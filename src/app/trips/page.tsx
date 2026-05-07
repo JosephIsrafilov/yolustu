@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import MobileShell from '@/components/layout/MobileShell';
+import WebLayout from '@/components/layout/WebLayout';
 import TripCard from '@/components/trips/TripCard';
 import TripFilters from '@/components/trips/TripFilters';
 import EmptyState from '@/components/ui/EmptyState';
@@ -26,40 +26,40 @@ function TripsContent() {
   const filteredTrips = useMemo(() => filterTrips(trips, filters), [trips, filters]);
 
   return (
-    <MobileShell
-      title="Gedişlər"
-      showBack
-      rightAction={
-        <button onClick={() => setShowFilters(!showFilters)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-muted transition-colors">
-          <Filter size={18} className={showFilters ? 'text-brand-600' : 'text-text-muted'} />
+    <WebLayout title="Gedişlər" showBack>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-text-muted">{filteredTrips.length} gediş tapıldı</p>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-white text-sm font-medium hover:bg-surface-muted transition-colors"
+        >
+          <Filter size={16} className={showFilters ? 'text-brand-600' : 'text-text-muted'} />
+          Filtrlər
         </button>
-      }
-    >
-      <div className="px-4 pt-2 pb-4">
-        {showFilters && (
-          <div className="mb-4 animate-slide-up">
-            <TripFilters filters={filters} onChange={setFilters} onSearch={() => setShowFilters(false)} />
-          </div>
-        )}
-
-        {filteredTrips.length > 0 ? (
-          <div className="flex flex-col gap-3 stagger-children">
-            <p className="text-xs text-text-muted">{filteredTrips.length} gediş tapıldı</p>
-            {filteredTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} driver={users.find((u) => u.id === trip.driverId)} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="Gediş tapılmadı" description="Filtrləri dəyişdirin və ya başqa tarix seçin" />
-        )}
       </div>
-    </MobileShell>
+
+      {showFilters && (
+        <div className="mb-6 animate-slide-up">
+          <TripFilters filters={filters} onChange={setFilters} onSearch={() => setShowFilters(false)} />
+        </div>
+      )}
+
+      {filteredTrips.length > 0 ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+          {filteredTrips.map((trip) => (
+            <TripCard key={trip.id} trip={trip} driver={users.find((u) => u.id === trip.driverId)} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="Gediş tapılmadı" description="Filtrləri dəyişdirin və ya başqa tarix seçin" />
+      )}
+    </WebLayout>
   );
 }
 
 export default function TripsPage() {
   return (
-    <Suspense fallback={<MobileShell title="Gedişlər" showBack><LoadingState /></MobileShell>}>
+    <Suspense fallback={<WebLayout title="Gedişlər" showBack><LoadingState /></WebLayout>}>
       <TripsContent />
     </Suspense>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import MobileShell from '@/components/layout/MobileShell';
+import WebLayout from '@/components/layout/WebLayout';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import RoleSwitch from '@/components/layout/RoleSwitch';
@@ -22,12 +22,12 @@ export default function ProfilePage() {
 
   if (!isAuthenticated || !currentUser) {
     return (
-      <MobileShell title="Profil" showNav={true}>
-        <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+      <WebLayout title="Profil">
+        <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-text-muted mb-4">Daxil olmaq lazımdır</p>
           <Button onClick={() => router.push(ROUTES.login)}>Daxil ol</Button>
         </div>
-      </MobileShell>
+      </WebLayout>
     );
   }
 
@@ -40,19 +40,14 @@ export default function ProfilePage() {
   const saveEdit = () => { updateProfile(form); setEditing(false); };
 
   return (
-    <MobileShell title="Profil" rightAction={<RoleSwitch />}>
-      <div className="px-4 pb-4 stagger-children">
+    <WebLayout title="Profil" narrow>
+      <div className="stagger-children">
+        <div className="flex justify-end mb-4"><RoleSwitch /></div>
         <ProfileHeader user={currentUser} reviewsCount={userReviews.length} />
-
-        {currentUser.bio && !editing && (
-          <Card padding="sm" className="mb-3">
-            <p className="text-sm text-text-secondary">{currentUser.bio}</p>
-          </Card>
-        )}
-
+        {currentUser.bio && !editing && (<Card padding="md" className="mb-4 mt-4"><p className="text-sm text-text-secondary">{currentUser.bio}</p></Card>)}
         {editing ? (
-          <Card className="mb-3">
-            <div className="flex flex-col gap-3">
+          <Card className="mb-4 mt-4">
+            <div className="flex flex-col gap-4">
               <Input label="Ad" value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} />
               <Input label="Telefon" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
               <div className="flex flex-col gap-1.5">
@@ -62,40 +57,19 @@ export default function ProfilePage() {
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={2} placeholder="Haqqımda" className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
-              <div className="flex gap-2">
-                <Button fullWidth onClick={saveEdit}>Yadda saxla</Button>
-                <Button fullWidth variant="ghost" onClick={() => setEditing(false)}>Ləğv et</Button>
-              </div>
+              <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Haqqımda" className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
+              <div className="flex gap-3"><Button fullWidth onClick={saveEdit}>Yadda saxla</Button><Button fullWidth variant="ghost" onClick={() => setEditing(false)}>Ləğv et</Button></div>
             </div>
           </Card>
         ) : (
-          <div className="flex flex-col gap-2 mb-4">
-            <Button variant="outline" fullWidth onClick={startEdit}><Settings size={16} /> Profili redaktə et</Button>
-            {currentUser.role === 'admin' && (
-              <Button variant="secondary" fullWidth onClick={() => router.push(ROUTES.admin)}>
-                <Shield size={16} /> Admin panel
-              </Button>
-            )}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6 mt-4">
+            <Button variant="outline" onClick={startEdit}><Settings size={16} /> Profili redaktə et</Button>
+            {currentUser.role === 'admin' && (<Button variant="secondary" onClick={() => router.push(ROUTES.admin)}><Shield size={16} /> Admin panel</Button>)}
           </div>
         )}
-
-        {/* Reviews */}
-        {userReviews.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold text-text mb-2">Rəylər</h3>
-            <div className="flex flex-col gap-2">
-              {userReviews.map((r) => (
-                <ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Button variant="ghost" fullWidth className="mt-6 text-danger-500" onClick={() => { logout(); router.push('/'); }}>
-          <LogOut size={16} /> Çıxış
-        </Button>
+        {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">Rəylər</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
+        <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><LogOut size={16} /> Çıxış</Button>
       </div>
-    </MobileShell>
+    </WebLayout>
   );
 }

@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Yolüstü — Global Design System
+   Yolüstü — Global Design System (Web)
    ============================================================ */
 
 @theme {
@@ -117,7 +117,8 @@
 
 /* ─── Custom scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -127,7 +128,16 @@
   border-radius: 9999px;
 }
 
-/* ─── Safe-area for mobile ──────────────────────────────── */
-.pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+/* ─── Scrollbar hide utility ────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Hero gradient (landing page) ──────────────────────── */
+.hero-gradient {
+  background: linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-800) 50%, var(--color-brand-950) 100%);
 }

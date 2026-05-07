@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import MobileShell from '@/components/layout/MobileShell';
+import WebLayout from '@/components/layout/WebLayout';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
@@ -24,9 +24,9 @@ function ReviewContent() {
   };
 
   return (
-    <div className="px-4 pt-4 pb-6">
+    <div>
       {trip && target && (
-        <Card padding="sm" className="mb-4 bg-brand-50 border-brand-100">
+        <Card padding="md" className="mb-6 bg-brand-50 border-brand-100">
           <p className="text-sm text-brand-700">
             <span className="font-semibold">{trip.departureCity} → {trip.arrivalCity}</span>
             {' '}gedişi üçün <span className="font-semibold">{target.fullName}</span>-ı qiymətləndirin
@@ -40,10 +40,10 @@ function ReviewContent() {
 
 export default function CreateReviewPage() {
   return (
-    <MobileShell title="Rəy yazın" showBack showNav={false}>
+    <WebLayout title="Rəy yazın" showBack narrow hideFooter>
       <Suspense fallback={<div className="p-4 text-center text-text-muted">Yüklənir...</div>}>
         <ReviewContent />
       </Suspense>
-    </MobileShell>
+    </WebLayout>
   );
 }

@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import MobileShell from '@/components/layout/MobileShell';
+import WebLayout from '@/components/layout/WebLayout';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { Plus, Map, Inbox, Car } from 'lucide-react';
+import { Plus, Map, Inbox } from 'lucide-react';
 
 export default function DriverDashboardPage() {
   const router = useRouter();
@@ -20,42 +20,22 @@ export default function DriverDashboardPage() {
   });
 
   return (
-    <MobileShell title="Sürücü paneli">
-      <div className="px-4 pt-2 pb-4 stagger-children">
-        {/* Quick stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <Card padding="sm" className="text-center">
-            <p className="text-2xl font-bold text-brand-600">{activeTrips.length}</p>
-            <p className="text-[11px] text-text-muted">Aktiv gediş</p>
-          </Card>
-          <Card padding="sm" className="text-center">
-            <p className="text-2xl font-bold text-accent-500">{pendingBookings.length}</p>
-            <p className="text-[11px] text-text-muted">Gözləyən</p>
-          </Card>
-          <Card padding="sm" className="text-center">
-            <p className="text-2xl font-bold text-text">{myTrips.length}</p>
-            <p className="text-[11px] text-text-muted">Ümumi</p>
-          </Card>
+    <WebLayout title="Sürücü paneli">
+      <div className="stagger-children">
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <Card padding="lg" className="text-center"><p className="text-3xl font-bold text-brand-600">{activeTrips.length}</p><p className="text-sm text-text-muted mt-1">Aktiv gediş</p></Card>
+          <Card padding="lg" className="text-center"><p className="text-3xl font-bold text-accent-500">{pendingBookings.length}</p><p className="text-sm text-text-muted mt-1">Gözləyən sorğu</p></Card>
+          <Card padding="lg" className="text-center"><p className="text-3xl font-bold text-text">{myTrips.length}</p><p className="text-sm text-text-muted mt-1">Ümumi gediş</p></Card>
         </div>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-2">
-          <Button fullWidth size="lg" onClick={() => router.push(ROUTES.createTrip)}>
-            <Plus size={18} /> Yeni gediş yarat
-          </Button>
-          <Button fullWidth size="lg" variant="outline" onClick={() => router.push(ROUTES.myTrips)}>
-            <Map size={18} /> Gedişlərim
-          </Button>
+        <div className="grid sm:grid-cols-3 gap-3">
+          <Button fullWidth size="lg" onClick={() => router.push(ROUTES.createTrip)}><Plus size={18} /> Yeni gediş yarat</Button>
+          <Button fullWidth size="lg" variant="outline" onClick={() => router.push(ROUTES.myTrips)}><Map size={18} /> Gedişlərim</Button>
           <Button fullWidth size="lg" variant="secondary" onClick={() => router.push(ROUTES.bookingRequests)}>
             <Inbox size={18} /> Rezerv sorğuları
-            {pendingBookings.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 bg-accent-500 text-white text-[10px] font-bold rounded-full">
-                {pendingBookings.length}
-              </span>
-            )}
+            {pendingBookings.length > 0 && (<span className="ml-1 px-1.5 py-0.5 bg-accent-500 text-white text-[10px] font-bold rounded-full">{pendingBookings.length}</span>)}
           </Button>
         </div>
       </div>
-    </MobileShell>
+    </WebLayout>
   );
 }
