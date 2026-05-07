@@ -1,99 +1,99 @@
-# 🚗 YolUstu — План проекта
+# 🚗 YolUstu — Project Plan
 
-> Платформа попутных поездок для Азербайджана (аналог BlaBlaCar)
+> Carpooling platform for Azerbaijan (BlaBlaCar analogue)
 
 ---
 
-## 1. Обзор продукта
+## 1. Product Overview
 
-| Параметр | Описание |
+| Parameter | Description |
 |---|---|
-| **Название** | YolUstu (Yol Üstü — «По пути») |
-| **Суть** | Мобильное приложение + веб-платформа для поиска и предложения попутных поездок по Азербайджану |
-| **Целевая аудитория** | Водители и пассажиры, путешествующие между городами Азербайджана (Баку ↔ Гянджа, Баку ↔ Ленкорань, Баку ↔ Шеки и т.д.) |
-| **Проблема** | Нет удобного цифрового сервиса для поиска попутчиков. Люди ищут попутки через WhatsApp-группы, Telegram и «сарафанное радио» |
-| **Решение** | Централизованная платформа с верификацией, рейтингами, онлайн-оплатой и удобным поиском |
+| **Name** | YolUstu (Yol Üstü — "On the Way") |
+| **Concept** | Mobile app + web platform for finding and offering carpooling rides across Azerbaijan |
+| **Target Audience** | Drivers and passengers traveling between Azerbaijani cities (Baku ↔ Ganja, Baku ↔ Lankaran, Baku ↔ Sheki, etc.) |
+| **Problem** | No convenient digital service for finding carpool rides. People search through WhatsApp groups, Telegram, and word of mouth |
+| **Solution** | Centralized platform with verification, ratings, online payments, and convenient search |
 
 ---
 
-## 2. Ключевые фичи (MVP)
+## 2. Key Features (MVP)
 
-### 2.1 Для пассажиров
-- 🔍 Поиск поездок по маршруту, дате и времени
-- 📍 Указание промежуточных точек посадки/высадки
-- 💳 Онлайн-бронирование и оплата
-- ⭐ Рейтинг и отзывы о водителях
-- 💬 Чат с водителем после бронирования
-- 🔔 Push-уведомления о статусе поездки
+### 2.1 For Passengers
+- 🔍 Search rides by route, date, and time
+- 📍 Specify intermediate pickup/drop-off points
+- 💳 Online booking and payment
+- ⭐ Driver ratings and reviews
+- 💬 Chat with driver after booking
+- 🔔 Push notifications about ride status
 
-### 2.2 Для водителей
-- ➕ Публикация поездки (маршрут, дата, время, цена, кол-во мест)
-- 🔄 Повторяющиеся поездки (регулярные маршруты)
-- ✅ Подтверждение / отклонение пассажиров
-- 💰 Получение оплаты на карту / баланс
-- ⭐ Рейтинг и отзывы о пассажирах
+### 2.2 For Drivers
+- ➕ Publish a ride (route, date, time, price, number of seats)
+- 🔄 Recurring rides (regular routes)
+- ✅ Approve / reject passengers
+- 💰 Receive payment to card / balance
+- ⭐ Passenger ratings and reviews
 
-### 2.3 Общие
-- 📱 Регистрация через номер телефона (OTP через SMS)
-- 🪪 Верификация личности (фото удостоверения + селфи)
-- 🗺️ Интерактивная карта маршрута
-- 🌐 Мультиязычность: Azerbaijani (основной), Русский, English
-
----
-
-## 3. Фичи после MVP (v2+)
-
-- 🚕 Регулярные маршруты с автоматическим созданием поездок
-- 👥 Групповые поездки (несколько пассажиров — один водитель)
-- 🏆 Система лояльности и промокоды
-- 📊 Аналитика для водителей (заработок, статистика)
-- 🔗 Интеграция с картой ASAN (государственная верификация)
-- 🚌 Партнёрство с автобусными компаниями
-- 📦 Доставка посылок попутно
-- 🆘 Кнопка SOS и отслеживание поездки в реальном времени
+### 2.3 General
+- 📱 Registration via phone number (SMS OTP)
+- 🪪 Identity verification (ID photo + selfie)
+- 🗺️ Interactive route map
+- 🌐 Multilingual: Azerbaijani (primary), Russian, English
 
 ---
 
-## 4. Технический стек
+## 3. Post-MVP Features (v2+)
 
-### 4.1 Мобильные приложения
-| Компонент | Технология | Обоснование |
+- 🚕 Regular routes with automatic ride creation
+- 👥 Group rides (multiple passengers — one driver)
+- 🏆 Loyalty program and promo codes
+- 📊 Driver analytics (earnings, statistics)
+- 🔗 Integration with ASAN card (government verification)
+- 🚌 Partnership with bus companies
+- 📦 Parcel delivery along the way
+- 🆘 SOS button and real-time ride tracking
+
+---
+
+## 4. Tech Stack
+
+### 4.1 Mobile Apps
+| Component | Technology | Rationale |
 |---|---|---|
-| Фреймворк | **React Native** или **Flutter** | Один код на iOS + Android, быстрый выход на рынок |
-| Навигация | React Navigation / GoRouter | — |
-| Состояние | Zustand / Riverpod | Простота и производительность |
-| Карты | **Google Maps SDK** | Хорошее покрытие Азербайджана |
+| Framework | **React Native** or **Flutter** | Single codebase for iOS + Android, fast time-to-market |
+| Navigation | React Navigation / GoRouter | — |
+| State Management | Zustand / Riverpod | Simplicity and performance |
+| Maps | **Google Maps SDK** | Good coverage of Azerbaijan |
 
 ### 4.2 Backend
-| Компонент | Технология | Обоснование |
+| Component | Technology | Rationale |
 |---|---|---|
-| API | **Node.js + NestJS** или **Python + FastAPI** | Быстрая разработка, хорошая экосистема |
-| База данных | **PostgreSQL** | Надёжность, PostGIS для геозапросов |
-| Кэш | **Redis** | Сессии, кэширование маршрутов |
-| Очереди | **BullMQ** (Redis) | Уведомления, email, SMS |
-| Хранилище | **AWS S3** / **MinIO** | Фото профилей, документы |
-| Поиск | **PostGIS** + PostgreSQL | Геопространственный поиск поездок |
+| API | **Node.js + NestJS** or **Python + FastAPI** | Rapid development, strong ecosystem |
+| Database | **PostgreSQL** | Reliability, PostGIS for geo-queries |
+| Cache | **Redis** | Sessions, route caching |
+| Queues | **BullMQ** (Redis) | Notifications, email, SMS |
+| Storage | **AWS S3** / **MinIO** | Profile photos, documents |
+| Search | **PostGIS** + PostgreSQL | Geospatial ride search |
 
-### 4.3 Веб-приложение
-| Компонент | Технология |
+### 4.3 Web Application
+| Component | Technology |
 |---|---|
-| Фреймворк | **Next.js** (React) |
+| Framework | **Next.js** (React) |
 | UI | Tailwind CSS + Shadcn/UI |
-| Карты | Google Maps JS API |
+| Maps | Google Maps JS API |
 
-### 4.4 Инфраструктура
-| Компонент | Технология |
+### 4.4 Infrastructure
+| Component | Technology |
 |---|---|
-| Хостинг | **AWS** / **DigitalOcean** |
+| Hosting | **AWS** / **DigitalOcean** |
 | CI/CD | GitHub Actions |
-| Контейнеризация | Docker + Docker Compose |
-| Мониторинг | Sentry + Grafana |
-| SMS-провайдер | **Azerbaijani SMS gateway** (например, lsim.az или oxu SMS) |
-| Оплата | **Kapital Bank e-commerce** или **Payriff** (MilliÖn) |
+| Containerization | Docker + Docker Compose |
+| Monitoring | Sentry + Grafana |
+| SMS Provider | **Azerbaijani SMS gateway** (e.g., lsim.az or oxu SMS) |
+| Payments | **Kapital Bank e-commerce** or **Payriff** (MilliÖn) |
 
 ---
 
-## 5. Архитектура (высокоуровневая)
+## 5. Architecture (High-Level)
 
 ```mermaid
 graph TB
@@ -139,7 +139,7 @@ graph TB
 
 ---
 
-## 6. Схема базы данных (ключевые таблицы)
+## 6. Database Schema (Key Tables)
 
 ```mermaid
 erDiagram
@@ -221,104 +221,104 @@ erDiagram
 
 ---
 
-## 7. Фазы разработки
+## 7. Development Phases
 
-### Фаза 1 — Фундамент (6-8 недель)
-| # | Задача | Верификация |
+### Phase 1 — Foundation (6–8 weeks)
+| # | Task | Verification |
 |---|---|---|
-| 1 | Настройка проекта (monorepo, CI/CD, Docker) | `docker compose up` запускает всё |
-| 2 | Модель данных + миграции PostgreSQL | Миграции проходят, таблицы созданы |
-| 3 | Аутентификация (SMS OTP, JWT) | Можно зарегистрироваться и войти по SMS |
-| 4 | CRUD API для поездок | Можно создать, найти, редактировать, удалить поездку |
-| 5 | Геопоиск поездок (PostGIS) | Поиск по маршруту возвращает релевантные поездки |
+| 1 | Project setup (monorepo, CI/CD, Docker) | `docker compose up` starts everything |
+| 2 | Data model + PostgreSQL migrations | Migrations pass, tables are created |
+| 3 | Authentication (SMS OTP, JWT) | Can register and log in via SMS |
+| 4 | CRUD API for rides | Can create, find, edit, delete a ride |
+| 5 | Geo-search for rides (PostGIS) | Route search returns relevant rides |
 
-### Фаза 2 — Основной функционал (6-8 недель)
-| # | Задача | Верификация |
+### Phase 2 — Core Functionality (6–8 weeks)
+| # | Task | Verification |
 |---|---|---|
-| 1 | Система бронирования | Пассажир бронирует место → статус обновляется |
-| 2 | Чат между водителем и пассажиром | Сообщения доставляются в реальном времени (WebSocket) |
-| 3 | Push-уведомления (FCM / APNs) | Уведомления приходят при бронировании, отмене, сообщении |
-| 4 | Рейтинги и отзывы | После поездки можно оставить отзыв |
-| 5 | Профиль пользователя + верификация | Загрузка документов, модерация |
+| 1 | Booking system | Passenger books a seat → status updates |
+| 2 | Chat between driver and passenger | Messages delivered in real time (WebSocket) |
+| 3 | Push notifications (FCM / APNs) | Notifications arrive on booking, cancellation, message |
+| 4 | Ratings and reviews | Can leave a review after a ride |
+| 5 | User profile + verification | Document upload, moderation |
 
-### Фаза 3 — Оплата и мобильное приложение (6-8 недель)
-| # | Задача | Верификация |
+### Phase 3 — Payments & Mobile App (6–8 weeks)
+| # | Task | Verification |
 |---|---|---|
-| 1 | Интеграция с Payriff / Kapital Bank | Тестовый платёж проходит |
-| 2 | Мобильное приложение (основные экраны) | Поиск, бронирование, профиль работают |
-| 3 | Карта маршрута (Google Maps) | Маршрут отображается на карте |
-| 4 | Веб-лендинг + SEO | Сайт доступен, индексируется |
+| 1 | Payriff / Kapital Bank integration | Test payment goes through |
+| 2 | Mobile app (main screens) | Search, booking, profile work |
+| 3 | Route map (Google Maps) | Route displayed on map |
+| 4 | Web landing + SEO | Site is accessible, indexed |
 
-### Фаза 4 — Запуск и рост (4-6 недель)
-| # | Задача | Верификация |
+### Phase 4 — Launch & Growth (4–6 weeks)
+| # | Task | Verification |
 |---|---|---|
-| 1 | Бета-тестирование (50-100 пользователей) | Критические баги найдены и исправлены |
-| 2 | Админ-панель (модерация, аналитика) | Админ видит статистику, может блокировать |
-| 3 | Оптимизация производительности | Время ответа API < 200ms (p95) |
-| 4 | Публикация в App Store + Google Play | Приложение прошло ревью |
+| 1 | Beta testing (50–100 users) | Critical bugs found and fixed |
+| 2 | Admin panel (moderation, analytics) | Admin sees stats, can block users |
+| 3 | Performance optimization | API response time < 200ms (p95) |
+| 4 | App Store + Google Play publication | App passes review |
 
 ---
 
-## 8. Бизнес-модель
+## 8. Business Model
 
-| Источник дохода | Описание |
+| Revenue Source | Description |
 |---|---|
-| **Сервисный сбор** | 10-15% от стоимости бронирования с пассажира |
-| **Promoted rides** | Водители могут продвигать свои поездки в поиске |
-| **Верификация PRO** | Расширенная верификация для повышения доверия |
-| **Партнёрства** | Страхование поездок, автосервисы, заправки |
+| **Service fee** | 10–15% of booking cost from the passenger |
+| **Promoted rides** | Drivers can promote their rides in search results |
+| **PRO verification** | Enhanced verification for increased trust |
+| **Partnerships** | Ride insurance, auto services, gas stations |
 
 ---
 
-## 9. Локализация для Азербайджана
+## 9. Localization for Azerbaijan
 
 > [!IMPORTANT]
-> Эти аспекты критичны для успеха именно на азербайджанском рынке.
+> These aspects are critical for success specifically in the Azerbaijani market.
 
-- **Язык**: Основной UI на азербайджанском, поддержка русского и английского
-- **Валюта**: Все цены в AZN (₼)
-- **Оплата**: Интеграция с местными банками (Kapital Bank, ABB, Payriff/MilliÖn)
-- **SMS**: Местный SMS-провайдер для доставки OTP
-- **Популярные маршруты**: Предустановленные маршруты (Bakı–Gəncə, Bakı–Lənkəran, Bakı–Şəki, Bakı–Quba, Bakı–Şamaxı)
-- **Юридические аспекты**: Консультация с юристом по законодательству о перевозках в АР
-- **Культурные особенности**: Возможность указать предпочтения (курение, музыка, женский-only поездки)
+- **Language**: Primary UI in Azerbaijani, Russian and English support
+- **Currency**: All prices in AZN (₼)
+- **Payments**: Integration with local banks (Kapital Bank, ABB, Payriff/MilliÖn)
+- **SMS**: Local SMS provider for OTP delivery
+- **Popular routes**: Pre-configured routes (Bakı–Gəncə, Bakı–Lənkəran, Bakı–Şəki, Bakı–Quba, Bakı–Şamaxı)
+- **Legal aspects**: Consultation with a lawyer on transportation law in Azerbaijan
+- **Cultural specifics**: Ability to specify preferences (smoking, music, women-only rides)
 
 ---
 
-## 10. Ключевые метрики (KPI)
+## 10. Key Metrics (KPI)
 
-| Метрика | Цель (первые 6 месяцев) |
+| Metric | Target (first 6 months) |
 |---|---|
-| Регистрации | 5,000+ пользователей |
-| Активные поездки в месяц | 500+ |
-| Конверсия поиск → бронирование | > 15% |
-| Средний рейтинг водителей | > 4.5 |
-| Время ответа API (p95) | < 200ms |
-| Crash-free rate (мобильное приложение) | > 99.5% |
+| Registrations | 5,000+ users |
+| Active rides per month | 500+ |
+| Search → booking conversion | > 15% |
+| Average driver rating | > 4.5 |
+| API response time (p95) | < 200ms |
+| Crash-free rate (mobile app) | > 99.5% |
 
 ---
 
-## 11. Конкурентные преимущества
+## 11. Competitive Advantages
 
-1. **Первопроходец** — нет прямого конкурента в Азербайджане
-2. **Локализация** — полная адаптация под местный рынок (язык, оплата, маршруты)
-3. **Доверие** — верификация через удостоверение, рейтинги, отзывы
-4. **Удобство** — простой UX vs. хаотичные WhatsApp-группы
-5. **Безопасность** — кнопка SOS, отслеживание маршрута, страхование
+1. **First mover** — no direct competitor in Azerbaijan
+2. **Localization** — full adaptation for the local market (language, payments, routes)
+3. **Trust** — verification via ID, ratings, reviews
+4. **Convenience** — simple UX vs. chaotic WhatsApp groups
+5. **Safety** — SOS button, route tracking, insurance
 
 ---
 
-## 12. Риски и митигация
+## 12. Risks and Mitigation
 
-| Риск | Митигация |
+| Risk | Mitigation |
 |---|---|
-| Низкая начальная база пользователей (проблема курицы и яйца) | Начать с 2-3 популярных маршрутов, привлечь водителей бонусами |
-| Пользователи договариваются напрямую, обходя платформу | Предложить страховку и удобство только через платформу |
-| Конкуренция со стороны BlaBlaCar | Глубокая локализация, которую международный игрок не обеспечит |
-| Юридические ограничения | Юрист + диалог с регулятором на раннем этапе |
-| Безопасность пассажиров | Верификация, SOS, отслеживание, страхование |
+| Low initial user base (chicken-and-egg problem) | Start with 2–3 popular routes, attract drivers with bonuses |
+| Users negotiate directly, bypassing the platform | Offer insurance and convenience only through the platform |
+| Competition from BlaBlaCar | Deep localization that an international player won't provide |
+| Legal restrictions | Lawyer + early-stage dialogue with the regulator |
+| Passenger safety | Verification, SOS, tracking, insurance |
 
 ---
 
 > [!TIP]
-> **Рекомендация по старту**: Начни с веб-версии (Next.js) + бота в Telegram как MVP. Это позволит валидировать идею с минимальными затратами до разработки полноценного мобильного приложения.
+> **Startup recommendation**: Start with a web version (Next.js) + a Telegram bot as MVP. This allows idea validation with minimal costs before building a full mobile app.

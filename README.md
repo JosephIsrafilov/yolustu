@@ -1,71 +1,71 @@
 # 🚗 YolUstu (Yol Üstü)
 
-> Платформа попутных поездок для Азербайджана — удобный поиск и предложение поездок между городами.
+> Carpooling platform for Azerbaijan — easy search and offer of rides between cities.
 
-## О проекте
+## About
 
-**YolUstu** — централизованная платформа для поиска попутчиков в Азербайджане. Решает проблему хаотичного поиска поездок через WhatsApp-группы и Telegram, предоставляя удобный сервис с верификацией, рейтингами и онлайн-оплатой.
+**YolUstu** is a centralized carpooling platform for Azerbaijan. It solves the problem of chaotic ride-searching through WhatsApp groups and Telegram by providing a convenient service with identity verification, ratings, and online payments.
 
-## Технический стек
+## Tech Stack
 
-| Компонент | Технология |
+| Component | Technology |
 |---|---|
 | **Backend** | Node.js + NestJS (Modular Monolith) |
 | **Database** | PostgreSQL + PostGIS |
 | **Cache** | Redis |
 | **Web** | Next.js (React) |
 | **Mobile** | React Native |
-| **Карты** | Google Maps API |
-| **Оплата** | Payriff / Kapital Bank |
+| **Maps** | Google Maps API |
+| **Payments** | Payriff / Kapital Bank |
 | **SMS** | lsim.az |
 | **CI/CD** | GitHub Actions |
-| **Инфраструктура** | Docker + Docker Compose |
+| **Infrastructure** | Docker + Docker Compose |
 
-## Архитектура
+## Architecture
 
-Modular Monolith — единое NestJS-приложение, разбитое на изолированные модули:
+Modular Monolith — a single NestJS application split into isolated modules:
 
 ```
 src/
 ├── modules/
-│   ├── auth/          # Аутентификация, SMS OTP, JWT
-│   ├── users/         # Профили, верификация KYC
-│   ├── rides/         # Поездки, геопоиск
-│   ├── bookings/      # Бронирование
-│   ├── payments/      # Интеграция с Payriff
-│   ├── chat/          # WebSocket чат
+│   ├── auth/          # Authentication, SMS OTP, JWT
+│   ├── users/         # Profiles, KYC verification
+│   ├── rides/         # Rides, geo-search
+│   ├── bookings/      # Booking
+│   ├── payments/      # Payriff integration
+│   ├── chat/          # WebSocket chat
 │   ├── notifications/ # Push, SMS
-│   └── reviews/       # Рейтинги и отзывы
+│   └── reviews/       # Ratings and reviews
 ├── common/            # Shared: guards, pipes, filters, DTOs
-├── config/            # Конфигурация (env, database)
+├── config/            # Configuration (env, database)
 └── main.ts
 ```
 
-## Ключевые фичи (MVP)
+## Key Features (MVP)
 
-- 🔍 Поиск поездок по маршруту, дате и времени (PostGIS геопоиск)
-- 📱 Регистрация через SMS OTP
-- 💳 Онлайн-бронирование и оплата
-- ⭐ Рейтинги и отзывы
-- 💬 Real-time чат (WebSocket)
-- 🔔 Push-уведомления
+- 🔍 Ride search by route, date, and time (PostGIS geo-search)
+- 📱 Registration via SMS OTP
+- 💳 Online booking and payment
+- ⭐ Ratings and reviews
+- 💬 Real-time chat (WebSocket)
+- 🔔 Push notifications
 
-## Документация
+## Documentation
 
-- [📋 План проекта](./yolustu_plan.md)
-- [🏗️ Архитектура](./yolustu_architecture.md)
+- [📋 Project Plan](./yolustu_plan.md)
+- [🏗️ Architecture](./yolustu_architecture.md)
 
-## Запуск (dev)
+## Getting Started (dev)
 
 ```bash
-# Установка зависимостей
+# Install dependencies
 npm install
 
-# Запуск в dev-режиме
+# Start in dev mode
 docker compose up -d   # PostgreSQL, Redis
 npm run dev
 ```
 
-## Лицензия
+## License
 
 MIT

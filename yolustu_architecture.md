@@ -1,83 +1,83 @@
-# YolUstu — Архитектурные решения (приложение к дипломной работе)
+# YolUstu — Architectural Decisions (Diploma Work Appendix)
 
 ---
 
-## 1. Выбор архитектурного стиля: Modular Monolith → Microservices
+## 1. Architectural Style: Modular Monolith → Microservices
 
-Для MVP выбран подход **Modular Monolith** (модульный монолит) — единое NestJS-приложение, разделённое на изолированные модули по бизнес-доменам. Это даёт:
-- Простоту деплоя (один Docker-контейнер)
-- Низкие инфраструктурные затраты на старте
-- Возможность выделить модули в микросервисы при росте нагрузки
+For the MVP, the **Modular Monolith** approach is chosen — a single NestJS application divided into isolated modules by business domains. This provides:
+- Simple deployment (one Docker container)
+- Low infrastructure costs at the start
+- Ability to extract modules into microservices as load grows
 
 ```
 src/
 ├── modules/
-│   ├── auth/          # Аутентификация, SMS OTP, JWT
-│   ├── users/         # Профили, верификация KYC
-│   ├── rides/         # Поездки, геопоиск
-│   ├── bookings/      # Бронирование
-│   ├── payments/      # Интеграция с Payriff
-│   ├── chat/          # WebSocket чат
+│   ├── auth/          # Authentication, SMS OTP, JWT
+│   ├── users/         # Profiles, KYC verification
+│   ├── rides/         # Rides, geo-search
+│   ├── bookings/      # Booking
+│   ├── payments/      # Payriff integration
+│   ├── chat/          # WebSocket chat
 │   ├── notifications/ # Push, SMS
-│   └── reviews/       # Рейтинги и отзывы
+│   └── reviews/       # Ratings and reviews
 ├── common/            # Shared: guards, pipes, filters, DTOs
-├── config/            # Конфигурация (env, database)
+├── config/            # Configuration (env, database)
 └── main.ts
 ```
 
-> Каждый модуль инкапсулирует свои controllers, services, repositories и DTOs. Модули общаются через dependency injection, не через прямые импорты внутренних классов.
+> Each module encapsulates its own controllers, services, repositories, and DTOs. Modules communicate via dependency injection, not through direct imports of internal classes.
 
 ---
 
-## 2. Аутентификация: поток SMS OTP + JWT
+## 2. Authentication: SMS OTP + JWT Flow
 
 ```mermaid
 sequenceDiagram
-    actor P as Пользователь
+    actor P as User
     participant App as Mobile / Web
     participant API as NestJS API
     participant Redis as Redis
     participant SMS as lsim.az
 
-    P->>App: Вводит номер телефона
+    P->>App: Enters phone number
     App->>API: POST /auth/otp/send {phone}
-    API->>API: Генерирует 6-значный OTP
-    API->>Redis: Сохраняет OTP (TTL 5 мин)
-    API->>SMS: Отправляет SMS с кодом
-    SMS-->>P: SMS: "Ваш код: 123456"
-    P->>App: Вводит OTP
+    API->>API: Generates 6-digit OTP
+    API->>Redis: Stores OTP (TTL 5 min)
+    API->>SMS: Sends SMS with code
+    SMS-->>P: SMS: "Your code: 123456"
+    P->>App: Enters OTP
     App->>API: POST /auth/otp/verify {phone, code}
-    API->>Redis: Проверяет OTP
+    API->>Redis: Validates OTP
     Redis-->>API: OK / Expired
-    API->>API: Создаёт/находит пользователя
-    API->>API: Генерирует JWT access (15 мин) + refresh (30 дней)
+    API->>API: Creates/finds user
+    API->>API: Generates JWT access (15 min) + refresh (30 days)
     API-->>App: {accessToken, refreshToken, user}
 ```
 
-**Механизм обновления токена:**
-- Access token живёт 15 минут
-- Refresh token живёт 30 дней, хранится в Redis
-- При обновлении старый refresh token инвалидируется (rotation)
-- При подозрительной активности — все refresh tokens пользователя аннулируются
+**Token refresh mechanism:**
+- Access token lives 15 minutes
+- Refresh token lives 30 days, stored in Redis
+- On refresh, the old refresh token is invalidated (rotation)
+- On suspicious activity — all user refresh tokens are revoked
 
 ---
 
-## 3. Геопоиск маршрутов (PostGIS)
+## 3. Geo-Search for Rides (PostGIS)
 
-Ключевая архитектурная задача — найти поездки, маршрут которых проходит «по пути» пассажира.
+The key architectural challenge is finding rides whose route goes "along the way" for a passenger.
 
-### Алгоритм поиска
+### Search Algorithm
 
 ```mermaid
 flowchart TD
-    A["Пассажир вводит:\nТочка А → Точка Б"] --> B["Геокодирование\nGoogle Maps Geocoding API"]
-    B --> C["PostGIS запрос:\nST_DWithin по origin + destination"]
-    C --> D["Фильтрация:\n- Дата/время\n- Свободные места\n- Статус = active"]
-    D --> E["Ранжирование:\n- Расстояние до маршрута\n- Рейтинг водителя\n- Цена"]
-    E --> F["Результат:\nСписок релевантных поездок"]
+    A["Passenger enters:\nPoint A → Point B"] --> B["Geocoding\nGoogle Maps Geocoding API"]
+    B --> C["PostGIS query:\nST_DWithin on origin + destination"]
+    C --> D["Filtering:\n- Date/time\n- Available seats\n- Status = active"]
+    D --> E["Ranking:\n- Distance to route\n- Driver rating\n- Price"]
+    E --> F["Result:\nList of relevant rides"]
 ```
 
-**SQL-запрос (упрощённый):**
+**SQL query (simplified):**
 ```sql
 SELECT r.*, u.first_name, u.rating,
        ST_Distance(r.origin_location, ST_SetSRID(ST_MakePoint(:lng1, :lat1), 4326)) AS origin_dist,
@@ -90,7 +90,7 @@ WHERE r.status = 'active'
   AND ST_DWithin(
       r.origin_location::geography,
       ST_SetSRID(ST_MakePoint(:lng1, :lat1), 4326)::geography,
-      :radius_meters  -- например, 15000 (15 км)
+      :radius_meters  -- e.g., 15000 (15 km)
   )
   AND ST_DWithin(
       r.destination_location::geography,
@@ -101,7 +101,7 @@ ORDER BY origin_dist + dest_dist ASC, u.rating DESC
 LIMIT 20;
 ```
 
-**Индексы:**
+**Indexes:**
 ```sql
 CREATE INDEX idx_rides_origin_geo ON rides USING GIST (origin_location);
 CREATE INDEX idx_rides_dest_geo ON rides USING GIST (destination_location);
@@ -110,68 +110,68 @@ CREATE INDEX idx_rides_departure ON rides (departure_time) WHERE status = 'activ
 
 ---
 
-## 4. Поток бронирования (Booking Flow)
+## 4. Booking Flow
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending : Пассажир бронирует
-    pending --> confirmed : Водитель подтверждает
-    pending --> rejected : Водитель отклоняет
-    pending --> cancelled : Пассажир отменяет
-    confirmed --> paid : Оплата прошла
-    confirmed --> cancelled : Отмена до оплаты
-    paid --> completed : Поездка завершена
-    paid --> refunded : Отмена после оплаты
-    completed --> reviewed : Отзыв оставлен
+    [*] --> pending : Passenger books
+    pending --> confirmed : Driver confirms
+    pending --> rejected : Driver rejects
+    pending --> cancelled : Passenger cancels
+    confirmed --> paid : Payment successful
+    confirmed --> cancelled : Cancelled before payment
+    paid --> completed : Ride completed
+    paid --> refunded : Cancelled after payment
+    completed --> reviewed : Review submitted
     rejected --> [*]
     cancelled --> [*]
     refunded --> [*]
     reviewed --> [*]
 ```
 
-Смена статуса сопровождается:
-1. Обновлением `available_seats` в таблице `rides`
-2. Push-уведомлением обеим сторонам
-3. Записью в лог событий (audit trail)
+Status changes are accompanied by:
+1. Updating `available_seats` in the `rides` table
+2. Push notification to both parties
+3. Entry in the event log (audit trail)
 
 ---
 
-## 5. Платёжная архитектура
+## 5. Payment Architecture
 
 ```mermaid
 sequenceDiagram
-    actor P as Пассажир
-    participant App as Приложение
+    actor P as Passenger
+    participant App as Application
     participant API as NestJS API
     participant DB as PostgreSQL
     participant Pay as Payriff API
 
-    P->>App: Нажимает "Оплатить"
+    P->>App: Clicks "Pay"
     App->>API: POST /payments/create {bookingId}
-    API->>DB: Создаёт запись Payment (status=pending)
-    API->>Pay: Создаёт платёжную сессию
+    API->>DB: Creates Payment record (status=pending)
+    API->>Pay: Creates payment session
     Pay-->>API: {paymentUrl, transactionId}
     API-->>App: {paymentUrl}
-    App->>Pay: Redirect → платёжная страница
-    P->>Pay: Вводит данные карты
+    App->>Pay: Redirect → payment page
+    P->>Pay: Enters card details
     Pay->>API: Webhook: payment_success / payment_failed
-    API->>DB: Обновляет Payment status
-    API->>DB: Обновляет Booking status → paid
-    API->>App: Push-уведомление: "Оплата прошла"
+    API->>DB: Updates Payment status
+    API->>DB: Updates Booking status → paid
+    API->>App: Push notification: "Payment successful"
 ```
 
-**Безопасность платежей:**
-- API не хранит данные банковских карт (PCI DSS compliance)
-- Webhook от Payriff верифицируется через подпись (HMAC)
-- Идемпотентность: повторный webhook не создаёт дублей
+**Payment security:**
+- API does not store bank card data (PCI DSS compliance)
+- Webhook from Payriff is verified via signature (HMAC)
+- Idempotency: repeated webhook does not create duplicates
 
 ---
 
-## 6. Real-Time архитектура (чат + уведомления)
+## 6. Real-Time Architecture (Chat + Notifications)
 
 ```mermaid
 graph LR
-    subgraph Clients["Клиенты"]
+    subgraph Clients["Clients"]
         A["Mobile App"]
         B["Web App"]
     end
@@ -184,7 +184,7 @@ graph LR
         D["Redis Pub/Sub"]
     end
 
-    subgraph Storage["Хранение"]
+    subgraph Storage["Storage"]
         E["PostgreSQL\n(messages)"]
     end
 
@@ -199,104 +199,104 @@ graph LR
     C --> F
 ```
 
-**Логика доставки сообщений:**
-1. Клиент отправляет сообщение через WebSocket
-2. Сервер сохраняет в PostgreSQL
-3. Сервер публикует в Redis Pub/Sub (для горизонтального масштабирования)
-4. Если получатель онлайн → доставка через WebSocket
-5. Если получатель офлайн → Push-уведомление через FCM/APNs
+**Message delivery logic:**
+1. Client sends a message via WebSocket
+2. Server saves it to PostgreSQL
+3. Server publishes to Redis Pub/Sub (for horizontal scaling)
+4. If recipient is online → delivery via WebSocket
+5. If recipient is offline → Push notification via FCM/APNs
 
-**Комнаты чата:**
-- Каждая поездка = одна комната (`ride:{rideId}`)
-- Только водитель и подтверждённые пассажиры имеют доступ
+**Chat rooms:**
+- Each ride = one room (`ride:{rideId}`)
+- Only the driver and confirmed passengers have access
 
 ---
 
-## 7. Кэширование
+## 7. Caching
 
-| Что кэшируется | Хранилище | TTL | Стратегия инвалидации |
+| What is cached | Storage | TTL | Invalidation strategy |
 |---|---|---|---|
-| Сессии / Refresh tokens | Redis | 30 дней | Удаление при logout |
-| OTP коды | Redis | 5 мин | Auto-expire |
-| Популярные маршруты | Redis | 1 час | Invalidate при новой поездке |
-| Профили пользователей | Redis | 15 мин | Invalidate при обновлении |
-| Результаты геопоиска | Не кэшируются | — | Данные слишком динамичны |
+| Sessions / Refresh tokens | Redis | 30 days | Delete on logout |
+| OTP codes | Redis | 5 min | Auto-expire |
+| Popular routes | Redis | 1 hour | Invalidate on new ride |
+| User profiles | Redis | 15 min | Invalidate on update |
+| Geo-search results | Not cached | — | Data is too dynamic |
 
 ---
 
-## 8. Обработка ошибок и устойчивость
+## 8. Error Handling and Resilience
 
 ### Centralized Error Handling (NestJS Exception Filter)
 
 ```
-Все ошибки → GlobalExceptionFilter → стандартный JSON-ответ:
+All errors → GlobalExceptionFilter → standard JSON response:
 {
   "statusCode": 400,
   "error": "BOOKING_NO_SEATS",
-  "message": "Нет свободных мест",
+  "message": "No available seats",
   "timestamp": "2026-05-06T12:00:00Z"
 }
 ```
 
-### Retry-политика для внешних сервисов
+### Retry Policy for External Services
 
-| Сервис | Стратегия | Max retries |
+| Service | Strategy | Max retries |
 |---|---|---|
 | SMS Gateway (lsim.az) | Exponential backoff | 3 |
 | Payriff API | Exponential backoff + fallback | 3 |
 | Google Maps API | Retry + circuit breaker | 2 |
-| FCM Push | Fire-and-forget с логированием | 1 |
+| FCM Push | Fire-and-forget with logging | 1 |
 
 ### Circuit Breaker
-При последовательных ошибках внешнего сервиса (>5 за 30 сек) — circuit открывается, запросы возвращают fallback-ответ. Через 60 сек — пробный запрос (half-open).
+On consecutive errors from an external service (>5 in 30 sec) — the circuit opens, requests return a fallback response. After 60 sec — a probe request (half-open).
 
 ---
 
-## 9. Безопасность
+## 9. Security
 
-| Аспект | Реализация |
+| Aspect | Implementation |
 |---|---|
-| **Аутентификация** | JWT (RS256), access + refresh token rotation |
-| **Авторизация** | RBAC: user, driver, admin. Guard-декораторы NestJS |
-| **HTTPS** | Обязательный TLS на всех эндпоинтах (Let's Encrypt) |
-| **Rate Limiting** | 100 req/min на IP (nestjs-throttler) |
+| **Authentication** | JWT (RS256), access + refresh token rotation |
+| **Authorization** | RBAC: user, driver, admin. NestJS guard decorators |
+| **HTTPS** | Mandatory TLS on all endpoints (Let's Encrypt) |
+| **Rate Limiting** | 100 req/min per IP (nestjs-throttler) |
 | **Input Validation** | class-validator + class-transformer (DTO pipes) |
-| **SQL Injection** | Prisma ORM — параметризованные запросы |
-| **XSS** | Санитизация пользовательского ввода, CSP headers |
-| **CORS** | Whitelist разрешённых доменов |
-| **Загрузка файлов** | Проверка MIME-type, ограничение 5 MB, S3 presigned URLs |
-| **Данные карт** | Не хранятся на сервере (PCI DSS через Payriff) |
+| **SQL Injection** | Prisma ORM — parameterized queries |
+| **XSS** | User input sanitization, CSP headers |
+| **CORS** | Whitelist of allowed domains |
+| **File Uploads** | MIME-type validation, 5 MB limit, S3 presigned URLs |
+| **Card Data** | Not stored on the server (PCI DSS via Payriff) |
 
 ---
 
-## 10. Observability (наблюдаемость)
+## 10. Observability
 
-### Три столпа
+### Three Pillars
 
 ```mermaid
 graph LR
-    A["Логирование\nPino + ELK"] --> D["Observability"]
-    B["Метрики\nPrometheus + Grafana"] --> D
-    C["Трейсинг\nSentry"] --> D
+    A["Logging\nPino + ELK"] --> D["Observability"]
+    B["Metrics\nPrometheus + Grafana"] --> D
+    C["Tracing\nSentry"] --> D
 ```
 
-| Инструмент | Назначение |
+| Tool | Purpose |
 |---|---|
-| **Pino** (структурированный JSON) | Логирование запросов, ошибок, бизнес-событий |
-| **Prometheus** | Сбор метрик (RPS, latency, error rate) |
-| **Grafana** | Визуализация дашбордов |
-| **Sentry** | Трекинг ошибок и performance (traces) |
+| **Pino** (structured JSON) | Logging requests, errors, business events |
+| **Prometheus** | Collecting metrics (RPS, latency, error rate) |
+| **Grafana** | Dashboard visualization |
+| **Sentry** | Error tracking and performance (traces) |
 
-### Ключевые метрики для мониторинга
-- `http_request_duration_seconds` — латентность API
-- `rides_created_total` — счётчик созданных поездок
-- `bookings_total` — счётчик бронирований по статусам
-- `payments_total` — счётчик платежей (success/failed)
-- `ws_connections_active` — активные WebSocket-соединения
+### Key Metrics to Monitor
+- `http_request_duration_seconds` — API latency
+- `rides_created_total` — ride creation counter
+- `bookings_total` — booking counter by status
+- `payments_total` — payment counter (success/failed)
+- `ws_connections_active` — active WebSocket connections
 
 ---
 
-## 11. Стратегия деплоя
+## 11. Deployment Strategy
 
 ```mermaid
 graph TB
@@ -307,8 +307,8 @@ graph TB
     end
 
     subgraph Deploy["Deployment"]
-        D --> E["Staging\n(автоматически)"]
-        E --> F["Ручное подтверждение"]
+        D --> E["Staging\n(automatic)"]
+        E --> F["Manual approval"]
         F --> G["Production\n(blue-green)"]
     end
 
@@ -321,7 +321,7 @@ graph TB
 ```
 
 **Docker Compose (production):**
-- `api` — NestJS (2 реплики за Nginx)
+- `api` — NestJS (2 replicas behind Nginx)
 - `web` — Next.js (SSR)
 - `postgres` — PostgreSQL 15 + PostGIS
 - `redis` — Redis 7
@@ -331,28 +331,28 @@ graph TB
 
 ## 12. API Design (REST)
 
-### Версионирование
-Все эндпоинты под префиксом `/api/v1/`. При breaking changes — `/api/v2/`.
+### Versioning
+All endpoints under the `/api/v1/` prefix. On breaking changes — `/api/v2/`.
 
-### Основные эндпоинты
+### Main Endpoints
 
-| Метод | Путь | Описание |
+| Method | Path | Description |
 |---|---|---|
-| POST | `/auth/otp/send` | Отправить OTP |
-| POST | `/auth/otp/verify` | Верифицировать OTP |
-| POST | `/auth/refresh` | Обновить access token |
-| GET | `/users/me` | Текущий профиль |
-| PUT | `/users/me` | Обновить профиль |
-| POST | `/rides` | Создать поездку |
-| GET | `/rides/search` | Поиск поездок (геопоиск) |
-| GET | `/rides/:id` | Детали поездки |
-| POST | `/bookings` | Забронировать место |
-| PATCH | `/bookings/:id/confirm` | Подтвердить бронирование |
-| POST | `/payments/create` | Создать платёж |
-| GET | `/reviews/user/:id` | Отзывы о пользователе |
-| POST | `/reviews` | Оставить отзыв |
+| POST | `/auth/otp/send` | Send OTP |
+| POST | `/auth/otp/verify` | Verify OTP |
+| POST | `/auth/refresh` | Refresh access token |
+| GET | `/users/me` | Current profile |
+| PUT | `/users/me` | Update profile |
+| POST | `/rides` | Create a ride |
+| GET | `/rides/search` | Search rides (geo-search) |
+| GET | `/rides/:id` | Ride details |
+| POST | `/bookings` | Book a seat |
+| PATCH | `/bookings/:id/confirm` | Confirm booking |
+| POST | `/payments/create` | Create payment |
+| GET | `/reviews/user/:id` | User reviews |
+| POST | `/reviews` | Submit a review |
 
-### Формат ответов
+### Response Format
 ```json
 {
   "success": true,
@@ -365,8 +365,8 @@ graph TB
 }
 ```
 
-### Пагинация
-Cursor-based для списков поездок (высокая производительность при больших объёмах):
+### Pagination
+Cursor-based for ride lists (high performance at scale):
 ```
 GET /rides/search?cursor=eyJpZCI6MTIzfQ&limit=20
 ```
