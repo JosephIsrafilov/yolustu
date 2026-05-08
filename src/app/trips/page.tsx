@@ -1,18 +1,19 @@
 'use client';
 
 import React, { useState, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
-import TripCard from '@/components/trips/TripCard';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { filterTrips } from '@/lib/mock-api';
 import { AZ_CITIES } from '@/lib/utils';
+import { Star, ArrowRight, Ban, Armchair, CigaretteOff, Dog, User as UserIcon, Calendar, Search } from 'lucide-react';
 import type { TripSearchFilters } from '@/types';
 
 function TripsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { trips, users } = useAppStore();
 
   const [filters, setFilters] = useState<TripSearchFilters>({
@@ -21,72 +22,54 @@ function TripsContent() {
     date: searchParams.get('date') || undefined,
   });
 
-  const [showFilters, setShowFilters] = useState(true);
   const filteredTrips = useMemo(() => filterTrips(trips, filters), [trips, filters]);
   const from = filters.departureCity || 'Bütün';
   const to = filters.arrivalCity || 'Bütün';
 
   return (
     <WebLayout>
-      <main className="flex flex-col md:flex-row gap-6">
-        {/* ── Sidebar Filters ──────────────── */}
-        <aside className="w-full md:w-1/4 shrink-0">
-          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sticky top-[100px]">
-            <div className="flex justify-between items-center mb-4 border-b border-outline-variant pb-2">
-              <h2 className="text-lg font-semibold text-primary">Filtrlər</h2>
-              <button
-                onClick={() => setFilters({})}
-                className="text-secondary text-xs font-bold hover:underline"
-              >
-                Sıfırla
-              </button>
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* ── Sidebar ──────────────────── */}
+        <aside className="w-full md:w-[280px] shrink-0">
+          <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
+              <h2 className="text-[18px] font-semibold text-[#002f37]">Filtrlər</h2>
+              <button onClick={() => setFilters({})} className="text-[#3a6a00] text-[12px] font-bold hover:underline">Sıfırla</button>
             </div>
 
-            {/* Departure city */}
-            <div className="mb-6">
-              <h3 className="text-base font-bold text-on-surface-variant mb-2">Haradan</h3>
-              <select
-                value={filters.departureCity || ''}
-                onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-              >
+            {/* City selects */}
+            <div className="mb-5">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haradan</h3>
+              <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
+                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
                 <option value="">Bütün şəhərlər</option>
                 {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            {/* Arrival city */}
-            <div className="mb-6">
-              <h3 className="text-base font-bold text-on-surface-variant mb-2">Haraya</h3>
-              <select
-                value={filters.arrivalCity || ''}
-                onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-              >
+            <div className="mb-5">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haraya</h3>
+              <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
+                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
                 <option value="">Bütün şəhərlər</option>
                 {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            {/* Date */}
-            <div className="mb-6">
-              <h3 className="text-base font-bold text-on-surface-variant mb-2">Tarix</h3>
-              <input
-                type="date"
-                value={filters.date || ''}
-                onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container"
-              />
+            <div className="mb-5">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Tarix</h3>
+              <input type="date" value={filters.date || ''} onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
+                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
             </div>
 
-            {/* Departure time */}
-            <div className="mb-6">
-              <h3 className="text-base font-bold text-on-surface-variant mb-2">Gediş vaxtı</h3>
-              <div className="space-y-1">
+            {/* Time checkboxes */}
+            <div className="mb-5">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Gediş vaxtı</h3>
+              <div className="space-y-2">
                 {['Səhər (06:00 - 12:00)', 'Günorta (12:00 - 18:00)', 'Axşam (18:00 - 00:00)'].map((label) => (
-                  <label key={label} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded text-primary-container focus:ring-primary-container border-outline-variant" />
-                    <span className="text-sm text-on-surface">{label}</span>
+                  <label key={label} className="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" className="rounded border-[#c0c8ca] text-[#054752] focus:ring-[#054752]/20 w-4 h-4" />
+                    <span className="text-[14px] text-[#011f23]">{label}</span>
                   </label>
                 ))}
               </div>
@@ -94,111 +77,116 @@ function TripsContent() {
 
             {/* Amenities */}
             <div>
-              <h3 className="text-base font-bold text-on-surface-variant mb-2">Xüsusiyyətlər</h3>
-              <div className="space-y-1">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Xüsusiyyətlər</h3>
+              <div className="space-y-2">
                 {[
-                  { icon: 'smoke_free', label: 'Siqaret çəkilmir' },
-                  { icon: 'female', label: 'Yalnız qadınlar' },
-                  { icon: 'pets', label: 'Ev heyvanlarına icazə' },
-                ].map((item) => (
-                  <label key={item.label} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded text-primary-container focus:ring-primary-container border-outline-variant" />
-                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{item.icon}</span>
-                    <span className="text-sm text-on-surface">{item.label}</span>
-                  </label>
-                ))}
+                  { icon: CigaretteOff, label: 'Siqaret çəkilmir' },
+                  { icon: UserIcon, label: 'Yalnız qadınlar' },
+                  { icon: Dog, label: 'Ev heyvanlarına icazə' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <label key={item.label} className="flex items-center gap-2.5 cursor-pointer">
+                      <input type="checkbox" className="rounded border-[#c0c8ca] text-[#054752] focus:ring-[#054752]/20 w-4 h-4" />
+                      <Icon size={16} className="text-[#40484a]" />
+                      <span className="text-[14px] text-[#011f23]">{item.label}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
         </aside>
 
-        {/* ── Results ──────────────────────── */}
-        <section className="w-full md:w-3/4 flex flex-col gap-4">
-          {/* Search summary */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+        {/* ── Results ──────────────────── */}
+        <section className="flex-1 flex flex-col gap-4">
+          {/* Search summary bar */}
+          <div className="bg-[#dbf9fe] p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
-              <div className="flex items-center gap-2 text-2xl font-semibold text-primary mb-1">
+              <div className="flex items-center gap-2 text-[24px] font-semibold text-[#002f37] mb-1">
                 <span>{from}</span>
-                <span className="material-symbols-outlined text-outline">arrow_right_alt</span>
+                <ArrowRight size={20} className="text-[#70787b]" />
                 <span>{to}</span>
               </div>
-              <div className="text-sm text-on-surface-variant flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+              <div className="text-[14px] text-[#40484a] flex items-center gap-2">
+                <Calendar size={14} />
                 <span>{filters.date || 'Bütün tarixlər'}</span>
               </div>
             </div>
-            <span className="mt-2 sm:mt-0 text-sm text-on-surface-variant">
+            <span className="mt-2 sm:mt-0 text-[14px] text-[#40484a] font-medium">
               {filteredTrips.length} nəticə tapıldı
             </span>
           </div>
 
           {/* Trip cards */}
           {filteredTrips.length > 0 ? (
-            <div className="flex flex-col gap-4 stagger-children">
+            <div className="flex flex-col gap-3 stagger-children">
               {filteredTrips.map((trip) => {
                 const driver = users.find((u) => u.id === trip.driverId);
+                const isFull = trip.seatsAvailable === 0;
                 return (
-                  <article
-                    key={trip.id}
-                    className={`bg-surface-container-lowest rounded-xl border border-outline-variant p-4 hover:shadow-card-hover transition-shadow cursor-pointer ${
-                      trip.seatsAvailable === 0 ? 'opacity-75 grayscale cursor-not-allowed' : ''
+                  <article key={trip.id}
+                    onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
+                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 transition-all ${
+                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] cursor-pointer'
                     }`}
-                    onClick={() => trip.seatsAvailable > 0 && (window.location.href = `/trips/${trip.id}`)}
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      {/* Driver info */}
-                      <div className="flex items-center gap-2 sm:w-1/4">
+                    style={{ boxShadow: '0 2px 8px rgba(5,71,82,0.04)' }}
+                    onMouseEnter={(e) => { if (!isFull) e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(5,71,82,0.04)'; }}>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      {/* Driver */}
+                      <div className="flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-lg">
+                          <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
                             {driver?.fullName.charAt(0) || '?'}
                           </div>
                           {driver && driver.rating >= 4.5 && (
-                            <span className="absolute bottom-0 right-0 bg-action rounded-full w-4 h-4 flex items-center justify-center border-2 border-surface-container-lowest" title="Təsdiqlənmiş">
-                              <span className="material-symbols-outlined text-white text-[10px]">check</span>
+                            <span className="absolute -bottom-0.5 -right-0.5 bg-[#7ED321] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
                             </span>
                           )}
                         </div>
                         <div>
-                          <h4 className="text-base font-bold text-primary">{driver?.fullName.split(' ')[0] || 'Naməlum'}</h4>
-                          <div className="flex items-center text-sm text-on-surface-variant">
-                            <span className="material-symbols-outlined text-[#F5A623] text-[16px]">star</span>
-                            <span className="ml-1 font-bold">{driver?.rating.toFixed(1) || '—'}</span>
-                            <span className="ml-1">({driver?.totalTrips || 0})</span>
+                          <h4 className="text-[15px] font-bold text-[#002f37]">{driver?.fullName.split(' ')[0] || 'Naməlum'}</h4>
+                          <div className="flex items-center gap-1 text-[13px] text-[#40484a]">
+                            <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
+                            <span className="font-bold">{driver?.rating.toFixed(1)}</span>
+                            <span>({driver?.totalTrips})</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Timeline */}
-                      <div className="flex-grow flex items-center justify-center sm:w-1/2 relative">
-                        <div className="flex flex-col items-end text-right pr-2">
-                          <span className="text-lg font-semibold text-primary">{trip.time}</span>
-                          <span className="text-sm text-on-surface-variant">{trip.departureCity}</span>
+                      {/* Time + route */}
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="text-right shrink-0">
+                          <div className="text-[18px] font-semibold text-[#002f37]">{trip.time}</div>
+                          <div className="text-[13px] text-[#40484a]">{trip.departureCity}</div>
                         </div>
-                        <div className="flex flex-col items-center px-2 relative z-10 w-24">
-                          <div className="w-2 h-2 rounded-full bg-outline-variant"></div>
-                          <div className="h-8 w-0.5 bg-outline-variant my-1 border-l border-dashed border-outline-variant relative">
-                            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface-container-lowest text-xs text-outline px-1 whitespace-nowrap">
-                              {trip.carModel}
+
+                        {/* Timeline visual */}
+                        <div className="flex flex-col items-center w-20 shrink-0">
+                          <div className="w-2.5 h-2.5 rounded-full border-2 border-[#c0c8ca] bg-white"></div>
+                          <div className="w-px h-6 bg-[#c0c8ca] relative">
+                            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-[#70787b] bg-white px-1 whitespace-nowrap">
+                              {trip.carModel.split(' ').slice(0, 2).join(' ')}
                             </span>
                           </div>
-                          <div className="w-2 h-2 rounded-full bg-primary-container"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#054752]"></div>
                         </div>
-                        <div className="flex flex-col items-start text-left pl-2">
-                          <span className="text-lg font-semibold text-primary">—</span>
-                          <span className="text-sm text-on-surface-variant">{trip.arrivalCity}</span>
+
+                        <div className="text-left shrink-0">
+                          <div className="text-[18px] font-semibold text-[#002f37]">—</div>
+                          <div className="text-[13px] text-[#40484a]">{trip.arrivalCity}</div>
                         </div>
                       </div>
 
-                      {/* Price */}
-                      <div className="flex flex-col sm:items-end justify-between sm:w-1/4 mt-2 sm:mt-0">
-                        <div className="text-xl font-bold text-primary">{trip.pricePerSeat} ₼</div>
-                        <div className={`flex items-center gap-1 mt-1 ${trip.seatsAvailable > 0 ? 'text-secondary' : 'text-error'}`}>
-                          <span className="material-symbols-outlined text-[18px]">
-                            {trip.seatsAvailable > 0 ? 'airline_seat_recline_normal' : 'block'}
-                          </span>
-                          <span className="text-xs font-bold">
-                            {trip.seatsAvailable > 0 ? `${trip.seatsAvailable} yer qalıb` : 'Yer yoxdur'}
-                          </span>
+                      {/* Price + seats */}
+                      <div className="flex flex-col items-end sm:w-[120px] shrink-0">
+                        <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
+                        <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#3a6a00]'}`}>
+                          {isFull ? <Ban size={14} /> : <Armchair size={14} />}
+                          <span>{isFull ? 'Yer yoxdur' : `${trip.seatsAvailable} yer qalıb`}</span>
                         </div>
                       </div>
                     </div>
@@ -210,7 +198,7 @@ function TripsContent() {
             <EmptyState title="Gediş tapılmadı" description="Filtrləri dəyişdirin və ya başqa tarix seçin" />
           )}
         </section>
-      </main>
+      </div>
     </WebLayout>
   );
 }
