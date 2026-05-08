@@ -11,6 +11,7 @@
   --color-surface: #edfcff;
   --color-surface-dim: #c2dfe5;
   --color-surface-bright: #edfcff;
+  --color-surface-muted: #d5f3f9;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #dbf9fe;
   --color-surface-container: #d5f3f9;
@@ -19,7 +20,7 @@
   --color-surface-variant: #cae8ed;
   --color-surface-tint: #306671;
 
-  /* ── Primary ────────────────────────────────────── */
+  /* ── Primary / Brand ─────────────────────────────── */
   --color-primary: #002f37;
   --color-on-primary: #ffffff;
   --color-primary-container: #054752;
@@ -28,12 +29,39 @@
   --color-primary-fixed-dim: #9acfdc;
   --color-inverse-primary: #9acfdc;
 
+  --color-brand-50: #e6f7fa;
+  --color-brand-100: #b5ebf9;
+  --color-brand-200: #9acfdc;
+  --color-brand-300: #80b4c1;
+  --color-brand-400: #5a98a6;
+  --color-brand-500: #306671;
+  --color-brand-600: #054752;
+  --color-brand-700: #003d47;
+  --color-brand-800: #002f37;
+  --color-brand-900: #001f24;
+
   /* ── Secondary (Action Green) ───────────────────── */
   --color-secondary: #3a6a00;
   --color-on-secondary: #ffffff;
   --color-secondary-container: #a1fa49;
   --color-on-secondary-container: #3e7100;
   --color-action: #7ED321;
+
+  /* ── Accent (Star / Orange) ─────────────────────── */
+  --color-accent-400: #f7b84e;
+  --color-accent-500: #F5A623;
+  --color-accent-600: #e09000;
+
+  /* ── Danger (Error / Red) ───────────────────────── */
+  --color-danger-400: #d63a3a;
+  --color-danger-500: #ba1a1a;
+  --color-danger-600: #93000a;
+
+  /* ── Warning ────────────────────────────────────── */
+  --color-warn-500: #e09000;
+
+  /* ── Success ────────────────────────────────────── */
+  --color-success-500: #3a6a00;
 
   /* ── Tertiary ───────────────────────────────────── */
   --color-tertiary: #282b2c;
@@ -46,6 +74,11 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
+  /* ── Text colors ────────────────────────────────── */
+  --color-text: #011f23;
+  --color-text-secondary: #40484a;
+  --color-text-muted: #70787b;
+
   /* ── On-surface / background ────────────────────── */
   --color-on-surface: #011f23;
   --color-on-surface-variant: #40484a;
@@ -54,7 +87,9 @@
   --color-inverse-surface: #193439;
   --color-inverse-on-surface: #d8f6fc;
 
-  /* ── Outline ────────────────────────────────────── */
+  /* ── Border / Outline ──────────────────────────── */
+  --color-border: #c0c8ca;
+  --color-border-strong: #70787b;
   --color-outline: #70787b;
   --color-outline-variant: #c0c8ca;
 
@@ -109,3 +144,69 @@
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 9999px; }
+
+/* ─── Semantic color utility classes ─────────────────────── */
+/* Plain CSS classes using design-system CSS variables         */
+
+/* ── Brand backgrounds ─ */
+.bg-brand-50  { background-color: var(--color-brand-50); }
+.bg-brand-100 { background-color: var(--color-brand-100); }
+.bg-brand-200 { background-color: var(--color-brand-200); }
+.bg-brand-500 { background-color: var(--color-brand-500); }
+.bg-brand-600 { background-color: var(--color-brand-600); }
+.bg-brand-700 { background-color: var(--color-brand-700); }
+.bg-brand-800 { background-color: var(--color-brand-800); }
+.bg-brand-900 { background-color: var(--color-brand-900); }
+
+/* ── Brand text ─ */
+.text-brand-200 { color: var(--color-brand-200); }
+.text-brand-500 { color: var(--color-brand-500); }
+.text-brand-600 { color: var(--color-brand-600); }
+.text-brand-700 { color: var(--color-brand-700); }
+
+/* ── Brand borders ─ */
+.border-brand-100 { border-color: var(--color-brand-100); }
+.border-brand-200 { border-color: var(--color-brand-200); }
+.border-brand-500 { border-color: var(--color-brand-500); }
+.border-brand-600 { border-color: var(--color-brand-600); }
+
+/* ── Brand focus rings ─ */
+.ring-brand-100 { --tw-ring-color: var(--color-brand-100); }
+.ring-brand-500 { --tw-ring-color: var(--color-brand-500); }
+
+/* ── Brand gradients ─ */
+.from-brand-50  { --tw-gradient-from: var(--color-brand-50); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
+.from-brand-300 { --tw-gradient-from: var(--color-brand-300); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
+.from-brand-400 { --tw-gradient-from: var(--color-brand-400); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
+.to-brand-600   { --tw-gradient-to: var(--color-brand-600); }
+.to-brand-700   { --tw-gradient-to: var(--color-brand-700); }
+
+/* ── Accent ─ */
+.bg-accent-500    { background-color: var(--color-accent-500); }
+.text-accent-500  { color: var(--color-accent-500); }
+.fill-accent-500  { fill: var(--color-accent-500); }
+
+/* ── Danger ─ */
+.bg-danger-500     { background-color: var(--color-danger-500); }
+.bg-danger-600     { background-color: var(--color-danger-600); }
+.text-danger-500   { color: var(--color-danger-500); }
+.border-danger-500 { border-color: var(--color-danger-500); }
+.ring-danger-500   { --tw-ring-color: var(--color-danger-500); }
+
+/* ── Warn / Success ─ */
+.text-warn-500    { color: var(--color-warn-500); }
+.text-success-500 { color: var(--color-success-500); }
+
+/* ── Text semantic ─ */
+.text-text           { color: var(--color-text); }
+.text-text-secondary { color: var(--color-text-secondary); }
+.text-text-muted     { color: var(--color-text-muted); }
+
+/* ── Border semantic ─ */
+.border-border        { border-color: var(--color-border); }
+.border-border-strong { border-color: var(--color-border-strong); }
+
+/* ── Surface ─ */
+.bg-surface-muted { background-color: var(--color-surface-muted); }
+.bg-surface-dim   { background-color: var(--color-surface-dim); }
+
