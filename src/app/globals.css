@@ -1,52 +1,96 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
 /* ============================================================
-   Yolüstü — Global Design System (Web)
+   Yolüstü — Design System from Stitch (Material 3 tokens)
    ============================================================ */
 
 @theme {
-  --color-brand-50: #eef7ff;
-  --color-brand-100: #d9edff;
-  --color-brand-200: #bce0ff;
-  --color-brand-300: #8ecdff;
-  --color-brand-400: #59b0ff;
-  --color-brand-500: #338dff;
-  --color-brand-600: #1a6df5;
-  --color-brand-700: #1457e1;
-  --color-brand-800: #1746b6;
-  --color-brand-900: #193e8f;
-  --color-brand-950: #142757;
+  /* ── Surface palette ─────────────────────────────── */
+  --color-surface: #edfcff;
+  --color-surface-dim: #c2dfe5;
+  --color-surface-bright: #edfcff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #dbf9fe;
+  --color-surface-container: #d5f3f9;
+  --color-surface-container-high: #d0edf3;
+  --color-surface-container-highest: #cae8ed;
+  --color-surface-variant: #cae8ed;
+  --color-surface-tint: #306671;
 
-  --color-accent-400: #fbbf24;
-  --color-accent-500: #f59e0b;
+  /* ── Primary ─────────────────────────────────────── */
+  --color-primary: #002f37;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #054752;
+  --color-on-primary-container: #80b4c1;
+  --color-primary-fixed: #b5ebf9;
+  --color-primary-fixed-dim: #9acfdc;
+  --color-inverse-primary: #9acfdc;
 
-  --color-success-400: #4ade80;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
+  /* ── Secondary (Action Green) ────────────────────── */
+  --color-secondary: #3a6a00;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #a1fa49;
+  --color-on-secondary-container: #3e7100;
+  --color-secondary-fixed: #a1fa49;
+  --color-secondary-fixed-dim: #87dc2c;
+  --color-action: #7ED321;
 
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
+  /* ── Tertiary ────────────────────────────────────── */
+  --color-tertiary: #282b2c;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #3e4142;
+  --color-on-tertiary-container: #aaadae;
+  --color-tertiary-fixed: #e1e3e4;
+  --color-tertiary-fixed-dim: #c4c7c8;
 
-  --color-warn-400: #fbbf24;
-  --color-warn-500: #f59e0b;
+  /* ── Error ───────────────────────────────────────── */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
 
-  --color-surface: #ffffff;
-  --color-surface-dim: #f8fafc;
-  --color-surface-muted: #f1f5f9;
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-  --color-text: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  /* ── On-surface ──────────────────────────────────── */
+  --color-on-surface: #011f23;
+  --color-on-surface-variant: #40484a;
+  --color-on-background: #011f23;
+  --color-background: #edfcff;
+  --color-inverse-surface: #193439;
+  --color-inverse-on-surface: #d8f6fc;
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
+  /* ── Outline ─────────────────────────────────────── */
+  --color-outline: #70787b;
+  --color-outline-variant: #c0c8ca;
+
+  /* ── Legacy brand aliases for compatibility ──────── */
+  --color-brand-50: #edfcff;
+  --color-brand-100: #d5f3f9;
+  --color-brand-200: #b5ebf9;
+  --color-brand-400: #9acfdc;
+  --color-brand-500: #306671;
+  --color-brand-600: #054752;
+  --color-brand-700: #002f37;
+
+  /* ── Typography ──────────────────────────────────── */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* ── Radius ──────────────────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
+
+  /* ── Spacing tokens ──────────────────────────────── */
+  --spacing-unit: 4px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 24px;
+  --spacing-gutter: 16px;
+  --spacing-section: 40px;
+  --spacing-container: 16px;
 }
 
 /* ─── Reset & Base ──────────────────────────────────────── */
@@ -63,14 +107,15 @@
   }
 
   body {
-    background-color: var(--color-surface-dim);
-    color: var(--color-text);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
     min-height: 100dvh;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
   ::selection {
-    background-color: var(--color-brand-200);
-    color: var(--color-brand-900);
+    background-color: var(--color-primary-fixed);
+    color: var(--color-primary);
   }
 }
 
@@ -85,11 +130,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
 .animate-fade-in {
   animation: fade-in 0.35s ease-out both;
 }
@@ -98,11 +138,7 @@
   animation: slide-up 0.4s ease-out both;
 }
 
-.animate-pulse-soft {
-  animation: pulse-soft 2s ease-in-out infinite;
-}
-
-/* ─── Stagger children animations ───────────────────────── */
+/* ─── Stagger children ──────────────────────────────────── */
 .stagger-children > * {
   animation: fade-in 0.35s ease-out both;
 }
@@ -112,8 +148,6 @@
 .stagger-children > *:nth-child(4) { animation-delay: 180ms; }
 .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
 
 /* ─── Custom scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar {
@@ -124,20 +158,33 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
+  background: var(--color-outline-variant);
   border-radius: 9999px;
 }
 
-/* ─── Scrollbar hide utility ────────────────────────────── */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Material Symbols fix ──────────────────────────────── */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Hero gradient (landing page) ──────────────────────── */
-.hero-gradient {
-  background: linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-800) 50%, var(--color-brand-950) 100%);
+/* ─── Elevation shadows (from design system) ────────────── */
+.shadow-card {
+  box-shadow: 0 4px 12px rgba(5, 71, 82, 0.05);
+}
+.shadow-card-hover {
+  box-shadow: 0 8px 24px rgba(5, 71, 82, 0.1);
 }

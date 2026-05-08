@@ -10,23 +10,35 @@ import { POPULAR_ROUTES } from '@/data/mock-data';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
-import {
-  MapPin, Shield, Star, Clock, Car, Users,
-  ArrowRight, Search, CheckCircle,
-} from 'lucide-react';
 
-const BENEFITS = [
-  { icon: Shield, title: 'Təhlükəsiz gedişlər', desc: 'Yoxlanmış profillər, reytinqlər və rəylər ilə arxayın səyahət edin.' },
-  { icon: Star, title: 'Rəy sistemi', desc: 'Hər gediş sonrası sürücü və sərnişinlər bir-birini qiymətləndirir.' },
-  { icon: Clock, title: 'Sürətli axtarış', desc: 'Bir neçə kliklə istədiyiniz gedişi tapın və rezerv edin.' },
-  { icon: MapPin, title: 'Yerli marşrutlar', desc: 'Bakı, Gəncə, Şəki, Quba, Lənkəran — bütün Azərbaycan.' },
+const FEATURES = [
+  {
+    icon: 'verified_user',
+    title: 'Təsdiqlənmiş Sürücülər',
+    desc: 'Bütün sürücülər platformamıza qatılmazdan əvvəl şəxsiyyət və sənəd yoxlanışından keçir.',
+  },
+  {
+    icon: 'payments',
+    title: 'Sərfəli Qiymətlər',
+    desc: 'Səyahət xərclərini bölüşərək daha ucuz və rahat yolçuluq edin.',
+  },
+  {
+    icon: 'eco',
+    title: 'Ekoloji Təmiz',
+    desc: 'Boş oturacaqları dolduraraq karbon emissiyasını azaltmağa kömək edin.',
+  },
 ];
 
-const HOW_IT_WORKS = [
-  { step: '1', title: 'Gediş axtarın', desc: 'Haradan, haraya və nə vaxt getmək istədiyinizi seçin.' },
-  { step: '2', title: 'Sürücünü seçin', desc: 'Rəyləri oxuyun, qiyməti müqayisə edin və uyğun gedişi tapın.' },
-  { step: '3', title: 'Rezerv edin', desc: 'Sorğu göndərin, sürücü təsdiqləsin və yola çıxın!' },
+const ROUTE_IMAGES: Record<string, string> = {
+  'Bakı-Gəncə': 'https://lh3.googleusercontent.com/aida-public/AB6AXuBM7LZRJ3_vRLkf7aJbFim3PHgizHDH09QLx4oCmBjhhwIQ8xTOj58nI8lajjzLiw9IqjNRGlFwSI6Gvneo-QnPjVl2YDOQyPf09GGzSB5D1ZE8qmnQ6WoaghhG1N98NXui0dIJXu10WL_jNmrcUc8GWy5AX5-yJRiPELbgbjJHAFXy2KOC_Kk2c0bDHyQ6AisZ6t_PozZeeMwleB8rbyHw1Xji8C6-hkEy_U0ymO9CyJQlDnG-pK-f4t1nBg2vR9G9X_bPhpXJWGQ',
+  'Bakı-Lənkəran': 'https://lh3.googleusercontent.com/aida-public/AB6AXuClf0mYYkt7HvE7_cJ02Z0LyWTh7ESAdnDblfA-nCjztrnsuO8xUSUD2Jw_YguKr0TR6EQsbb_GnB_4QJlNePCBG1a-Sy-32OG6IfoxZjPsbSezF95txQ5ad4Ry6YzCvArh7aL4S4yzjG799DQwdE-bY_3AyqxFXCuVkevqu774lKFWf10ObmJQZEcLdGjP483V7aNatvaRHyjB2Uo8Uyf1wwr9etE9ZNSmHHEl0jnEkhExN2_ABtwYjn2g0v1wZeUUhADfNQjLOCs',
+  'Bakı-Şəki': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAX75FRsx_fVi6GYaSgcBWt30jv6bIMuyg-rHiCH4eDG-dEQYnyd4LMJb4CXrgoI22qXCtvJMXSt-QZUDafCl3eilFffKGq3HzfbLEKccEoEC3kfMwpfr7v2hXCoIyeoK8PNHEBMnS5r4RvvZ0kGVfrI48J2YtPYf3rBVsm6zcRQa03vB84NiEYkNcjvs5zv14u0n1M6K0bqIPnBZOaL4sCDuwlcFrzYSt28jmHvJCw1WWUEhl2nTG4ZW5YHw_8_DNUaFdlYSU5pvc',
+};
+
+const TOP_ROUTES = [
+  { from: 'Bakı', to: 'Gəncə', price: 15 },
+  { from: 'Bakı', to: 'Lənkəran', price: 12 },
+  { from: 'Bakı', to: 'Şəki', price: 18 },
 ];
 
 export default function HomePage() {
@@ -35,6 +47,7 @@ export default function HomePage() {
   const [dep, setDep] = useState('');
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
+  const [passengers, setPassengers] = useState(1);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -45,215 +58,191 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-on-background">
       <Header />
 
-      {/* ── Hero Section ──────────────────────────────────── */}
-      <section className="hero-gradient relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-[-120px] right-[-80px] w-[400px] h-[400px] rounded-full bg-white/5" />
-        <div className="absolute bottom-[-60px] left-[-40px] w-[250px] h-[250px] rounded-full bg-white/5" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Text */}
-            <div className="text-white animate-fade-in">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-                Ucuz və rahat
-                <br />
-                <span className="text-brand-200">şəhərlərarası</span>
-                <br />
-                gedişlər
-              </h1>
-              <p className="mt-5 text-lg text-brand-100 max-w-lg leading-relaxed">
-                Yolüstü ilə Azərbaycan üzrə yoxlanmış sürücülərlə təhlükəsiz, ucuz və rahat yol paylaşın.
-              </p>
-
-              {/* Stats */}
-              <div className="flex items-center gap-8 mt-8">
-                <div>
-                  <p className="text-3xl font-bold text-white">9+</p>
-                  <p className="text-sm text-brand-200">Şəhər</p>
-                </div>
-                <div className="w-px h-10 bg-white/20" />
-                <div>
-                  <p className="text-3xl font-bold text-white">50+</p>
-                  <p className="text-sm text-brand-200">Sürücü</p>
-                </div>
-                <div className="w-px h-10 bg-white/20" />
-                <div>
-                  <p className="text-3xl font-bold text-white">4.7</p>
-                  <p className="text-sm text-brand-200">★ Reytinq</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Search Card */}
-            <div className="animate-slide-up">
-              <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 p-6 sm:p-8">
-                <h2 className="text-xl font-bold text-text mb-5">Gediş axtarın</h2>
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-secondary">Haradan</label>
-                    <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-500" />
-                      <select
-                        value={dep}
-                        onChange={(e) => setDep(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-white pl-10 pr-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 appearance-none"
-                      >
-                        <option value="">Bütün şəhərlər</option>
-                        {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-secondary">Haraya</label>
-                    <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-600" />
-                      <select
-                        value={arr}
-                        onChange={(e) => setArr(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-white pl-10 pr-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 appearance-none"
-                      >
-                        <option value="">Bütün şəhərlər</option>
-                        {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-secondary">Tarix</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                    />
-                  </div>
-
-                  <Button fullWidth size="lg" onClick={handleSearch} className="mt-1">
-                    <Search size={18} /> Gediş axtar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Popular Routes ────────────────────────────────── */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-text">Populyar marşrutlar</h2>
-            <p className="mt-2 text-text-muted">Ən çox axtarılan şəhərlərarası gedişlər</p>
+      <main className="flex-grow">
+        {/* ── Hero Section ──────────────────────────────── */}
+        <section className="relative bg-surface-container-high py-20 px-4">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHxIqknSmcrI7UDCNZrC1YKEZntQFALItCeTKNKoxFiKIRDXxI9SaLGM7W-vdr06sWCD3j2IFn8FOu9SIWVAwpi2afedPvKnjjsrJyHIhVtSkurTmYIcJfBjwGqN-dfxYEajoJlo_Dt8YRV9V_wfSTeI4STnu3kmjYPoUQqd7kJyVcsDe2R0IqaMBLgjVV3_YZ_hKrUvrhf63nIZ5SK3IMHOey_eBov8Nk1NGpRN8oCDSQS1NlcHDvNIEl5IFN_LPT49G6Jbujr4M"
+              alt="Azerbaijan highway"
+              className="w-full h-full object-cover opacity-20"
+            />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {POPULAR_ROUTES.map((r) => (
-              <Card
-                key={`${r.from}-${r.to}`}
-                hoverable
-                padding="md"
-                onClick={() => {
-                  const params = new URLSearchParams({ from: r.from, to: r.to });
-                  router.push(`${ROUTES.trips}?${params.toString()}`);
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
-                      <MapPin size={14} className="text-brand-500" />
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <span className="font-semibold text-text">{r.from}</span>
-                      <ArrowRight size={14} className="text-text-muted" />
-                      <span className="font-semibold text-text">{r.to}</span>
-                    </div>
-                  </div>
-                  <span className="text-sm font-bold text-brand-600">~{formatPrice(r.avgPrice)}</span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ──────────────────────────────────── */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-text">Necə işləyir?</h2>
-            <p className="mt-2 text-text-muted">3 sadə addımla yolunuza çıxın</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map((item) => (
-              <div key={item.step} className="text-center animate-fade-in">
-                <div className="w-14 h-14 rounded-2xl bg-brand-100 text-brand-700 text-xl font-bold flex items-center justify-center mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-lg font-bold text-text mb-2">{item.title}</h3>
-                <p className="text-sm text-text-muted leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Benefits ──────────────────────────────────────── */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-text">Niyə Yolüstü?</h2>
-            <p className="mt-2 text-text-muted">WhatsApp qruplarından daha rahat, taksidən daha ucuz</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {BENEFITS.map((b) => {
-              const Icon = b.icon;
-              return (
-                <Card key={b.title} padding="lg" className="text-center hover:shadow-lg transition-shadow duration-300">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 mx-auto mb-4">
-                    <Icon size={24} />
-                  </div>
-                  <h3 className="text-base font-bold text-text mb-2">{b.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{b.desc}</p>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA Section ───────────────────────────────────── */}
-      {!isAuthenticated && (
-        <section className="hero-gradient py-16">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Hazırsınız? İndi qoşulun!
-            </h2>
-            <p className="text-brand-100 mb-8 max-w-lg mx-auto">
-              Qeydiyyatdan keçin və ilk gedişinizi tapın. Ucuz, rahat və təhlükəsiz.
+          <div className="relative z-10 max-w-[1140px] mx-auto flex flex-col items-center text-center">
+            <h1 className="text-[40px] font-bold leading-[48px] tracking-[-0.02em] text-primary mb-4">
+              Sərfəli və Təhlükəsiz Səyahət
+            </h1>
+            <p className="text-2xl font-semibold leading-8 text-on-surface-variant mb-12">
+              Azərbaycanın hər yerinə etibarlı sürücülərlə yolçuluq edin.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link href={ROUTES.register}>
-                <Button size="lg" className="bg-white text-brand-700 hover:bg-brand-50 shadow-lg">
-                  Qeydiyyatdan keç
-                </Button>
+
+            {/* Search bar */}
+            <div className="bg-surface-container-lowest rounded-xl shadow-md p-4 w-full max-w-4xl flex flex-col md:flex-row gap-1 items-center">
+              <div className="flex-1 w-full relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">location_on</span>
+                <select
+                  value={dep}
+                  onChange={(e) => setDep(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container text-base bg-surface-container-lowest appearance-none"
+                >
+                  <option value="">Haradan</option>
+                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="hidden md:flex items-center justify-center p-2 text-outline-variant">
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </div>
+
+              <div className="flex-1 w-full relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">location_on</span>
+                <select
+                  value={arr}
+                  onChange={(e) => setArr(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container text-base bg-surface-container-lowest appearance-none"
+                >
+                  <option value="">Haraya</option>
+                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="flex-1 w-full relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">calendar_today</span>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container text-base bg-surface-container-lowest"
+                />
+              </div>
+
+              <div className="w-full md:w-28 relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">person</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={4}
+                  value={passengers}
+                  onChange={(e) => setPassengers(Number(e.target.value))}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container text-base bg-surface-container-lowest"
+                />
+              </div>
+
+              <button
+                onClick={handleSearch}
+                className="w-full md:w-auto bg-action text-on-primary font-semibold text-lg px-8 py-3 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap shadow-sm"
+              >
+                Axtar
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Features Section ─────────────────────────── */}
+        <section className="py-10 px-4 max-w-[1140px] mx-auto">
+          <h2 className="text-2xl font-semibold leading-8 text-primary mb-10 text-center">
+            Niyə YolUstu?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="bg-surface-container-lowest p-6 rounded-xl shadow-card border border-surface-dim hover:shadow-card-hover transition-shadow"
+              >
+                <div className="w-12 h-12 bg-surface-container flex items-center justify-center rounded-full mb-4">
+                  <span className="material-symbols-outlined text-primary-container text-2xl">{f.icon}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-primary mb-2">{f.title}</h3>
+                <p className="text-sm text-on-surface-variant leading-5">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Popular Routes ───────────────────────────── */}
+        <section className="bg-surface-container py-10 px-4">
+          <div className="max-w-[1140px] mx-auto">
+            <div className="flex justify-between items-end mb-10">
+              <h2 className="text-2xl font-semibold leading-8 text-primary">
+                Populyar İstiqamətlər
+              </h2>
+              <Link
+                href={ROUTES.trips}
+                className="text-sm text-primary-container hover:underline hidden md:block"
+              >
+                Bütün istiqamətlərə bax
               </Link>
-              <Link href={ROUTES.login}>
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  Daxil ol
-                </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {TOP_ROUTES.map((r) => (
+                <div
+                  key={`${r.from}-${r.to}`}
+                  onClick={() => {
+                    const params = new URLSearchParams({ from: r.from, to: r.to });
+                    router.push(`${ROUTES.trips}?${params.toString()}`);
+                  }}
+                  className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-card group cursor-pointer"
+                >
+                  <div className="h-40 relative">
+                    <img
+                      src={ROUTE_IMAGES[`${r.from}-${r.to}`]}
+                      alt={`${r.from} → ${r.to}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <h3 className="absolute bottom-4 left-4 text-on-primary text-lg font-semibold">
+                      {r.from} → {r.to}
+                    </h3>
+                  </div>
+                  <div className="p-4 flex justify-between items-center">
+                    <span className="text-sm text-on-surface-variant">Başlayan qiymət:</span>
+                    <span className="text-xl font-bold text-primary">{r.price} ₼</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href={ROUTES.trips}
+              className="block mt-6 text-center text-sm text-primary-container hover:underline md:hidden"
+            >
+              Bütün istiqamətlərə bax
+            </Link>
+          </div>
+        </section>
+
+        {/* ── Driver CTA ───────────────────────────────── */}
+        <section className="py-10 px-4">
+          <div className="max-w-[1140px] mx-auto bg-primary-container rounded-2xl overflow-hidden relative shadow-lg">
+            <div className="absolute inset-0 z-0">
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuARLFSOEGJ3Mx03z965Iwz2nfLLy-1Eskiz98UKv8XjA8HYdcUwKb2kKz7PXzsZ29Dwh-S9euW2_QwIRzTuSN3NIIiacxV61HK0-i5z0PGJ6DV4MwK9D3uapcQLKQf6xy2neRxWKbFQ7cOlEhkD4MTODs42wzJZao3mfqxE5HEfQ2skqdW9KrrdZFdZI_RZiZ8BXqCn_BovmcTfth30lzyrxnfCggVJJs8FlAyU21H9ACrfiBho6uMPMm-n0pIkqRh6FR0d4AHnysg"
+                alt="Driver on the road"
+                className="w-full h-full object-cover opacity-30 mix-blend-overlay"
+              />
+            </div>
+            <div className="relative z-10 p-12 md:p-16 flex flex-col items-center md:items-start text-center md:text-left text-on-primary w-full md:w-2/3">
+              <h2 className="text-[40px] font-bold leading-[48px] tracking-[-0.02em] mb-2">
+                Maşınınız var?
+              </h2>
+              <p className="text-2xl font-semibold opacity-90 mb-6">
+                Yolda qazanın. Boş yerləri paylaşın və səyahət xərclərinizi qarşılayın.
+              </p>
+              <Link href={ROUTES.createTrip}>
+                <button className="bg-action text-on-primary font-semibold text-lg px-8 py-3 rounded-full hover:opacity-90 transition-opacity shadow-md">
+                  Səfər təklif et
+                </button>
               </Link>
             </div>
           </div>
         </section>
-      )}
+      </main>
 
       <Footer />
     </div>

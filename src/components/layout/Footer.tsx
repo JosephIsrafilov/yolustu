@@ -1,74 +1,40 @@
 import React from 'react';
 import Link from 'next/link';
-import { Car } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
 
-const FOOTER_LINKS = {
-  Platforma: [
-    { label: 'Gediş axtar', href: ROUTES.search },
-    { label: 'Gediş yarat', href: ROUTES.createTrip },
-    { label: 'Necə işləyir', href: '/' },
-  ],
-  Şirkət: [
-    { label: 'Haqqımızda', href: '/' },
-    { label: 'Əlaqə', href: '/' },
-    { label: 'Karyera', href: '/' },
-  ],
-  Hüquqi: [
-    { label: 'İstifadə qaydaları', href: '/' },
-    { label: 'Məxfilik siyasəti', href: '/' },
-  ],
-};
+const FOOTER_LINKS = [
+  { label: 'Haqqımızda', href: '/' },
+  { label: 'Yardım Mərkəzi', href: '/' },
+  { label: 'İstifadə Şərtləri', href: '/' },
+  { label: 'Məxfilik Siyasəti', href: '/' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-border mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                <Car size={16} className="text-white" />
-              </div>
-              <span className="text-lg font-extrabold">
-                Yol<span className="text-brand-600">üstü</span>
-              </span>
+    <footer className="bg-surface border-t border-outline-variant w-full mt-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 py-10 max-w-[1140px] mx-auto gap-6">
+        <Link href="/" className="text-lg font-black text-primary">
+          YolUstu
+        </Link>
+        <nav className="flex flex-wrap justify-center gap-4">
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="text-xs font-bold text-on-surface-variant hover:text-secondary underline transition-all"
+            >
+              {link.label}
             </Link>
-            <p className="text-sm text-text-muted leading-relaxed max-w-xs">
-              Azərbaycan üzrə şəhərlərarası gedişləri tap, paylaş, ucuz və rahat səyahət et.
-            </p>
-          </div>
-
-          {/* Link columns */}
-          {Object.entries(FOOTER_LINKS).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="text-sm font-semibold text-text mb-3">{title}</h4>
-              <ul className="flex flex-col gap-2">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-text-muted hover:text-brand-600 transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
           ))}
+        </nav>
+        <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
+          <span>AZ | RU | EN</span>
+          <span className="text-outline-variant">|</span>
+          <span>AZN ₼</span>
         </div>
-
-        {/* Bottom bar */}
-        <div className="border-t border-border mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-text-muted">
-            © {new Date().getFullYear()} Yolüstü. Bütün hüquqlar qorunur.
-          </p>
-          <p className="text-xs text-text-muted">
-            Bakı, Azərbaycan 🇦🇿
-          </p>
-        </div>
+      </div>
+      <div className="w-full text-center pb-4 text-sm text-on-surface-variant">
+        © {new Date().getFullYear()} YolUstu. Bütün hüquqlar qorunur.
       </div>
     </footer>
   );
