@@ -12,7 +12,7 @@ import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
-import { LogOut, Settings, Shield } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -63,12 +63,12 @@ export default function ProfilePage() {
           </Card>
         ) : (
           <div className="flex flex-col sm:flex-row gap-3 mb-6 mt-4">
-            <Button variant="outline" onClick={startEdit}><Settings size={16} /> Profili redaktə et</Button>
-            {currentUser.role === 'admin' && (<Button variant="secondary" onClick={() => router.push(ROUTES.admin)}><Shield size={16} /> Admin panel</Button>)}
+            <Button variant="outline" onClick={startEdit}><Icon name="settings" size={16} /> Profili redaktə et</Button>
+            {currentUser.role === 'admin' && (<Button variant="secondary" onClick={() => router.push(ROUTES.admin)}><Icon name="shield" size={16} /> Admin panel</Button>)}
           </div>
         )}
         {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">Rəylər</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
-        <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><LogOut size={16} /> Çıxış</Button>
+        <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><Icon name="log-out" size={16} /> Çıxış</Button>
       </div>
     </WebLayout>
   );

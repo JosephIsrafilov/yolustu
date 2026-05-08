@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, Clock, Users, Star, Car } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { formatPrice, formatRating } from '@/lib/utils';
@@ -46,11 +46,11 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       {/* Trip info */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary mb-3">
         <span className="flex items-center gap-1">
-          <Clock size={13} />
+          <Icon name="clock" size={13} />
           {trip.date} • {trip.time}
         </span>
         <span className="flex items-center gap-1">
-          <Users size={13} />
+          <Icon name="users" size={13} />
           {trip.seatsAvailable} yer boş
         </span>
         {trip.status !== 'active' && (
@@ -68,11 +68,11 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
             <p className="text-sm font-medium text-text truncate">{driver.fullName}</p>
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <span className="flex items-center gap-0.5">
-                <Star size={11} className="text-accent-500 fill-accent-500" />
+                <Icon name="star" size={11} className="text-accent-500 fill-accent-500" fill="currentColor" />
                 {formatRating(driver.rating)}
               </span>
               <span className="flex items-center gap-0.5">
-                <Car size={11} />
+                <Icon name="car" size={11} />
                 {trip.carModel}
               </span>
             </div>
@@ -83,7 +83,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       {/* Meeting point */}
       {!compact && trip.meetingPoint && (
         <div className="flex items-start gap-1.5 mt-2 text-xs text-text-muted">
-          <MapPin size={12} className="mt-0.5 shrink-0" />
+          <Icon name="map-pin" size={12} className="mt-0.5 shrink-0" />
           <span className="truncate">{trip.meetingPoint}</span>
         </div>
       )}

@@ -8,7 +8,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { Map, Plus } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function MyTripsPage() {
   const router = useRouter();
@@ -20,10 +20,10 @@ export default function MyTripsPage() {
   return (
     <WebLayout title="Gedişlərim" showBack>
       <div className="stagger-children">
-        <Button variant="secondary" className="mb-6" onClick={() => router.push(ROUTES.createTrip)}><Plus size={16} /> Yeni gediş yarat</Button>
+        <Button variant="secondary" className="mb-6" onClick={() => router.push(ROUTES.createTrip)}><Icon name="plus" size={16} /> Yeni gediş yarat</Button>
         {active.length > 0 && (<><h3 className="text-lg font-semibold text-text mb-3">Aktiv gedişlər</h3><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">{active.map((t) => (<div key={t.id}><TripCard trip={t} driver={users.find((u) => u.id === t.driverId)} compact /><div className="flex gap-2 mt-2"><Button size="sm" variant="outline" fullWidth onClick={() => cancelTrip(t.id)}>Ləğv et</Button><Button size="sm" variant="secondary" fullWidth onClick={() => completeTrip(t.id)}>Tamamla</Button><Button size="sm" variant="primary" fullWidth onClick={() => router.push(ROUTES.bookingRequests)}>Sorğular</Button></div></div>))}</div></>)}
         {past.length > 0 && (<><h3 className="text-lg font-semibold text-text mb-3">Keçmiş gedişlər</h3><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{past.map((t) => <TripCard key={t.id} trip={t} compact />)}</div></>)}
-        {myTrips.length === 0 && (<EmptyState icon={<Map size={28} />} title="Hələ gediş yaratmamısınız" action={<Button onClick={() => router.push(ROUTES.createTrip)}>Gediş yarat</Button>} />)}
+        {myTrips.length === 0 && (<EmptyState icon={<Icon name="map" size={28} />} title="Hələ gediş yaratmamısınız" action={<Button onClick={() => router.push(ROUTES.createTrip)}>Gediş yarat</Button>} />)}
       </div>
     </WebLayout>
   );

@@ -12,7 +12,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, formatRating } from '@/lib/utils';
-import { Clock, Users, Car, Star, MessageSquare, AlertTriangle } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -43,20 +43,20 @@ export default function TripDetailsPage() {
           <Card><RouteTimeline departure={trip.departureCity} arrival={trip.arrivalCity} meetingPoint={trip.meetingPoint} dropoffPoint={trip.dropoffPoint} /></Card>
           <Card>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div><Clock size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Tarix</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>
-              <div><Users size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Yerlər</p><p className="text-sm font-semibold">{trip.seatsAvailable}/{trip.seatsTotal}</p><p className="text-xs text-text-muted">boş</p></div>
-              <div><Car size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Maşın</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
+              <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Tarix</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>
+              <div><Icon name="users" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Yerlər</p><p className="text-sm font-semibold">{trip.seatsAvailable}/{trip.seatsTotal}</p><p className="text-xs text-text-muted">boş</p></div>
+              <div><Icon name="car" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Maşın</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
             </div>
           </Card>
-          {trip.comment && (<Card padding="md"><div className="flex items-start gap-3"><MessageSquare size={16} className="text-text-muted mt-0.5 shrink-0" /><p className="text-sm text-text-secondary">{trip.comment}</p></div></Card>)}
+          {trip.comment && (<Card padding="md"><div className="flex items-start gap-3"><Icon name="message-square" size={16} className="text-text-muted mt-0.5 shrink-0" /><p className="text-sm text-text-secondary">{trip.comment}</p></div></Card>)}
           <StatusBadge status={trip.status} type="trip" />
           {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">Sürücü rəyləri</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         </div>
         <div className="lg:col-span-1">
           <div className="sticky top-24 flex flex-col gap-4">
             <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">Yer başına qiymət</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
-            {driver && (<Card><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">{driver.fullName.charAt(0)}</div><div className="flex-1"><p className="text-base font-semibold text-text">{driver.fullName}</p><div className="flex items-center gap-2 text-xs text-text-muted"><span className="flex items-center gap-0.5"><Star size={11} className="text-accent-500 fill-accent-500" />{formatRating(driver.rating)}</span><span>{driver.totalTrips} gediş</span><span>{driver.city}</span></div></div></div></Card>)}
-            {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><AlertTriangle size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
+            {driver && (<Card><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">{driver.fullName.charAt(0)}</div><div className="flex-1"><p className="text-base font-semibold text-text">{driver.fullName}</p><div className="flex items-center gap-2 text-xs text-text-muted"><span className="flex items-center gap-0.5"><Icon name="star" size={11} className="text-accent-500" fill="currentColor" />{formatRating(driver.rating)}</span><span>{driver.totalTrips} gediş</span><span>{driver.city}</span></div></div></div></Card>)}
+            {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
               <Card><div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between"><span className="text-sm font-medium">Neçə yer?</span><div className="flex items-center gap-2"><button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">−</button><span className="w-8 text-center font-bold">{seats}</span><button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button></div></div>

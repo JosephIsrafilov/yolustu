@@ -4,7 +4,7 @@ import React from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { Users, Check, X } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import type { Booking, Trip, User } from '@/types';
 
 interface BookingRequestCardProps {
@@ -44,7 +44,7 @@ export default function BookingRequestCard({
 
       <div className="flex items-center gap-3 text-xs text-text-secondary mb-3">
         <span className="flex items-center gap-1">
-          <Users size={13} />
+          <Icon name="users" size={13} />
           {booking.seatsRequested} yer istəyir
         </span>
         <span>
@@ -61,11 +61,11 @@ export default function BookingRequestCard({
             onClick={onAccept}
             disabled={noSeats}
           >
-            <Check size={14} />
+            <Icon name="check" size={14} />
             {noSeats ? 'Yer yoxdur' : 'Qəbul et'}
           </Button>
           <Button variant="outline" size="sm" fullWidth onClick={onReject}>
-            <X size={14} />
+            <Icon name="x" size={14} />
             Rədd et
           </Button>
         </div>

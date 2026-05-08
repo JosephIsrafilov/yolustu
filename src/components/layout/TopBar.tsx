@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 interface TopBarProps {
   title: string;
@@ -23,7 +23,7 @@ export default function TopBar({ title, showBack = false, rightAction }: TopBarP
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-muted transition-colors"
               aria-label="Geri"
             >
-              <ArrowLeft size={20} />
+              <Icon name="arrow-left" size={20} />
             </button>
           )}
           <h1 className="text-lg font-bold text-text truncate">{title}</h1>

@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import { validateEmail, validatePassword } from '@/lib/mock-api';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-[14px] font-semibold text-[#011f23]">Email</label>
               <div className="relative">
-                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="mail" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="email" placeholder="email@example.com" value={email}
                   onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
@@ -61,7 +61,7 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-[14px] font-semibold text-[#011f23]">Şifrə</label>
               <div className="relative">
-                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="lock" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="password" placeholder="Ən azı 6 simvol" value={password}
                   onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
@@ -72,7 +72,7 @@ export default function LoginPage() {
             <button type="submit" disabled={loading}
               className="w-full bg-[#7ED321] text-white font-semibold text-[16px] py-3.5 rounded-xl hover:bg-[#6bc01a] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ boxShadow: '0 2px 8px rgba(126,211,33,0.3)' }}>
-              {loading ? <><Loader2 size={18} className="animate-spin" /> Yüklənir...</> : 'Daxil ol'}
+              {loading ? <><Icon name="loader-2" size={18} className="animate-spin" /> Yüklənir...</> : 'Daxil ol'}
             </button>
           </form>
 

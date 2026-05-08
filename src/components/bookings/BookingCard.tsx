@@ -4,7 +4,7 @@ import React from 'react';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Button from '@/components/ui/Button';
-import { Clock, MapPin, Star } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { formatPrice } from '@/lib/utils';
 import type { Booking, Trip, User } from '@/types';
 
@@ -37,7 +37,7 @@ export default function BookingCard({
             {trip.departureCity} → {trip.arrivalCity}
           </p>
           <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
-            <Clock size={12} />
+            <Icon name="clock" size={12} />
             {trip.date} • {trip.time}
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function BookingCard({
           <div>
             <p className="text-sm font-medium text-text">{driver.fullName}</p>
             <p className="flex items-center gap-1 text-xs text-text-muted">
-              <Star size={10} className="text-accent-500 fill-accent-500" />
+              <Icon name="star" size={10} className="text-accent-500" fill="currentColor" />
               {driver.rating.toFixed(1)}
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function BookingCard({
           )}
           {canReview && onReview && (
             <Button variant="secondary" size="sm" onClick={onReview} fullWidth>
-              <Star size={14} />
+              <Icon name="star" size={14} />
               Rəy yaz
             </Button>
           )}

@@ -5,7 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAppStore } from '@/store/useAppStore';
-import { Trash2 } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function AdminTripsPage() {
   const { trips, users, deleteTrip } = useAppStore();
@@ -40,7 +40,7 @@ export default function AdminTripsPage() {
                     <td className="px-4 py-3"><StatusBadge status={t.status} type="trip" /></td>
                     <td className="px-4 py-3">
                       <Button size="sm" variant="danger" onClick={() => deleteTrip(t.id)}>
-                        <Trash2 size={14} /> Sil
+                        <Icon name="trash-2" size={14} /> Sil
                       </Button>
                     </td>
                   </tr>

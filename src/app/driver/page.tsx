@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { Plus, Map, Inbox } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function DriverDashboardPage() {
   const router = useRouter();
@@ -28,10 +28,10 @@ export default function DriverDashboardPage() {
           <Card padding="lg" className="text-center"><p className="text-3xl font-bold text-text">{myTrips.length}</p><p className="text-sm text-text-muted mt-1">Ümumi gediş</p></Card>
         </div>
         <div className="grid sm:grid-cols-3 gap-3">
-          <Button fullWidth size="lg" onClick={() => router.push(ROUTES.createTrip)}><Plus size={18} /> Yeni gediş yarat</Button>
-          <Button fullWidth size="lg" variant="outline" onClick={() => router.push(ROUTES.myTrips)}><Map size={18} /> Gedişlərim</Button>
+          <Button fullWidth size="lg" onClick={() => router.push(ROUTES.createTrip)}><Icon name="plus" size={18} /> Yeni gediş yarat</Button>
+          <Button fullWidth size="lg" variant="outline" onClick={() => router.push(ROUTES.myTrips)}><Icon name="map" size={18} /> Gedişlərim</Button>
           <Button fullWidth size="lg" variant="secondary" onClick={() => router.push(ROUTES.bookingRequests)}>
-            <Inbox size={18} /> Rezerv sorğuları
+            <Icon name="inbox" size={18} /> Rezerv sorğuları
             {pendingBookings.length > 0 && (<span className="ml-1 px-1.5 py-0.5 bg-accent-500 text-white text-[10px] font-bold rounded-full">{pendingBookings.length}</span>)}
           </Button>
         </div>

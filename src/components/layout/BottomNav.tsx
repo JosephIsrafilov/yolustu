@@ -3,15 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, CalendarCheck, Car, UserCircle } from 'lucide-react';
+import Icon, { type IconName } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 
-const NAV_ITEMS = [
-  { href: ROUTES.search, label: 'Axtar', icon: Search },
-  { href: ROUTES.bookings, label: 'Rezervlər', icon: CalendarCheck },
-  { href: ROUTES.driverDashboard, label: 'Sür', icon: Car },
-  { href: ROUTES.profile, label: 'Profil', icon: UserCircle },
+const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
+  { href: ROUTES.search, label: 'Axtar', icon: 'search' },
+  { href: ROUTES.bookings, label: 'Rezervlər', icon: 'calendar-check' },
+  { href: ROUTES.driverDashboard, label: 'Sür', icon: 'car' },
+  { href: ROUTES.profile, label: 'Profil', icon: 'user-circle' },
 ];
 
 export default function BottomNav() {
@@ -23,7 +23,6 @@ export default function BottomNav() {
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + '/');
-          const Icon = item.icon;
           return (
             <Link
               key={item.href}
@@ -36,6 +35,7 @@ export default function BottomNav() {
               )}
             >
               <Icon
+                name={item.icon}
                 size={22}
                 strokeWidth={isActive ? 2.5 : 2}
                 className="transition-all duration-200"

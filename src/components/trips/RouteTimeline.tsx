@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MapPin } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 interface RouteTimelineProps {
   departure: string;
@@ -31,7 +31,7 @@ export default function RouteTimeline({
           <p className="text-base font-semibold text-text">{departure}</p>
           {meetingPoint && (
             <p className="flex items-center gap-1 text-xs text-text-muted mt-0.5">
-              <MapPin size={11} className="shrink-0" />
+              <Icon name="map-pin" size={11} className="shrink-0" />
               {meetingPoint}
             </p>
           )}
@@ -40,7 +40,7 @@ export default function RouteTimeline({
           <p className="text-base font-semibold text-text">{arrival}</p>
           {dropoffPoint && (
             <p className="flex items-center gap-1 text-xs text-text-muted mt-0.5">
-              <MapPin size={11} className="shrink-0" />
+              <Icon name="map-pin" size={11} className="shrink-0" />
               {dropoffPoint}
             </p>
           )}

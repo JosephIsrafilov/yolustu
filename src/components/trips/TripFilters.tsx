@@ -3,7 +3,7 @@
 import React from 'react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Search, Calendar, MapPin, Banknote } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { AZ_CITIES } from '@/lib/utils';
 import type { TripSearchFilters } from '@/types';
 
@@ -54,7 +54,7 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
         type="date"
         value={filters.date || ''}
         onChange={(e) => update('date', e.target.value)}
-        icon={<Calendar size={16} />}
+        icon={<Icon name="calendar" size={16} />}
       />
 
       <Input
@@ -63,11 +63,11 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
         placeholder="Məs: 20"
         value={filters.maxPrice || ''}
         onChange={(e) => update('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
-        icon={<Banknote size={16} />}
+        icon={<Icon name="banknote" size={16} />}
       />
 
       <Button fullWidth onClick={onSearch}>
-        <Search size={16} />
+        <Icon name="search" size={16} />
         Axtar
       </Button>
     </div>

@@ -5,7 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { useAppStore } from '@/store/useAppStore';
-import { ShieldOff, ShieldCheck, Star } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function AdminUsersPage() {
   const { users, blockUser, unblockUser } = useAppStore();
@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">{u.city || '—'}</td>
                   <td className="px-4 py-3">
                     <span className="flex items-center gap-1">
-                      <Star size={12} className="text-accent-500 fill-accent-500" />{u.rating.toFixed(1)}
+                      <Icon name="star" size={12} className="text-accent-500" fill="currentColor" />{u.rating.toFixed(1)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -43,11 +43,11 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">
                     {u.isBlocked ? (
                       <Button size="sm" variant="secondary" onClick={() => unblockUser(u.id)}>
-                        <ShieldCheck size={14} /> Bloku aç
+                        <Icon name="shield-check" size={14} /> Bloku aç
                       </Button>
                     ) : (
                       <Button size="sm" variant="danger" onClick={() => blockUser(u.id)}>
-                        <ShieldOff size={14} /> Blokla
+                        <Icon name="shield-off" size={14} /> Blokla
                       </Button>
                     )}
                   </td>

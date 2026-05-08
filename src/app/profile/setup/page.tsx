@@ -10,7 +10,7 @@ import Card from '@/components/ui/Card';
 import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES } from '@/lib/utils';
-import { User } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function ProfileSetupPage() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function ProfileSetupPage() {
           <h1 className="text-2xl font-bold text-text mb-1 text-center">Profil qurulması</h1>
           <p className="text-sm text-text-muted mb-6 text-center">Məlumatlarınızı tamamlayın</p>
           <div className="flex flex-col gap-4">
-            <Input label="Ad və Soyad" value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} icon={<User size={16} />} />
+            <Input label="Ad və Soyad" value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} icon={<Icon name="user" size={16} />} />
             <Input label="Telefon" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-text">Şəhər</label>

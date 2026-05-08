@@ -3,7 +3,7 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Car, Users } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function RoleSwitch() {
   const { activeRole, switchRole } = useAppStore();
@@ -19,7 +19,7 @@ export default function RoleSwitch() {
             : 'text-text-muted hover:text-text-secondary',
         )}
       >
-        <Users size={14} />
+        <Icon name="users" size={14} />
         Sərnişin
       </button>
       <button
@@ -31,7 +31,7 @@ export default function RoleSwitch() {
             : 'text-text-muted hover:text-text-secondary',
         )}
       >
-        <Car size={14} />
+        <Icon name="car" size={14} />
         Sürücü
       </button>
     </div>

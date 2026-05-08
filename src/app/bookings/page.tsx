@@ -8,7 +8,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import { CalendarCheck } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function BookingsPage() {
           })}
         </div>
       ) : (
-        <EmptyState icon={<CalendarCheck size={28} />} title={tab === 'upcoming' ? 'Gələn rezerv yoxdur' : 'Keçmiş rezerv yoxdur'} description="Gediş axtarın və ilk rezervinizi edin" />
+        <EmptyState icon={<Icon name="calendar-check" size={28} />} title={tab === 'upcoming' ? 'Gələn rezerv yoxdur' : 'Keçmiş rezerv yoxdur'} description="Gediş axtarın və ilk rezervinizi edin" />
       )}
     </WebLayout>
   );

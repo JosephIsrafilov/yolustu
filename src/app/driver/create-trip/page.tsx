@@ -10,7 +10,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
 import { CAR_MODELS } from '@/data/mock-data';
-import { ArrowRight, ArrowLeft, Check, MapPin, Calendar } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import type { CreateTripData } from '@/types';
 
 const STEPS = ['Marşrut', 'Tarix', 'Yerlər', 'Maşın', 'Baxış'];
@@ -63,11 +63,11 @@ export default function CreateTripPage() {
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">Haradan</label><select value={form.departureCity} onChange={(e) => update('departureCity', e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"><option value="">Seçin</option>{AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}</select>{errors.departureCity && <p className="text-xs text-danger-500">{errors.departureCity}</p>}</div>
               <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">Haraya</label><select value={form.arrivalCity} onChange={(e) => update('arrivalCity', e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"><option value="">Seçin</option>{AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}</select>{errors.arrivalCity && <p className="text-xs text-danger-500">{errors.arrivalCity}</p>}</div>
-              <Input label="Görüş nöqtəsi" placeholder="Məs: 28 May metro" value={form.meetingPoint} onChange={(e) => update('meetingPoint', e.target.value)} icon={<MapPin size={16} />} />
-              <Input label="Eniş nöqtəsi" placeholder="Məs: Gəncə avtovağzal" value={form.dropoffPoint} onChange={(e) => update('dropoffPoint', e.target.value)} icon={<MapPin size={16} />} />
+              <Input label="Görüş nöqtəsi" placeholder="Məs: 28 May metro" value={form.meetingPoint} onChange={(e) => update('meetingPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
+              <Input label="Eniş nöqtəsi" placeholder="Məs: Gəncə avtovağzal" value={form.dropoffPoint} onChange={(e) => update('dropoffPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
             </div>
           )}
-          {step === 1 && (<div className="flex flex-col gap-4"><Input label="Tarix" type="date" value={form.date} onChange={(e) => update('date', e.target.value)} error={errors.date} icon={<Calendar size={16} />} /><Input label="Saat" type="time" value={form.time} onChange={(e) => update('time', e.target.value)} error={errors.time} /></div>)}
+          {step === 1 && (<div className="flex flex-col gap-4"><Input label="Tarix" type="date" value={form.date} onChange={(e) => update('date', e.target.value)} error={errors.date} icon={<Icon name="calendar" size={16} />} /><Input label="Saat" type="time" value={form.time} onChange={(e) => update('time', e.target.value)} error={errors.time} /></div>)}
           {step === 2 && (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">Yer sayı (1-4)</label><div className="flex items-center gap-3"><button type="button" onClick={() => update('seatsTotal', Math.max(1, form.seatsTotal - 1))} className="w-10 h-10 rounded-xl bg-surface-muted flex items-center justify-center font-bold text-lg">−</button><span className="text-2xl font-bold w-8 text-center">{form.seatsTotal}</span><button type="button" onClick={() => update('seatsTotal', Math.min(4, form.seatsTotal + 1))} className="w-10 h-10 rounded-xl bg-surface-muted flex items-center justify-center font-bold text-lg">+</button></div>{errors.seatsTotal && <p className="text-xs text-danger-500">{errors.seatsTotal}</p>}</div>
@@ -95,8 +95,8 @@ export default function CreateTripPage() {
           )}
         </div>
         <div className="flex gap-3 mt-8">
-          {step > 0 && <Button variant="outline" fullWidth onClick={back}><ArrowLeft size={16} /> Geri</Button>}
-          {step < 4 ? (<Button fullWidth onClick={next}>İrəli <ArrowRight size={16} /></Button>) : (<Button fullWidth size="lg" onClick={publish}><Check size={16} /> Gedişi dərc et</Button>)}
+          {step > 0 && <Button variant="outline" fullWidth onClick={back}><Icon name="arrow-left" size={16} /> Geri</Button>}
+          {step < 4 ? (<Button fullWidth onClick={next}>İrəli <Icon name="arrow-right" size={16} /></Button>) : (<Button fullWidth size="lg" onClick={publish}><Icon name="check" size={16} /> Gedişi dərc et</Button>)}
         </div>
       </Card>
     </WebLayout>

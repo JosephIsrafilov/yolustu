@@ -8,7 +8,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { filterTrips } from '@/lib/mock-api';
 import { AZ_CITIES } from '@/lib/utils';
-import { Star, ArrowRight, Ban, Armchair, CigaretteOff, Dog, User as UserIcon, Calendar, Search } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 
 function TripsContent() {
@@ -80,15 +80,14 @@ function TripsContent() {
               <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Xüsusiyyətlər</h3>
               <div className="space-y-2">
                 {[
-                  { icon: CigaretteOff, label: 'Siqaret çəkilmir' },
-                  { icon: UserIcon, label: 'Yalnız qadınlar' },
-                  { icon: Dog, label: 'Ev heyvanlarına icazə' },
+                  { icon: 'cigarette-off' as const, label: 'Siqaret çəkilmir' },
+                  { icon: 'user' as const, label: 'Yalnız qadınlar' },
+                  { icon: 'dog' as const, label: 'Ev heyvanlarına icazə' },
                 ].map((item) => {
-                  const Icon = item.icon;
                   return (
                     <label key={item.label} className="flex items-center gap-2.5 cursor-pointer">
                       <input type="checkbox" className="rounded border-[#c0c8ca] text-[#054752] focus:ring-[#054752]/20 w-4 h-4" />
-                      <Icon size={16} className="text-[#40484a]" />
+                      <Icon name={item.icon} size={16} className="text-[#40484a]" />
                       <span className="text-[14px] text-[#011f23]">{item.label}</span>
                     </label>
                   );
@@ -105,11 +104,11 @@ function TripsContent() {
             <div>
               <div className="flex items-center gap-2 text-[24px] font-semibold text-[#002f37] mb-1">
                 <span>{from}</span>
-                <ArrowRight size={20} className="text-[#70787b]" />
+                <Icon name="arrow-right" size={20} className="text-[#70787b]" />
                 <span>{to}</span>
               </div>
               <div className="text-[14px] text-[#40484a] flex items-center gap-2">
-                <Calendar size={14} />
+                <Icon name="calendar" size={14} />
                 <span>{filters.date || 'Bütün tarixlər'}</span>
               </div>
             </div>
@@ -150,7 +149,7 @@ function TripsContent() {
                         <div>
                           <h4 className="text-[15px] font-bold text-[#002f37]">{driver?.fullName.split(' ')[0] || 'Naməlum'}</h4>
                           <div className="flex items-center gap-1 text-[13px] text-[#40484a]">
-                            <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
+                            <Icon name="star" size={13} className="text-[#F5A623]" fill="currentColor" />
                             <span className="font-bold">{driver?.rating.toFixed(1)}</span>
                             <span>({driver?.totalTrips})</span>
                           </div>
@@ -185,7 +184,7 @@ function TripsContent() {
                       <div className="flex flex-col items-end sm:w-[120px] shrink-0">
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
                         <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#3a6a00]'}`}>
-                          {isFull ? <Ban size={14} /> : <Armchair size={14} />}
+                          {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span>{isFull ? 'Yer yoxdur' : `${trip.seatsAvailable} yer qalıb`}</span>
                         </div>
                       </div>

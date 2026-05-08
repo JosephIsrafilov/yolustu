@@ -8,21 +8,21 @@ import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES } from '@/lib/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { MapPin, ArrowRight, Calendar, Users, ShieldCheck, Banknote, Leaf, ChevronRight } from 'lucide-react';
+import Icon, { type IconName } from '@/components/ui/Icon';
 
-const FEATURES = [
+const FEATURES: { icon: IconName; title: string; desc: string }[] = [
   {
-    icon: ShieldCheck,
+    icon: 'shield-check',
     title: 'Təsdiqlənmiş Sürücülər',
     desc: 'Bütün sürücülər platformamıza qatılmazdan əvvəl şəxsiyyət və sənəd yoxlanışından keçir.',
   },
   {
-    icon: Banknote,
+    icon: 'banknote',
     title: 'Sərfəli Qiymətlər',
     desc: 'Səyahət xərclərini bölüşərək daha ucuz və rahat yolçuluq edin.',
   },
   {
-    icon: Leaf,
+    icon: 'leaf',
     title: 'Ekoloji Təmiz',
     desc: 'Boş oturacaqları dolduraraq karbon emissiyasını azaltmağa kömək edin.',
   },
@@ -75,7 +75,7 @@ export default function HomePage() {
                  style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.12)' }}>
               {/* From */}
               <div className="flex-1 relative">
-                <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={dep} onChange={(e) => setDep(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all appearance-none">
                   <option value="">Haradan</option>
@@ -85,12 +85,12 @@ export default function HomePage() {
 
               {/* Arrow */}
               <div className="hidden md:flex items-center justify-center px-1">
-                <ArrowRight size={20} className="text-[#c0c8ca]" />
+                <Icon name="arrow-right" size={20} className="text-[#c0c8ca]" />
               </div>
 
               {/* To */}
               <div className="flex-1 relative">
-                <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={arr} onChange={(e) => setArr(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all appearance-none">
                   <option value="">Haraya</option>
@@ -100,14 +100,14 @@ export default function HomePage() {
 
               {/* Date */}
               <div className="flex-1 relative">
-                <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
               </div>
 
               {/* Passengers */}
               <div className="w-full md:w-24 relative">
-                <Users size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <Icon name="users" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="number" min={1} max={4} value={passengers} onChange={(e) => setPassengers(Number(e.target.value))}
                   className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
               </div>
@@ -128,22 +128,19 @@ export default function HomePage() {
             Niyə YolUstu?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger-children">
-            {FEATURES.map((f) => {
-              const Icon = f.icon;
-              return (
-                <div key={f.title}
-                  className="bg-white p-7 rounded-2xl border border-[#c2dfe5] hover:border-[#9acfdc] transition-all cursor-default group"
-                  style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(5,71,82,0.05)')}>
-                  <div className="w-12 h-12 bg-[#d5f3f9] flex items-center justify-center rounded-full mb-5">
-                    <Icon size={22} className="text-[#054752]" />
-                  </div>
-                  <h3 className="text-[18px] font-semibold text-[#002f37] mb-2 leading-6">{f.title}</h3>
-                  <p className="text-[14px] text-[#40484a] leading-5">{f.desc}</p>
+            {FEATURES.map((f) => (
+              <div key={f.title}
+                className="bg-white p-7 rounded-2xl border border-[#c2dfe5] hover:border-[#9acfdc] transition-all cursor-default group"
+                style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)')}
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(5,71,82,0.05)')}>
+                <div className="w-12 h-12 bg-[#d5f3f9] flex items-center justify-center rounded-full mb-5">
+                  <Icon name={f.icon} size={22} className="text-[#054752]" />
                 </div>
-              );
-            })}
+                <h3 className="text-[18px] font-semibold text-[#002f37] mb-2 leading-6">{f.title}</h3>
+                <p className="text-[14px] text-[#40484a] leading-5">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -156,7 +153,7 @@ export default function HomePage() {
               </h2>
               <Link href={ROUTES.trips}
                 className="text-[14px] text-[#054752] hover:underline hidden md:flex items-center gap-1 font-medium">
-                Bütün istiqamətlərə bax <ChevronRight size={16} />
+                Bütün istiqamətlərə bax <Icon name="chevron-right" size={16} />
               </Link>
             </div>
 

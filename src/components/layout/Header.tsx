@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { Search, Menu, X, LogOut } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 export default function Header() {
   const pathname = usePathname();
@@ -75,7 +75,7 @@ export default function Header() {
                 </span>
               </Link>
               <button onClick={() => logout()} className="text-[#40484a] hover:text-[#ba1a1a] transition-colors">
-                <LogOut size={18} />
+                <Icon name="log-out" size={18} />
               </button>
             </>
           ) : (
@@ -93,7 +93,7 @@ export default function Header() {
           )}
           {/* Mobile menu toggle */}
           <button className="md:hidden text-[#40484a]" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileOpen ? <Icon name="x" size={22} /> : <Icon name="menu" size={22} />}
           </button>
         </div>
       </div>

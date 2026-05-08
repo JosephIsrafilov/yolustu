@@ -3,7 +3,7 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
-import { ArrowLeft } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 interface WebLayoutProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
             {showBack && (
               <button onClick={() => window.history.back()}
                 className="w-10 h-10 rounded-full bg-white border border-[#c0c8ca] flex items-center justify-center hover:bg-[#d5f3f9] transition-colors">
-                <ArrowLeft size={18} className="text-[#40484a]" />
+                <Icon name="arrow-left" size={18} className="text-[#40484a]" />
               </button>
             )}
             {title && (

@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="az" data-scroll-behavior="smooth">
-      <body className="antialiased" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <body className="antialiased" style={{ fontFamily: "'Inter', sans-serif" }}>
         {children}
       </body>
     </html>

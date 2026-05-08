@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Card from '@/components/ui/Card';
-import { Star } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import type { Review, User } from '@/types';
 
 interface ReviewCardProps {
@@ -24,12 +24,14 @@ export default function ReviewCard({ review, author }: ReviewCardProps) {
             </p>
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star
+                <Icon
                   key={i}
+                  name="star"
                   size={12}
+                  fill={i < review.rating ? 'currentColor' : 'none'}
                   className={
                     i < review.rating
-                      ? 'text-accent-500 fill-accent-500'
+                      ? 'text-accent-500'
                       : 'text-gray-200'
                   }
                 />

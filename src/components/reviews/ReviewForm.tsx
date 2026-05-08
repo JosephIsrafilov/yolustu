@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
-import { Star } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 
 interface ReviewFormProps {
   onSubmit: (data: { rating: number; comment: string }) => void;
@@ -35,11 +35,13 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
               onMouseLeave={() => setHoverRating(0)}
               className="p-1 transition-transform duration-100 hover:scale-110 active:scale-95"
             >
-              <Star
+              <Icon
+                name="star"
                 size={32}
+                fill={star <= (hoverRating || rating) ? 'currentColor' : 'none'}
                 className={
                   star <= (hoverRating || rating)
-                    ? 'text-accent-500 fill-accent-500 transition-colors duration-150'
+                    ? 'text-accent-500 transition-colors duration-150'
                     : 'text-gray-200 transition-colors duration-150'
                 }
               />

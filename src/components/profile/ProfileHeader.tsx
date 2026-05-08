@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Star, MapPin, Car, Calendar } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { formatRating } from '@/lib/utils';
 import type { User } from '@/types';
 
@@ -23,13 +23,13 @@ export default function ProfileHeader({ user, reviewsCount = 0 }: ProfileHeaderP
       <div className="flex items-center gap-3 mt-2 text-sm text-text-secondary">
         {user.city && (
           <span className="flex items-center gap-1">
-            <MapPin size={14} />
+            <Icon name="map-pin" size={14} />
             {user.city}
           </span>
         )}
         {user.rating > 0 && (
           <span className="flex items-center gap-1">
-            <Star size={14} className="text-accent-500 fill-accent-500" />
+            <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
             {formatRating(user.rating)}
           </span>
         )}
