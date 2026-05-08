@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
-import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES } from '@/lib/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -13,25 +13,43 @@ import Icon, { type IconName } from '@/components/ui/Icon';
 const FEATURES: { icon: IconName; title: string; desc: string }[] = [
   {
     icon: 'shield-check',
-    title: 'Təsdiqlənmiş Sürücülər',
-    desc: 'Bütün sürücülər platformamıza qatılmazdan əvvəl şəxsiyyət və sənəd yoxlanışından keçir.',
+    title: 'Təhlükəsizlik',
+    desc: 'Bütün sürücülər yoxlanılır. Səyahətiniz boyu rahatlığınız bizim prioritetimizdir.',
   },
   {
     icon: 'banknote',
-    title: 'Sərfəli Qiymətlər',
-    desc: 'Səyahət xərclərini bölüşərək daha ucuz və rahat yolçuluq edin.',
+    title: 'Sərfəli Qiymət',
+    desc: 'Büdcənizə uyğun variantlar tapın. Şəffaf qiymətləndirmə, gizli ödənişlər yoxdur.',
   },
   {
     icon: 'leaf',
     title: 'Ekoloji Təmiz',
-    desc: 'Boş oturacaqları dolduraraq karbon emissiyasını azaltmağa kömək edin.',
+    desc: 'Boş yerləri paylaşaraq karbon izimizi azaldın. Birlikdə daha yaşıl bir gələcək üçün.',
   },
 ];
 
 const TOP_ROUTES = [
-  { from: 'Bakı', to: 'Gəncə', price: 15, img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBM7LZRJ3_vRLkf7aJbFim3PHgizHDH09QLx4oCmBjhhwIQ8xTOj58nI8lajjzLiw9IqjNRGlFwSI6Gvneo-QnPjVl2YDOQyPf09GGzSB5D1ZE8qmnQ6WoaghhG1N98NXui0dIJXu10WL_jNmrcUc8GWy5AX5-yJRiPELbgbjJHAFXy2KOC_Kk2c0bDHyQ6AisZ6t_PozZeeMwleB8rbyHw1Xji8C6-hkEy_U0ymO9CyJQlDnG-pK-f4t1nBg2vR9G9X_bPhpXJWGQ' },
-  { from: 'Bakı', to: 'Lənkəran', price: 12, img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuClf0mYYkt7HvE7_cJ02Z0LyWTh7ESAdnDblfA-nCjztrnsuO8xUSUD2Jw_YguKr0TR6EQsbb_GnB_4QJlNePCBG1a-Sy-32OG6IfoxZjPsbSezF95txQ5ad4Ry6YzCvArh7aL4S4yzjG799DQwdE-bY_3AyqxFXCuVkevqu774lKFWf10ObmJQZEcLdGjP483V7aNatvaRHyjB2Uo8Uyf1wwr9etE9ZNSmHHEl0jnEkhExN2_ABtwYjn2g0v1wZeUUhADfNQjLOCs' },
-  { from: 'Bakı', to: 'Şəki', price: 18, img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAX75FRsx_fVi6GYaSgcBWt30jv6bIMuyg-rHiCH4eDG-dEQYnyd4LMJb4CXrgoI22qXCtvJMXSt-QZUDafCl3eilFffKGq3HzfbLEKccEoEC3kfMwpfr7v2hXCoIyeoK8PNHEBMnS5r4RvvZ0kGVfrI48J2YtPYf3rBVsm6zcRQa03vB84NiEYkNcjvs5zv14u0n1M6K0bqIPnBZOaL4sCDuwlcFrzYSt28jmHvJCw1WWUEhl2nTG4ZW5YHw_8_DNUaFdlYSU5pvc' },
+  {
+    from: 'Bakı',
+    to: 'Gəncə',
+    price: 15,
+    trips: 'Hər gün 20+ səfər',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB5IQh9eoAlVCIbIcZm73CAErqvtVfQe0w5TQOlQY3KdCCK6p-5otR2flM3qhI0by15J2iBnjKJw3LONslc6QriE6eHjeC4Iuc7rtOqYBj792b04vkbLj16FUIv1kA2Onpnje30uGaIf0Ac2n5bGEyeANX0Jxqy3IKbjL0RZ-AOPVtqufzOv7V1LgW-xw-U1B9VSqgzukwxk0XZ15BJy3wuypKrHqv1ZRbp7RyhXkmxFGokMsAmpPiuhwnYzLSYjm8lr-YnfcV3tdo',
+  },
+  {
+    from: 'Bakı',
+    to: 'Quba',
+    price: 10,
+    trips: 'Hər gün 15+ səfər',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAfj91f3rPN3Yftx2nh9gkj_0fYD1wtf9PXcuPEBedXBuga-9CNvDdZODGuV1-84CBvQfLFbOnsyoHMDn8qdYwsLowUZDr7qpKgXiSrFAODLkOrpz1ShTHuArGiA-rT9POdgZWD2pvPlSXKCIe8KIzqcW-tRSibhray7Rirw2XDYrMbwv5dud79XF3kGTV-uHbe-IaDbahMkpFrsHFXjtfYtLxew524Pp39couepc14Lyxy9kfrSSzMtdPxOWNW1vXkhTdq5Xb94WM',
+  },
+  {
+    from: 'Bakı',
+    to: 'Lənkəran',
+    price: 12,
+    trips: 'Hər gün 10+ səfər',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrRWiYBMTNGjfSDfkpQk9w9qYxCbJyvT-2eUDU4RiMVRWM4Zb50_XBVBKfWrHbjUJiCRRoahvwUJe21fU26evN1WkgTmeTaaWZ7RIRR02GwDE9XQXENqsfnKHhl5JyIesSQxOW8xSt6W66Tm9l2gINRh4F0k7gczDGc5nDL84Vg_LVcuYu7bTB5LA28BOuXBSGAYHoVXTvwonxQcVdkF49FfUg7DV_0UdzpK_Hqzpsjmx7t9YJzYLtwhf6zuGwpjHQqQVgRJC9Hlk',
+  },
 ];
 
 export default function HomePage() {
@@ -46,6 +64,7 @@ export default function HomePage() {
     if (dep) params.set('from', dep);
     if (arr) params.set('to', arr);
     if (date) params.set('date', date);
+    params.set('passengers', String(passengers));
     router.push(`${ROUTES.trips}?${params.toString()}`);
   };
 
@@ -54,160 +73,188 @@ export default function HomePage() {
       <Header />
 
       <main className="flex-grow">
-        {/* ═══ Hero ═══ */}
-        <section className="relative py-20 px-6 overflow-hidden" style={{ background: 'linear-gradient(180deg, #d0edf3 0%, #edfcff 100%)' }}>
+        {/* Hero */}
+        <section className="relative flex h-[500px] w-full items-center justify-center overflow-hidden md:h-[600px]">
           <div className="absolute inset-0 z-0">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHxIqknSmcrI7UDCNZrC1YKEZntQFALItCeTKNKoxFiKIRDXxI9SaLGM7W-vdr06sWCD3j2IFn8FOu9SIWVAwpi2afedPvKnjjsrJyHIhVtSkurTmYIcJfBjwGqN-dfxYEajoJlo_Dt8YRV9V_wfSTeI4STnu3kmjYPoUQqd7kJyVcsDe2R0IqaMBLgjVV3_YZ_hKrUvrhf63nIZ5SK3IMHOey_eBov8Nk1NGpRN8oCDSQS1NlcHDvNIEl5IFN_LPT49G6Jbujr4M"
-              alt="" className="w-full h-full object-cover opacity-15" />
+            <Image
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdhXsktOYAkazf8LKTPl37m1Yh_7UPyMGxC5x7Fu62lr_Bw4sYyfhThMBsrkOXnHPn_rwXc8LkrSbArYkG7ucl0ynDnHrNj4PeQPHcK2-em0m-ZdwTUjnHCC9qsj2lyfQa4bkSqmWyNggmy4E0TwkSdVxvpWcHx-CnCtpLxAnxczJD3aNxgDeU2R-xxx6rKD34RqChhSg6jsEK_pewJ_d1b71R1neeQWGelPWc3yWdzuh_dcbtzBstbiIuDvhhdHkteIE4GlKFIrs"
+              alt="Azerbaijan highway landscape"
+              fill
+              preload
+              sizes="100vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#054752]/40 to-[#054752]/80" />
           </div>
 
-          <div className="relative z-10 max-w-[1140px] mx-auto flex flex-col items-center text-center">
-            <h1 className="text-[40px] font-bold leading-[48px] tracking-[-0.02em] text-[#002f37] mb-4">
-              Sərfəli və Təhlükəsiz Səyahət
+          <div className="relative z-10 mx-auto flex w-full max-w-[1140px] flex-col items-center px-4 text-center">
+            <h1 className="mb-6 max-w-2xl text-[40px] font-bold leading-[48px] tracking-[-0.02em] text-white drop-shadow-sm">
+              Səyahətinizi Asanlaşdırın
             </h1>
-            <p className="text-[20px] font-medium leading-[28px] text-[#40484a] mb-12 max-w-2xl">
-              Azərbaycanın hər yerinə etibarlı sürücülərlə yolçuluq edin.
-            </p>
 
-            {/* Search bar — inline on desktop */}
-            <div className="bg-white rounded-2xl p-4 w-full max-w-4xl flex flex-col md:flex-row gap-2 items-stretch"
-                 style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.12)' }}>
-              {/* From */}
+            <div className="mt-4 flex w-full max-w-4xl flex-col gap-4 rounded-xl bg-white p-4 shadow-lg md:flex-row md:p-6">
               <div className="flex-1 relative">
                 <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={dep} onChange={(e) => setDep(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all appearance-none">
-                  <option value="">Haradan</option>
+                  className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]">
+                  <option value="">From</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              {/* Arrow */}
-              <div className="hidden md:flex items-center justify-center px-1">
-                <Icon name="arrow-right" size={20} className="text-[#c0c8ca]" />
+              <div className="z-10 -mx-4 hidden items-center justify-center md:flex">
+                <button
+                  type="button"
+                  className="rounded-full border border-[#c0c8ca] bg-[#00AFF5] p-2 text-white shadow-sm transition-all hover:border-[#054752] hover:bg-[#054752]"
+                  onClick={() => {
+                    setDep(arr);
+                    setArr(dep);
+                  }}
+                  aria-label="Swap route"
+                >
+                  <Icon name="arrow-right" size={20} />
+                </button>
               </div>
 
-              {/* To */}
               <div className="flex-1 relative">
                 <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={arr} onChange={(e) => setArr(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all appearance-none">
-                  <option value="">Haraya</option>
+                  className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]">
+                  <option value="">To</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              {/* Date */}
               <div className="flex-1 relative">
                 <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
+                  className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]" />
               </div>
 
-              {/* Passengers */}
-              <div className="w-full md:w-24 relative">
-                <Icon name="users" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                <input type="number" min={1} max={4} value={passengers} onChange={(e) => setPassengers(Number(e.target.value))}
-                  className="w-full pl-10 pr-3 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
+              <div className="flex-1 relative">
+                <Icon name="user" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <select
+                  value={passengers}
+                  onChange={(e) => setPassengers(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]"
+                >
+                  <option value={1}>1 Passenger</option>
+                  <option value={2}>2 Passengers</option>
+                  <option value={3}>3 Passengers</option>
+                  <option value={4}>4+ Passengers</option>
+                </select>
               </div>
 
-              {/* Search button */}
               <button onClick={handleSearch}
-                className="w-full md:w-auto bg-[#7ED321] text-white font-semibold text-[16px] px-8 py-3.5 rounded-xl hover:bg-[#6bc01a] active:scale-[0.98] transition-all whitespace-nowrap"
-                style={{ boxShadow: '0 2px 8px rgba(126,211,33,0.3)' }}>
-                Axtar
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#00AFF5] px-8 py-3 text-[18px] font-semibold text-white shadow-md transition-colors hover:bg-[#054752] md:w-auto">
+                Search
+                <Icon name="search" size={18} />
               </button>
             </div>
           </div>
         </section>
 
-        {/* ═══ Features ═══ */}
-        <section className="py-16 px-6 max-w-[1140px] mx-auto">
-          <h2 className="text-[24px] font-semibold leading-[32px] text-[#002f37] mb-10 text-center">
-            Niyə YolUstu?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger-children">
-            {FEATURES.map((f) => (
-              <div key={f.title}
-                className="bg-white p-7 rounded-2xl border border-[#c2dfe5] hover:border-[#9acfdc] transition-all cursor-default group"
-                style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)')}
-                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(5,71,82,0.05)')}>
-                <div className="w-12 h-12 bg-[#d5f3f9] flex items-center justify-center rounded-full mb-5">
-                  <Icon name={f.icon} size={22} className="text-[#054752]" />
+        {/* Features */}
+        <section className="border-b border-[#c0c8ca] bg-white px-4 py-10">
+          <div className="mx-auto w-full max-w-[1140px]">
+            <h2 className="mb-10 text-center text-[24px] font-semibold leading-[32px] text-[#002f37]">
+              Niyə YolUstu?
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {FEATURES.map((f) => (
+                <div key={f.title}
+                  className="flex flex-col items-center rounded-xl border border-transparent bg-[#edfcff] p-6 text-center transition-all duration-300 hover:border-[#c0c8ca] hover:shadow-md">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#b5ebf9] text-[#002f37]">
+                    <Icon name={f.icon} size={32} className="text-[#002f37]" />
+                  </div>
+                  <h3 className="mb-2 text-[18px] font-semibold leading-6 text-[#011f23]">{f.title}</h3>
+                  <p className="text-[14px] leading-5 text-[#40484a]">{f.desc}</p>
                 </div>
-                <h3 className="text-[18px] font-semibold text-[#002f37] mb-2 leading-6">{f.title}</h3>
-                <p className="text-[14px] text-[#40484a] leading-5">{f.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ═══ Popular Routes ═══ */}
-        <section className="py-16 px-6" style={{ backgroundColor: '#d5f3f9' }}>
-          <div className="max-w-[1140px] mx-auto">
-            <div className="flex justify-between items-end mb-10">
+        {/* Popular Routes */}
+        <section className="bg-[#edfcff] px-4 py-10">
+          <div className="mx-auto max-w-[1140px]">
+            <div className="mb-6 flex items-end justify-between">
               <h2 className="text-[24px] font-semibold leading-[32px] text-[#002f37]">
-                Populyar İstiqamətlər
+                Məşhur İstiqamətlər
               </h2>
               <Link href={ROUTES.trips}
-                className="text-[14px] text-[#054752] hover:underline hidden md:flex items-center gap-1 font-medium">
-                Bütün istiqamətlərə bax <Icon name="chevron-right" size={16} />
+                className="hidden items-center gap-1 text-[12px] font-bold text-[#002f37] transition-colors hover:text-[#3a6a00] md:flex">
+                Hamısına bax <Icon name="arrow-right" size={14} />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger-children">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {TOP_ROUTES.map((r) => (
                 <div key={`${r.from}-${r.to}`}
                   onClick={() => router.push(`${ROUTES.trips}?from=${r.from}&to=${r.to}`)}
-                  className="bg-white rounded-2xl overflow-hidden cursor-pointer group transition-all"
-                  style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(5,71,82,0.05)')}>
-                  <div className="h-44 relative overflow-hidden">
-                    <img src={r.img} alt={`${r.from} → ${r.to}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                    <h3 className="absolute bottom-4 left-5 text-white text-[18px] font-semibold">
-                      {r.from} → {r.to}
-                    </h3>
+                  className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl shadow-sm transition-all duration-300 hover:shadow-md">
+                    <Image
+                      src={r.img}
+                      alt={`${r.from} → ${r.to}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#002f37]/90 via-[#002f37]/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-4 p-4">
+                      <div>
+                        <h3 className="mb-1 text-[18px] font-semibold leading-6 text-white">
+                          {r.from} → {r.to}
+                        </h3>
+                        <p className="text-[14px] leading-5 text-white/80">{r.trips}</p>
+                      </div>
+                      <div className="shrink-0 rounded-lg bg-white px-3 py-1 text-[12px] font-bold leading-4 text-[#002f37] shadow-sm">
+                        {r.price} ₼-dən
+                      </div>
+                    </div>
                   </div>
-                  <div className="px-5 py-4 flex justify-between items-center">
-                    <span className="text-[14px] text-[#40484a]">Başlayan qiymət:</span>
-                    <span className="text-[20px] font-bold text-[#002f37]">{r.price} ₼</span>
-                  </div>
-                </div>
               ))}
             </div>
 
             <Link href={ROUTES.trips}
-              className="block mt-6 text-center text-[14px] text-[#054752] hover:underline md:hidden font-medium">
-              Bütün istiqamətlərə bax
+              className="mt-6 block text-center text-[14px] font-medium text-[#054752] hover:underline md:hidden">
+              Hamısına bax
             </Link>
           </div>
         </section>
 
-        {/* ═══ Driver CTA ═══ */}
-        <section className="py-16 px-6">
-          <div className="max-w-[1140px] mx-auto bg-[#054752] rounded-3xl overflow-hidden relative"
-               style={{ boxShadow: '0 16px 48px rgba(5,71,82,0.25)' }}>
-            <div className="absolute inset-0 z-0">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuARLFSOEGJ3Mx03z965Iwz2nfLLy-1Eskiz98UKv8XjA8HYdcUwKb2kKz7PXzsZ29Dwh-S9euW2_QwIRzTuSN3NIIiacxV61HK0-i5z0PGJ6DV4MwK9D3uapcQLKQf6xy2neRxWKbFQ7cOlEhkD4MTODs42wzJZao3mfqxE5HEfQ2skqdW9KrrdZFdZI_RZiZ8BXqCn_BovmcTfth30lzyrxnfCggVJJs8FlAyU21H9ACrfiBho6uMPMm-n0pIkqRh6FR0d4AHnysg"
-                alt="" className="w-full h-full object-cover opacity-25 mix-blend-overlay" />
-            </div>
-            <div className="relative z-10 p-12 md:p-16 flex flex-col items-center md:items-start text-center md:text-left text-white w-full md:w-2/3">
-              <h2 className="text-[40px] font-bold leading-[48px] tracking-[-0.02em] mb-3">
-                Maşınınız var?
-              </h2>
-              <p className="text-[20px] font-medium leading-[28px] opacity-90 mb-8">
-                Yolda qazanın. Boş yerləri paylaşın və səyahət xərclərinizi qarşılayın.
-              </p>
-              <Link href={ROUTES.createTrip}
-                className="inline-flex bg-[#7ED321] text-white font-semibold text-[16px] px-8 py-4 rounded-full hover:bg-[#6bc01a] active:scale-[0.98] transition-all"
-                style={{ boxShadow: '0 4px 16px rgba(126,211,33,0.4)' }}>
-                Səfər təklif et
-              </Link>
+        {/* Driver CTA */}
+        <section className="relative overflow-hidden bg-[#002f37] px-4 py-10">
+          <div className="relative z-10 mx-auto w-full max-w-[1140px]">
+            <div className="flex flex-col items-center justify-between gap-12 md:flex-row lg:gap-20">
+              <div className="flex flex-1 flex-col items-start gap-4 text-left">
+                <h2 className="text-[40px] font-bold leading-[48px] tracking-[-0.02em] text-white">
+                  Maşınınız var?
+                </h2>
+                <p className="max-w-lg text-[18px] leading-7 text-[#9acfdc]">
+                  Xərclərinizi bölüşün və səyahətinizi daha maraqlı edin. Bu gün sürücü kimi qeydiyyatdan keçin və pul qazanmağa başlayın.
+                </p>
+                <Link href={ROUTES.createTrip}
+                  className="mt-4 inline-flex items-center gap-3 rounded-xl bg-[#3a6a00] px-10 py-4 text-[18px] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#a1fa49] hover:text-[#3e7100] hover:shadow-xl">
+                  Offer a Ride
+                  <Icon name="car" size={20} />
+                </Link>
+              </div>
+
+              <div className="w-full max-w-md flex-1 md:max-w-none">
+                <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 p-2 backdrop-blur-sm md:p-4">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[2rem] shadow-2xl md:aspect-square">
+                    <Image
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDFHqHGdWMMr1wRtsLtmkZ3BAe6yWoErMvoFd3cvKo5S16lJe5dkqXqP_7205400KdUIIWAmgFFEp1Y_DrDYH8OCj3AlxA7QOtlsG7C_Kc2o0HQSvdHszojofXkvK1KQhrqlOJ4P7afxo8sbZrcNh6CsFgsvBSRGhpGVqLL_N2RMuq8Nt5mZPJIY61vSaaNQvByRJ3ug4cF7fps8mSWHIlwo3ZLukPDRkW4j9njnAIMO0qY3nG6nhbq6mLt7gZYEi3L2gtllKmQm4"
+                      alt="Professional carpooling route in Azerbaijan"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 520px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/20" />
+                </div>
+              </div>
             </div>
           </div>
         </section>

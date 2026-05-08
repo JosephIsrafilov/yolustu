@@ -27,22 +27,22 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-[#ffffff] border-b border-[#c0c8ca] w-full sticky top-0 z-50" style={{ boxShadow: '0 1px 4px rgba(5,71,82,0.06)' }}>
-      <div className="flex justify-between items-center w-full px-6 py-3 max-w-[1140px] mx-auto">
-        {/* Left: Logo + Nav */}
+    <header className="sticky top-0 z-50 w-full border-b border-[#c0c8ca] bg-white shadow-sm">
+      <div className="mx-auto flex h-[72px] w-full max-w-[1140px] items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-[18px] font-[900] text-[#002f37] tracking-tight leading-6">
+          <Link href="/" className="flex items-center gap-2 text-[18px] font-black leading-6 tracking-tight text-[#002f37] transition-colors hover:text-[#3a6a00]">
+            <Icon name="map" size={22} strokeWidth={1.8} />
             YolUstu
           </Link>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden h-[72px] items-center gap-6 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`py-2 text-[12px] font-bold uppercase tracking-wider transition-colors duration-200 ${
+                className={`flex h-full items-center border-b-2 px-2 text-[14px] font-semibold transition-colors duration-200 ${
                   isActive(link.match)
-                    ? 'text-[#3a6a00] border-b-2 border-[#3a6a00]'
-                    : 'text-[#40484a] hover:text-[#3a6a00]'
+                    ? 'border-[#002f37] text-[#002f37]'
+                    : 'border-transparent text-[#40484a] hover:text-[#3a6a00]'
                 }`}
               >
                 {link.label}
@@ -57,12 +57,12 @@ export default function Header() {
             <>
               <Link
                 href={ROUTES.bookings}
-                className="text-[12px] font-bold text-[#40484a] hover:text-[#3a6a00] transition-colors hidden sm:block"
+                className="hidden text-[12px] font-bold text-[#40484a] transition-colors hover:text-[#3a6a00] sm:block"
               >
                 Rezervlər
               </Link>
               {currentUser.role === 'admin' && (
-                <Link href={ROUTES.admin} className="text-[12px] font-bold text-[#40484a] hover:text-[#3a6a00] transition-colors hidden sm:block">
+                <Link href={ROUTES.admin} className="hidden text-[12px] font-bold text-[#40484a] transition-colors hover:text-[#3a6a00] sm:block">
                   Admin
                 </Link>
               )}
@@ -80,18 +80,17 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href={ROUTES.login} className="text-[12px] font-bold text-[#40484a] hover:text-[#3a6a00] transition-colors hidden md:block">
+              <Link href={ROUTES.login} className="hidden px-4 py-2 text-[12px] font-bold text-[#002f37] transition-colors hover:text-[#3a6a00] md:block">
                 Daxil ol
               </Link>
               <Link
                 href={ROUTES.register}
-                className="text-[12px] font-bold text-white bg-[#002f37] px-5 py-2.5 rounded-full hover:bg-[#054752] transition-colors"
+                className="rounded-lg bg-[#002f37] px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#054752]"
               >
                 Qeydiyyat
               </Link>
             </>
           )}
-          {/* Mobile menu toggle */}
           <button className="md:hidden text-[#40484a]" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <Icon name="x" size={22} /> : <Icon name="menu" size={22} />}
           </button>
