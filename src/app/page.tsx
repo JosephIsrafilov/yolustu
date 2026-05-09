@@ -92,17 +92,18 @@ export default function HomePage() {
               Səyahətinizi Asanlaşdırın
             </h1>
 
-            <div className="mt-4 flex w-full max-w-4xl flex-col gap-4 rounded-xl bg-white p-4 shadow-lg md:flex-row md:p-6">
-              <div className="flex-1 relative">
+            <div className="mt-4 grid w-full max-w-4xl gap-3 rounded-xl bg-white p-3 text-left shadow-lg sm:grid-cols-2 md:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] md:items-end md:p-4">
+              <div className="relative">
+                <label className="mb-1.5 block text-[12px] font-bold text-[#40484a]">Haradan</label>
                 <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={dep} onChange={(e) => setDep(e.target.value)}
                   className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]">
-                  <option value="">From</option>
+                  <option value="">Haradan</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              <div className="z-10 -mx-4 hidden items-center justify-center md:flex">
+              <div className="z-10 hidden items-end justify-center pb-1 md:flex">
                 <button
                   type="button"
                   className="rounded-full border border-[#c0c8ca] bg-[#00AFF5] p-2 text-white shadow-sm transition-all hover:border-[#054752] hover:bg-[#054752]"
@@ -116,38 +117,41 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div className="flex-1 relative">
+              <div className="relative">
+                <label className="mb-1.5 block text-[12px] font-bold text-[#40484a]">Haraya</label>
                 <Icon name="map-pin" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select value={arr} onChange={(e) => setArr(e.target.value)}
                   className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]">
-                  <option value="">To</option>
+                  <option value="">Haraya</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              <div className="flex-1 relative">
+              <div className="relative">
+                <label className="mb-1.5 block text-[12px] font-bold text-[#40484a]">Tarix</label>
                 <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
                   className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]" />
               </div>
 
-              <div className="flex-1 relative">
+              <div className="relative">
+                <label className="mb-1.5 block text-[12px] font-bold text-[#40484a]">Sərnişin</label>
                 <Icon name="user" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <select
                   value={passengers}
                   onChange={(e) => setPassengers(Number(e.target.value))}
                   className="w-full rounded-lg border border-[#c0c8ca] bg-[#edfcff] py-3 pl-10 pr-4 text-[16px] text-[#011f23] outline-none transition-all appearance-none focus:border-[#002f37] focus:ring-1 focus:ring-[#002f37]"
                 >
-                  <option value={1}>1 Passenger</option>
-                  <option value={2}>2 Passengers</option>
-                  <option value={3}>3 Passengers</option>
-                  <option value={4}>4+ Passengers</option>
+                  <option value={1}>1 sərnişin</option>
+                  <option value={2}>2 sərnişin</option>
+                  <option value={3}>3 sərnişin</option>
+                  <option value={4}>4+ sərnişin</option>
                 </select>
               </div>
 
               <button onClick={handleSearch}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#00AFF5] px-8 py-3 text-[18px] font-semibold text-white shadow-md transition-colors hover:bg-[#054752] md:w-auto">
-                Search
+                Axtar
                 <Icon name="search" size={18} />
               </button>
             </div>
@@ -158,7 +162,7 @@ export default function HomePage() {
         <section className="border-b border-[#c0c8ca] bg-white px-4 py-10">
           <div className="mx-auto w-full max-w-[1140px]">
             <h2 className="mb-10 text-center text-[24px] font-semibold leading-[32px] text-[#002f37]">
-              Niyə YolUstu?
+              Niyə Yolüstü?
             </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {FEATURES.map((f) => (
@@ -236,7 +240,7 @@ export default function HomePage() {
                 </p>
                 <Link href={ROUTES.createTrip}
                   className="mt-4 inline-flex items-center gap-3 rounded-xl bg-[#3a6a00] px-10 py-4 text-[18px] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#a1fa49] hover:text-[#3e7100] hover:shadow-xl">
-                  Offer a Ride
+                  Gediş paylaş
                   <Icon name="car" size={20} />
                 </Link>
               </div>

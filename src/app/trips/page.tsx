@@ -20,17 +20,24 @@ function TripsContent() {
     departureCity: searchParams.get('from') || undefined,
     arrivalCity: searchParams.get('to') || undefined,
     date: searchParams.get('date') || undefined,
+    minSeats: searchParams.get('passengers') ? Number(searchParams.get('passengers')) : undefined,
   });
 
   const filteredTrips = useMemo(() => filterTrips(trips, filters), [trips, filters]);
   const from = filters.departureCity || 'Bütün';
   const to = filters.arrivalCity || 'Bütün';
+  const activeFilters = [
+    filters.departureCity && `Haradan: ${filters.departureCity}`,
+    filters.arrivalCity && `Haraya: ${filters.arrivalCity}`,
+    filters.date && `Tarix: ${filters.date}`,
+    filters.minSeats && `Sərnişin: ${filters.minSeats}+`,
+  ].filter(Boolean);
 
   return (
     <WebLayout>
       <div className="flex flex-col md:flex-row gap-6">
         {/* ── Sidebar ──────────────────── */}
-        <aside className="w-full md:w-[280px] shrink-0">
+        <aside className="order-2 w-full md:order-1 md:w-[280px] shrink-0">
           <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
             <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
               <h2 className="text-[18px] font-semibold text-[#002f37]">Filtrlər</h2>
@@ -62,43 +69,14 @@ function TripsContent() {
                 className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
             </div>
 
-            {/* Time checkboxes */}
-            <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Gediş vaxtı</h3>
-              <div className="space-y-2">
-                {['Səhər (06:00 - 12:00)', 'Günorta (12:00 - 18:00)', 'Axşam (18:00 - 00:00)'].map((label) => (
-                  <label key={label} className="flex items-center gap-2.5 cursor-pointer">
-                    <input type="checkbox" className="rounded border-[#c0c8ca] text-[#054752] focus:ring-[#054752]/20 w-4 h-4" />
-                    <span className="text-[14px] text-[#011f23]">{label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Amenities */}
-            <div>
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Xüsusiyyətlər</h3>
-              <div className="space-y-2">
-                {[
-                  { icon: 'cigarette-off' as const, label: 'Siqaret çəkilmir' },
-                  { icon: 'user' as const, label: 'Yalnız qadınlar' },
-                  { icon: 'dog' as const, label: 'Ev heyvanlarına icazə' },
-                ].map((item) => {
-                  return (
-                    <label key={item.label} className="flex items-center gap-2.5 cursor-pointer">
-                      <input type="checkbox" className="rounded border-[#c0c8ca] text-[#054752] focus:ring-[#054752]/20 w-4 h-4" />
-                      <Icon name={item.icon} size={16} className="text-[#40484a]" />
-                      <span className="text-[14px] text-[#011f23]">{item.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
+            <div className="rounded-xl bg-[#edfcff] p-3 text-[13px] leading-5 text-[#40484a]">
+              Daha detallı vaxt və xüsusiyyət filtrləri Sprint 1 üçün saxlanılıb. Bu prototipdə yalnız şəhər, tarix və yer sayı işləyir.
             </div>
           </div>
         </aside>
 
         {/* ── Results ──────────────────── */}
-        <section className="flex-1 flex flex-col gap-4">
+        <section className="order-1 flex-1 flex flex-col gap-4 md:order-2">
           {/* Search summary bar */}
           <div className="bg-[#dbf9fe] p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
@@ -116,6 +94,15 @@ function TripsContent() {
               {filteredTrips.length} nəticə tapıldı
             </span>
           </div>
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((filter) => (
+                <span key={filter} className="rounded-full border border-[#c0c8ca] bg-white px-3 py-1 text-[12px] font-semibold text-[#054752]">
+                  {filter}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Trip cards */}
           {filteredTrips.length > 0 ? (
@@ -126,16 +113,13 @@ function TripsContent() {
                 return (
                   <article key={trip.id}
                     onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
-                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 transition-all ${
-                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] cursor-pointer'
-                    }`}
-                    style={{ boxShadow: '0 2px 8px rgba(5,71,82,0.04)' }}
-                    onMouseEnter={(e) => { if (!isFull) e.currentTarget.style.boxShadow = '0 8px 24px rgba(5,71,82,0.10)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(5,71,82,0.04)'; }}>
+                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 shadow-card transition-all ${
+                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] hover:shadow-card-hover cursor-pointer'
+                    }`}>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       {/* Driver */}
-                      <div className="flex items-center gap-3 sm:w-[180px] shrink-0">
+                      <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
                           <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
                             {driver?.fullName.charAt(0) || '?'}
@@ -157,7 +141,7 @@ function TripsContent() {
                       </div>
 
                       {/* Time + route */}
-                      <div className="flex items-center gap-3 flex-1">
+                      <div className="order-1 flex items-center gap-3 flex-1">
                         <div className="text-right shrink-0">
                           <div className="text-[18px] font-semibold text-[#002f37]">{trip.time}</div>
                           <div className="text-[13px] text-[#40484a]">{trip.departureCity}</div>
@@ -181,12 +165,13 @@ function TripsContent() {
                       </div>
 
                       {/* Price + seats */}
-                      <div className="flex flex-col items-end sm:w-[120px] shrink-0">
+                      <div className="order-3 flex flex-col items-end sm:w-[120px] shrink-0">
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
                         <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#3a6a00]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span>{isFull ? 'Yer yoxdur' : `${trip.seatsAvailable} yer qalıb`}</span>
                         </div>
+                        {!isFull && <span className="mt-2 text-[12px] font-bold text-[#054752]">Ətraflı bax</span>}
                       </div>
                     </div>
                   </article>

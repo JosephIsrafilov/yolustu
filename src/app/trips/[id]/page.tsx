@@ -67,9 +67,21 @@ export default function TripDetailsPage() {
             {driver && (<Card><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">{driver.fullName.charAt(0)}</div><div className="flex-1"><p className="text-base font-semibold text-text">{driver.fullName}</p><div className="flex items-center gap-2 text-xs text-text-muted"><span className="flex items-center gap-0.5"><Icon name="star" size={11} className="text-accent-500" fill="currentColor" />{formatRating(driver.rating)}</span><span>{driver.totalTrips} gediş</span><span>{driver.city}</span></div></div></div></Card>)}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
-              <Card><div className="flex flex-col gap-4">
+              <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-base font-bold text-text">Rezerv sorğusu</p>
+                  <p className="text-xs text-text-muted">Sürücü təsdiqlədikdən sonra rezerv aktiv olacaq.</p>
+                </div>
                 <div className="flex items-center justify-between"><span className="text-sm font-medium">Neçə yer?</span><div className="flex items-center gap-2"><button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">−</button><span className="w-8 text-center font-bold">{seats}</span><button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button></div></div>
-                <div className="flex items-center justify-between text-sm"><span className="text-text-muted">Cəmi</span><span className="font-bold text-brand-600">{formatPrice(trip.pricePerSeat * seats)}</span></div>
+                <div className="rounded-xl bg-surface-muted p-3 text-sm">
+                  <div className="flex items-center justify-between"><span className="text-text-muted">Seçilən yerlər</span><span className="font-semibold">{seats}</span></div>
+                  <div className="mt-2 flex items-center justify-between"><span className="text-text-muted">Yer başına</span><span className="font-semibold">{formatPrice(trip.pricePerSeat)}</span></div>
+                  <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">Cəmi</span><span className="text-lg font-bold text-brand-600">{formatPrice(trip.pricePerSeat * seats)}</span></div>
+                </div>
+                <div className="flex items-start gap-2 rounded-xl bg-[#fff8e8] p-3 text-xs leading-5 text-[#6b4b00]">
+                  <Icon name="shield-check" size={16} className="mt-0.5 shrink-0" />
+                  <span>Ödənişi və razılaşmanı platformadan kənarda etməyin.</span>
+                </div>
                 <Button fullWidth size="lg" onClick={handleBook}>Rezerv sorğusu göndər</Button>
               </div></Card>
             )}

@@ -19,6 +19,11 @@ export default function DriverDashboardPage() {
     const trip = myTrips.find((t) => t.id === b.tripId);
     return trip && b.status === 'pending';
   });
+  const nextTrip = activeTrips
+    .slice()
+    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))[0];
+  const nextRequest = pendingBookings[0];
+  const nextRequestTrip = nextRequest ? myTrips.find((t) => t.id === nextRequest.tripId) : undefined;
 
   return (
     <WebLayout title="Sürücü paneli">
@@ -36,6 +41,38 @@ export default function DriverDashboardPage() {
             <Icon name="inbox" size={18} /> Rezerv sorğuları
             {pendingBookings.length > 0 && (<span className="ml-1 px-1.5 py-0.5 bg-accent-500 text-white text-[10px] font-bold rounded-full">{pendingBookings.length}</span>)}
           </Button>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <Card>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-text">Növbəti addım</p>
+                {pendingBookings.length > 0 ? (
+                  <p className="mt-1 text-sm text-text-secondary">
+                    {pendingBookings.length} rezerv sorğusu gözləyir{nextRequestTrip ? `: ${nextRequestTrip.departureCity} → ${nextRequestTrip.arrivalCity}` : '.'}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-text-secondary">Hazırda gözləyən sorğu yoxdur.</p>
+                )}
+              </div>
+              <Button size="sm" variant={pendingBookings.length > 0 ? 'primary' : 'outline'} onClick={() => router.push(ROUTES.bookingRequests)}>Bax</Button>
+            </div>
+          </Card>
+          <Card>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-text">Yaxın aktiv gediş</p>
+                {nextTrip ? (
+                  <p className="mt-1 text-sm text-text-secondary">{nextTrip.departureCity} → {nextTrip.arrivalCity} · {nextTrip.date} · {nextTrip.time}</p>
+                ) : (
+                  <p className="mt-1 text-sm text-text-secondary">Aktiv gediş yoxdur. Yeni marşrut paylaşa bilərsiniz.</p>
+                )}
+              </div>
+              <Button size="sm" variant="outline" onClick={() => router.push(nextTrip ? ROUTES.myTrips : ROUTES.createTrip)}>
+                {nextTrip ? 'Gedişlər' : 'Yarat'}
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
       </ProtectedRoute>

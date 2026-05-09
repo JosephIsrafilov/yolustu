@@ -26,6 +26,10 @@ export default function SearchPage() {
     router.push(`${ROUTES.trips}?${params.toString()}`);
   };
 
+  const openPopularRoute = (from: string, to: string) => {
+    router.push(`${ROUTES.trips}?${new URLSearchParams({ from, to }).toString()}`);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/');
@@ -38,11 +42,14 @@ export default function SearchPage() {
 
   return (
     <WebLayout title="Gediş axtar">
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
-            <h2 className="text-lg font-bold text-text mb-4">Axtarış</h2>
-            <div className="flex flex-col gap-4">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-text">Marşrut</h2>
+              <p className="text-xs text-text-muted">Haradan, haraya və tarixi seçin</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-secondary">Haradan</label>
                 <select value={dep} onChange={(e) => setDep(e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -61,7 +68,9 @@ export default function SearchPage() {
                 <label className="text-sm font-medium text-text-secondary">Tarix</label>
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
               </div>
-              <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> Axtar</Button>
+              <div className="sm:flex sm:items-end lg:block">
+                <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> Axtar</Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -80,17 +89,21 @@ export default function SearchPage() {
           <h3 className="text-lg font-bold text-text mb-3">Populyar marşrutlar</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             {POPULAR_ROUTES.map((r) => (
-              <Card key={`${r.from}-${r.to}`} hoverable padding="md" onClick={() => {
-                setDep(r.from); setArr(r.to); handleSearch();
-              }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon name="map-pin" size={14} className="text-brand-500" />
-                    <span className="font-medium text-sm">{r.from}</span>
-                    <Icon name="arrow-right" size={14} className="text-text-muted" />
-                    <span className="font-medium text-sm">{r.to}</span>
+              <Card key={`${r.from}-${r.to}`} hoverable padding="md" onClick={() => openPopularRoute(r.from, r.to)}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                      <Icon name="map-pin" size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-text">{r.from} → {r.to}</p>
+                      <p className="text-xs text-text-muted">Uyğun gedişləri göstər</p>
+                    </div>
                   </div>
-                  <span className="text-sm font-bold text-brand-600">~{formatPrice(r.avgPrice)}</span>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-bold text-brand-600">~{formatPrice(r.avgPrice)}</p>
+                    <Icon name="arrow-right" size={14} className="ml-auto text-text-muted" />
+                  </div>
                 </div>
               </Card>
             ))}

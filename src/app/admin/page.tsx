@@ -1,13 +1,18 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Card from '@/components/ui/Card';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
+import { ROUTES } from '@/lib/routes';
 
 export default function AdminDashboardPage() {
   const { users, trips, bookings } = useAppStore();
+  const blockedUsers = users.filter((u) => u.isBlocked);
+  const activeTrips = trips.filter((t) => t.status === 'active');
+  const pendingBookings = bookings.filter((b) => b.status === 'pending');
 
   const stats: { label: string; value: number; icon: IconName; color: string }[] = [
     { label: 'İstifadəçilər', value: users.length, icon: 'users', color: 'text-brand-600' },
@@ -35,6 +40,35 @@ export default function AdminDashboardPage() {
             </div>
           </Card>
         ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">Moderasiya</p>
+              <p className="mt-1 text-sm text-text-secondary">{blockedUsers.length} bloklanmış istifadəçi</p>
+            </div>
+            <Link href={ROUTES.adminUsers} className="text-sm font-bold text-brand-600 hover:underline">İstifadəçilər</Link>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">Aktiv gedişlər</p>
+              <p className="mt-1 text-sm text-text-secondary">{activeTrips.length} marşrut hazırda aktivdir</p>
+            </div>
+            <Link href={ROUTES.adminTrips} className="text-sm font-bold text-brand-600 hover:underline">Gedişlər</Link>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">Rezerv sorğuları</p>
+              <p className="mt-1 text-sm text-text-secondary">{pendingBookings.length} gözləyən rezerv var</p>
+            </div>
+            <Link href={ROUTES.adminBookings} className="text-sm font-bold text-brand-600 hover:underline">Rezervlər</Link>
+          </div>
+        </Card>
       </div>
     </AdminLayout>
   );
