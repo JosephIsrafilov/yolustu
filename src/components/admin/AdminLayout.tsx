@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const ADMIN_LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: ROUTES.admin, label: 'Panel', icon: 'layout-dashboard' },
@@ -45,7 +46,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </div>
       </nav>
-      <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        <ProtectedRoute mode="admin">{children}</ProtectedRoute>
+      </main>
     </div>
   );
 }

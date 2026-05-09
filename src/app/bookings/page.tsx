@@ -9,10 +9,11 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function BookingsPage() {
   const router = useRouter();
-  const { bookings, trips, users, currentUser, cancelBooking } = useAppStore();
+  const { bookings, trips, users, currentUser, cancelBooking, lastError, clearError } = useAppStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
   const myBookings = bookings.filter((b) => b.passengerId === currentUser?.id);
@@ -22,6 +23,15 @@ export default function BookingsPage() {
 
   return (
     <WebLayout title="Rezervlərim">
+      <ProtectedRoute>
+      {lastError && (
+        <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
+          <div className="flex items-center justify-between gap-3">
+            <span>{lastError}</span>
+            <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+          </div>
+        </div>
+      )}
       <div className="flex gap-1 bg-surface-muted rounded-xl p-1 mb-6 max-w-xs">
         {(['upcoming', 'past'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={cn('flex-1 py-2 text-sm font-medium rounded-lg transition-all', tab === t ? 'bg-white text-brand-600 shadow-sm' : 'text-text-muted')}>
@@ -40,6 +50,7 @@ export default function BookingsPage() {
       ) : (
         <EmptyState icon={<Icon name="calendar-check" size={28} />} title={tab === 'upcoming' ? 'Gələn rezerv yoxdur' : 'Keçmiş rezerv yoxdur'} description="Gediş axtarın və ilk rezervinizi edin" />
       )}
+      </ProtectedRoute>
     </WebLayout>
   );
 }

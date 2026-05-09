@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function DriverDashboardPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function DriverDashboardPage() {
 
   return (
     <WebLayout title="Sürücü paneli">
+      <ProtectedRoute mode="driver">
       <div className="stagger-children">
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card padding="lg" className="text-center"><p className="text-3xl font-bold text-brand-600">{activeTrips.length}</p><p className="text-sm text-text-muted mt-1">Aktiv gediş</p></Card>
@@ -36,6 +38,7 @@ export default function DriverDashboardPage() {
           </Button>
         </div>
       </div>
+      </ProtectedRoute>
     </WebLayout>
   );
 }

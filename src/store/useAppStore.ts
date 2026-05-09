@@ -20,6 +20,7 @@ interface AppState {
   currentUser: User | null;
   isAuthenticated: boolean;
   activeRole: 'passenger' | 'driver';
+  lastError: string | null;
 
   // ─── Data ─────────────────────────────────────────────────
   users: User[];
@@ -33,28 +34,29 @@ interface AppState {
   logout: () => void;
   switchRole: (role: 'passenger' | 'driver') => void;
   loginAsAdmin: () => void;
+  clearError: () => void;
 
   // ─── Profile actions ──────────────────────────────────────
   updateProfile: (data: Partial<User>) => void;
 
   // ─── Trip actions ─────────────────────────────────────────
   createTrip: (data: Omit<Trip, 'id' | 'driverId' | 'seatsAvailable' | 'status' | 'createdAt'>) => string;
-  cancelTrip: (tripId: string) => void;
-  completeTrip: (tripId: string) => void;
+  cancelTrip: (tripId: string) => boolean;
+  completeTrip: (tripId: string) => boolean;
 
   // ─── Booking actions ──────────────────────────────────────
   createBooking: (tripId: string, seats: number) => string;
-  acceptBooking: (bookingId: string) => void;
-  rejectBooking: (bookingId: string) => void;
-  cancelBooking: (bookingId: string) => void;
+  acceptBooking: (bookingId: string) => boolean;
+  rejectBooking: (bookingId: string) => boolean;
+  cancelBooking: (bookingId: string) => boolean;
 
   // ─── Review actions ───────────────────────────────────────
-  createReview: (data: { tripId: string; targetUserId: string; rating: number; comment: string }) => void;
+  createReview: (data: { tripId: string; targetUserId: string; rating: number; comment: string }) => boolean;
 
   // ─── Admin actions ────────────────────────────────────────
   blockUser: (userId: string) => void;
   unblockUser: (userId: string) => void;
-  deleteTrip: (tripId: string) => void;
+  deleteTrip: (tripId: string) => boolean;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -62,6 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentUser: null,
   isAuthenticated: false,
   activeRole: 'passenger',
+  lastError: null,
 
   users: [...MOCK_USERS],
   trips: [...MOCK_TRIPS],
@@ -88,36 +91,60 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentUser: newUser,
       isAuthenticated: true,
       activeRole: 'passenger',
+      lastError: null,
     }));
   },
 
-  login: (email: string) => {
-    const user = get().users.find((u) => u.email === email);
-    if (user) {
-      set({ currentUser: user, isAuthenticated: true, activeRole: user.role === 'admin' ? 'passenger' : (user.role as 'passenger' | 'driver') });
-      return true;
+  login: (email: string, password: string) => {
+    void password;
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (!user) {
+      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Email vЙ™ ya ЕџifrЙ™ yanlД±ЕџdД±r.' });
+      return false;
     }
-    return false;
+    if (user.isBlocked) {
+      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'HesabД±nД±z bloklanД±b. DЙ™stЙ™k xidmЙ™ti ilЙ™ Й™laqЙ™ saxlayД±n.' });
+      return false;
+    }
+
+    // Sprint 0 mock auth intentionally accepts any valid password for demo users.
+    set({
+      currentUser: user,
+      isAuthenticated: true,
+      activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+      lastError: null,
+    });
+    return true;
   },
 
   logout: () => {
-    set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger' });
+    set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: null });
   },
 
   switchRole: (role) => {
     const { currentUser } = get();
     if (!currentUser) return;
+    if (currentUser.role === 'admin') {
+      set({ activeRole: role, lastError: null });
+      return;
+    }
     set({
       activeRole: role,
       currentUser: { ...currentUser, role: role as UserRole },
+      lastError: null,
     });
   },
 
   loginAsAdmin: () => {
     const admin = get().users.find((u) => u.role === 'admin');
     if (admin) {
-      set({ currentUser: admin, isAuthenticated: true });
+      set({ currentUser: admin, isAuthenticated: true, activeRole: 'passenger', lastError: null });
     }
+  },
+
+  clearError: () => {
+    set({ lastError: null });
   },
 
   // ─── Profile ──────────────────────────────────────────────
@@ -134,7 +161,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   // ─── Trips ────────────────────────────────────────────────
   createTrip: (data) => {
     const { currentUser } = get();
-    if (!currentUser) return '';
+    if (!currentUser) {
+      set({ lastError: 'GediЕџ yaratmaq ГјГ§Гјn daxil olun.' });
+      return '';
+    }
+    if (currentUser.role !== 'driver' && get().activeRole !== 'driver') {
+      set({ lastError: 'GediЕџ yaratmaq ГјГ§Гјn sГјrГјcГј roluna keГ§in.' });
+      return '';
+    }
     const id = generateId();
     const trip: Trip = {
       ...data,
@@ -144,11 +178,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       status: 'active',
       createdAt: new Date().toISOString(),
     };
-    set((s) => ({ trips: [...s.trips, trip] }));
+    set((s) => ({ trips: [...s.trips, trip], lastError: null }));
     return id;
   },
 
   cancelTrip: (tripId) => {
+    const trip = get().trips.find((t) => t.id === tripId);
+    if (!trip) {
+      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      return false;
+    }
     set((s) => ({
       trips: s.trips.map((t) =>
         t.id === tripId ? { ...t, status: 'cancelled' as const } : t,
@@ -160,10 +199,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
         return b;
       }),
+      lastError: null,
     }));
+    return true;
   },
 
   completeTrip: (tripId) => {
+    const trip = get().trips.find((t) => t.id === tripId);
+    if (!trip) {
+      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      return false;
+    }
     set((s) => ({
       trips: s.trips.map((t) =>
         t.id === tripId ? { ...t, status: 'completed' as const } : t,
@@ -174,13 +220,48 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
         return b;
       }),
+      lastError: null,
     }));
+    return true;
   },
 
   // ─── Bookings ─────────────────────────────────────────────
   createBooking: (tripId, seats) => {
-    const { currentUser } = get();
-    if (!currentUser) return '';
+    const { currentUser, trips, bookings } = get();
+    if (!currentUser) {
+      set({ lastError: 'Rezerv sorДџusu ГјГ§Гјn daxil olun.' });
+      return '';
+    }
+    const trip = trips.find((t) => t.id === tripId);
+    if (!trip) {
+      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      return '';
+    }
+    if (trip.driverId === currentUser.id) {
+      set({ lastError: 'Г–z gediЕџinizЙ™ rezerv edЙ™ bilmЙ™zsiniz.' });
+      return '';
+    }
+    if (trip.status !== 'active') {
+      set({ lastError: 'Bu gediЕџ artД±q aktiv deyil.' });
+      return '';
+    }
+    if (!Number.isInteger(seats) || seats < 1) {
+      set({ lastError: 'Yer sayД± dГјzgГјn deyil.' });
+      return '';
+    }
+    if (seats > trip.seatsAvailable) {
+      set({ lastError: 'KifayЙ™t qЙ™dЙ™r boЕџ yer yoxdur.' });
+      return '';
+    }
+    const hasActiveBooking = bookings.some((b) =>
+      b.tripId === tripId &&
+      b.passengerId === currentUser.id &&
+      ['pending', 'accepted', 'completed'].includes(b.status),
+    );
+    if (hasActiveBooking) {
+      set({ lastError: 'Bu gediЕџ ГјГ§Гјn artД±q aktiv sorДџunuz var.' });
+      return '';
+    }
     const id = generateId();
     const booking: Booking = {
       id,
@@ -190,36 +271,73 @@ export const useAppStore = create<AppState>((set, get) => ({
       seatsRequested: seats,
       createdAt: new Date().toISOString(),
     };
-    set((s) => ({ bookings: [...s.bookings, booking] }));
+    set((s) => ({ bookings: [...s.bookings, booking], lastError: null }));
     return id;
   },
 
   acceptBooking: (bookingId) => {
-    const booking = get().bookings.find((b) => b.id === bookingId);
-    if (!booking) return;
+    const { bookings, trips } = get();
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (!booking) {
+      set({ lastError: 'Rezerv sorДџusu tapД±lmadД±.' });
+      return false;
+    }
+    if (booking.status !== 'pending') {
+      set({ lastError: 'YalnД±z gГ¶zlЙ™yЙ™n sorДџular qЙ™bul edilЙ™ bilЙ™r.' });
+      return false;
+    }
+    const trip = trips.find((t) => t.id === booking.tripId);
+    if (!trip || trip.status !== 'active') {
+      set({ lastError: 'GediЕџ aktiv deyil vЙ™ ya tapД±lmadД±.' });
+      return false;
+    }
+    if (trip.seatsAvailable < booking.seatsRequested) {
+      set({ lastError: 'Bu sorДџu ГјГ§Гјn kifayЙ™t qЙ™dЙ™r boЕџ yer yoxdur.' });
+      return false;
+    }
     set((s) => ({
       bookings: s.bookings.map((b) =>
         b.id === bookingId ? { ...b, status: 'accepted' as BookingStatus } : b,
       ),
       trips: s.trips.map((t) =>
         t.id === booking.tripId
-          ? { ...t, seatsAvailable: Math.max(0, t.seatsAvailable - booking.seatsRequested) }
+          ? { ...t, seatsAvailable: t.seatsAvailable - booking.seatsRequested }
           : t,
       ),
+      lastError: null,
     }));
+    return true;
   },
 
   rejectBooking: (bookingId) => {
+    const booking = get().bookings.find((b) => b.id === bookingId);
+    if (!booking) {
+      set({ lastError: 'Rezerv sorДџusu tapД±lmadД±.' });
+      return false;
+    }
+    if (booking.status !== 'pending') {
+      set({ lastError: 'YalnД±z gГ¶zlЙ™yЙ™n sorДџular rЙ™dd edilЙ™ bilЙ™r.' });
+      return false;
+    }
     set((s) => ({
       bookings: s.bookings.map((b) =>
         b.id === bookingId ? { ...b, status: 'rejected' as BookingStatus } : b,
       ),
+      lastError: null,
     }));
+    return true;
   },
 
   cancelBooking: (bookingId) => {
     const booking = get().bookings.find((b) => b.id === bookingId);
-    if (!booking) return;
+    if (!booking) {
+      set({ lastError: 'Rezerv tapД±lmadД±.' });
+      return false;
+    }
+    if (!['pending', 'accepted'].includes(booking.status)) {
+      set({ lastError: 'Bu rezerv artД±q lЙ™Дџv edilЙ™ bilmЙ™z.' });
+      return false;
+    }
     const wasAccepted = booking.status === 'accepted';
     set((s) => ({
       bookings: s.bookings.map((b) =>
@@ -232,13 +350,50 @@ export const useAppStore = create<AppState>((set, get) => ({
               : t,
           )
         : s.trips,
+      lastError: null,
     }));
+    return true;
   },
 
   // ─── Reviews ──────────────────────────────────────────────
   createReview: (data) => {
-    const { currentUser } = get();
-    if (!currentUser) return;
+    const { currentUser, trips, users, reviews, bookings } = get();
+    if (!currentUser) {
+      set({ lastError: 'RЙ™y yazmaq ГјГ§Гјn daxil olun.' });
+      return false;
+    }
+    if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 5) {
+      set({ lastError: 'Reytinq 1-5 arasД±nda olmalД±dД±r.' });
+      return false;
+    }
+    const trip = trips.find((t) => t.id === data.tripId);
+    if (!trip) {
+      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      return false;
+    }
+    const targetUser = users.find((u) => u.id === data.targetUserId);
+    if (!targetUser) {
+      set({ lastError: 'QiymЙ™tlЙ™ndirilЙ™cЙ™k istifadЙ™Г§i tapД±lmadД±.' });
+      return false;
+    }
+    const completedBooking = bookings.find((b) =>
+      b.tripId === data.tripId &&
+      b.passengerId === currentUser.id &&
+      b.status === 'completed',
+    );
+    if (trip.status !== 'completed' || !completedBooking) {
+      set({ lastError: 'RЙ™y yalnД±z tamamlanmД±Еџ rezervdЙ™n sonra yazД±la bilЙ™r.' });
+      return false;
+    }
+    const duplicateReview = reviews.some((r) =>
+      r.authorId === currentUser.id &&
+      r.tripId === data.tripId &&
+      r.targetUserId === data.targetUserId,
+    );
+    if (duplicateReview) {
+      set({ lastError: 'Bu gediЕџ ГјГ§Гјn artД±q rЙ™y yazmД±sД±nД±z.' });
+      return false;
+    }
     const review: Review = {
       id: generateId(),
       tripId: data.tripId,
@@ -262,8 +417,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           s.currentUser?.id === data.targetUserId
             ? { ...s.currentUser, rating: Math.round(avgRating * 10) / 10 }
             : s.currentUser,
+        lastError: null,
       };
     });
+    return true;
   },
 
   // ─── Admin ────────────────────────────────────────────────
@@ -280,8 +437,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   deleteTrip: (tripId) => {
+    const trip = get().trips.find((t) => t.id === tripId);
+    if (!trip) {
+      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      return false;
+    }
     set((s) => ({
       trips: s.trips.filter((t) => t.id !== tripId),
+      // Keep historical booking rows but cancel open bookings to avoid orphan active state.
+      bookings: s.bookings.map((b) =>
+        b.tripId === tripId && (b.status === 'pending' || b.status === 'accepted')
+          ? { ...b, status: 'cancelled' as BookingStatus }
+          : b,
+      ),
+      reviews: s.reviews.filter((r) => r.tripId !== tripId),
+      lastError: null,
     }));
+    return true;
   },
 }));

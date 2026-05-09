@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
@@ -30,9 +31,15 @@ export default function LoginPage() {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
+    setSubmitError('');
     await new Promise((r) => setTimeout(r, 400));
-    login(email, password);
-    router.push(ROUTES.search);
+    const ok = login(email, password);
+    setLoading(false);
+    if (ok) {
+      router.push(ROUTES.search);
+      return;
+    }
+    setSubmitError('Email vЙ™ ya ЕџifrЙ™ yanlД±ЕџdД±r, yaxud hesab bloklanД±b.');
   };
 
   return (
@@ -68,6 +75,12 @@ export default function LoginPage() {
               </div>
               {errors.password && <p className="text-[12px] text-[#ba1a1a]">{errors.password}</p>}
             </div>
+
+            {submitError && (
+              <div className="rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-[13px] font-medium text-[#93000a]">
+                {submitError}
+              </div>
+            )}
 
             <button type="submit" disabled={loading}
               className="w-full bg-[#7ED321] text-white font-semibold text-[16px] py-3.5 rounded-xl hover:bg-[#6bc01a] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"

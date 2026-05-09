@@ -12,12 +12,13 @@ import { AZ_CITIES } from '@/lib/utils';
 import { CAR_MODELS } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
 import type { CreateTripData } from '@/types';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const STEPS = ['Marşrut', 'Tarix', 'Yerlər', 'Maşın', 'Baxış'];
 
 export default function CreateTripPage() {
   const router = useRouter();
-  const createTrip = useAppStore((s) => s.createTrip);
+  const { createTrip, lastError, clearError } = useAppStore();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CreateTripData>({
     departureCity: '', arrivalCity: '', meetingPoint: '', dropoffPoint: '',
@@ -48,12 +49,21 @@ export default function CreateTripPage() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const publish = () => {
-    createTrip({ departureCity: form.departureCity, arrivalCity: form.arrivalCity, meetingPoint: form.meetingPoint, dropoffPoint: form.dropoffPoint, date: form.date, time: form.time, seatsTotal: form.seatsTotal, pricePerSeat: form.pricePerSeat, carModel: form.carModel, comment: form.comment });
-    router.push(ROUTES.myTrips);
+    const id = createTrip({ departureCity: form.departureCity, arrivalCity: form.arrivalCity, meetingPoint: form.meetingPoint, dropoffPoint: form.dropoffPoint, date: form.date, time: form.time, seatsTotal: form.seatsTotal, pricePerSeat: form.pricePerSeat, carModel: form.carModel, comment: form.comment });
+    if (id) router.push(ROUTES.myTrips);
   };
 
   return (
     <WebLayout title="Yeni gediş" showBack narrow hideFooter>
+      <ProtectedRoute mode="driver">
+      {lastError && (
+        <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
+          <div className="flex items-center justify-between gap-3">
+            <span>{lastError}</span>
+            <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-2 mb-8">
         {STEPS.map((s, i) => (<div key={s} className="flex-1"><div className={`h-2 rounded-full transition-colors duration-300 ${i <= step ? 'bg-brand-500' : 'bg-surface-muted'}`} /><p className={`text-xs mt-1.5 text-center ${i === step ? 'text-brand-600 font-semibold' : 'text-text-muted'}`}>{s}</p></div>))}
       </div>
@@ -99,6 +109,7 @@ export default function CreateTripPage() {
           {step < 4 ? (<Button fullWidth onClick={next}>İrəli <Icon name="arrow-right" size={16} /></Button>) : (<Button fullWidth size="lg" onClick={publish}><Icon name="check" size={16} /> Gedişi dərc et</Button>)}
         </div>
       </Card>
+      </ProtectedRoute>
     </WebLayout>
   );
 }

@@ -17,7 +17,7 @@ import Icon from '@/components/ui/Icon';
 export default function TripDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated } = useAppStore();
+  const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated, lastError, clearError } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
 
@@ -31,7 +31,8 @@ export default function TripDetailsPage() {
 
   const handleBook = () => {
     if (!isAuthenticated || isOwnTrip || existingBooking) return;
-    createBooking(trip.id, seats);
+    const bookingId = createBooking(trip.id, seats);
+    if (!bookingId) return;
     setBooked(true);
     setTimeout(() => router.push(ROUTES.bookings), 1000);
   };
@@ -55,6 +56,14 @@ export default function TripDetailsPage() {
         <div className="lg:col-span-1">
           <div className="sticky top-24 flex flex-col gap-4">
             <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">Yer başına qiymət</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
+            {lastError && (
+              <Card padding="sm" className="bg-[#fff4f2] border-[#ffdad6]">
+                <div className="flex items-center justify-between gap-3 text-sm font-medium text-[#93000a]">
+                  <span>{lastError}</span>
+                  <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+                </div>
+              </Card>
+            )}
             {driver && (<Card><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">{driver.fullName.charAt(0)}</div><div className="flex-1"><p className="text-base font-semibold text-text">{driver.fullName}</p><div className="flex items-center gap-2 text-xs text-text-muted"><span className="flex items-center gap-0.5"><Icon name="star" size={11} className="text-accent-500" fill="currentColor" />{formatRating(driver.rating)}</span><span>{driver.totalTrips} gediş</span><span>{driver.city}</span></div></div></div></Card>)}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
