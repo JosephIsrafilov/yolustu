@@ -23,8 +23,8 @@ export default function ProtectedRoute({ children, mode = 'auth' }: ProtectedRou
     return (
       <EmptyState
         icon={<Icon name="lock" size={28} />}
-        title="Daxil olmaq lazД±mdД±r"
-        description="Bu sЙ™hifЙ™yЙ™ baxmaq ГјГ§Гјn hesabД±nД±za daxil olun."
+        title="Daxil olmaq lazımdır"
+        description="Bu səhifəyə baxmaq üçün hesabınıza daxil olun."
         action={<Button onClick={() => router.push(ROUTES.login)}>Daxil ol</Button>}
       />
     );
@@ -34,9 +34,9 @@ export default function ProtectedRoute({ children, mode = 'auth' }: ProtectedRou
     return (
       <EmptyState
         icon={<Icon name="shield-off" size={28} />}
-        title="GiriЕџ icazЙ™si yoxdur"
-        description="Bu bГ¶lmЙ™ yalnД±z admin istifadЙ™Г§ilЙ™ri ГјГ§ГјndГјr."
-        action={<Button variant="outline" onClick={() => router.push(ROUTES.search)}>TЙ™tbiqЙ™ qayД±t</Button>}
+        title="Giriş icazəsi yoxdur"
+        description="Bu bölmə yalnız admin istifadəçiləri üçündür."
+        action={<Button variant="outline" onClick={() => router.push(ROUTES.search)}>Tətbiqə qayıt</Button>}
       />
     );
   }
@@ -46,9 +46,9 @@ export default function ProtectedRoute({ children, mode = 'auth' }: ProtectedRou
     return (
       <EmptyState
         icon={<Icon name="car" size={28} />}
-        title="SГјrГјcГј rejimi lazД±mdД±r"
-        description="Bu bГ¶lmЙ™dЙ™ davam etmЙ™k ГјГ§Гјn profildЙ™ sГјrГјcГј roluna keГ§in."
-        action={<Button onClick={() => router.push(ROUTES.profile)}>ProfilЙ™ keГ§</Button>}
+        title="Sürücü rejimi lazımdır"
+        description="Bu bölmədə davam etmək üçün profildə sürücü roluna keçin."
+        action={<Button onClick={() => router.push(ROUTES.profile)}>Profilə keç</Button>}
       />
     );
   }

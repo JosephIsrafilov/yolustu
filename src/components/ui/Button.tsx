@@ -16,15 +16,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-sm',
+    'bg-brand-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:bg-brand-800',
   secondary:
-    'bg-brand-50 text-brand-700 hover:bg-brand-100 active:bg-brand-200',
+    'bg-brand-50 text-brand-700 hover:-translate-y-0.5 hover:bg-brand-100 active:translate-y-0 active:scale-[0.98] active:bg-brand-200',
   outline:
-    'border border-border-strong bg-white text-text hover:bg-surface-muted active:bg-surface-dim',
+    'border border-border-strong bg-white text-text hover:-translate-y-0.5 hover:bg-surface-muted hover:shadow-sm active:translate-y-0 active:scale-[0.98] active:bg-surface-dim',
   ghost:
-    'text-text-secondary hover:bg-surface-muted active:bg-surface-dim',
+    'text-text-secondary hover:bg-surface-muted active:scale-[0.98] active:bg-surface-dim',
   danger:
-    'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-600',
+    'bg-danger-500 text-white hover:-translate-y-0.5 hover:bg-danger-600 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:bg-danger-600',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -46,7 +46,7 @@ export default function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200',
+        'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variantClasses[variant],

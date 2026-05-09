@@ -30,7 +30,7 @@ export default function Card({
       className={cn(
         'bg-white rounded-2xl border border-border',
         paddingMap[padding],
-        hoverable && 'cursor-pointer transition-all duration-200 hover:shadow-md hover:border-brand-200 active:scale-[0.98]',
+        hoverable && 'cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md active:translate-y-0 active:scale-[0.98]',
         className,
       )}
     >
