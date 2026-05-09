@@ -1,79 +1,113 @@
-# 🚗 Yolüstü — Azərbaycan Carpooling Platforması
+# Yolüstü — Azerbaijan Carpooling Prototype
 
-> Şəhərlərarası gedişləri tap, paylaş, ucuz və rahat səyahət et.
+Yolüstü is a Sprint 0 frontend-only prototype for a carpooling product in Azerbaijan. It is built to demonstrate passenger, driver, and admin flows with mock data before Sprint 1 backend integration.
 
-## Layihə Haqqında
+This repository is not production-ready. It does not include a real backend, real authentication, payments, maps, SMS, push notifications, chat, or uploads.
 
-**Yolüstü** — Azərbaycan bazarı üçün hazırlanmış carpooling (ortaq gediş) platformasıdır. Tətbiq sərnişinlərə sürücülərlə şəhərlərarası gedişləri paylaşmağa imkan verir.
+## Current Sprint 0 Status
 
-- Sürücülər gediş elan edir
-- Sərnişinlər gediş axtarır və rezerv sorğusu göndərir
-- Sürücü sorğunu qəbul və ya rədd edir
-- MVP yalnız fərdi maşınlarla carpooling-ə fokuslanır
+- Next.js 16 App Router + TypeScript frontend prototype.
+- Tailwind CSS v4 for styling.
+- Zustand for client-side state.
+- Mock demo data and mock flows only.
+- P0 protected route guards exist for passenger, driver, and admin screens.
+- P0 mock store validation exists for booking, review, and trip-related actions.
+- P0 mobile UI improvements exist for landing, search, trip list, trip details, driver dashboard, and admin dashboard.
+- Data is in-memory/client-side mock state. It is suitable for demos only.
+- Real backend/API integration is planned for Sprint 1 and is not implemented yet.
 
-## Sprint 0 Məqsədi
+## Technology Stack
 
-Sprint 0 layihənin əsasını hazırlayır:
-- ✅ Məhsul vizyonu və MVP hüdudları
-- ✅ Scrum prosesi və rol bölgüsü
-- ✅ Product Backlog və User Story-lər
-- ✅ Arxitektura və verilənlər bazası sxemi
-- ✅ API kontraktı
-- ✅ Mobil-first UI prototipi (clickable)
-- ✅ Mock data ilə işləyən bütün ekranlar
-- ✅ Admin paneli
-- ✅ Sənədləşdirmə
-
-## Texnologiya Yığını (Sprint 0 Prototipi)
-
-| Komponent | Texnologiya |
+| Area | Current implementation |
 |---|---|
-| Frontend | Next.js 16 + TypeScript |
-| Stil | Tailwind CSS v4 |
-| State | Zustand |
-| İkonlar | Lucide React |
-| Data | Mock data (in-memory) |
+| Framework | Next.js 16 App Router |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| State management | Zustand |
+| Data | Mock data / client-side state |
+| Authentication | Mock login only |
+| Backend | Not implemented |
 
-### Gələcək Tövsiyə Olunan Yığın
+## What Is Not Implemented Yet
 
-| Komponent | Texnologiya |
-|---|---|
-| Mobil Tətbiq | Flutter və ya React Native |
-| Backend | Django REST Framework və ya FastAPI |
-| Verilənlər Bazası | PostgreSQL |
-| Autentifikasiya | JWT |
-| Admin Panel | Django Admin və ya React Admin |
-| API Sənədləri | Swagger / OpenAPI |
+- Real backend or database.
+- Real auth/JWT/session handling.
+- Real password verification.
+- Payments.
+- Maps/GPS.
+- SMS OTP.
+- Push notifications.
+- Chat.
+- File upload.
+- Production moderation, verification, or audit tooling.
 
-## Necə İşə Salmaq
+## How To Run
 
 ```bash
-# Bağımlılıqları quraşdırın
 npm install
-
-# Development serveri başladın
 npm run dev
-
-# Production build
 npm run build
+npm run lint
 ```
 
-Tətbiq `http://localhost:3000` ünvanında açılacaq.
+Development server:
 
-## Demo İstifadəçilər
+```text
+http://localhost:3000
+```
 
-| Rol | Email | Şifrə |
+## Demo Users
+
+Sprint 0 uses mock login. The email must match an existing demo user, blocked users cannot log in, and the password is intentionally accepted as "any password" for demo purposes.
+
+| Role | Email | Password |
 |---|---|---|
-| Sürücü | elvin@example.com | istənilən |
-| Sərnişin | aysel@example.com | istənilən |
-| Sürücü | murad@example.com | istənilən |
-| Admin | sanan@example.com | istənilən |
+| Driver | elvin@example.com | any password |
+| Passenger | aysel@example.com | any password |
+| Driver | murad@example.com | any password |
+| Admin | sanan@example.com | any password |
 
-## Qovluq Strukturu
+## Mock Flows
 
-```
+These flows are clickable mock flows, not real backend workflows:
+
+- Passenger registration/login.
+- Profile setup.
+- Ride search.
+- Trip list and trip details.
+- Booking request creation.
+- Passenger booking list.
+- Driver booking request review.
+- Driver trip creation.
+- Driver trip list/dashboard.
+- Review creation.
+- Admin dashboard.
+- Admin users, trips, and bookings management.
+- Passenger/driver role switching where supported by the prototype.
+
+## Important Business Rules In The Mock Store
+
+The Sprint 0 Zustand store includes P0 validation so the clickable prototype behaves more safely:
+
+- Unknown or blocked users cannot log in.
+- Protected pages require a mock current user.
+- Driver pages require driver capability/role.
+- Admin pages require admin role.
+- Users cannot book their own trips.
+- Bookings require an active existing trip and available seats.
+- Duplicate active bookings are prevented.
+- Booking acceptance validates trip seats and booking status.
+- Cancelling an accepted booking restores seats.
+- Reviews validate author, target, rating range, duplicate reviews, and completed-trip constraints where supported by mock data.
+- Deleting a trip avoids leaving related mock state in an unsafe orphaned state.
+
+These are frontend mock validations only. They must be reimplemented and enforced server-side in Sprint 1.
+
+## Project Structure
+
+```text
 yolustu/
-├── docs/                    # Sənədləşdirmə
+├── docs/
 │   ├── sprint-0-report.md
 │   ├── product-vision.md
 │   ├── mvp-scope.md
@@ -87,86 +121,58 @@ yolustu/
 │   ├── demo-scenario.md
 │   └── risks-and-metrics.md
 ├── src/
-│   ├── app/                 # Next.js səhifələr
-│   │   ├── auth/            # Qeydiyyat / Giriş
-│   │   ├── profile/         # Profil
-│   │   ├── search/          # Axtarış
-│   │   ├── trips/           # Gedişlər
-│   │   ├── bookings/        # Rezervlər
-│   │   ├── driver/          # Sürücü paneli
-│   │   ├── reviews/         # Rəylər
-│   │   └── admin/           # Admin paneli
-│   ├── components/          # UI komponentləri
-│   ├── data/                # Mock data
-│   ├── types/               # TypeScript tipləri
-│   ├── lib/                 # Utillar, mock API
-│   └── store/               # Zustand store
-└── package.json
+│   ├── app/
+│   │   ├── auth/
+│   │   ├── profile/
+│   │   ├── search/
+│   │   ├── trips/
+│   │   ├── bookings/
+│   │   ├── driver/
+│   │   ├── reviews/
+│   │   └── admin/
+│   ├── components/
+│   ├── data/
+│   ├── lib/
+│   ├── store/
+│   └── types/
+├── package.json
+├── next.config.ts
+└── tsconfig.json
 ```
 
-## İmplementasiya Olunan Ekranlar
+## Implemented Screens
 
-1. **Welcome/Onboarding** — `/`
-2. **Qeydiyyat** — `/auth/register`
-3. **Daxil ol** — `/auth/login`
-4. **Profil qurulması** — `/profile/setup`
-5. **Profil** — `/profile`
-6. **Gediş axtarışı** — `/search`
-7. **Gediş siyahısı** — `/trips`
-8. **Gediş detalları** — `/trips/[id]`
-9. **Rezervlərim** — `/bookings`
-10. **Rezerv sorğuları** — `/bookings/requests`
-11. **Sürücü paneli** — `/driver`
-12. **Gediş yarat** — `/driver/create-trip`
-13. **Gedişlərim** — `/driver/my-trips`
-14. **Rəy yaz** — `/reviews/create`
-15. **Admin panel** — `/admin`
-16. **Admin istifadəçilər** — `/admin/users`
-17. **Admin gedişlər** — `/admin/trips`
-18. **Admin rezervlər** — `/admin/bookings`
+- `/` — landing/onboarding prototype.
+- `/auth/register` — mock registration.
+- `/auth/login` — mock login.
+- `/profile/setup` — protected profile setup.
+- `/profile` — profile screen.
+- `/search` — ride search.
+- `/trips` — trip results.
+- `/trips/[id]` — trip details and booking request UI.
+- `/bookings` — passenger bookings.
+- `/bookings/requests` — driver booking requests.
+- `/driver` — driver dashboard.
+- `/driver/create-trip` — mock create trip flow.
+- `/driver/my-trips` — driver trips.
+- `/reviews/create` — mock review flow.
+- `/admin` — admin dashboard.
+- `/admin/users` — admin users.
+- `/admin/trips` — admin trips.
+- `/admin/bookings` — admin bookings.
 
-## Mock Axınlar
+## Sprint 1 Direction
 
-- ✅ Qeydiyyat → Profil qurulması → Axtarış
-- ✅ Giriş → Axtarış → Gediş detalları → Rezerv sorğusu
-- ✅ Sürücü: Gediş yaratma (5 addım) → Gedişlərim
-- ✅ Sürücü: Rezerv sorğularını qəbul/rədd etmə
-- ✅ Sərnişin: Rezerv ləğvi
-- ✅ Rəy yazma (tamamlanmış gediş üçün)
-- ✅ Admin: İstifadəçi bloklama, gediş silmə
-- ✅ Rol dəyişdirmə (Sərnişin ↔ Sürücü)
+Sprint 1 should replace mock-only behavior with server-backed functionality:
 
-## Sprint 0 Nəticələri
+1. Backend project setup.
+2. Database schema implementation.
+3. User/profile APIs.
+4. Real authentication and JWT/session handling.
+5. Server-side validation for bookings, trips, reviews, and admin actions.
+6. API integration from the Next.js frontend.
+7. Error handling, loading states, and test coverage.
 
-### Daxil olanlar
-- İşləyən prototipi olan 18 mobil-first ekran
-- Zustand ilə mock state management
-- Bütün iş qaydaları (öz gedişinə rezerv qadağası, yer azalması, reytinq yenilənməsi)
-- 12+ sənəd
-- Tam API kontraktı
-- ER diaqramı ilə verilənlər bazası sxemi
-
-### Daxil olmayanlar
-- Real backend
-- Real autentifikasiya
-- Ödəniş sistemi
-- GPS / xəritə
-- Push bildirişlər
-- Sürücü sənəd yoxlanışı
-
-## Sprint 1 Planı
-
-1. Backend layihəsinin qurulması (Django/FastAPI)
-2. User/Profile modelləri
-3. Qeydiyyat API
-4. Login/Logout API
-5. JWT autentifikasiya
-6. Mobil tətbiq auth ekranlarını backend-ə qoşma
-7. Profil API
-8. Xəta idarəetməsi
-9. Validasiya
-10. Auth axınının testi
-
-## Lisenziya
+## License
 
 MIT

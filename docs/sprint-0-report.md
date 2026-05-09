@@ -1,107 +1,156 @@
 # Sprint 0 Report — Yolüstü
 
-## Sprint Məlumatları
+## Sprint Metadata
 
-| Sahə | Dəyər |
+| Field | Value |
 |---|---|
 | Sprint | Sprint 0 |
-| Müddət | 1 həftə |
-| Başlanğıc | 2026-05-01 |
-| Bitmə | 2026-05-07 |
-| Məqsəd | Layihə əsasının hazırlanması |
+| Scope | Frontend-only clickable prototype |
+| Stack | Next.js 16 App Router, TypeScript, Tailwind CSS v4, Zustand |
+| Data | Mock data / client-side state |
+| Backend | Not implemented |
+| Production readiness | Not production-ready |
 
-## Sprint Məqsədi
+## Sprint Goal
 
-Yolüstü carpooling platformasının əsasını hazırlamaq:
-- Məhsul vizyonu və MVP hüdudlarını müəyyən etmək
-- Scrum prosesini qurmaq
-- Product Backlog və User Story-ləri yazmaq
-- Arxitektura və verilənlər bazası sxemini hazırlamaq
-- API kontraktını yazmaq
-- Mobil-first clickable prototip hazırlamaq
-- Sənədləşdirmə
+Sprint 0 establishes a working frontend prototype for Yolüstü, a carpooling platform concept for Azerbaijan. The goal is to validate navigation, screen coverage, passenger/driver/admin flows, and mock business rules before Sprint 1 backend integration.
 
-## Sprint Backlog
+## Current Implementation
 
-| # | Tapşırıq | Status |
+### Implemented
+
+- Next.js 16 + TypeScript frontend prototype.
+- Mobile-first screens for onboarding, auth, profile, search, trips, bookings, driver flows, reviews, and admin flows.
+- Tailwind CSS v4 styling.
+- Zustand state management.
+- Mock users, trips, bookings, reviews, vehicles, and related demo data.
+- Mock login with existing-user lookup.
+- Blocked mock users cannot log in.
+- Protected route guards for auth-only, driver-only, and admin-only pages.
+- Store-level validation for key mock booking, review, and trip actions.
+- P0 mobile UI improvements for landing, search, trip list, trip details, driver dashboard, and admin dashboard.
+
+### Not Implemented
+
+- Real backend.
+- Real database.
+- Real auth/JWT/session handling.
+- Real password verification.
+- Payments.
+- Maps/GPS.
+- SMS OTP.
+- Push notifications.
+- Chat.
+- File upload.
+- Production admin moderation.
+- Production security controls.
+
+## Demo Authentication
+
+Sprint 0 authentication is intentionally mock-only:
+
+- The user must exist by email.
+- Blocked users are rejected.
+- Password is intentionally "any password" for Sprint 0 demo use.
+- No JWT, cookies, sessions, refresh tokens, or backend calls exist.
+
+Demo users:
+
+| Role | Email | Password |
 |---|---|---|
-| S0-01 | Məhsul vizyonu sənədi | ✅ Tamamlandı |
-| S0-02 | MVP hüdudları sənədi | ✅ Tamamlandı |
-| S0-03 | Scrum rolları | ✅ Tamamlandı |
-| S0-04 | Product Backlog | ✅ Tamamlandı |
-| S0-05 | User Story-lər | ✅ Tamamlandı |
-| S0-06 | Qəbul meyarları | ✅ Tamamlandı |
-| S0-07 | Arxitektura sənədi | ✅ Tamamlandı |
-| S0-08 | API kontraktı | ✅ Tamamlandı |
-| S0-09 | Verilənlər bazası sxemi | ✅ Tamamlandı |
-| S0-10 | Layihə strukturu | ✅ Tamamlandı |
-| S0-11 | Next.js prototipi qurulması | ✅ Tamamlandı |
-| S0-12 | UI komponentlər kitabxanası | ✅ Tamamlandı |
-| S0-13 | Mock data | ✅ Tamamlandı |
-| S0-14 | Auth ekranları | ✅ Tamamlandı |
-| S0-15 | Profil ekranları | ✅ Tamamlandı |
-| S0-16 | Axtarış ekranı | ✅ Tamamlandı |
-| S0-17 | Gediş siyahısı/detalları | ✅ Tamamlandı |
-| S0-18 | Rezerv ekranları | ✅ Tamamlandı |
-| S0-19 | Sürücü paneli | ✅ Tamamlandı |
-| S0-20 | Gediş yaratma (multi-step) | ✅ Tamamlandı |
-| S0-21 | Rəy sistemi | ✅ Tamamlandı |
-| S0-22 | Admin paneli | ✅ Tamamlandı |
-| S0-23 | Zustand state management | ✅ Tamamlandı |
-| S0-24 | Demo ssenarisi | ✅ Tamamlandı |
-| S0-25 | Risklər və metriklər | ✅ Tamamlandı |
-| S0-26 | README.md | ✅ Tamamlandı |
+| Driver | elvin@example.com | any password |
+| Passenger | aysel@example.com | any password |
+| Driver | murad@example.com | any password |
+| Admin | sanan@example.com | any password |
 
-## Tamamlanan Çatdırılmalar
+## Mock Data And State
 
-### Kod
-- 18 mobil-first ekran (Next.js App Router)
-- 15+ yenidən istifadə olunan UI komponent
-- Zustand ilə tam state management
-- TypeScript tipləri bütün domain modellər üçün
-- Mock data Azərbaycan şəhərləri və istifadəçiləri ilə
-- İş qaydaları implementasiyası
+The prototype uses Zustand and local mock data. Passenger, driver, and admin flows mutate client-side state for demonstration. This is not a substitute for backend validation.
 
-### Sənədləşdirmə
-- 12 sənəd faylı `docs/` qovluğunda
-- Tam API kontraktı
-- ER diaqramı ilə verilənlər bazası sxemi
-- Arxitektura diaqramı
-- Demo ssenarisi
+P0 validation currently exists for:
 
-## Sprint Review Qeydləri
+- Login user lookup and blocked-user handling.
+- Protected page access.
+- Preventing unauthenticated bookings.
+- Preventing booking your own trip.
+- Preventing bookings for inactive or missing trips.
+- Preventing bookings when seats are unavailable.
+- Preventing duplicate active bookings.
+- Validating booking seat count.
+- Validating booking acceptance.
+- Restoring seats when an accepted booking is cancelled.
+- Validating review author, target, rating range, duplicates, and completed-trip constraints where supported by mock data.
+- Avoiding unsafe orphaned mock state when trips are deleted.
 
-### Nə yaxşı getdi
-- Prototipin bütün əsas ekranları vaxtında hazırlandı
-- Mock data ilə real Azərbaycan ssenariləri yaradıldı
-- İş qaydaları düzgün implementasiya edildi
-- Sənədləşdirmə tam və strukturlaşdırılmışdır
+All of this must be enforced again on the server in Sprint 1.
 
-### Nə təkmilləşdirilə bilər
-- Bəzi animasiyalar daha mürəkkəb ola bilər
-- Test coverage əlavə edilə bilər
-- Accessibility audit aparılmalıdır
+## Implemented Routes
 
-## Sprint Retrospective Qeydləri
+| Route | Status |
+|---|---|
+| `/` | Implemented |
+| `/auth/register` | Implemented mock flow |
+| `/auth/login` | Implemented mock flow |
+| `/profile/setup` | Implemented, protected |
+| `/profile` | Implemented |
+| `/search` | Implemented |
+| `/trips` | Implemented |
+| `/trips/[id]` | Implemented |
+| `/bookings` | Implemented, protected |
+| `/bookings/requests` | Implemented, driver protected |
+| `/driver` | Implemented, driver protected |
+| `/driver/create-trip` | Implemented, driver protected |
+| `/driver/my-trips` | Implemented, driver protected |
+| `/reviews/create` | Implemented, protected |
+| `/admin` | Implemented, admin protected |
+| `/admin/users` | Implemented, admin protected |
+| `/admin/trips` | Implemented, admin protected |
+| `/admin/bookings` | Implemented, admin protected |
 
-### Davam etdirmək
-- Clean kod strukturu
-- Component-based arxitektura
-- Əvvəlcədən sənədləşdirmə
+## How To Run
 
-### Başlamaq
-- Unit testlər yazmaq
-- CI/CD pipeline qurmaq
-- Real backend işə başlamaq
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+```
 
-### Dayandırmaq
-- Feature creep — MVP hüdudlarına sadiq qalmaq
+Development server:
 
-## Növbəti Sprint Hazırlığı
+```text
+http://localhost:3000
+```
 
-Sprint 1-də backend development başlayacaq:
-1. Django/FastAPI layihəsinin qurulması
-2. PostgreSQL verilənlər bazası
-3. User/Profile modelləri
-4. Auth API (JWT)
-5. Mobil tətbiqin backend-ə qoşulması
+## Sprint Review Notes
+
+### What Is Ready For Demo
+
+- The prototype can be used to click through major passenger, driver, and admin journeys.
+- Mock validation is strong enough for a safer Sprint 0 demo.
+- Mobile UI has been tightened on the main discovery and booking screens.
+- Documentation now clearly separates current implementation from future backend/API plans.
+
+### Known Gaps
+
+- No real persistence beyond client-side mock state.
+- No real authentication or authorization.
+- No server-side business rules.
+- No production API integration.
+- No payment, map, SMS, push, chat, or upload implementation.
+- Test coverage is still limited/not established as a full suite.
+- Accessibility and responsive polish need deeper review.
+
+## Sprint 1 Preparation
+
+Recommended next work:
+
+1. Choose and scaffold the backend.
+2. Implement database models and migrations.
+3. Implement real auth/JWT/session flows.
+4. Move all critical business validation to the backend.
+5. Connect frontend flows to real APIs.
+6. Add test coverage for auth, bookings, trips, reviews, and admin actions.
+7. Add production-grade error/loading states.
+
+Sprint 0 should remain a frontend prototype until those Sprint 1 backend foundations exist.
