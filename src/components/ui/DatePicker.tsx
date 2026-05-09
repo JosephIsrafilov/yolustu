@@ -132,7 +132,7 @@ export default function DatePicker({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[#001f24]/45 px-3 pb-3 pt-16 backdrop-blur-[2px] animate-fade-in md:items-center md:p-6">
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[#001f24]/20 px-3 pb-3 pt-14 backdrop-blur-[1px] animate-fade-in md:items-center md:bg-[#001f24]/15 md:p-6">
           <button
             type="button"
             aria-label="Bağla"
@@ -140,10 +140,10 @@ export default function DatePicker({
             onClick={() => setOpen(false)}
           />
 
-          <div className="relative w-full max-w-md rounded-[28px] bg-white p-4 shadow-[0_24px_70px_rgba(0,31,36,0.28)] transition-all duration-200 ease-out animate-fade-in md:rounded-[24px] md:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="animate-slide-up relative flex max-h-[85dvh] w-full max-w-md flex-col overflow-y-auto rounded-t-[28px] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_18px_50px_rgba(0,31,36,0.20)] transition-all duration-200 ease-out md:max-h-[80vh] md:max-w-[440px] md:rounded-[24px] md:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-text-muted">Tarix</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">Tarix</p>
                 <h2 className="text-lg font-bold text-text">
                   {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
                 </h2>
@@ -158,7 +158,7 @@ export default function DatePicker({
               </button>
             </div>
 
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => changeMonth(-1)}
@@ -167,7 +167,7 @@ export default function DatePicker({
               >
                 <Icon name="arrow-left" size={18} />
               </button>
-              <div className="rounded-full bg-surface-muted px-3 py-1.5 text-xs font-semibold text-text-secondary">
+              <div className="min-w-0 truncate rounded-full bg-surface-muted px-3 py-1.5 text-xs font-semibold text-text-secondary">
                 {formatDateLabel(draftValue) || placeholder}
               </div>
               <button
@@ -180,9 +180,9 @@ export default function DatePicker({
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center">
+            <div className="grid grid-cols-7 gap-0.5 text-center md:gap-1">
               {WEEKDAYS.map((day) => (
-                <div key={day} className="py-2 text-[11px] font-bold uppercase text-text-muted">
+                <div key={day} className="py-1.5 text-[11px] font-bold uppercase text-text-muted md:py-1">
                   {day}
                 </div>
               ))}
@@ -201,7 +201,7 @@ export default function DatePicker({
                     disabled={disabled}
                     onClick={() => setDraftValue(iso)}
                     className={cn(
-                      'mx-auto flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold transition-all duration-200 ease-out',
+                      'mx-auto flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold transition-all duration-200 ease-out md:h-9 md:w-9 md:rounded-xl',
                       'focus:outline-none focus:ring-2 focus:ring-brand-500',
                       selected && 'bg-brand-600 text-white shadow-md',
                       !selected && !disabled && 'text-text hover:-translate-y-0.5 hover:bg-surface-muted active:translate-y-0 active:scale-[0.96]',
@@ -215,11 +215,11 @@ export default function DatePicker({
               })}
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="sticky bottom-0 -mx-4 mt-4 grid grid-cols-2 gap-3 bg-white px-4 pt-3 pb-[env(safe-area-inset-bottom)] md:static md:mx-0 md:mt-4 md:p-0">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="h-12 rounded-2xl border border-border bg-white text-sm font-bold text-text transition-all duration-200 ease-out hover:bg-surface-muted active:scale-[0.98]"
+                className="h-11 rounded-2xl border border-border bg-white text-sm font-bold text-text transition-all duration-200 ease-out hover:bg-surface-muted active:scale-[0.98] md:h-10"
               >
                 Bağla
               </button>
@@ -227,7 +227,7 @@ export default function DatePicker({
                 type="button"
                 onClick={confirm}
                 disabled={!draftValue}
-                className="h-12 rounded-2xl bg-brand-600 text-sm font-bold text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-11 rounded-2xl bg-brand-600 text-sm font-bold text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:h-10"
               >
                 Təsdiqlə
               </button>
