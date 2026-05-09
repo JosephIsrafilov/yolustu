@@ -9,6 +9,7 @@ import { AZ_CITIES } from '@/lib/utils';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Icon, { type IconName } from '@/components/ui/Icon';
+import DatePicker from '@/components/ui/DatePicker';
 
 const FEATURES: { icon: IconName; title: string; desc: string }[] = [
   {
@@ -141,16 +142,13 @@ export default function HomePage() {
                   </select>
                 </div>
 
-                <div className="relative">
-                  <label className="mb-1 block text-[12px] font-bold text-[#40484a]">Tarix</label>
-                  <Icon name="calendar" size={18} className="pointer-events-none absolute left-3 top-[39px] text-[#70787b]" />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                  />
-                </div>
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                  label="Tarix"
+                  placeholder="Tarix seçin"
+                  className="[&_label]:mb-1 [&_label]:text-[12px] [&_label]:font-bold [&_label]:text-[#40484a]"
+                />
 
                 <div className="relative">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">Sərnişin</label>

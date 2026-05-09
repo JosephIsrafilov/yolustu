@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES, formatPrice } from '@/lib/utils';
@@ -42,7 +43,7 @@ export default function SearchPage() {
 
   return (
     <WebLayout title="Gediş axtar">
-      <div className="grid lg:grid-cols-3 gap-5">
+      <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <div className="mb-4">
@@ -52,32 +53,37 @@ export default function SearchPage() {
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-secondary">Haradan</label>
-                <select value={dep} onChange={(e) => setDep(e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <select
+                  value={dep}
+                  onChange={(e) => setDep(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
                   <option value="">Bütün şəhərlər</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-secondary">Haraya</label>
-                <select value={arr} onChange={(e) => setArr(e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <select
+                  value={arr}
+                  onChange={(e) => setArr(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
                   <option value="">Bütün şəhərlər</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Tarix</label>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-              </div>
+              <DatePicker value={date} onChange={setDate} label="Tarix" placeholder="Tarix seçin" />
               <div className="sm:flex sm:items-end lg:block">
                 <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> Axtar</Button>
               </div>
             </div>
           </Card>
         </div>
-        <div className="lg:col-span-2 stagger-children">
-          <Card padding="md" className="mb-6 bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100">
+        <div className="stagger-children lg:col-span-2">
+          <Card padding="md" className="mb-6 border-brand-100 bg-gradient-to-r from-brand-50 to-blue-50">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600 shrink-0">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
                 <Icon name="shield" size={24} />
               </div>
               <div>
@@ -86,8 +92,8 @@ export default function SearchPage() {
               </div>
             </div>
           </Card>
-          <h3 className="text-lg font-bold text-text mb-3">Populyar marşrutlar</h3>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <h3 className="mb-3 text-lg font-bold text-text">Populyar marşrutlar</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
             {POPULAR_ROUTES.map((r) => (
               <Card key={`${r.from}-${r.to}`} hoverable padding="md" onClick={() => openPopularRoute(r.from, r.to)}>
                 <div className="flex items-center justify-between gap-3">
