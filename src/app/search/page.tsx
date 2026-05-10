@@ -18,17 +18,24 @@ export default function SearchPage() {
   const [dep, setDep] = useState('');
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
+  const [passengers, setPassengers] = useState(1);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (dep) params.set('from', dep);
     if (arr) params.set('to', arr);
     if (date) params.set('date', date);
+    if (passengers > 1) params.set('passengers', String(passengers));
     router.push(`${ROUTES.trips}?${params.toString()}`);
   };
 
   const openPopularRoute = (from: string, to: string) => {
     router.push(`${ROUTES.trips}?${new URLSearchParams({ from, to }).toString()}`);
+  };
+
+  const swapRoute = () => {
+    setDep(arr);
+    setArr(dep);
   };
 
   useEffect(() => {
@@ -62,6 +69,18 @@ export default function SearchPage() {
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+              <div className="flex items-end sm:items-center lg:justify-center">
+                <button
+                  type="button"
+                  onClick={swapRoute}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-brand-600 transition-all hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  aria-label="Marşrutu dəyiş"
+                  title="Marşrutu dəyiş"
+                >
+                  <Icon name="arrow-right" size={16} />
+                  <Icon name="arrow-left" size={16} className="-ml-1" />
+                </button>
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-secondary">Haraya</label>
                 <select
@@ -74,6 +93,28 @@ export default function SearchPage() {
                 </select>
               </div>
               <DatePicker value={date} onChange={setDate} label="Tarix" placeholder="Tarix seçin" />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-secondary">Sərnişin</label>
+                <div className="flex items-center justify-between rounded-xl border border-border bg-white px-2 py-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPassengers((value) => Math.max(1, value - 1))}
+                    className="h-8 w-8 rounded-lg bg-surface-muted text-sm font-bold text-text transition-colors hover:bg-surface-dim"
+                    aria-label="Sərnişin sayını azalt"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-10 text-center text-sm font-bold text-text">{passengers}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPassengers((value) => Math.min(4, value + 1))}
+                    className="h-8 w-8 rounded-lg bg-surface-muted text-sm font-bold text-text transition-colors hover:bg-surface-dim"
+                    aria-label="Sərnişin sayını artır"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
               <div className="sm:flex sm:items-end lg:block">
                 <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> Axtar</Button>
               </div>

@@ -39,7 +39,7 @@ export default function LoginPage() {
       router.push(ROUTES.search);
       return;
     }
-    setSubmitError('Email vЙ™ ya ЕџifrЙ™ yanlД±ЕџdД±r, yaxud hesab bloklanД±b.');
+    setSubmitError('Email və ya şifrə yanlışdır, yaxud hesab bloklanıb.');
   };
 
   return (

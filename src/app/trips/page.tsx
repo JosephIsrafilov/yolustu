@@ -26,6 +26,9 @@ function TripsContent() {
   const filteredTrips = useMemo(() => filterTrips(trips, filters), [trips, filters]);
   const from = filters.departureCity || 'Bütün';
   const to = filters.arrivalCity || 'Bütün';
+  const updateMinSeats = (nextSeats: number) => {
+    setFilters((p) => ({ ...p, minSeats: nextSeats > 1 ? nextSeats : undefined }));
+  };
   const activeFilters = [
     filters.departureCity && `Haradan: ${filters.departureCity}`,
     filters.arrivalCity && `Haraya: ${filters.arrivalCity}`,
@@ -67,6 +70,29 @@ function TripsContent() {
               <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Tarix</h3>
               <input type="date" value={filters.date || ''} onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
                 className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
+            </div>
+
+            <div className="mb-5">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Sərnişin sayı</h3>
+              <div className="flex items-center justify-between rounded-xl border border-[#c0c8ca] bg-white px-2 py-1.5">
+                <button
+                  type="button"
+                  onClick={() => updateMinSeats(Math.max(1, (filters.minSeats || 1) - 1))}
+                  className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  aria-label="Sərnişin sayını azalt"
+                >
+                  −
+                </button>
+                <span className="min-w-10 text-center text-[14px] font-bold text-[#011f23]">{filters.minSeats || 1}</span>
+                <button
+                  type="button"
+                  onClick={() => updateMinSeats(Math.min(4, (filters.minSeats || 1) + 1))}
+                  className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  aria-label="Sərnişin sayını artır"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             <div className="rounded-xl bg-[#edfcff] p-3 text-[13px] leading-5 text-[#40484a]">

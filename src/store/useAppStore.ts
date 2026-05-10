@@ -100,11 +100,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const normalizedEmail = email.trim().toLowerCase();
     const user = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
     if (!user) {
-      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Email vЙ™ ya ЕџifrЙ™ yanlД±ЕџdД±r.' });
+      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Email və ya şifrə yanlışdır.' });
       return false;
     }
     if (user.isBlocked) {
-      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'HesabД±nД±z bloklanД±b. DЙ™stЙ™k xidmЙ™ti ilЙ™ Й™laqЙ™ saxlayД±n.' });
+      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Hesabınız bloklanıb. Dəstək xidməti ilə əlaqə saxlayın.' });
       return false;
     }
 
@@ -162,11 +162,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   createTrip: (data) => {
     const { currentUser } = get();
     if (!currentUser) {
-      set({ lastError: 'GediЕџ yaratmaq ГјГ§Гјn daxil olun.' });
+      set({ lastError: 'Gediş yaratmaq üçün daxil olun.' });
       return '';
     }
     if (currentUser.role !== 'driver' && get().activeRole !== 'driver') {
-      set({ lastError: 'GediЕџ yaratmaq ГјГ§Гјn sГјrГјcГј roluna keГ§in.' });
+      set({ lastError: 'Gediş yaratmaq üçün sürücü roluna keçin.' });
       return '';
     }
     const id = generateId();
@@ -185,7 +185,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   cancelTrip: (tripId) => {
     const trip = get().trips.find((t) => t.id === tripId);
     if (!trip) {
-      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      set({ lastError: 'Gediş tapılmadı.' });
       return false;
     }
     set((s) => ({
@@ -207,7 +207,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   completeTrip: (tripId) => {
     const trip = get().trips.find((t) => t.id === tripId);
     if (!trip) {
-      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      set({ lastError: 'Gediş tapılmadı.' });
       return false;
     }
     set((s) => ({
@@ -229,28 +229,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   createBooking: (tripId, seats) => {
     const { currentUser, trips, bookings } = get();
     if (!currentUser) {
-      set({ lastError: 'Rezerv sorДџusu ГјГ§Гјn daxil olun.' });
+      set({ lastError: 'Rezerv sorğusu üçün daxil olun.' });
       return '';
     }
     const trip = trips.find((t) => t.id === tripId);
     if (!trip) {
-      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      set({ lastError: 'Gediş tapılmadı.' });
       return '';
     }
     if (trip.driverId === currentUser.id) {
-      set({ lastError: 'Г–z gediЕџinizЙ™ rezerv edЙ™ bilmЙ™zsiniz.' });
+      set({ lastError: 'Öz gedişinizə rezerv edə bilməzsiniz.' });
       return '';
     }
     if (trip.status !== 'active') {
-      set({ lastError: 'Bu gediЕџ artД±q aktiv deyil.' });
+      set({ lastError: 'Bu gediş artıq aktiv deyil.' });
       return '';
     }
     if (!Number.isInteger(seats) || seats < 1) {
-      set({ lastError: 'Yer sayД± dГјzgГјn deyil.' });
+      set({ lastError: 'Yer sayı düzgün deyil.' });
       return '';
     }
     if (seats > trip.seatsAvailable) {
-      set({ lastError: 'KifayЙ™t qЙ™dЙ™r boЕџ yer yoxdur.' });
+      set({ lastError: 'Kifayət qədər boş yer yoxdur.' });
       return '';
     }
     const hasActiveBooking = bookings.some((b) =>
@@ -259,7 +259,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       ['pending', 'accepted', 'completed'].includes(b.status),
     );
     if (hasActiveBooking) {
-      set({ lastError: 'Bu gediЕџ ГјГ§Гјn artД±q aktiv sorДџunuz var.' });
+      set({ lastError: 'Bu gediş üçün artıq aktiv sorğunuz var.' });
       return '';
     }
     const id = generateId();
@@ -279,20 +279,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { bookings, trips } = get();
     const booking = bookings.find((b) => b.id === bookingId);
     if (!booking) {
-      set({ lastError: 'Rezerv sorДџusu tapД±lmadД±.' });
+      set({ lastError: 'Rezerv sorğusu tapılmadı.' });
       return false;
     }
     if (booking.status !== 'pending') {
-      set({ lastError: 'YalnД±z gГ¶zlЙ™yЙ™n sorДџular qЙ™bul edilЙ™ bilЙ™r.' });
+      set({ lastError: 'Yalnız gözləyən sorğular qəbul edilə bilər.' });
       return false;
     }
     const trip = trips.find((t) => t.id === booking.tripId);
     if (!trip || trip.status !== 'active') {
-      set({ lastError: 'GediЕџ aktiv deyil vЙ™ ya tapД±lmadД±.' });
+      set({ lastError: 'Gediş aktiv deyil və ya tapılmadı.' });
       return false;
     }
     if (trip.seatsAvailable < booking.seatsRequested) {
-      set({ lastError: 'Bu sorДџu ГјГ§Гјn kifayЙ™t qЙ™dЙ™r boЕџ yer yoxdur.' });
+      set({ lastError: 'Bu sorğu üçün kifayət qədər boş yer yoxdur.' });
       return false;
     }
     set((s) => ({
@@ -312,11 +312,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   rejectBooking: (bookingId) => {
     const booking = get().bookings.find((b) => b.id === bookingId);
     if (!booking) {
-      set({ lastError: 'Rezerv sorДџusu tapД±lmadД±.' });
+      set({ lastError: 'Rezerv sorğusu tapılmadı.' });
       return false;
     }
     if (booking.status !== 'pending') {
-      set({ lastError: 'YalnД±z gГ¶zlЙ™yЙ™n sorДџular rЙ™dd edilЙ™ bilЙ™r.' });
+      set({ lastError: 'Yalnız gözləyən sorğular rədd edilə bilər.' });
       return false;
     }
     set((s) => ({
@@ -331,11 +331,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   cancelBooking: (bookingId) => {
     const booking = get().bookings.find((b) => b.id === bookingId);
     if (!booking) {
-      set({ lastError: 'Rezerv tapД±lmadД±.' });
+      set({ lastError: 'Rezerv tapılmadı.' });
       return false;
     }
     if (!['pending', 'accepted'].includes(booking.status)) {
-      set({ lastError: 'Bu rezerv artД±q lЙ™Дџv edilЙ™ bilmЙ™z.' });
+      set({ lastError: 'Bu rezerv artıq ləğv edilə bilməz.' });
       return false;
     }
     const wasAccepted = booking.status === 'accepted';
@@ -359,21 +359,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   createReview: (data) => {
     const { currentUser, trips, users, reviews, bookings } = get();
     if (!currentUser) {
-      set({ lastError: 'RЙ™y yazmaq ГјГ§Гјn daxil olun.' });
+      set({ lastError: 'Rəy yazmaq üçün daxil olun.' });
       return false;
     }
     if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 5) {
-      set({ lastError: 'Reytinq 1-5 arasД±nda olmalД±dД±r.' });
+      set({ lastError: 'Reytinq 1-5 arasında olmalıdır.' });
       return false;
     }
     const trip = trips.find((t) => t.id === data.tripId);
     if (!trip) {
-      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      set({ lastError: 'Gediş tapılmadı.' });
       return false;
     }
     const targetUser = users.find((u) => u.id === data.targetUserId);
     if (!targetUser) {
-      set({ lastError: 'QiymЙ™tlЙ™ndirilЙ™cЙ™k istifadЙ™Г§i tapД±lmadД±.' });
+      set({ lastError: 'Qiymətləndiriləcək istifadəçi tapılmadı.' });
       return false;
     }
     const completedBooking = bookings.find((b) =>
@@ -382,7 +382,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       b.status === 'completed',
     );
     if (trip.status !== 'completed' || !completedBooking) {
-      set({ lastError: 'RЙ™y yalnД±z tamamlanmД±Еџ rezervdЙ™n sonra yazД±la bilЙ™r.' });
+      set({ lastError: 'Rəy yalnız tamamlanmış rezervdən sonra yazıla bilər.' });
       return false;
     }
     const duplicateReview = reviews.some((r) =>
@@ -391,7 +391,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       r.targetUserId === data.targetUserId,
     );
     if (duplicateReview) {
-      set({ lastError: 'Bu gediЕџ ГјГ§Гјn artД±q rЙ™y yazmД±sД±nД±z.' });
+      set({ lastError: 'Bu gediş üçün artıq rəy yazmısınız.' });
       return false;
     }
     const review: Review = {
@@ -439,7 +439,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   deleteTrip: (tripId) => {
     const trip = get().trips.find((t) => t.id === tripId);
     if (!trip) {
-      set({ lastError: 'GediЕџ tapД±lmadД±.' });
+      set({ lastError: 'Gediş tapılmadı.' });
       return false;
     }
     set((s) => ({
