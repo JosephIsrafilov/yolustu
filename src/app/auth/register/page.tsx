@@ -21,7 +21,11 @@ export default function RegisterPage() {
     const e: Record<string, string> = {};
     if (!form.fullName.trim()) e.fullName = 'Ad tələb olunur';
     if (!validateEmail(form.email)) e.email = 'Düzgün email daxil edin';
-    if (!validatePhone(form.phone) && form.phone.length < 10) e.phone = 'Düzgün telefon nömrəsi';
+    if (!form.phone.trim()) {
+      e.phone = 'Telefon tələb olunur';
+    } else if (!validatePhone(form.phone.trim())) {
+      e.phone = 'Düzgün telefon nömrəsi';
+    }
     if (!validatePassword(form.password)) e.password = 'Ən azı 6 simvol';
     if (form.password !== form.confirm) e.confirm = 'Şifrələr uyğun gəlmir';
     setErrors(e);
@@ -56,7 +60,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="bg-white rounded-2xl w-full max-w-md p-8 border border-[#c0c8ca]" style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.08)' }}>
           <div className="text-center mb-6">
-            <span className="text-[24px] font-[900] text-[#002f37]">YolUstu</span>
+            <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
           </div>
           <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">Qeydiyyat</h1>
           <p className="text-[14px] text-[#40484a] text-center mb-6">Hesab yaradın və gedişlərə qoşulun</p>

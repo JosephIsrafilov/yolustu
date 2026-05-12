@@ -10,15 +10,17 @@ const LINKS = [
 ];
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="mt-auto w-full border-t border-[#c0c8ca] bg-[#edfcff]">
       <div className="mx-auto flex w-full max-w-[1140px] flex-col items-center justify-between gap-6 px-4 py-10 md:flex-row">
         <div className="flex flex-col items-center gap-2 md:items-start">
           <Link href="/" className="flex items-center gap-2 text-[18px] font-black text-[#002f37]">
             <Icon name="map" size={20} strokeWidth={1.8} />
-            YolUstu
+            Yolüstü
           </Link>
-          <span className="text-[14px] text-[#40484a]">© 2024 YolUstu. Bütün hüquqlar qorunur.</span>
+          <span className="text-[14px] text-[#40484a]">© {currentYear} Yolüstü. Bütün hüquqlar qorunur.</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-5">
           {LINKS.map((l) => (
