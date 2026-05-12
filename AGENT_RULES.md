@@ -5,17 +5,6 @@ Yolüstü is an Azerbaijani carpooling platform similar to BlaBlaCar.
 
 The main product is a mobile app. In Sprint 0 we build a mobile-first web prototype with mock data and documentation.
 
-## Sprint 0 Goal
-Create:
-- mobile-first UI prototype
-- mock data
-- mock state
-- main user flows
-- admin panel placeholder
-- Scrum documentation
-- API contract draft
-- database schema draft
-- demo scenario
 
 ## Tech Stack
 - Next.js App Router

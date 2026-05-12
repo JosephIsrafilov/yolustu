@@ -50,20 +50,26 @@ function TripsContent() {
             {/* City selects */}
             <div className="mb-5">
               <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haradan</h3>
-              <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
-                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                <option value="">Bütün şəhərlər</option>
-                {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <div className="relative">
+                <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
+                <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
+                  className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
+                  <option value="">Bütün şəhərlər</option>
+                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
             </div>
 
             <div className="mb-5">
               <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haraya</h3>
-              <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
-                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                <option value="">Bütün şəhərlər</option>
-                {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <div className="relative">
+                <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
+                <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
+                  className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
+                  <option value="">Bütün şəhərlər</option>
+                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
             </div>
 
             <div className="mb-5">
@@ -147,9 +153,13 @@ function TripsContent() {
                       {/* Driver */}
                       <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
-                          <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
-                            {driver?.fullName.charAt(0) || '?'}
-                          </div>
+                          {driver?.avatarUrl ? (
+                            <img src={driver.avatarUrl} alt={driver.fullName} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
+                          ) : (
+                            <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
+                              {driver?.fullName.charAt(0) || '?'}
+                            </div>
+                          )}
                           {driver && driver.rating >= 4.5 && (
                             <span className="absolute -bottom-0.5 -right-0.5 bg-[#7ED321] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
                               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>

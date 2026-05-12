@@ -61,9 +61,13 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       {/* Driver info */}
       {driver && !compact && (
         <div className="flex items-center gap-2 pt-3 border-t border-border">
-          <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
-            {driver.fullName.charAt(0)}
-          </div>
+          {driver.avatarUrl ? (
+            <img src={driver.avatarUrl} alt={driver.fullName} className="w-8 h-8 rounded-full object-cover border border-border" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
+              {driver.fullName.charAt(0)}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-text truncate">{driver.fullName}</p>
             <div className="flex items-center gap-2 text-xs text-text-muted">

@@ -102,17 +102,19 @@ export default function HomePage() {
 
             <div className="animate-fade-in mt-5 w-full max-w-4xl rounded-[24px] border border-white/70 bg-white/95 p-3 text-left shadow-[0_18px_45px_rgba(5,71,82,0.18)] backdrop-blur md:mt-8 md:p-4">
               <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] md:items-end">
-                <div className="relative">
+                <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">Haradan</label>
-                  <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-[39px] text-[#70787b]" />
-                  <select
-                    value={dep}
-                    onChange={(e) => setDep(e.target.value)}
-                    className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                  >
-                    <option value="">Haradan</option>
-                    {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="relative">
+                    <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                    <select
+                      value={dep}
+                      onChange={(e) => setDep(e.target.value)}
+                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
+                    >
+                      <option value="">Haradan</option>
+                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="z-10 hidden items-end justify-center pb-1 md:flex">
@@ -129,17 +131,19 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                <div className="relative">
+                <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">Haraya</label>
-                  <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-[39px] text-[#70787b]" />
-                  <select
-                    value={arr}
-                    onChange={(e) => setArr(e.target.value)}
-                    className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                  >
-                    <option value="">Haraya</option>
-                    {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="relative">
+                    <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                    <select
+                      value={arr}
+                      onChange={(e) => setArr(e.target.value)}
+                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
+                    >
+                      <option value="">Haraya</option>
+                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <DatePicker
@@ -150,19 +154,21 @@ export default function HomePage() {
                   className="[&_label]:mb-1 [&_label]:text-[12px] [&_label]:font-bold [&_label]:text-[#40484a]"
                 />
 
-                <div className="relative">
+                <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">Sərnişin</label>
-                  <Icon name="user" size={18} className="pointer-events-none absolute left-3 top-[39px] text-[#70787b]" />
-                  <select
-                    value={passengers}
-                    onChange={(e) => setPassengers(Number(e.target.value))}
-                    className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                  >
-                    <option value={1}>1 sərnişin</option>
-                    <option value={2}>2 sərnişin</option>
-                    <option value={3}>3 sərnişin</option>
-                    <option value={4}>4+ sərnişin</option>
-                  </select>
+                  <div className="relative">
+                    <Icon name="user" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                    <select
+                      value={passengers}
+                      onChange={(e) => setPassengers(Number(e.target.value))}
+                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
+                    >
+                      <option value={1}>1 sərnişin</option>
+                      <option value={2}>2 sərnişin</option>
+                      <option value={3}>3 sərnişin</option>
+                      <option value={4}>4+ sərnişin</option>
+                    </select>
+                  </div>
                 </div>
 
                 <button

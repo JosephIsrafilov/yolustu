@@ -231,7 +231,7 @@ export default function DatePicker({
         onClick={openPicker}
         className="relative flex h-12 w-full items-center rounded-2xl border border-border bg-white pl-10 pr-4 text-left text-sm text-text shadow-sm transition-all duration-200 ease-out hover:border-border-strong hover:bg-surface-muted/40 focus:outline-none focus:ring-2 focus:ring-brand-500 active:scale-[0.99]"
       >
-        <Icon name="calendar" size={18} className="absolute left-3 text-text-muted" />
+        <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <span className={selectedLabel ? 'text-text' : 'text-text-muted'}>
           {selectedLabel || placeholder}
         </span>

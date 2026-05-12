@@ -64,7 +64,30 @@ export default function TripDetailsPage() {
                 </div>
               </Card>
             )}
-            {driver && (<Card><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">{driver.fullName.charAt(0)}</div><div className="flex-1"><p className="text-base font-semibold text-text">{driver.fullName}</p><div className="flex items-center gap-2 text-xs text-text-muted"><span className="flex items-center gap-0.5"><Icon name="star" size={11} className="text-accent-500" fill="currentColor" />{formatRating(driver.rating)}</span><span>{driver.totalTrips} gediş</span><span>{driver.city}</span></div></div></div></Card>)}
+            {driver && (
+              <Card>
+                <div className="flex items-center gap-3">
+                  {driver.avatarUrl ? (
+                    <img src={driver.avatarUrl} alt={driver.fullName} className="w-12 h-12 rounded-full object-cover border border-border" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">
+                      {driver.fullName.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-base font-semibold text-text">{driver.fullName}</p>
+                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                      <span className="flex items-center gap-0.5">
+                        <Icon name="star" size={11} className="text-accent-500" fill="currentColor" />
+                        {formatRating(driver.rating)}
+                      </span>
+                      <span>{driver.totalTrips} gediş</span>
+                      <span>{driver.city}</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
               <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
