@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import { validateEmail, validatePassword } from '@/lib/mock-api';
 import Icon from '@/components/ui/Icon';
+import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -82,11 +83,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            <button type="submit" disabled={loading}
-              className="w-full bg-[#7ED321] text-white font-semibold text-[16px] py-3.5 rounded-xl hover:bg-[#6bc01a] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ boxShadow: '0 2px 8px rgba(126,211,33,0.3)' }}>
-              {loading ? <><Icon name="loader-2" size={18} className="animate-spin" /> Yüklənir...</> : 'Daxil ol'}
-            </button>
+            <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
+              {loading ? 'Yüklənir...' : 'Daxil ol'}
+            </Button>
           </form>
 
           <p className="text-[14px] text-[#40484a] text-center mt-6">

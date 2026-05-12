@@ -25,15 +25,15 @@ export default function Footer() {
         <nav className="flex flex-wrap justify-center gap-5">
           {LINKS.map((l) => (
             <Link key={l.label} href={l.href}
-              className="text-[12px] font-bold text-[#40484a] hover:text-[#3a6a00] underline underline-offset-2 transition-colors">
+              className="text-[12px] font-bold text-[#40484a] hover:text-[#054752] underline underline-offset-2 transition-colors">
               {l.label}
             </Link>
           ))}
         </nav>
         <div className="flex items-center gap-4 text-[12px] font-bold text-[#40484a]">
-          <button className="transition-colors hover:text-[#3a6a00]">AZ | RU | EN</button>
+          <button className="transition-colors hover:text-[#054752]">AZ | RU | EN</button>
           <span className="text-[#c0c8ca]">|</span>
-          <button className="flex items-center gap-1 transition-colors hover:text-[#3a6a00]">
+          <button className="flex items-center gap-1 transition-colors hover:text-[#054752]">
             AZN ₼
             <Icon name="chevron-right" size={12} className="rotate-90" />
           </button>

@@ -32,7 +32,7 @@ export default function Header() {
         <div className="flex items-center gap-6 md:gap-8">
           <Link
             href="/"
-            className="flex items-center gap-2 text-[18px] font-black leading-6 tracking-tight text-[#002f37] transition-all duration-200 ease-out hover:text-[#3a6a00] active:scale-[0.98]"
+            className="flex items-center gap-2 text-[18px] font-black leading-6 tracking-tight text-[#002f37] transition-all duration-200 ease-out hover:text-[#054752] active:scale-[0.98]"
           >
             <Icon name="map" size={22} strokeWidth={1.8} />
             Yolüstü
@@ -45,7 +45,7 @@ export default function Header() {
                 className={`flex h-full items-center border-b-2 px-2 text-[14px] font-semibold transition-all duration-200 ease-out hover:-translate-y-0.5 ${
                   isActive(link.match)
                     ? 'border-[#002f37] text-[#002f37]'
-                    : 'border-transparent text-[#40484a] hover:text-[#3a6a00]'
+                    : 'border-transparent text-[#40484a] hover:text-[#054752]'
                 }`}
               >
                 {link.label}
@@ -59,14 +59,14 @@ export default function Header() {
             <>
               <Link
                 href={ROUTES.bookings}
-                className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#3a6a00] sm:block"
+                className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
               >
                 Rezervlər
               </Link>
               {currentUser.role === 'admin' && (
                 <Link
                   href={ROUTES.admin}
-                  className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#3a6a00] sm:block"
+                  className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
                 >
                   Admin
                 </Link>
@@ -90,7 +90,7 @@ export default function Header() {
             <>
               <Link
                 href={ROUTES.login}
-                className="hidden rounded-lg px-4 py-2 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#edfcff] hover:text-[#3a6a00] active:scale-[0.98] md:block"
+                className="hidden rounded-lg px-4 py-2 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] md:block"
               >
                 Daxil ol
               </Link>
@@ -120,7 +120,7 @@ export default function Header() {
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={`rounded-lg px-2 py-2 text-[14px] font-semibold transition-all duration-200 ease-out active:scale-[0.98] ${
-                  isActive(link.match) ? 'bg-[#edfcff] text-[#3a6a00]' : 'text-[#40484a] hover:bg-[#edfcff]'
+                  isActive(link.match) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
                 }`}
               >
                 {link.label}

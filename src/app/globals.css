@@ -3,7 +3,7 @@
 
 /* ============================================================
    Yolüstü — Design System (Stitch / Material 3 tokens)
-   Font: Plus Jakarta Sans  |  Palette: Teal + Action Green
+   Font: Plus Jakarta Sans  |  Palette: Teal / Brand Blue
    ============================================================ */
 
 @theme {
@@ -40,12 +40,12 @@
   --color-brand-800: #002f37;
   --color-brand-900: #001f24;
 
-  /* ── Secondary (Action Green) ───────────────────── */
-  --color-secondary: #3a6a00;
+  /* ── Secondary ──────────────────────────────────── */
+  --color-secondary: #054752;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #a1fa49;
-  --color-on-secondary-container: #3e7100;
-  --color-action: #7ED321;
+  --color-secondary-container: #b5ebf9;
+  --color-on-secondary-container: #003d47;
+  --color-action: #306671;
 
   /* ── Accent (Star / Orange) ─────────────────────── */
   --color-accent-400: #f7b84e;
@@ -61,7 +61,7 @@
   --color-warn-500: #e09000;
 
   /* ── Success ────────────────────────────────────── */
-  --color-success-500: #3a6a00;
+  --color-success-500: #054752;
 
   /* ── Tertiary ───────────────────────────────────── */
   --color-tertiary: #282b2c;

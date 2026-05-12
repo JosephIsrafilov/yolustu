@@ -44,7 +44,7 @@ function TripsContent() {
           <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
             <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
               <h2 className="text-[18px] font-semibold text-[#002f37]">Filtrlər</h2>
-              <button onClick={() => setFilters({})} className="text-[#3a6a00] text-[12px] font-bold hover:underline">Sıfırla</button>
+              <button onClick={() => setFilters({})} className="text-[#054752] text-[12px] font-bold hover:underline">Sıfırla</button>
             </div>
 
             {/* City selects */}
@@ -161,7 +161,7 @@ function TripsContent() {
                             </div>
                           )}
                           {driver && driver.rating >= 4.5 && (
-                            <span className="absolute -bottom-0.5 -right-0.5 bg-[#7ED321] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+                            <span className="absolute -bottom-0.5 -right-0.5 bg-[#054752] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
                               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
                             </span>
                           )}
@@ -203,7 +203,7 @@ function TripsContent() {
                       {/* Price + seats */}
                       <div className="order-3 flex flex-col items-end sm:w-[120px] shrink-0">
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
-                        <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#3a6a00]'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span>{isFull ? 'Yer yoxdur' : `${trip.seatsAvailable} yer qalıb`}</span>
                         </div>

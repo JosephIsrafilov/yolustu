@@ -213,7 +213,7 @@ export default function HomePage() {
               </h2>
               <Link
                 href={ROUTES.trips}
-                className="hidden items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-[#3a6a00] md:flex"
+                className="hidden items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-[#054752] md:flex"
               >
                 Hamısına bax <Icon name="arrow-right" size={14} />
               </Link>
@@ -270,7 +270,7 @@ export default function HomePage() {
                 </p>
                 <Link
                   href={ROUTES.createTrip}
-                  className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-[#3a6a00] px-8 py-3.5 text-[16px] font-semibold text-white shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#a1fa49] hover:text-[#3e7100] hover:shadow-xl active:translate-y-0 active:scale-[0.98] md:px-10 md:py-4 md:text-[18px]"
+                  className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-[#054752] px-8 py-3.5 text-[16px] font-semibold text-white shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#306671] hover:shadow-xl active:translate-y-0 active:scale-[0.98] md:px-10 md:py-4 md:text-[18px]"
                 >
                   Gediş paylaş
                   <Icon name="car" size={20} />
