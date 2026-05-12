@@ -19,6 +19,7 @@ export default function SearchPage() {
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
   const [passengers, setPassengers] = useState(1);
+  const [isSwapping, setIsSwapping] = useState(false);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -34,8 +35,11 @@ export default function SearchPage() {
   };
 
   const swapRoute = () => {
+    setIsSwapping(true);
+    const temp = dep;
     setDep(arr);
-    setArr(dep);
+    setArr(temp);
+    setTimeout(() => setIsSwapping(false), 400);
   };
 
   useEffect(() => {
@@ -58,39 +62,52 @@ export default function SearchPage() {
               <p className="text-xs text-text-muted">Haradan, haraya və tarixi seçin</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Haradan</label>
-                <select
-                  value={dep}
-                  onChange={(e) => setDep(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="">Bütün şəhərlər</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="flex items-end sm:items-center lg:justify-center">
-                <button
-                  type="button"
-                  onClick={swapRoute}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-brand-600 transition-all hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  aria-label="Marşrutu dəyiş"
-                  title="Marşrutu dəyiş"
-                >
-                  <Icon name="arrow-right" size={16} />
-                  <Icon name="arrow-left" size={16} className="-ml-1" />
-                </button>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Haraya</label>
-                <select
-                  value={arr}
-                  onChange={(e) => setArr(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="">Bütün şəhərlər</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+              <div className="relative lg:flex lg:flex-col lg:gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">Haradan</label>
+                  <div className="relative">
+                    <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                    <select
+                      value={dep}
+                      onChange={(e) => setDep(e.target.value)}
+                      className="w-full appearance-none rounded-xl border border-border bg-white pl-10 pr-4 py-2.5 text-sm transition-all duration-200 ease-out focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      <option value="">Haradan seçin</option>
+                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-end sm:items-center lg:absolute lg:right-4 lg:top-[50%] lg:z-10 lg:-translate-y-[2px]">
+                  <button
+                    type="button"
+                    onClick={swapRoute}
+                    className={`group flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-brand-600 shadow-sm transition-all duration-300 hover:border-brand-500 hover:bg-brand-50 hover:shadow-md active:scale-90 focus:outline-none focus:ring-2 focus:ring-brand-500 ${isSwapping ? 'rotate-180' : ''}`}
+                    aria-label="Marşrutu dəyiş"
+                    title="Marşrutu dəyiş"
+                  >
+                    <Icon
+                      name="repeat"
+                      size={16}
+                      className={`transition-transform duration-500 ${isSwapping ? 'scale-75' : 'group-hover:scale-110'}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">Haraya</label>
+                  <div className="relative">
+                    <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                    <select
+                      value={arr}
+                      onChange={(e) => setArr(e.target.value)}
+                      className="w-full appearance-none rounded-xl border border-border bg-white pl-10 pr-4 py-2.5 text-sm transition-all duration-200 ease-out focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      <option value="">Haraya seçin</option>
+                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
               <DatePicker value={date} onChange={setDate} label="Tarix" placeholder="Tarix seçin" />
               <div className="flex flex-col gap-1.5">

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
 import { formatRating } from '@/lib/utils';
 import type { User } from '@/types';
@@ -13,10 +14,19 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({ user, reviewsCount = 0 }: ProfileHeaderProps) {
   return (
     <div className="flex flex-col items-center text-center py-6 px-4">
-      {/* Avatar */}
-      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3">
-        {user.fullName.charAt(0)}
-      </div>
+      {user.avatarUrl ? (
+        <Image
+          src={user.avatarUrl}
+          alt={user.fullName}
+          width={80}
+          height={80}
+          className="mb-3 h-20 w-20 rounded-full border border-border object-cover shadow-lg"
+        />
+      ) : (
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-3">
+          {user.fullName.charAt(0)}
+        </div>
+      )}
 
       <h2 className="text-xl font-bold text-text">{user.fullName}</h2>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -72,9 +73,19 @@ export default function Header() {
                 </Link>
               )}
               <Link href={ROUTES.profile} className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#054752] text-[13px] font-bold text-white shadow-sm">
-                  {currentUser.fullName.charAt(0)}
-                </div>
+                {currentUser.avatarUrl ? (
+                  <Image
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.fullName}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full border border-[#c0c8ca] object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#054752] text-[13px] font-bold text-white shadow-sm">
+                    {currentUser.fullName.charAt(0)}
+                  </div>
+                )}
                 <span className="hidden text-[14px] font-bold text-[#002f37] lg:block">
                   {currentUser.fullName.split(' ')[0]}
                 </span>

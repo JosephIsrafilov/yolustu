@@ -21,7 +21,7 @@ export type IconName =
   | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
-  | 'dog';
+  | 'dog' | 'repeat';
 
 // Each path value is [d-string, options?] — options: fill, fillRule, etc.
 const PATHS: Record<IconName, string> = {
@@ -65,6 +65,7 @@ const PATHS: Record<IconName, string> = {
   'armchair': 'M19 9V6a2 2 0 00-2-2H7a2 2 0 00-2 2v3M3 11v5a2 2 0 002 2h14a2 2 0 002-2v-5a3 3 0 00-3-3H6a3 3 0 00-3 3zM5 18v2M19 18v2',
   'cigarette-off': 'M2 2l20 20M12 12H2v4h14M22 12v4M18 12h-.01M7 12v4M2 8a4 4 0 014-4M16 8a4 4 0 014-4',
   'dog': 'M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .137 1.217.17 1.727 1.5 3 .426.408 1.143.884 2 1.33V19a2 2 0 002 2h8a2 2 0 002-2v-4.67c.857-.447 1.574-.922 2-1.33 1.33-1.273 1.363-1.783 1.5-3 .113-.994-1.177-6.53-4-7C15.577 2.679 14 3.782 14 5.172V6M12 6v3M12 13h.01',
+  'repeat': 'M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

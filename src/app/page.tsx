@@ -59,6 +59,18 @@ export default function HomePage() {
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
   const [passengers, setPassengers] = useState(1);
+  const [isSwapping, setIsSwapping] = useState(false);
+
+  const swapRoute = () => {
+    setIsSwapping(true);
+    const temp = dep;
+    setDep(arr);
+    setArr(temp);
+    setTimeout(() => setIsSwapping(false), 400);
+  };
+
+
+
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -120,11 +132,8 @@ export default function HomePage() {
                 <div className="z-10 hidden items-end justify-center pb-1 md:flex">
                   <button
                     type="button"
-                    className="rounded-full border border-[#c0c8ca] bg-white p-2 text-[#054752] shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#054752] hover:bg-[#edfcff] hover:shadow-md active:translate-y-0 active:scale-[0.96]"
-                    onClick={() => {
-                      setDep(arr);
-                      setArr(dep);
-                    }}
+                    className={`rounded-full border border-[#c0c8ca] bg-white p-2 text-[#054752] shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[#054752] hover:bg-[#edfcff] hover:shadow-md active:translate-y-0 active:scale-[0.96] ${isSwapping ? 'rotate-180' : ''}`}
+                    onClick={swapRoute}
                     aria-label="Marşrutu dəyiş"
                   >
                     <Icon name="arrow-right" size={20} />
@@ -281,7 +290,7 @@ export default function HomePage() {
                 <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-2 backdrop-blur-sm md:rounded-[2.5rem] md:p-4">
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[1.5rem] shadow-2xl md:aspect-square md:rounded-[2rem]">
                     <Image
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDFHqHGdWMMr1wRtsLtmkZ3BAe6yWoErMvoFd3cvKo5S16lJe5dkqXqP_7205400KdUIIWAmgFFEp1Y_DrDYH8OCj3AlxA7QOtlsG7C_Kc2o0HQSvdHszojofXkvK1KQhrqlOJ4P7afxo8sbZrcNh6CsFgsvBSRGhpGVqLL_N2RMuq8Nt5mZPJIY61vSaaNQvByRJ3ug4cF7fps8mSWHIlwo3ZLukPDRkW4j9njnAIMO0qY3nG6nhbq6mLt7gZYEi3L2gtllKmQm4"
+                      src="/images/driver-mountain-road.png"
                       alt="Yolüstü sürücü gedişi"
                       fill
                       sizes="(max-width: 768px) 100vw, 520px"

@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
         pathname: "/aida-public/**",
         search: "",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
     qualities: [75],
   },
