@@ -19,7 +19,15 @@ export default function Input({
   id,
   ...props
 }: InputProps) {
-  const inputId = id || label?.toLowerCase().replace(/\s/g, '-');
+  const fallbackId = React.useId();
+  const inputId = id || fallbackId;
+  const errorId = `${inputId}-error`;
+  const helperId = `${inputId}-helper`;
+
+  const describedBy = [
+    error ? errorId : undefined,
+    helperText && !error ? helperId : undefined,
+  ].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -30,7 +38,7 @@ export default function Input({
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
             {icon}
           </div>
         )}
@@ -47,12 +55,20 @@ export default function Input({
               : 'border-border hover:border-border-strong',
             className,
           )}
+          aria-invalid={!!error}
+          aria-describedby={describedBy}
           {...props}
         />
       </div>
-      {error && <p className="text-xs text-danger-500">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="text-xs text-danger-500">
+          {error}
+        </p>
+      )}
       {helperText && !error && (
-        <p className="text-xs text-text-muted">{helperText}</p>
+        <p id={helperId} className="text-xs text-text-muted">
+          {helperText}
+        </p>
       )}
     </div>
   );
