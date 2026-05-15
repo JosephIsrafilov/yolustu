@@ -1,6 +1,7 @@
 from core.database import engine
 from sqlalchemy import text
 
+
 def check_all_relations():
     with engine.connect() as conn:
         query = text("""
@@ -15,6 +16,7 @@ def check_all_relations():
         for row in rows:
             # kind: r=table, i=index, S=sequence, v=view, m=materialized view, c=composite type, t=TOAST table, f=foreign table
             print(row)
+
 
 if __name__ == "__main__":
     check_all_relations()

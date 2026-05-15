@@ -10,20 +10,25 @@ from schemas.auth import LoginInput
 
 router = APIRouter()
 
+
 @router.post("/request-otp")
 def request_otp(phone: str):
     return {"message": "success", "phone": phone}
+
 
 @router.post("/verify-otp", response_model=Token)
 def verify_otp(phone: str, otp: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.phone == phone).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found. Please register first.")
+        raise HTTPException(
+            status_code=404, detail="User not found. Please register first."
+        )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.phone}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
@@ -40,6 +45,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
+
 @router.post("/login", response_model=Token)
 def login(login_data: LoginInput, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.phone == login_data.email).first()
@@ -50,4 +56,3 @@ def login(login_data: LoginInput, db: Session = Depends(get_db)):
         data={"sub": user.phone}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
-
