@@ -1,3 +1,0 @@
-## 2026-05-13 - [Input Component Accessibility & Micro-interaction]
-**Learning:** Absolute positioned icons within inputs can intercept mouse clicks, preventing the input from gaining focus. Additionally, generated IDs based on labels can be brittle and non-unique, breaking `aria-describedby` associations for error messages.
-**Action:** Always use `pointer-events-none` on decorative absolute elements overlapping interactive fields. Use `React.useId()` for robust ID generation and ensure inputs use `aria-invalid` and `aria-describedby` pointing to error/helper texts with `role="alert"`.
