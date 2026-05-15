@@ -14,7 +14,7 @@ import type { TripSearchFilters } from '@/types';
 function TripsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { trips, users } = useAppStore();
+  const { trips, users, fetchTrips } = useAppStore();
 
   const [filters, setFilters] = useState<TripSearchFilters>({
     departureCity: searchParams.get('from') || undefined,
@@ -23,7 +23,12 @@ function TripsContent() {
     minSeats: searchParams.get('passengers') ? Number(searchParams.get('passengers')) : undefined,
   });
 
-  const filteredTrips = useMemo(() => filterTrips(trips, filters), [trips, filters]);
+  React.useEffect(() => {
+    fetchTrips(filters);
+  }, [fetchTrips, filters]);
+
+  const filteredTrips = trips; // Now the store already contains filtered trips if API supports it, or all trips
+
   const from = filters.departureCity || 'Bütün';
   const to = filters.arrivalCity || 'Bütün';
   const updateMinSeats = (nextSeats: number) => {

@@ -7,14 +7,13 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
-import { validateEmail, validatePassword } from '@/lib/mock-api';
 import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useAppStore((s) => s.login);
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
@@ -22,8 +21,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!validateEmail(email)) e.email = 'Düzgün email daxil edin';
-    if (!validatePassword(password)) e.password = 'Ən azı 6 simvol';
+    if (!phone) e.phone = 'Nömrəni daxil edin';
+    if (password.length < 6) e.password = 'Ən azı 6 simvol';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -33,14 +32,18 @@ export default function LoginPage() {
     if (!validate()) return;
     setLoading(true);
     setSubmitError('');
-    await new Promise((r) => setTimeout(r, 400));
-    const ok = login(email, password);
-    setLoading(false);
-    if (ok) {
-      router.push(ROUTES.search);
-      return;
+    try {
+      const ok = await login(phone, password);
+      setLoading(false);
+      if (ok) {
+        router.push(ROUTES.search);
+        return;
+      }
+      setSubmitError('Nömrə və ya şifrə yanlışdır.');
+    } catch (err: any) {
+      setLoading(false);
+      setSubmitError(err.message || 'Xəta baş verdi');
     }
-    setSubmitError('Email və ya şifrə yanlışdır, yaxud hesab bloklanıb.');
   };
 
   return (
@@ -56,14 +59,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-semibold text-[#011f23]">Email</label>
+              <label className="text-[14px] font-semibold text-[#011f23]">Mobil Nömrə</label>
               <div className="relative">
-                <Icon name="mail" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                <input type="email" placeholder="email@example.com" value={email}
-                  onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
+                <Icon name="phone" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                <input type="text" placeholder="+994501234567" value={phone}
+                  onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors((p) => { const n = { ...p }; delete n.phone; return n; }); }}
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
               </div>
-              {errors.email && <p className="text-[12px] text-[#ba1a1a]">{errors.email}</p>}
+              {errors.phone && <p className="text-[12px] text-[#ba1a1a]">{errors.phone}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">

@@ -1,52 +1,53 @@
 import type { User, Trip, Booking, Review } from '@/types';
 
 export interface AuthSlice {
-  
   currentUser: User | null;
   isAuthenticated: boolean;
   activeRole: 'passenger' | 'driver';
   lastError: string | null;
   users: User[];
 
-  register: (data: { fullName: string; email: string; phone: string; password: string }) => void;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   switchRole: (role: 'passenger' | 'driver') => void;
-  loginAsAdmin: () => void;
+  loginAsAdmin: () => Promise<void>;
   clearError: () => void;
 
-  updateProfile: (data: Partial<User>) => void;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 
-  blockUser: (userId: string) => void;
-  unblockUser: (userId: string) => void;
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
+  
+  fetchUsers: () => Promise<void>;
 }
 
 export interface TripSlice {
-  
   trips: Trip[];
+  isLoadingTrips: boolean;
 
-  createTrip: (data: Omit<Trip, 'id' | 'driverId' | 'seatsAvailable' | 'status' | 'createdAt'>) => string;
-  cancelTrip: (tripId: string) => boolean;
-  completeTrip: (tripId: string) => boolean;
-
-  deleteTrip: (tripId: string) => boolean;
+  fetchTrips: (filters?: any) => Promise<void>;
+  createTrip: (data: Omit<Trip, 'id' | 'driverId' | 'seatsAvailable' | 'status' | 'createdAt'>) => Promise<string>;
+  cancelTrip: (tripId: string) => Promise<boolean>;
+  completeTrip: (tripId: string) => Promise<boolean>;
+  deleteTrip: (tripId: string) => Promise<boolean>;
 }
 
 export interface BookingSlice {
-  
   bookings: Booking[];
 
-  createBooking: (tripId: string, seats: number) => string;
-  acceptBooking: (bookingId: string) => boolean;
-  rejectBooking: (bookingId: string) => boolean;
-  cancelBooking: (bookingId: string) => boolean;
+  fetchBookings: () => Promise<void>;
+  createBooking: (tripId: string, seats: number) => Promise<string>;
+  acceptBooking: (bookingId: string) => Promise<boolean>;
+  rejectBooking: (bookingId: string) => Promise<boolean>;
+  cancelBooking: (bookingId: string) => Promise<boolean>;
 }
 
 export interface ReviewSlice {
-  
   reviews: Review[];
 
-  createReview: (data: { tripId: string; targetUserId: string; rating: number; comment: string }) => boolean;
+  fetchReviews: (targetUserId: string) => Promise<void>;
+  createReview: (data: { tripId: string; targetUserId: string; rating: number; comment: string }) => Promise<boolean>;
 }
 
 export type AppState = AuthSlice & TripSlice & BookingSlice & ReviewSlice;

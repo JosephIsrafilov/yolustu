@@ -1,8 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AppState, AuthSlice } from '../types';
-import { MOCK_USERS } from '@/data/mock-data';
-import { generateId } from '@/lib/utils';
-import type { User, UserRole } from '@/types';
+import { authService } from '@/services';
+import type { UserRole } from '@/types';
 
 export const createAuthSlice: StateCreator<
   AppState,
@@ -14,64 +13,63 @@ export const createAuthSlice: StateCreator<
   isAuthenticated: false,
   activeRole: 'passenger',
   lastError: null,
-  users: [...MOCK_USERS],
+  users: [],
 
-  register: (data) => {
-    const newUser: User = {
-      id: generateId(),
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      city: '',
-      avatarUrl: '',
-      role: 'passenger',
-      rating: 0,
-      totalTrips: 0,
-      isBlocked: false,
-      createdAt: new Date().toISOString(),
-    };
-    set((s) => ({
-      users: [...s.users, newUser],
-      currentUser: newUser,
-      isAuthenticated: true,
-      activeRole: 'passenger',
-      lastError: null,
-    }));
-  },
-
-  login: (email: string, password: string) => {
-    void password;
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
-    if (!user) {
-      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Email və ya şifrə yanlışdır.' });
+  register: async (data) => {
+    try {
+      const user = await authService.register(data);
+      set({
+        currentUser: user,
+        isAuthenticated: true,
+        activeRole: 'passenger',
+        lastError: null,
+      });
+      return true;
+    } catch (error: any) {
+      set({ lastError: error.message || 'Qeydiyyat zamanı xəta baş verdi.' });
       return false;
     }
-    if (user.isBlocked) {
-      set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: 'Hesabınız bloklanıb. Dəstək xidməti ilə əlaqə saxlayın.' });
-      return false;
-    }
-
-    set({
-      currentUser: user,
-      isAuthenticated: true,
-      activeRole: user.role === 'driver' ? 'driver' : 'passenger',
-      lastError: null,
-    });
-    return true;
   },
 
-  logout: () => {
-    set({ currentUser: null, isAuthenticated: false, activeRole: 'passenger', lastError: null });
+  login: async (email, password) => {
+    try {
+      set({ lastError: null });
+      const user = await authService.login({ email, password });
+      set({
+        currentUser: user,
+        isAuthenticated: true,
+        activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+        lastError: null,
+      });
+      return true;
+    } catch (error: any) {
+      set({
+        currentUser: null,
+        isAuthenticated: false,
+        lastError: error.message || 'Email və ya şifrə yanlışdır.',
+      });
+      return false;
+    }
+  },
+
+  logout: async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      set({
+        currentUser: null,
+        isAuthenticated: false,
+        activeRole: 'passenger',
+        lastError: null,
+      });
+    }
   },
 
   switchRole: (role) => {
     const { currentUser } = get();
     if (!currentUser) return;
-    if (currentUser.role === 'admin') {
-      set({ activeRole: role, lastError: null });
-      return;
-    }
     set({
       activeRole: role,
       currentUser: { ...currentUser, role: role as UserRole },
@@ -79,10 +77,20 @@ export const createAuthSlice: StateCreator<
     });
   },
 
-  loginAsAdmin: () => {
-    const admin = get().users.find((u) => u.role === 'admin');
-    if (admin) {
-      set({ currentUser: admin, isAuthenticated: true, activeRole: 'passenger', lastError: null });
+  loginAsAdmin: async () => {
+    try {
+      const users = get().users;
+      const admin = users.find((u) => u.role === 'admin');
+      if (admin) {
+        set({
+          currentUser: admin,
+          isAuthenticated: true,
+          activeRole: 'passenger',
+          lastError: null,
+        });
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
     }
   },
 
@@ -90,25 +98,47 @@ export const createAuthSlice: StateCreator<
     set({ lastError: null });
   },
 
-  updateProfile: (data) => {
-    const { currentUser } = get();
-    if (!currentUser) return;
-    const updated = { ...currentUser, ...data };
-    set((s) => ({
-      currentUser: updated,
-      users: s.users.map((u) => (u.id === currentUser.id ? updated : u)),
-    }));
+  updateProfile: async (data) => {
+    try {
+      const updated = await authService.updateProfile(data);
+      set((s) => ({
+        currentUser: updated,
+        users: s.users.map((u) => (u.id === updated.id ? updated : u)),
+      }));
+    } catch (error: any) {
+      set({ lastError: error.message || 'Profil yenilənməsi zamanı xəta baş verdi.' });
+      throw error;
+    }
   },
 
-  blockUser: (userId) => {
-    set((s) => ({
-      users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: true } : u)),
-    }));
+  blockUser: async (userId) => {
+    try {
+      
+      set((s) => ({
+        users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: true } : u)),
+      }));
+    } catch (error) {
+      console.error('Block user error:', error);
+    }
   },
 
-  unblockUser: (userId) => {
-    set((s) => ({
-      users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: false } : u)),
-    }));
+  unblockUser: async (userId) => {
+    try {
+      
+      set((s) => ({
+        users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: false } : u)),
+      }));
+    } catch (error) {
+      console.error('Unblock user error:', error);
+    }
+  },
+
+  fetchUsers: async () => {
+    try {
+      
+      
+    } catch (error) {
+      console.error('Fetch users error:', error);
+    }
   },
 });

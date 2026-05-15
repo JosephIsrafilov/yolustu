@@ -21,7 +21,7 @@ export const mockTripsService: TripsService = {
   },
 
   async createTrip(input) {
-    const tripId = useAppStore.getState().createTrip(input);
+    const tripId = await useAppStore.getState().createTrip(input);
     if (!tripId) {
       throw buildStoreError('Trip could not be created.');
     }
@@ -42,7 +42,7 @@ export const mockTripsService: TripsService = {
   },
 
   async cancelTrip(tripId) {
-    const ok = useAppStore.getState().cancelTrip(tripId);
+    const ok = await useAppStore.getState().cancelTrip(tripId);
     if (!ok) {
       throw buildStoreError('Trip could not be cancelled.');
     }
@@ -57,7 +57,7 @@ export const mockTripsService: TripsService = {
   },
 
   async completeTrip(tripId) {
-    const ok = useAppStore.getState().completeTrip(tripId);
+    const ok = await useAppStore.getState().completeTrip(tripId);
     if (!ok) {
       throw buildStoreError('Trip could not be completed.');
     }

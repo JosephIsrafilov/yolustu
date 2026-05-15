@@ -19,8 +19,8 @@ function ReviewContent() {
   const trip = trips.find((t) => t.id === tripId);
   const target = users.find((u) => u.id === targetUserId);
 
-  const handleSubmit = (data: { rating: number; comment: string }) => {
-    const ok = createReview({ tripId, targetUserId, ...data });
+  const handleSubmit = async (data: { rating: number; comment: string }) => {
+    const ok = await createReview({ tripId, targetUserId, ...data });
     if (ok) router.push(ROUTES.bookings);
   };
 

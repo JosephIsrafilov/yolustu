@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const register = useAppStore((s) => s.register);
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirm: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
@@ -37,9 +38,14 @@ export default function RegisterPage() {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-    register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password });
-    router.push(ROUTES.profileSetup);
+    setSubmitError('');
+    const ok = await register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password });
+    setLoading(false);
+    if (ok) {
+      router.push(ROUTES.profileSetup);
+    } else {
+      setSubmitError(useAppStore.getState().lastError || 'Xəta baş verdi');
+    }
   };
 
   const update = (key: string, value: string) => {
@@ -80,6 +86,12 @@ export default function RegisterPage() {
                 {errors[f.key] && <p className="text-[12px] text-[#ba1a1a]">{errors[f.key]}</p>}
               </div>
             ))}
+
+            {submitError && (
+              <div className="rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-[13px] font-medium text-[#93000a]">
+                {submitError}
+              </div>
+            )}
 
             <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
               {loading ? 'Yüklənir...' : 'Qeydiyyatdan keç'}

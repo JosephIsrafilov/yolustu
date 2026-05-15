@@ -70,13 +70,20 @@ class ApiClient {
 
   private async request<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
     try {
-      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       });
 

@@ -65,8 +65,8 @@ export default function CreateTripPage() {
   const next = () => { if (validateStep()) setStep((s) => Math.min(s + 1, 4)); };
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  const publish = () => {
-    const id = createTrip({
+  const publish = async () => {
+    const id = await createTrip({
       departureCity: form.departureCity,
       arrivalCity: form.arrivalCity,
       meetingPoint: form.meetingPoint,

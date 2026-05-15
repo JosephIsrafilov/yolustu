@@ -5,7 +5,7 @@ import { buildStoreError, requireCurrentUser } from '@/services/mock/mock-servic
 
 export const mockBookingsService: BookingsService = {
   async createBooking(input) {
-    const bookingId = useAppStore.getState().createBooking(input.tripId, input.seatsRequested);
+    const bookingId = await useAppStore.getState().createBooking(input.tripId, input.seatsRequested);
     if (!bookingId) {
       throw buildStoreError('Booking request could not be created.');
     }
@@ -36,7 +36,7 @@ export const mockBookingsService: BookingsService = {
   },
 
   async acceptBooking(bookingId) {
-    const ok = useAppStore.getState().acceptBooking(bookingId);
+    const ok = await useAppStore.getState().acceptBooking(bookingId);
     if (!ok) {
       throw buildStoreError('Booking request could not be accepted.');
     }
@@ -51,7 +51,7 @@ export const mockBookingsService: BookingsService = {
   },
 
   async rejectBooking(bookingId) {
-    const ok = useAppStore.getState().rejectBooking(bookingId);
+    const ok = await useAppStore.getState().rejectBooking(bookingId);
     if (!ok) {
       throw buildStoreError('Booking request could not be rejected.');
     }
@@ -66,7 +66,7 @@ export const mockBookingsService: BookingsService = {
   },
 
   async cancelBooking(bookingId) {
-    const ok = useAppStore.getState().cancelBooking(bookingId);
+    const ok = await useAppStore.getState().cancelBooking(bookingId);
     if (!ok) {
       throw buildStoreError('Booking could not be cancelled.');
     }
