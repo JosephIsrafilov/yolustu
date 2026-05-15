@@ -6,6 +6,7 @@ from api.rides import router as rides_router
 from api.bookings import router as bookings_router
 from api.vehicles import router as vehicles_router
 from api.reviews import router as reviews_router
+from api.messages import router as messages_router
 
 app = FastAPI(title="Yolüstü API")
 origins = [
@@ -25,6 +26,7 @@ app.include_router(rides_router, prefix="/api/rides", tags=["rides"])
 app.include_router(bookings_router, prefix="/api/bookings", tags=["bookings"])
 app.include_router(vehicles_router, prefix="/api/vehicles", tags=["vehicles"])
 app.include_router(reviews_router, prefix="/api/reviews", tags=["reviews"])
+app.include_router(messages_router, prefix="/api/messages", tags=["messages"])
 
 
 @app.get("/")

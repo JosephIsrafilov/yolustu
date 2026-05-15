@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 class LoginInput(BaseModel):
-    email: str
-    password: str
+    phone: str
+    password: str # For now, but Yolüstü mainly uses OTP
