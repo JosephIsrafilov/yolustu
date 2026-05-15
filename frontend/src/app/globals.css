@@ -1,13 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-/* ============================================================
-   Yolüstü — Design System (Stitch / Material 3 tokens)
-   Font: Plus Jakarta Sans  |  Palette: Teal / Brand Blue
-   ============================================================ */
-
 @theme {
-  /* ── Surface ────────────────────────────────────── */
+  
   --color-surface: #edfcff;
   --color-surface-dim: #c2dfe5;
   --color-surface-bright: #edfcff;
@@ -20,7 +15,6 @@
   --color-surface-variant: #cae8ed;
   --color-surface-tint: #306671;
 
-  /* ── Primary / Brand ─────────────────────────────── */
   --color-primary: #002f37;
   --color-on-primary: #ffffff;
   --color-primary-container: #054752;
@@ -40,46 +34,37 @@
   --color-brand-800: #002f37;
   --color-brand-900: #001f24;
 
-  /* ── Secondary ──────────────────────────────────── */
   --color-secondary: #054752;
   --color-on-secondary: #ffffff;
   --color-secondary-container: #b5ebf9;
   --color-on-secondary-container: #003d47;
   --color-action: #306671;
 
-  /* ── Accent (Star / Orange) ─────────────────────── */
   --color-accent-400: #f7b84e;
   --color-accent-500: #F5A623;
   --color-accent-600: #e09000;
 
-  /* ── Danger (Error / Red) ───────────────────────── */
   --color-danger-400: #d63a3a;
   --color-danger-500: #ba1a1a;
   --color-danger-600: #93000a;
 
-  /* ── Warning ────────────────────────────────────── */
   --color-warn-500: #e09000;
 
-  /* ── Success ────────────────────────────────────── */
   --color-success-500: #054752;
 
-  /* ── Tertiary ───────────────────────────────────── */
   --color-tertiary: #282b2c;
   --color-on-tertiary: #ffffff;
   --color-tertiary-container: #3e4142;
 
-  /* ── Error ──────────────────────────────────────── */
   --color-error: #ba1a1a;
   --color-on-error: #ffffff;
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  /* ── Text colors ────────────────────────────────── */
   --color-text: #011f23;
   --color-text-secondary: #40484a;
   --color-text-muted: #70787b;
 
-  /* ── On-surface / background ────────────────────── */
   --color-on-surface: #011f23;
   --color-on-surface-variant: #40484a;
   --color-on-background: #011f23;
@@ -87,20 +72,16 @@
   --color-inverse-surface: #193439;
   --color-inverse-on-surface: #d8f6fc;
 
-  /* ── Border / Outline ──────────────────────────── */
   --color-border: #c0c8ca;
   --color-border-strong: #70787b;
   --color-outline: #70787b;
   --color-outline-variant: #c0c8ca;
 
-  /* ── Star / rating ──────────────────────────────── */
   --color-star: #F5A623;
 
-  /* ── Typography ─────────────────────────────────── */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ─── Base ──────────────────────────────────────────────── */
 @layer base {
   html {
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -120,7 +101,6 @@
   }
 }
 
-/* ─── Animations ────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -143,19 +123,13 @@
 .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
 
-/* ─── Elevation shadows (from Stitch design system) ────── */
 .shadow-card      { box-shadow: 0 4px 12px rgba(5,71,82,0.05); }
 .shadow-card-hover{ box-shadow: 0 8px 24px rgba(5,71,82,0.10); }
 
-/* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 9999px; }
 
-/* ─── Semantic color utility classes ─────────────────────── */
-/* Plain CSS classes using design-system CSS variables         */
-
-/* ── Brand backgrounds ─ */
 .bg-brand-50  { background-color: var(--color-brand-50); }
 .bg-brand-100 { background-color: var(--color-brand-100); }
 .bg-brand-200 { background-color: var(--color-brand-200); }
@@ -165,54 +139,44 @@
 .bg-brand-800 { background-color: var(--color-brand-800); }
 .bg-brand-900 { background-color: var(--color-brand-900); }
 
-/* ── Brand text ─ */
 .text-brand-200 { color: var(--color-brand-200); }
 .text-brand-500 { color: var(--color-brand-500); }
 .text-brand-600 { color: var(--color-brand-600); }
 .text-brand-700 { color: var(--color-brand-700); }
 
-/* ── Brand borders ─ */
 .border-brand-100 { border-color: var(--color-brand-100); }
 .border-brand-200 { border-color: var(--color-brand-200); }
 .border-brand-500 { border-color: var(--color-brand-500); }
 .border-brand-600 { border-color: var(--color-brand-600); }
 
-/* ── Brand focus rings ─ */
 .ring-brand-100 { --tw-ring-color: var(--color-brand-100); }
 .ring-brand-500 { --tw-ring-color: var(--color-brand-500); }
 
-/* ── Brand gradients ─ */
 .from-brand-50  { --tw-gradient-from: var(--color-brand-50); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
 .from-brand-300 { --tw-gradient-from: var(--color-brand-300); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
 .from-brand-400 { --tw-gradient-from: var(--color-brand-400); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent); }
 .to-brand-600   { --tw-gradient-to: var(--color-brand-600); }
 .to-brand-700   { --tw-gradient-to: var(--color-brand-700); }
 
-/* ── Accent ─ */
 .bg-accent-500    { background-color: var(--color-accent-500); }
 .text-accent-500  { color: var(--color-accent-500); }
 .fill-accent-500  { fill: var(--color-accent-500); }
 
-/* ── Danger ─ */
 .bg-danger-500     { background-color: var(--color-danger-500); }
 .bg-danger-600     { background-color: var(--color-danger-600); }
 .text-danger-500   { color: var(--color-danger-500); }
 .border-danger-500 { border-color: var(--color-danger-500); }
 .ring-danger-500   { --tw-ring-color: var(--color-danger-500); }
 
-/* ── Warn / Success ─ */
 .text-warn-500    { color: var(--color-warn-500); }
 .text-success-500 { color: var(--color-success-500); }
 
-/* ── Text semantic ─ */
 .text-text           { color: var(--color-text); }
 .text-text-secondary { color: var(--color-text-secondary); }
 .text-text-muted     { color: var(--color-text-muted); }
 
-/* ── Border semantic ─ */
 .border-border        { border-color: var(--color-border); }
 .border-border-strong { border-color: var(--color-border-strong); }
 
-/* ── Surface ─ */
 .bg-surface-muted { background-color: var(--color-surface-muted); }
 .bg-surface-dim   { background-color: var(--color-surface-dim); }

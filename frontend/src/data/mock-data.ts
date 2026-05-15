@@ -1,10 +1,7 @@
-// ============================================================
-// Yolüstü — Realistic Azerbaijani Mock Data
-// ============================================================
+
 
 import type { User, Trip, Booking, Review, AdminModerationItem } from '@/types';
 
-// ─── Users ──────────────────────────────────────────────────
 export const MOCK_USERS: User[] = [
   {
     id: 'u1',
@@ -120,7 +117,6 @@ export const MOCK_USERS: User[] = [
   },
 ];
 
-// ─── Trips ──────────────────────────────────────────────────
 export const MOCK_TRIPS: Trip[] = [
   {
     id: 't1',
@@ -258,7 +254,6 @@ export const MOCK_TRIPS: Trip[] = [
   },
 ];
 
-// ─── Bookings ───────────────────────────────────────────────
 export const MOCK_BOOKINGS: Booking[] = [
   {
     id: 'b1',
@@ -302,7 +297,6 @@ export const MOCK_BOOKINGS: Booking[] = [
   },
 ];
 
-// ─── Reviews ────────────────────────────────────────────────
 export const MOCK_REVIEWS: Review[] = [
   {
     id: 'r1',
@@ -333,7 +327,6 @@ export const MOCK_REVIEWS: Review[] = [
   },
 ];
 
-// ─── Admin Moderation Items ─────────────────────────────────
 export const MOCK_MODERATION: AdminModerationItem[] = [
   {
     id: 'm1',
@@ -353,7 +346,6 @@ export const MOCK_MODERATION: AdminModerationItem[] = [
   },
 ];
 
-// ─── Popular Routes ─────────────────────────────────────────
 export const POPULAR_ROUTES = [
   { from: 'Bakı', to: 'Gəncə', avgPrice: 15 },
   { from: 'Bakı', to: 'Quba', avgPrice: 10 },
@@ -364,7 +356,6 @@ export const POPULAR_ROUTES = [
   { from: 'Bakı', to: 'Şamaxı', avgPrice: 12 },
 ];
 
-// ─── Cars ───────────────────────────────────────────────────
 export const CAR_MODELS = [
   'Toyota Prius',
   'Hyundai Elantra',

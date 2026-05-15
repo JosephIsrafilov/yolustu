@@ -69,9 +69,6 @@ export default function HomePage() {
     setTimeout(() => setIsSwapping(false), 400);
   };
 
-
-
-
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (dep) params.set('from', dep);

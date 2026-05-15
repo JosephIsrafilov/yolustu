@@ -30,7 +30,7 @@ export default function BookingCard({
 
   return (
     <Card className="animate-fade-in">
-      {/* Header with status */}
+      {}
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-base font-bold text-text">
@@ -44,13 +44,13 @@ export default function BookingCard({
         <StatusBadge status={booking.status} />
       </div>
 
-      {/* Details */}
+      {}
       <div className="flex items-center gap-4 text-sm text-text-secondary mb-3">
         <span className="font-semibold text-brand-600">{formatPrice(trip.pricePerSeat)}</span>
         <span>{booking.seatsRequested} yer</span>
       </div>
 
-      {/* Driver */}
+      {}
       {driver && (
         <div className="flex items-center gap-2 py-2 border-t border-border">
           <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
@@ -66,7 +66,7 @@ export default function BookingCard({
         </div>
       )}
 
-      {/* Actions */}
+      {}
       {(canCancel || canReview) && (
         <div className="flex gap-2 mt-3 pt-3 border-t border-border">
           {canCancel && onCancel && (

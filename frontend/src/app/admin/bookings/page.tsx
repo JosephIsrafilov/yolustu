@@ -19,7 +19,7 @@ export default function AdminBookingsPage() {
     <AdminLayout>
       <h1 className="text-2xl font-bold text-text mb-4">Rezervlər</h1>
 
-      {/* Filters */}
+      {}
       <div className="flex gap-1 flex-wrap mb-4">
         {STATUSES.map((s) => (
           <button key={s} onClick={() => setFilter(s)}

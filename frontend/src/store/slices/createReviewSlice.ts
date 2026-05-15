@@ -61,7 +61,7 @@ export const createReviewSlice: StateCreator<
     };
     set((s) => {
       const allReviews = [...s.reviews, review];
-      // Recalculate average rating for target user
+      
       const targetReviews = allReviews.filter((r) => r.targetUserId === data.targetUserId);
       const avgRating = targetReviews.reduce((sum, r) => sum + r.rating, 0) / targetReviews.length;
       return {

@@ -18,14 +18,14 @@ export default function RouteTimeline({
 }: RouteTimelineProps) {
   return (
     <div className="flex gap-3">
-      {/* Timeline dots/line */}
+      {}
       <div className="flex flex-col items-center pt-1">
         <div className="w-3 h-3 rounded-full bg-brand-500 ring-4 ring-brand-100" />
         <div className="w-0.5 flex-1 bg-gradient-to-b from-brand-300 to-brand-600 my-1 min-h-[40px]" />
         <div className="w-3 h-3 rounded-full bg-brand-700 ring-4 ring-brand-100" />
       </div>
 
-      {/* Info */}
+      {}
       <div className="flex flex-col justify-between flex-1 py-0.5">
         <div>
           <p className="text-base font-semibold text-text">{departure}</p>

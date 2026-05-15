@@ -22,7 +22,7 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Star rating */}
+      {}
       <div>
         <label className="text-sm font-medium text-text mb-2 block">Qiymətləndirmə</label>
         <div className="flex items-center gap-1">
@@ -53,7 +53,7 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
         )}
       </div>
 
-      {/* Comment */}
+      {}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-text">Şərh (ixtiyari)</label>
         <textarea

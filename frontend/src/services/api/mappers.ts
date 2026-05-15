@@ -7,14 +7,14 @@ export function mapApiTripToTrip(apiTrip: any): Trip {
     driverId: apiTrip.driver_id,
     departureCity: apiTrip.origin_city,
     arrivalCity: apiTrip.destination_city,
-    meetingPoint: '', // TODO: Add to backend
-    dropoffPoint: '', // TODO: Add to backend
+    meetingPoint: '', 
+    dropoffPoint: '', 
     date: departureDate.toISOString().split('T')[0],
     time: departureDate.toTimeString().split(' ')[0].substring(0, 5),
     seatsTotal: apiTrip.total_seats,
     seatsAvailable: apiTrip.available_seats,
     pricePerSeat: apiTrip.price_per_seat,
-    carModel: '', // TODO: Fetch from vehicle_id
+    carModel: '', 
     comment: apiTrip.description,
     status: apiTrip.status,
     createdAt: apiTrip.created_at,
@@ -36,13 +36,13 @@ export function mapApiUserToUser(apiUser: any): User {
   return {
     id: apiUser.id,
     fullName: `${apiUser.first_name} ${apiUser.last_name}`,
-    email: '', // TODO: Add to backend if needed
+    email: '', 
     phone: apiUser.phone,
-    city: '', // TODO: Add to backend
-    role: 'passenger', // TODO: Add role to backend
+    city: '', 
+    role: 'passenger', 
     rating: apiUser.rating,
-    totalTrips: 0, // TODO: Add to backend
-    isBlocked: false, // TODO: Add to backend
+    totalTrips: 0, 
+    isBlocked: false, 
     createdAt: apiUser.created_at,
   };
 }

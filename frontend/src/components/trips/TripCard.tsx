@@ -24,7 +24,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       onClick={() => router.push(ROUTES.tripDetails(trip.id))}
       className="animate-fade-in"
     >
-      {/* Route header */}
+      {}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center">
@@ -43,7 +43,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         </div>
       </div>
 
-      {/* Trip info */}
+      {}
       <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary mb-3">
         <span className="flex items-center gap-1">
           <Icon name="clock" size={13} />
@@ -58,7 +58,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         )}
       </div>
 
-      {/* Driver info */}
+      {}
       {driver && !compact && (
         <div className="flex items-center gap-2 pt-3 border-t border-border">
           {driver.avatarUrl ? (
@@ -84,7 +84,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         </div>
       )}
 
-      {/* Meeting point */}
+      {}
       {!compact && trip.meetingPoint && (
         <div className="flex items-start gap-1.5 mt-2 text-xs text-text-muted">
           <Icon name="map-pin" size={12} className="mt-0.5 shrink-0" />

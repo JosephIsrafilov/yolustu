@@ -1,11 +1,5 @@
 import React from 'react';
 
-/**
- * Lightweight inline SVG icon component.
- * Replaces lucide-react with zero-dependency SVG paths.
- * All icons use stroke-based rendering at 24×24 viewBox.
- */
-
 interface IconProps {
   name: IconName;
   size?: number;
@@ -23,7 +17,6 @@ export type IconName =
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
   | 'dog' | 'repeat';
 
-// Each path value is [d-string, options?] — options: fill, fillRule, etc.
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
   'search-x': 'M13.5 8.5L8.5 13.5M8.5 8.5l5 5M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',

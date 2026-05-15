@@ -1,21 +1,11 @@
-// ============================================================
-// Yolüstü — Mock API helpers
-// These simulate backend API calls for Sprint 0 prototype.
-// TODO: Replace with real fetch/axios calls in Sprint 1+
-// ============================================================
+
 
 import type { Trip, TripSearchFilters } from '@/types';
 
-/**
- * Simulate API delay
- */
 export function mockDelay(ms = 400): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Filter trips based on search criteria
- */
 export function filterTrips(trips: Trip[], filters: TripSearchFilters): Trip[] {
   return trips.filter((t) => {
     if (t.status !== 'active') return false;
@@ -29,10 +19,6 @@ export function filterTrips(trips: Trip[], filters: TripSearchFilters): Trip[] {
   });
 }
 
-/**
- * Mock auth validation
- * TODO: Replace with real JWT auth in Sprint 1
- */
 export function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

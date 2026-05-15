@@ -1,6 +1,4 @@
-// ============================================================
-// Yolüstü — Domain Types
-// ============================================================
+
 
 export type UserRole = 'passenger' | 'driver' | 'admin';
 
@@ -64,7 +62,7 @@ export interface Review {
   tripId: string;
   authorId: string;
   targetUserId: string;
-  rating: number; // 1-5
+  rating: number; 
   comment: string;
   createdAt: string;
 }
@@ -80,7 +78,6 @@ export interface AdminModerationItem {
   createdAt: string;
 }
 
-// Search / Filter helpers
 export interface TripSearchFilters {
   departureCity?: string;
   arrivalCity?: string;
@@ -89,7 +86,6 @@ export interface TripSearchFilters {
   minSeats?: number;
 }
 
-// Create-trip stepper
 export interface CreateTripData {
   departureCity: string;
   arrivalCity: string;

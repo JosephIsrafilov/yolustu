@@ -70,7 +70,7 @@ class ApiClient {
 
   private async request<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
     try {
-      // TODO: inject auth token via dedicated auth token provider when real auth is added.
+      
       const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
         method,
         headers: {

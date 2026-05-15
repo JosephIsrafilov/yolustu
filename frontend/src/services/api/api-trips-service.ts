@@ -28,7 +28,7 @@ export const apiTripsService: TripsService = {
   },
 
   async createTrip(input) {
-    // Convert frontend input to backend schema
+    
     const backendInput = {
       departure_time: `${input.date}T${input.time}:00`,
       total_seats: input.seatsTotal,
@@ -36,9 +36,9 @@ export const apiTripsService: TripsService = {
       price_per_seat: input.pricePerSeat,
       origin_city: input.departureCity,
       destination_city: input.arrivalCity,
-      vehicle_id: '00000000-0000-0000-0000-000000000000', // Placeholder, needs vehicle selection
-      origin: { lat: 0, lon: 0 }, // Placeholder, needs geocoding
-      destination: { lat: 0, lon: 0 }, // Placeholder, needs geocoding
+      vehicle_id: '00000000-0000-0000-0000-000000000000', 
+      origin: { lat: 0, lon: 0 }, 
+      destination: { lat: 0, lon: 0 }, 
       description: input.comment,
     };
     const response = await apiClient.post<any>('/rides', backendInput);

@@ -39,7 +39,7 @@ function TripsContent() {
   return (
     <WebLayout>
       <div className="flex flex-col md:flex-row gap-6">
-        {/* ── Sidebar ──────────────────── */}
+        {}
         <aside className="order-2 w-full md:order-1 md:w-[280px] shrink-0">
           <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
             <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
@@ -47,7 +47,7 @@ function TripsContent() {
               <button onClick={() => setFilters({})} className="text-[#054752] text-[12px] font-bold hover:underline">Sıfırla</button>
             </div>
 
-            {/* City selects */}
+            {}
             <div className="mb-5">
               <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haradan</h3>
               <div className="relative">
@@ -107,9 +107,9 @@ function TripsContent() {
           </div>
         </aside>
 
-        {/* ── Results ──────────────────── */}
+        {}
         <section className="order-1 flex-1 flex flex-col gap-4 md:order-2">
-          {/* Search summary bar */}
+          {}
           <div className="bg-[#dbf9fe] p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
               <div className="flex items-center gap-2 text-[24px] font-semibold text-[#002f37] mb-1">
@@ -136,7 +136,7 @@ function TripsContent() {
             </div>
           )}
 
-          {/* Trip cards */}
+          {}
           {filteredTrips.length > 0 ? (
             <div className="flex flex-col gap-3 stagger-children">
               {filteredTrips.map((trip) => {
@@ -150,7 +150,7 @@ function TripsContent() {
                     }`}>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      {/* Driver */}
+                      {}
                       <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
                           {driver?.avatarUrl ? (
@@ -176,14 +176,14 @@ function TripsContent() {
                         </div>
                       </div>
 
-                      {/* Time + route */}
+                      {}
                       <div className="order-1 flex items-center gap-3 flex-1">
                         <div className="text-right shrink-0">
                           <div className="text-[18px] font-semibold text-[#002f37]">{trip.time}</div>
                           <div className="text-[13px] text-[#40484a]">{trip.departureCity}</div>
                         </div>
 
-                        {/* Timeline visual */}
+                        {}
                         <div className="flex flex-col items-center w-20 shrink-0">
                           <div className="w-2.5 h-2.5 rounded-full border-2 border-[#c0c8ca] bg-white"></div>
                           <div className="w-px h-6 bg-[#c0c8ca] relative">
@@ -200,7 +200,7 @@ function TripsContent() {
                         </div>
                       </div>
 
-                      {/* Price + seats */}
+                      {}
                       <div className="order-3 flex flex-col items-end sm:w-[120px] shrink-0">
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
                         <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>

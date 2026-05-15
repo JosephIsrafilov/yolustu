@@ -1,7 +1,5 @@
-// ============================================================
-// Yolüstü — Zustand Global Store
-// Refactored into domain slices
-// ============================================================
+
+
 'use client';
 
 import { create } from 'zustand';
