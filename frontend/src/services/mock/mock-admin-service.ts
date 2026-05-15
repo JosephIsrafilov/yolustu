@@ -25,7 +25,7 @@ export const mockAdminService: AdminService = {
 
   async blockUser(userId) {
     requireAdminUser();
-    useAppStore.getState().blockUser(userId);
+    await useAppStore.getState().blockUser(userId);
     const user = useAppStore.getState().users.find((item) => item.id === userId);
     if (!user) {
       throw new ApiError({
@@ -38,7 +38,7 @@ export const mockAdminService: AdminService = {
 
   async unblockUser(userId) {
     requireAdminUser();
-    useAppStore.getState().unblockUser(userId);
+    await useAppStore.getState().unblockUser(userId);
     const user = useAppStore.getState().users.find((item) => item.id === userId);
     if (!user) {
       throw new ApiError({
@@ -56,7 +56,7 @@ export const mockAdminService: AdminService = {
 
   async deleteTrip(tripId) {
     requireAdminUser();
-    const ok = useAppStore.getState().deleteTrip(tripId);
+    const ok = await useAppStore.getState().deleteTrip(tripId);
     if (!ok) {
       throw buildStoreError('Trip could not be deleted.', 'NOT_FOUND');
     }

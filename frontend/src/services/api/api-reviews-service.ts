@@ -3,14 +3,21 @@ import type {
   CreateReviewInput,
   ReviewsService,
 } from '@/services/contracts/reviews-service';
-import type { Review } from '@/types';
+import { mapApiReviewToReview, type ApiReview } from './mappers';
 
 export const apiReviewsService: ReviewsService = {
   async createReview(input: CreateReviewInput) {
-    return apiClient.post<Review>('/reviews', input);
+    const response = await apiClient.post<ApiReview>('/reviews', {
+      ride_id: input.tripId,
+      target_id: input.targetUserId,
+      rating: input.rating,
+      comment: input.comment,
+    });
+    return mapApiReviewToReview(response);
   },
 
   async getReviewsForUser(userId) {
-    return apiClient.get<Review[]>(`/reviews/user/${userId}`);
+    const response = await apiClient.get<ApiReview[]>(`/reviews/user/${userId}`);
+    return response.map(mapApiReviewToReview);
   },
 };

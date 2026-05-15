@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
-import { filterTrips } from '@/lib/mock-api';
 import { AZ_CITIES } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';

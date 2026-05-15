@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
+import { toApiError } from '@/services/api-error';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,9 +41,10 @@ export default function LoginPage() {
         return;
       }
       setSubmitError('Nömrə və ya şifrə yanlışdır.');
-    } catch (err: any) {
+    } catch (err) {
+      const error = toApiError(err);
       setLoading(false);
-      setSubmitError(err.message || 'Xəta baş verdi');
+      setSubmitError(error.message || 'Xəta baş verdi');
     }
   };
 

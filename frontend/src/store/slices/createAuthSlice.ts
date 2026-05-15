@@ -1,6 +1,8 @@
 import { StateCreator } from 'zustand';
 import { AppState, AuthSlice } from '../types';
 import { authService } from '@/services';
+import { MOCK_USERS } from '@/data/mock-data';
+import { toApiError } from '@/services/api-error';
 import type { UserRole } from '@/types';
 
 export const createAuthSlice: StateCreator<
@@ -13,7 +15,7 @@ export const createAuthSlice: StateCreator<
   isAuthenticated: false,
   activeRole: 'passenger',
   lastError: null,
-  users: [],
+  users: [...MOCK_USERS],
 
   register: async (data) => {
     try {
@@ -25,16 +27,17 @@ export const createAuthSlice: StateCreator<
         lastError: null,
       });
       return true;
-    } catch (error: any) {
-      set({ lastError: error.message || 'Qeydiyyat zamanı xəta baş verdi.' });
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Qeydiyyat zamanı xəta baş verdi.' });
       return false;
     }
   },
 
-  login: async (email, password) => {
+  login: async (phone, password) => {
     try {
       set({ lastError: null });
-      const user = await authService.login({ email, password });
+      const user = await authService.login({ phone, password });
       set({
         currentUser: user,
         isAuthenticated: true,
@@ -42,11 +45,12 @@ export const createAuthSlice: StateCreator<
         lastError: null,
       });
       return true;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = toApiError(error);
       set({
         currentUser: null,
         isAuthenticated: false,
-        lastError: error.message || 'Email və ya şifrə yanlışdır.',
+        lastError: apiError.message || 'Nömrə və ya şifrə yanlışdır.',
       });
       return false;
     }
@@ -105,8 +109,9 @@ export const createAuthSlice: StateCreator<
         currentUser: updated,
         users: s.users.map((u) => (u.id === updated.id ? updated : u)),
       }));
-    } catch (error: any) {
-      set({ lastError: error.message || 'Profil yenilənməsi zamanı xəta baş verdi.' });
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Profil yenilənməsi zamanı xəta baş verdi.' });
       throw error;
     }
   },

@@ -5,16 +5,16 @@ import type {
   RegisterInput,
   UpdateProfileInput,
 } from '@/services/contracts/auth-service';
-import type { User } from '@/types';
+import { mapApiUserToUser, type ApiUser } from './mappers';
 
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
-    const payload = { email: input.email, password: input.password };
+    const payload = { phone: input.phone, password: input.password };
     const res = await apiClient.post<{ access_token: string }>('/auth/login', payload);
     localStorage.setItem('token', res.access_token);
-    const user = await apiClient.get<User | null>('/users/me');
+    const user = await apiClient.get<ApiUser | null>('/users/me');
     if (!user) throw new Error('User not found after login');
-    return user;
+    return mapApiUserToUser(user);
   },
 
   async register(input: RegisterInput) {
@@ -27,7 +27,7 @@ export const apiAuthService: AuthService = {
       last_name: lastName,
     };
     await apiClient.post<unknown>('/auth/register', payload);
-    return this.login({ email: input.phone, password: input.password });
+    return this.login({ phone: input.phone, password: input.password });
   },
 
   async logout() {
@@ -35,10 +35,19 @@ export const apiAuthService: AuthService = {
   },
 
   async getCurrentUser() {
-    return apiClient.get<User | null>('/users/me');
+    const user = await apiClient.get<ApiUser | null>('/users/me');
+    return user ? mapApiUserToUser(user) : null;
   },
 
   async updateProfile(input: UpdateProfileInput) {
-    return apiClient.put<User>('/users/me', input);
+    const names = input.fullName?.trim().split(/\s+/) ?? [];
+    const payload = {
+      phone: input.phone,
+      first_name: names[0],
+      last_name: names.length > 1 ? names.slice(1).join(' ') : undefined,
+      avatar_url: input.avatarUrl,
+    };
+    const user = await apiClient.put<ApiUser>('/users/me', payload);
+    return mapApiUserToUser(user);
   },
 };

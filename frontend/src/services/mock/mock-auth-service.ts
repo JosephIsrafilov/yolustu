@@ -6,39 +6,70 @@ import type {
   UpdateProfileInput,
 } from '@/services/contracts/auth-service';
 import { useAppStore } from '@/store/useAppStore';
-import { buildStoreError, requireCurrentUser } from '@/services/mock/mock-service-utils';
+import type { User } from '@/types';
+import { validatePassword } from '@/lib/mock-api';
+import { requireCurrentUser } from '@/services/mock/mock-service-utils';
+
+function createId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `u-${Date.now()}`;
+}
 
 export const mockAuthService: AuthService = {
   async login(input: LoginInput) {
-    const ok = useAppStore.getState().login(input.email, input.password);
-    if (!ok) {
-      throw buildStoreError('Login failed.', 'UNAUTHORIZED');
-    }
-
-    const user = useAppStore.getState().currentUser;
-    if (!user) {
+    if (!validatePassword(input.password)) {
       throw new ApiError({
-        code: 'UNKNOWN_ERROR',
-        message: 'Login completed but user is missing.',
+        code: 'UNAUTHORIZED',
+        message: 'Invalid phone or password.',
       });
     }
+
+    const user = useAppStore
+      .getState()
+      .users.find((item) => item.phone === input.phone && !item.isBlocked);
+    if (!user) {
+      throw new ApiError({
+        code: 'UNAUTHORIZED',
+        message: 'Invalid phone or password.',
+      });
+    }
+
     return user;
   },
 
   async register(input: RegisterInput) {
-    useAppStore.getState().register(input);
-    const user = useAppStore.getState().currentUser;
-    if (!user) {
+    const state = useAppStore.getState();
+    const existingUser = state.users.find(
+      (user) => user.phone === input.phone || user.email === input.email,
+    );
+    if (existingUser) {
       throw new ApiError({
-        code: 'UNKNOWN_ERROR',
-        message: 'Registration completed but user is missing.',
+        code: 'CONFLICT',
+        message: 'User already exists.',
       });
     }
+
+    const user: User = {
+      id: createId(),
+      fullName: input.fullName,
+      email: input.email,
+      phone: input.phone,
+      city: '',
+      role: 'passenger',
+      rating: 0,
+      totalTrips: 0,
+      isBlocked: false,
+      createdAt: new Date().toISOString(),
+    };
+    useAppStore.setState((current) => ({
+      users: [user, ...current.users],
+    }));
     return user;
   },
 
   async logout() {
-    useAppStore.getState().logout();
+    return;
   },
 
   async getCurrentUser() {
@@ -46,15 +77,20 @@ export const mockAuthService: AuthService = {
   },
 
   async updateProfile(input: UpdateProfileInput) {
-    requireCurrentUser();
-    useAppStore.getState().updateProfile(input);
-    const user = useAppStore.getState().currentUser;
-    if (!user) {
-      throw new ApiError({
-        code: 'UNKNOWN_ERROR',
-        message: 'Profile was updated but user is missing.',
-      });
-    }
-    return user;
+    const currentUser = requireCurrentUser();
+    const updatedUser: User = {
+      ...currentUser,
+      fullName: input.fullName ?? currentUser.fullName,
+      phone: input.phone ?? currentUser.phone,
+      city: input.city ?? currentUser.city,
+      bio: input.bio ?? currentUser.bio,
+      avatarUrl: input.avatarUrl ?? currentUser.avatarUrl,
+    };
+
+    useAppStore.setState((state) => ({
+      currentUser: updatedUser,
+      users: state.users.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+    }));
+    return updatedUser;
   },
 };

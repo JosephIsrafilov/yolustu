@@ -1,14 +1,15 @@
 import { StateCreator } from 'zustand';
 import { AppState, BookingSlice } from '../types';
 import { bookingsService } from '@/services';
+import { MOCK_BOOKINGS } from '@/data/mock-data';
 
 export const createBookingSlice: StateCreator<
   AppState,
   [],
   [],
   BookingSlice
-> = (set, get) => ({
-  bookings: [],
+> = (set) => ({
+  bookings: [...MOCK_BOOKINGS],
 
   fetchBookings: async () => {
     try {

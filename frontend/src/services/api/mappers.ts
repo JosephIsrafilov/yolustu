@@ -1,6 +1,50 @@
 import type { Trip, Booking, User, Review } from '@/types';
 
-export function mapApiTripToTrip(apiTrip: any): Trip {
+export interface ApiTrip {
+  id: string;
+  driver_id: string;
+  origin_city: string;
+  destination_city: string;
+  departure_time: string;
+  total_seats: number;
+  available_seats: number;
+  price_per_seat: number;
+  description?: string | null;
+  status: Trip['status'];
+  created_at: string;
+}
+
+export interface ApiBooking {
+  id: string;
+  ride_id: string;
+  passenger_id: string;
+  status: Booking['status'];
+  seats_booked: number;
+  created_at: string;
+}
+
+export interface ApiUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  rating: number;
+  total_rides: number;
+  created_at: string;
+  avatar_url?: string | null;
+}
+
+export interface ApiReview {
+  id: string;
+  ride_id: string;
+  author_id: string;
+  target_id: string;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+}
+
+export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
   const departureDate = new Date(apiTrip.departure_time);
   return {
     id: apiTrip.id,
@@ -15,13 +59,13 @@ export function mapApiTripToTrip(apiTrip: any): Trip {
     seatsAvailable: apiTrip.available_seats,
     pricePerSeat: apiTrip.price_per_seat,
     carModel: '', 
-    comment: apiTrip.description,
+    comment: apiTrip.description ?? undefined,
     status: apiTrip.status,
     createdAt: apiTrip.created_at,
   };
 }
 
-export function mapApiBookingToBooking(apiBooking: any): Booking {
+export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
   return {
     id: apiBooking.id,
     tripId: apiBooking.ride_id,
@@ -32,7 +76,7 @@ export function mapApiBookingToBooking(apiBooking: any): Booking {
   };
 }
 
-export function mapApiUserToUser(apiUser: any): User {
+export function mapApiUserToUser(apiUser: ApiUser): User {
   return {
     id: apiUser.id,
     fullName: `${apiUser.first_name} ${apiUser.last_name}`,
@@ -41,13 +85,13 @@ export function mapApiUserToUser(apiUser: any): User {
     city: '', 
     role: 'passenger', 
     rating: apiUser.rating,
-    totalTrips: 0, 
+    totalTrips: apiUser.total_rides, 
     isBlocked: false, 
     createdAt: apiUser.created_at,
   };
 }
 
-export function mapApiReviewToReview(apiReview: any): Review {
+export function mapApiReviewToReview(apiReview: ApiReview): Review {
   return {
     id: apiReview.id,
     tripId: apiReview.ride_id,

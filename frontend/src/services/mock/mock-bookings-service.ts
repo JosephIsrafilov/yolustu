@@ -1,22 +1,51 @@
 import { ApiError } from '@/services/api-error';
 import type { BookingsService } from '@/services/contracts/bookings-service';
 import { useAppStore } from '@/store/useAppStore';
-import { buildStoreError, requireCurrentUser } from '@/services/mock/mock-service-utils';
+import { requireCurrentUser } from '@/services/mock/mock-service-utils';
+
+function createId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `b-${Date.now()}`;
+}
 
 export const mockBookingsService: BookingsService = {
   async createBooking(input) {
-    const bookingId = await useAppStore.getState().createBooking(input.tripId, input.seatsRequested);
-    if (!bookingId) {
-      throw buildStoreError('Booking request could not be created.');
-    }
-    const booking = useAppStore.getState().bookings.find((item) => item.id === bookingId);
-    if (!booking) {
+    const currentUser = requireCurrentUser();
+    const trip = useAppStore.getState().trips.find((item) => item.id === input.tripId);
+    if (!trip) {
       throw new ApiError({
-        code: 'UNKNOWN_ERROR',
-        message: 'Booking was created but is missing.',
+        code: 'NOT_FOUND',
+        message: 'Trip not found.',
       });
     }
-    return booking;
+    if (trip.status !== 'active') {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'Trip is not active.',
+      });
+    }
+    if (trip.driverId === currentUser.id) {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'You cannot book your own trip.',
+      });
+    }
+    if (trip.seatsAvailable < input.seatsRequested) {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'Not enough seats available.',
+      });
+    }
+
+    return {
+      id: createId(),
+      tripId: input.tripId,
+      passengerId: currentUser.id,
+      status: 'pending',
+      seatsRequested: input.seatsRequested,
+      createdAt: new Date().toISOString(),
+    };
   },
 
   async getMyBookings() {
@@ -36,47 +65,102 @@ export const mockBookingsService: BookingsService = {
   },
 
   async acceptBooking(bookingId) {
-    const ok = await useAppStore.getState().acceptBooking(bookingId);
-    if (!ok) {
-      throw buildStoreError('Booking request could not be accepted.');
-    }
-    const booking = useAppStore.getState().bookings.find((item) => item.id === bookingId);
+    const currentUser = requireCurrentUser();
+    const state = useAppStore.getState();
+    const booking = state.bookings.find((item) => item.id === bookingId);
     if (!booking) {
       throw new ApiError({
         code: 'NOT_FOUND',
-        message: 'Booking not found after acceptance.',
+        message: 'Booking not found.',
       });
     }
-    return booking;
+    const trip = state.trips.find((item) => item.id === booking.tripId);
+    if (!trip) {
+      throw new ApiError({
+        code: 'NOT_FOUND',
+        message: 'Trip not found.',
+      });
+    }
+    if (trip.driverId !== currentUser.id) {
+      throw new ApiError({
+        code: 'FORBIDDEN',
+        message: 'Only the driver can accept this booking.',
+      });
+    }
+    if (booking.status !== 'pending') {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'Booking is not pending.',
+      });
+    }
+    if (trip.seatsAvailable < booking.seatsRequested) {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'Not enough seats available.',
+      });
+    }
+
+    useAppStore.setState((current) => ({
+      trips: current.trips.map((item) =>
+        item.id === trip.id
+          ? { ...item, seatsAvailable: item.seatsAvailable - booking.seatsRequested }
+          : item,
+      ),
+    }));
+    return { ...booking, status: 'accepted' };
   },
 
   async rejectBooking(bookingId) {
-    const ok = await useAppStore.getState().rejectBooking(bookingId);
-    if (!ok) {
-      throw buildStoreError('Booking request could not be rejected.');
-    }
-    const booking = useAppStore.getState().bookings.find((item) => item.id === bookingId);
+    const currentUser = requireCurrentUser();
+    const state = useAppStore.getState();
+    const booking = state.bookings.find((item) => item.id === bookingId);
     if (!booking) {
       throw new ApiError({
         code: 'NOT_FOUND',
-        message: 'Booking not found after rejection.',
+        message: 'Booking not found.',
       });
     }
-    return booking;
+    const trip = state.trips.find((item) => item.id === booking.tripId);
+    if (!trip) {
+      throw new ApiError({
+        code: 'NOT_FOUND',
+        message: 'Trip not found.',
+      });
+    }
+    if (trip.driverId !== currentUser.id) {
+      throw new ApiError({
+        code: 'FORBIDDEN',
+        message: 'Only the driver can reject this booking.',
+      });
+    }
+    return { ...booking, status: 'rejected' };
   },
 
   async cancelBooking(bookingId) {
-    const ok = await useAppStore.getState().cancelBooking(bookingId);
-    if (!ok) {
-      throw buildStoreError('Booking could not be cancelled.');
-    }
-    const booking = useAppStore.getState().bookings.find((item) => item.id === bookingId);
+    const currentUser = requireCurrentUser();
+    const state = useAppStore.getState();
+    const booking = state.bookings.find((item) => item.id === bookingId);
     if (!booking) {
       throw new ApiError({
         code: 'NOT_FOUND',
-        message: 'Booking not found after cancellation.',
+        message: 'Booking not found.',
       });
     }
-    return booking;
+    if (booking.passengerId !== currentUser.id) {
+      throw new ApiError({
+        code: 'FORBIDDEN',
+        message: 'Only the passenger can cancel this booking.',
+      });
+    }
+    if (booking.status === 'accepted') {
+      useAppStore.setState((current) => ({
+        trips: current.trips.map((trip) =>
+          trip.id === booking.tripId
+            ? { ...trip, seatsAvailable: trip.seatsAvailable + booking.seatsRequested }
+            : trip,
+        ),
+      }));
+    }
+    return { ...booking, status: 'cancelled' };
   },
 };

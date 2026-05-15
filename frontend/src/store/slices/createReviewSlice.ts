@@ -1,14 +1,15 @@
 import { StateCreator } from 'zustand';
 import { AppState, ReviewSlice } from '../types';
 import { reviewsService } from '@/services';
+import { MOCK_REVIEWS } from '@/data/mock-data';
 
 export const createReviewSlice: StateCreator<
   AppState,
   [],
   [],
   ReviewSlice
-> = (set, get) => ({
-  reviews: [],
+> = (set) => ({
+  reviews: [...MOCK_REVIEWS],
 
   fetchReviews: async (targetUserId) => {
     try {

@@ -1,7 +1,7 @@
 import type { User } from '@/types';
 
 export interface LoginInput {
-  email: string;
+  phone: string;
   password: string;
 }
 

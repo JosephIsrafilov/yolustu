@@ -13,6 +13,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     pass
 
+class UserUpdate(BaseModel):
+    phone: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    language: Optional[str] = None
+
 class UserResponse(UserBase):
     id: UUID
     is_verified: bool

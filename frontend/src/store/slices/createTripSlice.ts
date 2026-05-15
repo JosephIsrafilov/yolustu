@@ -1,14 +1,15 @@
 import { StateCreator } from 'zustand';
 import { AppState, TripSlice } from '../types';
 import { tripsService } from '@/services';
+import { MOCK_TRIPS } from '@/data/mock-data';
 
 export const createTripSlice: StateCreator<
   AppState,
   [],
   [],
   TripSlice
-> = (set, get) => ({
-  trips: [],
+> = (set) => ({
+  trips: [...MOCK_TRIPS],
   isLoadingTrips: false,
 
   fetchTrips: async (filters) => {
@@ -52,7 +53,7 @@ export const createTripSlice: StateCreator<
 
   completeTrip: async (tripId) => {
     try {
-      
+      await tripsService.completeTrip(tripId);
       set((state) => ({
         trips: state.trips.map((t) =>
           t.id === tripId ? { ...t, status: 'completed' } : t

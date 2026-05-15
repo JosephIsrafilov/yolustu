@@ -1,4 +1,4 @@
-import type { User, Trip, Booking, Review } from '@/types';
+import type { User, Trip, Booking, Review, TripSearchFilters } from '@/types';
 
 export interface AuthSlice {
   currentUser: User | null;
@@ -8,7 +8,7 @@ export interface AuthSlice {
   users: User[];
 
   register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<boolean>;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (phone: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   switchRole: (role: 'passenger' | 'driver') => void;
   loginAsAdmin: () => Promise<void>;
@@ -26,7 +26,7 @@ export interface TripSlice {
   trips: Trip[];
   isLoadingTrips: boolean;
 
-  fetchTrips: (filters?: any) => Promise<void>;
+  fetchTrips: (filters?: TripSearchFilters) => Promise<void>;
   createTrip: (data: Omit<Trip, 'id' | 'driverId' | 'seatsAvailable' | 'status' | 'createdAt'>) => Promise<string>;
   cancelTrip: (tripId: string) => Promise<boolean>;
   completeTrip: (tripId: string) => Promise<boolean>;

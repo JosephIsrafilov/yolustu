@@ -1,16 +1,15 @@
 import { apiClient } from '@/services/api-client';
 import type { TripsService } from '@/services/contracts/trips-service';
-import type { Trip, TripSearchFilters } from '@/types';
-import { mapApiTripToTrip } from './mappers';
+import type { TripSearchFilters } from '@/types';
+import { mapApiTripToTrip, type ApiTrip } from './mappers';
 
 function buildSearchQuery(filters: TripSearchFilters): string {
   const params = new URLSearchParams();
 
   if (filters.departureCity) params.set('origin_city', filters.departureCity);
   if (filters.arrivalCity) params.set('dest_city', filters.arrivalCity);
-  if (filters.date) params.set('date', filters.date);
-  if (typeof filters.maxPrice === 'number') params.set('maxPrice', String(filters.maxPrice));
-  if (typeof filters.minSeats === 'number') params.set('minSeats', String(filters.minSeats));
+  if (filters.date) params.set('departure_date', filters.date);
+  if (typeof filters.minSeats === 'number') params.set('min_seats', String(filters.minSeats));
 
   const query = params.toString();
   return query ? `?${query}` : '';
@@ -18,12 +17,15 @@ function buildSearchQuery(filters: TripSearchFilters): string {
 
 export const apiTripsService: TripsService = {
   async searchTrips(filters) {
-    const response = await apiClient.get<any[]>(`/rides/search${buildSearchQuery(filters)}`);
-    return response.map(mapApiTripToTrip);
+    const response = await apiClient.get<ApiTrip[]>(`/rides/search${buildSearchQuery(filters)}`);
+    const trips = response.map(mapApiTripToTrip);
+    return typeof filters.maxPrice === 'number'
+      ? trips.filter((trip) => trip.pricePerSeat <= filters.maxPrice!)
+      : trips;
   },
 
   async getTripById(tripId) {
-    const response = await apiClient.get<any>(`/rides/${tripId}`);
+    const response = await apiClient.get<ApiTrip>(`/rides/${tripId}`);
     return mapApiTripToTrip(response);
   },
 
@@ -41,22 +43,22 @@ export const apiTripsService: TripsService = {
       destination: { lat: 0, lon: 0 }, 
       description: input.comment,
     };
-    const response = await apiClient.post<any>('/rides', backendInput);
+    const response = await apiClient.post<ApiTrip>('/rides', backendInput);
     return mapApiTripToTrip(response);
   },
 
   async getMyTrips() {
-    const response = await apiClient.get<any[]>('/rides/my');
+    const response = await apiClient.get<ApiTrip[]>('/rides/my');
     return response.map(mapApiTripToTrip);
   },
 
   async cancelTrip(tripId) {
-    const response = await apiClient.patch<any>(`/rides/${tripId}/cancel`);
+    const response = await apiClient.patch<ApiTrip>(`/rides/${tripId}/cancel`);
     return mapApiTripToTrip(response);
   },
 
   async completeTrip(tripId) {
-    const response = await apiClient.patch<any>(`/rides/${tripId}/complete`);
+    const response = await apiClient.patch<ApiTrip>(`/rides/${tripId}/complete`);
     return mapApiTripToTrip(response);
   },
 };
