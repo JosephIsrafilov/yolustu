@@ -10,7 +10,7 @@ import sqlalchemy as sa
 import geoalchemy2
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
+
 revision: str = "a18f0b3882e4"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -18,7 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create users table
+    
     op.create_table(
         "users",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_users_phone"), "users", ["phone"], unique=True)
-    # Create vehicles table
+    
     op.create_table(
         "vehicles",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -58,7 +58,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    # Create rides table
+    
     op.create_table(
         "rides",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -112,8 +112,8 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    # Redundant indexes removed - GeoAlchemy2 handles them
-    # Create bookings table
+    
+    
     op.create_table(
         "bookings",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -137,7 +137,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    # Create messages table
+    
     op.create_table(
         "messages",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -160,7 +160,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    # Create reviews table
+    
     op.create_table(
         "reviews",
         sa.Column("id", sa.UUID(), nullable=False),

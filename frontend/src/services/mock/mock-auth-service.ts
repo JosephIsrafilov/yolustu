@@ -4,6 +4,7 @@ import type {
   LoginInput,
   RegisterInput,
   UpdateProfileInput,
+  VerifyOtpInput,
 } from '@/services/contracts/auth-service';
 import { useAppStore } from '@/store/useAppStore';
 import type { User } from '@/types';
@@ -40,9 +41,7 @@ export const mockAuthService: AuthService = {
 
   async register(input: RegisterInput) {
     const state = useAppStore.getState();
-    const existingUser = state.users.find(
-      (user) => user.phone === input.phone || user.email === input.email,
-    );
+    const existingUser = state.users.find((user) => user.phone === input.phone);
     if (existingUser) {
       throw new ApiError({
         code: 'CONFLICT',
@@ -53,7 +52,7 @@ export const mockAuthService: AuthService = {
     const user: User = {
       id: createId(),
       fullName: input.fullName,
-      email: input.email,
+      email: `${input.phone.replace(/\D/g, '')}@mock.yolustu.local`,
       phone: input.phone,
       city: '',
       role: 'passenger',
@@ -66,6 +65,19 @@ export const mockAuthService: AuthService = {
       users: [user, ...current.users],
     }));
     return user;
+  },
+
+  async requestOtp() {
+    return;
+  },
+
+  async verifyOtp(input: VerifyOtpInput) {
+    if (input.otp.length !== 6) {
+      throw new ApiError({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid OTP.',
+      });
+    }
   },
 
   async logout() {

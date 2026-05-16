@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/", response_model=BookingResponse)
 def create_booking(booking_in: BookingCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Using with_for_update to prevent race conditions on seats
+    
     ride = db.query(Ride).filter(Ride.id == booking_in.ride_id).with_for_update().first()
     
     if not ride:

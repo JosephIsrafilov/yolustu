@@ -7,12 +7,15 @@ export interface AuthSlice {
   lastError: string | null;
   users: User[];
 
-  register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<boolean>;
+  register: (data: { fullName: string; phone: string; password: string }) => Promise<boolean>;
   login: (phone: string, password: string) => Promise<boolean>;
+  requestOtp: (phone: string) => Promise<boolean>;
+  verifyAccount: (phone: string, otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
   switchRole: (role: 'passenger' | 'driver') => void;
   loginAsAdmin: () => Promise<void>;
   clearError: () => void;
+  initAuth: () => Promise<void>;
 
   updateProfile: (data: Partial<User>) => Promise<void>;
 

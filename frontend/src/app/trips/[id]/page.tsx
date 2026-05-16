@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import RouteTimeline from '@/components/trips/RouteTimeline';
@@ -68,7 +69,7 @@ export default function TripDetailsPage() {
               <Card>
                 <div className="flex items-center gap-3">
                   {driver.avatarUrl ? (
-                    <img src={driver.avatarUrl} alt={driver.fullName} className="w-12 h-12 rounded-full object-cover border border-border" />
+                    <Image src={driver.avatarUrl} alt={driver.fullName} width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-border" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">
                       {driver.fullName.charAt(0)}
@@ -89,6 +90,19 @@ export default function TripDetailsPage() {
               </Card>
             )}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
+            
+            {(isOwnTrip || existingBooking?.status === 'accepted') && (
+              <Button 
+                fullWidth 
+                variant="outline" 
+                onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
+                className="flex items-center justify-center gap-2"
+              >
+                <Icon name="message-square" size={18} />
+                Söhbətə keç
+              </Button>
+            )}
+            
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
               <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
                 <div>

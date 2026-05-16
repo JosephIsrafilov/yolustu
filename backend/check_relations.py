@@ -14,7 +14,7 @@ def check_all_relations():
         rows = result.fetchall()
         print(f"Found {len(rows)} relations:")
         for row in rows:
-            # kind: r=table, i=index, S=sequence, v=view, m=materialized view, c=composite type, t=TOAST table, f=foreign table
+            
             print(row)
 
 

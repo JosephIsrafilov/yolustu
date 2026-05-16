@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     language: Optional[str] = "az"
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 class UserUpdate(BaseModel):
     phone: Optional[str] = None
@@ -21,14 +21,13 @@ class UserUpdate(BaseModel):
     language: Optional[str] = None
 
 class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     is_verified: bool
     rating: float
     total_rides: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class VehicleBase(BaseModel):
     brand: str
@@ -41,12 +40,11 @@ class VehicleCreate(VehicleBase):
     pass
 
 class VehicleResponse(VehicleBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     user_id: UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Location(BaseModel):
     lat: float
@@ -63,7 +61,7 @@ class RideBase(BaseModel):
     status: str = "active"
     description: Optional[str] = None
     
-    # Preferences
+    
     smoking_allowed: bool = False
     pets_allowed: bool = False
     music_allowed: bool = True
@@ -75,13 +73,12 @@ class RideCreate(RideBase):
     destination: Location
 
 class RideResponse(RideBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     driver_id: UUID
     vehicle_id: UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class BookingBase(BaseModel):
     seats_booked: int
@@ -90,15 +87,14 @@ class BookingCreate(BookingBase):
     ride_id: UUID
 
 class BookingResponse(BookingBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     ride_id: UUID
     passenger_id: UUID
     status: str
     total_price: Optional[float] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class ReviewBase(BaseModel):
     rating: int
@@ -109,14 +105,13 @@ class ReviewCreate(ReviewBase):
     ride_id: UUID
 
 class ReviewResponse(ReviewBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     author_id: UUID
     target_id: UUID
     ride_id: UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class MessageBase(BaseModel):
     content: str
@@ -125,13 +120,12 @@ class MessageCreate(MessageBase):
     ride_id: UUID
 
 class MessageResponse(MessageBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     ride_id: UUID
     sender_id: UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str

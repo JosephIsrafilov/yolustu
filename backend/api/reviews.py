@@ -48,7 +48,7 @@ def create_review(review_in: ReviewCreate, db: Session = Depends(get_db), curren
     )
     db.add(new_review)
     
-    # Update target user rating
+    
     target_user = db.query(User).filter(User.id == review_in.target_id).first()
     all_reviews = db.query(Review).filter(Review.target_id == review_in.target_id).all()
     total_rating = sum([r.rating for r in all_reviews]) + review_in.rating

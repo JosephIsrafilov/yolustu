@@ -17,15 +17,35 @@ export const createAuthSlice: StateCreator<
   lastError: null,
   users: [...MOCK_USERS],
 
+  requestOtp: async (phone) => {
+    try {
+      set({ lastError: null });
+      await authService.requestOtp(phone);
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'OTP göndərilməsi zamanı xəta baş verdi.' });
+      return false;
+    }
+  },
+
+  verifyAccount: async (phone, otp) => {
+    try {
+      set({ lastError: null });
+      await authService.verifyOtp({ phone, otp });
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'OTP təsdiqlənməsi zamanı xəta baş verdi.' });
+      return false;
+    }
+  },
+
   register: async (data) => {
     try {
-      const user = await authService.register(data);
-      set({
-        currentUser: user,
-        isAuthenticated: true,
-        activeRole: 'passenger',
-        lastError: null,
-      });
+      set({ lastError: null });
+      await authService.register(data);
+      
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -102,6 +122,24 @@ export const createAuthSlice: StateCreator<
     set({ lastError: null });
   },
 
+  initAuth: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const user = await authService.getCurrentUser();
+      if (user) {
+        set({
+          currentUser: user,
+          isAuthenticated: true,
+          activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to initialize auth:', error);
+      localStorage.removeItem('token');
+    }
+  },
+
   updateProfile: async (data) => {
     try {
       const updated = await authService.updateProfile(data);
@@ -118,7 +156,6 @@ export const createAuthSlice: StateCreator<
 
   blockUser: async (userId) => {
     try {
-      
       set((s) => ({
         users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: true } : u)),
       }));
@@ -129,7 +166,6 @@ export const createAuthSlice: StateCreator<
 
   unblockUser: async (userId) => {
     try {
-      
       set((s) => ({
         users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: false } : u)),
       }));
@@ -140,7 +176,6 @@ export const createAuthSlice: StateCreator<
 
   fetchUsers: async () => {
     try {
-      
       
     } catch (error) {
       console.error('Fetch users error:', error);

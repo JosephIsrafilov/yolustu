@@ -1,5 +1,6 @@
 from models.models import User, Vehicle, Ride, Booking, Review
 from core.database import SessionLocal
+from core.security import get_password_hash
 from sqlalchemy.orm import Session
 import sys
 import os
@@ -13,7 +14,7 @@ def seed_db():
     db = SessionLocal()
     try:
         print("Starting seeding process...")
-        # 1. Users
+        
         mock_users = [
             {
                 "id": "u1",
@@ -64,6 +65,8 @@ def seed_db():
                 "rating": 0.0,
             },
         ]
+        
+        default_password_hash = get_password_hash("password123")
         user_map = {}
         for u_data in mock_users:
             user = db.query(User).filter(User.phone == u_data["phone"]).first()
@@ -73,6 +76,7 @@ def seed_db():
                     phone=u_data["phone"],
                     first_name=u_data["first_name"],
                     last_name=u_data["last_name"],
+                    hashed_password=default_password_hash,
                     is_verified=True,
                     rating=u_data["rating"],
                 )
@@ -80,7 +84,7 @@ def seed_db():
                 db.flush()
                 print(f"User {u_data['phone']} created.")
             user_map[u_data["id"]] = user
-        # 2. Vehicles for drivers
+        
         vehicles_data = [
             {
                 "id": "v1",
@@ -132,7 +136,7 @@ def seed_db():
                 db.flush()
                 print(f"Vehicle {v_data['plate_number']} created.")
             vehicle_map[v_data["id"]] = vehicle
-        # 3. Rides
+        
         rides_data = [
             {
                 "id": "t1",
@@ -171,7 +175,7 @@ def seed_db():
         for r_data in rides_data:
             driver = user_map[r_data["driver_id"]]
             vehicle = vehicle_map[r_data["vehicle_id"]]
-            # Use current time + some days for active rides
+            
             departure = datetime.now() + timedelta(days=2)
             ride = Ride(
                 id=uuid.uuid4(),

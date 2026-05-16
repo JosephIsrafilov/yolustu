@@ -14,6 +14,7 @@ import { toApiError } from '@/services/api-error';
 export default function LoginPage() {
   const router = useRouter();
   const login = useAppStore((s) => s.login);
+  
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,7 +24,7 @@ export default function LoginPage() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!phone) e.phone = 'Nömrəni daxil edin';
-    if (password.length < 6) e.password = 'Ən azı 6 simvol';
+    if (!password) e.password = 'Şifrəni daxil edin';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -40,7 +41,14 @@ export default function LoginPage() {
         router.push(ROUTES.search);
         return;
       }
-      setSubmitError('Nömrə və ya şifrə yanlışdır.');
+      
+      const lastError = useAppStore.getState().lastError;
+      if (lastError && lastError.toLowerCase().includes('verify')) {
+        
+        router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
+      } else {
+        setSubmitError(lastError || 'Nömrə və ya şifrə yanlışdır.');
+      }
     } catch (err) {
       const error = toApiError(err);
       setLoading(false);
@@ -56,6 +64,7 @@ export default function LoginPage() {
           <div className="text-center mb-6">
             <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
           </div>
+          
           <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">Daxil ol</h1>
           <p className="text-[14px] text-[#40484a] text-center mb-6">Hesabınıza daxil olun</p>
 
@@ -64,9 +73,16 @@ export default function LoginPage() {
               <label className="text-[14px] font-semibold text-[#011f23]">Mobil Nömrə</label>
               <div className="relative">
                 <Icon name="phone" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                <input type="text" placeholder="+994501234567" value={phone}
-                  onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors((p) => { const n = { ...p }; delete n.phone; return n; }); }}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
+                <input 
+                  type="text" 
+                  placeholder="+994501234567" 
+                  value={phone}
+                  onChange={(e) => { 
+                    setPhone(e.target.value); 
+                    if (errors.phone) setErrors((p) => { const n = { ...p }; delete n.phone; return n; }); 
+                  }}
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
+                />
               </div>
               {errors.phone && <p className="text-[12px] text-[#ba1a1a]">{errors.phone}</p>}
             </div>
@@ -75,9 +91,16 @@ export default function LoginPage() {
               <label className="text-[14px] font-semibold text-[#011f23]">Şifrə</label>
               <div className="relative">
                 <Icon name="lock" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                <input type="password" placeholder="Ən azı 6 simvol" value={password}
-                  onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
+                <input 
+                  type="password" 
+                  placeholder="Şifrənizi daxil edin" 
+                  value={password}
+                  onChange={(e) => { 
+                    setPassword(e.target.value); 
+                    if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); 
+                  }}
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
+                />
               </div>
               {errors.password && <p className="text-[12px] text-[#ba1a1a]">{errors.password}</p>}
             </div>
@@ -89,7 +112,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
-              {loading ? 'Yüklənir...' : 'Daxil ol'}
+              {loading ? 'Daxil olunur...' : 'Daxil ol'}
             </Button>
           </form>
 

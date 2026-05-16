@@ -1,109 +1,67 @@
-# Architecture — Yolüstü
+# Архитектура проекта Yolüstü
 
-## High-Level Architecture
+## Обзор архитектуры
+
+Проект использует архитектуру клиент-сервер с разделением на Frontend (Next.js) и Backend (FastAPI).
 
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        MA["📱 Mobile App<br/>(Flutter / React Native)"]
-        AP["🖥️ Admin Panel<br/>(React Web)"]
+        MA["📱 Mobile App<br/>(React Native / Flutter)"]
+        WA["🌐 Web App<br/>(Next.js)"]
     end
     
     subgraph "API Layer"
-        API["🔗 Backend API<br/>(Django REST / FastAPI)"]
+        API["🔗 Backend API<br/>(Python / FastAPI)"]
     end
     
     subgraph "Data Layer"
-        DB["🗄️ PostgreSQL"]
+        DB["🗄️ PostgreSQL + PostGIS"]
+        RD["⚡ Redis<br/>(OTP, Cache)"]
     end
     
     MA -->|REST API / JWT| API
-    AP -->|REST API / JWT| API
-    API -->|ORM| DB
+    WA -->|REST API / JWT| API
+    API -->|SQLAlchemy| DB
+    API -->|Redis-py| RD
 ```
 
-## Sprint 0 Prototipi Arxitekturası
+## Технологический стек
 
-Sprint 0-da real backend yoxdur. Prototipi aşağıdakı arxitektura ilə qurulub:
-
-```mermaid
-graph LR
-    subgraph "Next.js App (Sprint 0)"
-        Pages["📄 Pages<br/>(App Router)"]
-        Comp["🧩 Components"]
-        Store["📦 Zustand Store<br/>(Mock State)"]
-        Mock["🗂️ Mock Data"]
-    end
-    
-    Pages --> Comp
-    Pages --> Store
-    Store --> Mock
-```
-
-## Komponent Arxitekturası
-
-```
-src/
-├── app/              # Next.js App Router pages
-│   ├── auth/         # Authentication pages
-│   ├── profile/      # Profile pages
-│   ├── search/       # Search page
-│   ├── trips/        # Trip listing & details
-│   ├── bookings/     # Booking management
-│   ├── driver/       # Driver dashboard
-│   ├── reviews/      # Review creation
-│   └── admin/        # Admin panel
-├── components/
-│   ├── layout/       # MobileShell, BottomNav, TopBar
-│   ├── ui/           # Button, Card, Input, Badge, etc.
-│   ├── trips/        # TripCard, RouteTimeline, TripFilters
-│   ├── bookings/     # BookingCard, BookingRequestCard
-│   ├── reviews/      # ReviewCard, ReviewForm
-│   ├── profile/      # ProfileHeader
-│   └── admin/        # AdminLayout
-├── data/             # Mock data
-├── types/            # TypeScript interfaces
-├── lib/              # Utils, mock API, routes
-└── store/            # Zustand global state
-```
-
-## Gələcək Texnologiya Yığını
-
-| Komponent | Texnologiya | Səbəb |
+| Компонент | Технология | Обоснование |
 |---|---|---|
-| **Mobil Tətbiq** | Flutter və ya React Native | Cross-platform, bir codebase |
-| **Backend** | Django REST Framework və ya FastAPI | Python ekosistemi, sürətli inkişaf |
-| **Verilənlər Bazası** | PostgreSQL | Güclü relational DB |
-| **Autentifikasiya** | JWT (JSON Web Tokens) | Stateless, mobil uyğun |
-| **Admin Panel** | Django Admin və ya React Admin | Sürətli admin yaratma |
-| **API Sənədləri** | Swagger / OpenAPI | Avtomatik sənədləşdirmə |
-| **CI/CD** | GitHub Actions | Avtomatik test və deploy |
-| **Hosting** | Docker + Cloud (AWS/GCP) | Miqyaslana bilən infrastruktur |
+| **Backend** | **Python 3.10+ / FastAPI** | Высокая производительность, асинхронность, быстрая разработка. |
+| **Frontend** | **Next.js (React)** | SSR/SSG, отличная производительность и SEO. |
+| **База данных** | **PostgreSQL 15 + PostGIS** | Надежная реляционная БД с поддержкой геозапросов. |
+| **Кэширование** | **Redis** | Хранение OTP кодов, сессий и кэширование. |
+| **ORM** | **SQLAlchemy 2.0** | Современная и мощная ORM для работы с БД. |
+| **Миграции** | **Alembic** | Стандарт де-факто для миграций в экосистеме SQLAlchemy. |
+| **Аутентификация**| **JWT (Jose)** | Безсессионная авторизация, подходящая для мобильных и веб-приложений. |
 
-## Data Flow
+## Структура Backend (`backend/`)
 
-```mermaid
-sequenceDiagram
-    participant P as Sərnişin
-    participant A as API
-    participant D as Sürücü
-    
-    P->>A: Gediş axtar
-    A->>P: Gediş siyahısı
-    P->>A: Rezerv sorğusu göndər
-    A->>D: Yeni sorğu bildirişi
-    D->>A: Sorğunu qəbul et
-    A->>P: Rezerv təsdiqləndi
-    
-    Note over P,D: Gediş tamamlandıqdan sonra
-    P->>A: Rəy yaz
-    A->>D: Reytinq yeniləndi
+```
+backend/
+├── api/              # Эндпоинты API (auth, rides, users и т.д.)
+├── core/             # Глобальные настройки, конфиг, БД, Redis
+├── models/           # SQLAlchemy модели данных
+├── schemas/          # Pydantic схемы (DTO)
+├── crud/             # Логика работы с БД (Create, Read, Update, Delete)
+├── alembic/          # Скрипты миграций базы данных
+├── tests/            # Модульные и интеграционные тесты
+└── main.py           # Точка входа в приложение
 ```
 
-## Təhlükəsizlik
+## Поток аутентификации (OTP)
 
-- JWT token ilə autentifikasiya
-- Hər endpoint üçün icazə yoxlaması
-- İstifadəçi yalnız öz resurslarını idarə edə bilir
-- Admin ayrıca roldur
-- Şifrələr hash edilir
+1.  **Запрос OTP:** Пользователь вводит номер телефона. Система генерирует 6-значный код, сохраняет его в Redis с TTL (5 минут) и имитирует отправку SMS.
+2.  **Проверка OTP:** Пользователь вводит код. Система сверяет его с кодом в Redis.
+3.  **Выдача токена:** При успешном совпадении генерируется JWT (Access + Refresh tokens).
+
+## Безопасность
+
+- Хранение паролей в хешированном виде (Passlib/Bcrypt).
+- JWT токены для защиты API эндпоинтов.
+- Валидация всех входящих данных через Pydantic.
+- CORS политики для ограничения доступа с других доменов.
+- Скрытые переменные окружения через `.env`.

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import Card from '@/components/ui/Card';
@@ -24,7 +25,6 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       onClick={() => router.push(ROUTES.tripDetails(trip.id))}
       className="animate-fade-in"
     >
-      {}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center">
@@ -43,7 +43,6 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         </div>
       </div>
 
-      {}
       <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary mb-3">
         <span className="flex items-center gap-1">
           <Icon name="clock" size={13} />
@@ -58,11 +57,10 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         )}
       </div>
 
-      {}
       {driver && !compact && (
         <div className="flex items-center gap-2 pt-3 border-t border-border">
           {driver.avatarUrl ? (
-            <img src={driver.avatarUrl} alt={driver.fullName} className="w-8 h-8 rounded-full object-cover border border-border" />
+            <Image src={driver.avatarUrl} alt={driver.fullName} width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-border" />
           ) : (
             <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
               {driver.fullName.charAt(0)}
@@ -84,7 +82,6 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
         </div>
       )}
 
-      {}
       {!compact && trip.meetingPoint && (
         <div className="flex items-start gap-1.5 mt-2 text-xs text-text-muted">
           <Icon name="map-pin" size={12} className="mt-0.5 shrink-0" />

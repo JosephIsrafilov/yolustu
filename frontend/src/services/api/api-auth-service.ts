@@ -4,13 +4,13 @@ import type {
   LoginInput,
   RegisterInput,
   UpdateProfileInput,
+  VerifyOtpInput,
 } from '@/services/contracts/auth-service';
 import { mapApiUserToUser, type ApiUser } from './mappers';
 
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
-    const payload = { phone: input.phone, password: input.password };
-    const res = await apiClient.post<{ access_token: string }>('/auth/login', payload);
+    const res = await apiClient.post<{ access_token: string }>('/auth/login', input);
     localStorage.setItem('token', res.access_token);
     const user = await apiClient.get<ApiUser | null>('/users/me');
     if (!user) throw new Error('User not found after login');
@@ -25,9 +25,20 @@ export const apiAuthService: AuthService = {
       phone: input.phone,
       first_name: firstName,
       last_name: lastName,
+      password: input.password,
     };
-    await apiClient.post<unknown>('/auth/register', payload);
-    return this.login({ phone: input.phone, password: input.password });
+    const user = await apiClient.post<ApiUser>('/auth/register', payload);
+    return mapApiUserToUser(user);
+  },
+
+  async requestOtp(phone: string) {
+    await apiClient.post<unknown>(`/auth/request-otp?phone=${encodeURIComponent(phone)}`);
+  },
+
+  async verifyOtp(input: VerifyOtpInput) {
+    await apiClient.post<unknown>(
+      `/auth/verify-otp?phone=${encodeURIComponent(input.phone)}&otp=${encodeURIComponent(input.otp)}`
+    );
   },
 
   async logout() {

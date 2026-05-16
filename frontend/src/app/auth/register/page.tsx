@@ -7,14 +7,13 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
-import { validateEmail, validatePassword, validatePhone } from '@/lib/mock-api';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 
 export default function RegisterPage() {
   const router = useRouter();
   const register = useAppStore((s) => s.register);
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirm: '' });
+  const [form, setForm] = useState({ fullName: '', phone: '', password: '', confirm: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,13 +21,12 @@ export default function RegisterPage() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.fullName.trim()) e.fullName = 'Ad tələb olunur';
-    if (!validateEmail(form.email)) e.email = 'Düzgün email daxil edin';
     if (!form.phone.trim()) {
       e.phone = 'Telefon tələb olunur';
-    } else if (!validatePhone(form.phone.trim())) {
-      e.phone = 'Düzgün telefon nömrəsi';
+    } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ''))) {
+      e.phone = 'Düzgün telefon nömrəsi daxil edin';
     }
-    if (!validatePassword(form.password)) e.password = 'Ən azı 6 simvol';
+    if (form.password.length < 6) e.password = 'Ən azı 6 simvol';
     if (form.password !== form.confirm) e.confirm = 'Şifrələr uyğun gəlmir';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -39,12 +37,22 @@ export default function RegisterPage() {
     if (!validate()) return;
     setLoading(true);
     setSubmitError('');
-    const ok = await register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password });
-    setLoading(false);
-    if (ok) {
-      router.push(ROUTES.profileSetup);
-    } else {
-      setSubmitError(useAppStore.getState().lastError || 'Xəta baş verdi');
+    try {
+      const ok = await register({ 
+        fullName: form.fullName, 
+        phone: form.phone, 
+        password: form.password 
+      });
+      setLoading(false);
+      if (ok) {
+        
+        router.push(`/auth/verify?phone=${encodeURIComponent(form.phone)}`);
+      } else {
+        setSubmitError(useAppStore.getState().lastError || 'Xəta baş verdi');
+      }
+    } catch {
+      setLoading(false);
+      setSubmitError('Xəta baş verdi. Zəhmət olmasa yenidən yoxlayın.');
     }
   };
 
@@ -55,7 +63,6 @@ export default function RegisterPage() {
 
   const fields: { key: string; label: string; icon: IconName; placeholder: string; type: string }[] = [
     { key: 'fullName', label: 'Ad və Soyad', icon: 'user', placeholder: 'Məs: Elvin Məmmədov', type: 'text' },
-    { key: 'email', label: 'Email', icon: 'mail', placeholder: 'email@example.com', type: 'email' },
     { key: 'phone', label: 'Telefon', icon: 'phone', placeholder: '+994501234567', type: 'tel' },
     { key: 'password', label: 'Şifrə', icon: 'lock', placeholder: 'Ən azı 6 simvol', type: 'password' },
     { key: 'confirm', label: 'Şifrəni təsdiqləyin', icon: 'lock', placeholder: 'Təkrar daxil edin', type: 'password' },
@@ -78,10 +85,13 @@ export default function RegisterPage() {
                 <label className="text-[14px] font-semibold text-[#011f23]">{f.label}</label>
                 <div className="relative">
                   <Icon name={f.icon} size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                  <input type={f.type} placeholder={f.placeholder}
+                  <input 
+                    type={f.type} 
+                    placeholder={f.placeholder}
                     value={(form as Record<string, string>)[f.key]}
                     onChange={(e) => update(f.key, e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" />
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
+                  />
                 </div>
                 {errors[f.key] && <p className="text-[12px] text-[#ba1a1a]">{errors[f.key]}</p>}
               </div>

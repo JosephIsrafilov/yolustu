@@ -67,6 +67,15 @@ export interface Review {
   createdAt: string;
 }
 
+export interface Message {
+  id: string;
+  ride_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  sender_name?: string;
+}
+
 export type ModerationItemType = 'user' | 'trip' | 'booking';
 
 export interface AdminModerationItem {

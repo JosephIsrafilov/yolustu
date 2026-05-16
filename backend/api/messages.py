@@ -7,16 +7,18 @@ from core.database import get_db
 from api.deps import get_current_user
 from models.models import Message, Ride, User, Booking
 from schemas.schemas import MessageCreate, MessageResponse
+from core.websocket import manager
+from fastapi import WebSocket, WebSocketDisconnect
 
 router = APIRouter()
 
 @router.post("/", response_model=MessageResponse)
-def send_message(message_in: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def send_message(message_in: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     ride = db.query(Ride).filter(Ride.id == message_in.ride_id).first()
     if not ride:
         raise HTTPException(status_code=404, detail="Ride not found")
     
-    # Only driver or accepted passengers can send messages
+    
     is_driver = ride.driver_id == current_user.id
     is_passenger = db.query(Booking).filter(
         Booking.ride_id == ride.id,
@@ -35,7 +37,29 @@ def send_message(message_in: MessageCreate, db: Session = Depends(get_db), curre
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
+    
+    
+    message_data = {
+        "id": str(new_message.id),
+        "ride_id": str(new_message.ride_id),
+        "sender_id": str(new_message.sender_id),
+        "content": new_message.content,
+        "created_at": str(new_message.created_at),
+        "sender_name": f"{current_user.first_name} {current_user.last_name}"
+    }
+    await manager.broadcast_to_ride(message_data, message_in.ride_id)
+    
     return new_message
+
+@router.websocket("/ws/{ride_id}")
+async def websocket_endpoint(websocket: WebSocket, ride_id: UUID):
+    await manager.connect(websocket, ride_id)
+    try:
+        while True:
+            
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, ride_id)
 
 @router.get("/ride/{ride_id}", response_model=List[MessageResponse])
 def get_ride_messages(ride_id: UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -43,7 +67,7 @@ def get_ride_messages(ride_id: UUID, db: Session = Depends(get_db), current_user
     if not ride:
         raise HTTPException(status_code=404, detail="Ride not found")
         
-    # Check if user is participant
+    
     is_driver = ride.driver_id == current_user.id
     is_passenger = db.query(Booking).filter(
         Booking.ride_id == ride.id,

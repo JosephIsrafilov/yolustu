@@ -11,8 +11,9 @@ class User(Base):
     phone = Column(String(20), unique=True, index=True, nullable=False)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
+    hashed_password = Column(String(255), nullable=True) 
     avatar_url = Column(String(255), nullable=True)
-    language = Column(String(10), default="az") # az, ru, en
+    language = Column(String(10), default="az") 
     is_verified = Column(Boolean, default=False)
     rating = Column(Float, default=0.0)
     total_rides = Column(Integer, default=0)
@@ -45,21 +46,21 @@ class Ride(Base):
     driver_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     vehicle_id = Column(UUID(as_uuid=True), ForeignKey('vehicles.id'), nullable=False)
     
-    # Locations
+    
     origin_location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)
     origin_city = Column(String(100), nullable=False)
     destination_location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)
     destination_city = Column(String(100), nullable=False)
-    intermediate_cities = Column(Text, nullable=True) # Comma-separated cities
+    intermediate_cities = Column(Text, nullable=True) 
     
     departure_time = Column(DateTime(timezone=True), nullable=False)
     total_seats = Column(Integer, nullable=False)
     available_seats = Column(Integer, nullable=False)
     price_per_seat = Column(Float, nullable=False)
-    status = Column(String(20), default="active") # active, cancelled, completed
+    status = Column(String(20), default="active") 
     description = Column(Text, nullable=True)
     
-    # Preferences
+    
     smoking_allowed = Column(Boolean, default=False)
     pets_allowed = Column(Boolean, default=False)
     music_allowed = Column(Boolean, default=True)
@@ -80,7 +81,7 @@ class Booking(Base):
     passenger_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     seats_booked = Column(Integer, nullable=False)
     total_price = Column(Float, nullable=True)
-    status = Column(String(20), default="pending") # pending, accepted, rejected, cancelled
+    status = Column(String(20), default="pending") 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     ride = relationship("Ride", back_populates="bookings")

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -26,7 +27,7 @@ function TripsContent() {
     fetchTrips(filters);
   }, [fetchTrips, filters]);
 
-  const filteredTrips = trips; // Now the store already contains filtered trips if API supports it, or all trips
+  const filteredTrips = trips; 
 
   const from = filters.departureCity || 'Bütün';
   const to = filters.arrivalCity || 'Bütün';
@@ -154,11 +155,10 @@ function TripsContent() {
                     }`}>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      {}
                       <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
                           {driver?.avatarUrl ? (
-                            <img src={driver.avatarUrl} alt={driver.fullName} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
+                            <Image src={driver.avatarUrl} alt={driver.fullName} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
                           ) : (
                             <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
                               {driver?.fullName.charAt(0) || '?'}

@@ -31,7 +31,7 @@ def create_ride(ride_in: RideCreate, db: Session = Depends(get_db), current_user
         price_per_seat=ride_in.price_per_seat,
         status=ride_in.status,
         description=ride_in.description,
-        # Preferences
+        
         smoking_allowed=ride_in.smoking_allowed,
         pets_allowed=ride_in.pets_allowed,
         music_allowed=ride_in.music_allowed,
@@ -44,46 +44,72 @@ def create_ride(ride_in: RideCreate, db: Session = Depends(get_db), current_user
 
 @router.get("/search", response_model=List[RideResponse])
 def search_rides(
-    origin_lat: Optional[float] = None, 
-    origin_lon: Optional[float] = None, 
-    dest_lat: Optional[float] = None, 
-    dest_lon: Optional[float] = None, 
+    origin_lat: Optional[float] = None,
+    origin_lon: Optional[float] = None,
+    dest_lat: Optional[float] = None,
+    dest_lon: Optional[float] = None,
     origin_city: Optional[str] = None,
     dest_city: Optional[str] = None,
     departure_date: Optional[date] = None,
     min_seats: int = 1,
-    radius_meters: float = 5000,
+    radius_meters: float = 10000,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Ride).filter(Ride.status == "active", Ride.available_seats >= min_seats)
-    
+    query = db.query(Ride).filter(
+        Ride.status == "active", Ride.available_seats >= min_seats)
+
     if departure_date:
         query = query.filter(cast(Ride.departure_time, Date) == departure_date)
-    
+
+    dist_origin = None
+    dist_dest = None
+
     if origin_lat is not None and origin_lon is not None:
         origin_pt = f"POINT({origin_lon} {origin_lat})"
+        origin_geom = func.ST_GeomFromText(origin_pt, 4326)
         query = query.filter(
             func.ST_DWithin(
-                func.cast(Ride.origin_location, func.geography()), 
-                func.cast(func.ST_GeomFromText(origin_pt, 4326), func.geography()), 
+                func.cast(Ride.origin_location, func.geography()),
+                func.cast(origin_geom, func.geography()),
                 radius_meters
             )
+        )
+        dist_origin = func.ST_Distance(
+            func.cast(Ride.origin_location, func.geography()),
+            func.cast(origin_geom, func.geography())
         )
     elif origin_city:
-        query = query.filter(Ride.origin_city.ilike(f"%{origin_city}%"))
-        
+        query = query.filter(
+            (Ride.origin_city.ilike(f"%{origin_city}%")) |
+            (Ride.intermediate_cities.ilike(f"%{origin_city}%"))
+        )
+
     if dest_lat is not None and dest_lon is not None:
         dest_pt = f"POINT({dest_lon} {dest_lat})"
+        dest_geom = func.ST_GeomFromText(dest_pt, 4326)
         query = query.filter(
             func.ST_DWithin(
-                func.cast(Ride.destination_location, func.geography()), 
-                func.cast(func.ST_GeomFromText(dest_pt, 4326), func.geography()), 
+                func.cast(Ride.destination_location, func.geography()),
+                func.cast(dest_geom, func.geography()),
                 radius_meters
             )
         )
+        dist_dest = func.ST_Distance(
+            func.cast(Ride.destination_location, func.geography()),
+            func.cast(dest_geom, func.geography())
+        )
     elif dest_city:
-        query = query.filter(Ride.destination_city.ilike(f"%{dest_city}%"))
-        
+        query = query.filter(
+            (Ride.destination_city.ilike(f"%{dest_city}%")) |
+            (Ride.intermediate_cities.ilike(f"%{dest_city}%"))
+        )
+
+    
+    if dist_origin is not None and dist_dest is not None:
+        query = query.order_by((dist_origin + dist_dest).asc())
+    elif dist_origin is not None:
+        query = query.order_by(dist_origin.asc())
+
     return query.all()
 
 @router.get("/my", response_model=List[RideResponse])
@@ -118,7 +144,7 @@ def complete_ride(ride_id: UUID, db: Session = Depends(get_db), current_user: Us
         raise HTTPException(status_code=403, detail="Not authorized")
     
     ride.status = "completed"
-    # Increment total rides for driver
+    
     current_user.total_rides += 1
     
     db.commit()
