@@ -12,7 +12,7 @@ export type IconName =
   | 'search' | 'search-x' | 'menu' | 'x' | 'log-out' | 'arrow-left' | 'arrow-right'
   | 'chevron-right' | 'map-pin' | 'calendar' | 'calendar-check' | 'users' | 'user'
   | 'user-circle' | 'clock' | 'star' | 'car' | 'shield' | 'shield-check' | 'shield-off'
-  | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'inbox'
+  | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
   | 'dog' | 'repeat' | 'send';
@@ -44,6 +44,7 @@ const PATHS: Record<IconName, string> = {
   'check-circle': 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3',
   'plus': 'M12 5v14M5 12h14',
   'map': 'M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4zM8 2v16M16 6v16',
+  'list': 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   'inbox': 'M22 12h-6l-2 3H10l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z',
   'message-square': 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
   'alert-triangle': 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01',

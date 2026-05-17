@@ -10,11 +10,13 @@ import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
+import { MapContainer, RideMarkers } from '@/components/ui/Map';
 
 function TripsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { trips, users, fetchTrips } = useAppStore();
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const [filters, setFilters] = useState<TripSearchFilters>({
     departureCity: searchParams.get('from') || undefined,
@@ -127,9 +129,31 @@ function TripsContent() {
                 <span>{filters.date || 'Bütün tarixlər'}</span>
               </div>
             </div>
-            <span className="mt-2 sm:mt-0 text-[14px] text-[#40484a] font-medium">
-              {filteredTrips.length} nəticə tapıldı
-            </span>
+            <div className="mt-2 sm:mt-0 flex flex-col items-end gap-2">
+              <div className="flex bg-white rounded-lg p-1 border border-[#c0c8ca] shadow-sm">
+                <button 
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                    viewMode === 'list' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
+                  }`}
+                >
+                  <Icon name="list" size={14} />
+                  Siyahı
+                </button>
+                <button 
+                  onClick={() => setViewMode('map')}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                    viewMode === 'map' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
+                  }`}
+                >
+                  <Icon name="map" size={14} />
+                  Xəritə
+                </button>
+              </div>
+              <span className="text-[14px] text-[#40484a] font-medium">
+                {filteredTrips.length} nəticə tapıldı
+              </span>
+            </div>
           </div>
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -142,7 +166,13 @@ function TripsContent() {
           )}
 
           {}
-          {filteredTrips.length > 0 ? (
+          {viewMode === 'map' ? (
+            <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
+              <MapContainer>
+                <RideMarkers trips={filteredTrips} users={users} />
+              </MapContainer>
+            </div>
+          ) : filteredTrips.length > 0 ? (
             <div className="flex flex-col gap-3 stagger-children">
               {filteredTrips.map((trip) => {
                 const driver = users.find((u) => u.id === trip.driverId);

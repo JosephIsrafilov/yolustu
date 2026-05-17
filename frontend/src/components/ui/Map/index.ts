@@ -13,3 +13,8 @@ export const LocationPicker = dynamic(
   () => import('./LocationPicker'),
   { ssr: false }
 );
+
+export const RideMarkers = dynamic(
+  () => import('./RideMarkers'),
+  { ssr: false }
+);
