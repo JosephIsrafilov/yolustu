@@ -8,3 +8,8 @@ export const MapContainer = dynamic(
     loading: () => React.createElement('div', { className: "h-[400px] w-full animate-pulse bg-gray-100 rounded-xl" })
   }
 );
+
+export const LocationPicker = dynamic(
+  () => import('./LocationPicker'),
+  { ssr: false }
+);

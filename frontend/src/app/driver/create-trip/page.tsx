@@ -14,6 +14,7 @@ import { CAR_MODELS } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
 import type { CreateTripData } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { MapContainer, LocationPicker } from '@/components/ui/Map';
 
 const STEPS = ['Marşrut', 'Tarix', 'Yerlər', 'Maşın', 'Baxış'];
 
@@ -21,6 +22,7 @@ export default function CreateTripPage() {
   const router = useRouter();
   const { createTrip, lastError, clearError } = useAppStore();
   const [step, setStep] = useState(0);
+  const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [form, setForm] = useState<CreateTripData>({
     departureCity: '',
     arrivalCity: '',
@@ -32,10 +34,12 @@ export default function CreateTripPage() {
     pricePerSeat: 10,
     carModel: '',
     comment: '',
+    origin: undefined,
+    destination: undefined,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (key: keyof CreateTripData, value: string | number) => {
+  const update = (key: keyof CreateTripData, value: any) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
   };
@@ -77,6 +81,8 @@ export default function CreateTripPage() {
       pricePerSeat: form.pricePerSeat,
       carModel: form.carModel,
       comment: form.comment,
+      origin: form.origin,
+      destination: form.destination,
     });
     if (id) router.push(ROUTES.myTrips);
   };
@@ -120,6 +126,44 @@ export default function CreateTripPage() {
                   </select>
                   {errors.arrivalCity && <p className="text-xs text-danger-500">{errors.arrivalCity}</p>}
                 </div>
+
+                <div className="mt-2 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Xəritədə seçin (ixtiyari)</label>
+                    <div className="flex gap-1 rounded-lg bg-surface-muted p-1">
+                      <button 
+                        type="button"
+                        onClick={() => setPickerMode('origin')}
+                        className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${pickerMode === 'origin' ? 'bg-white shadow-sm text-brand-600' : 'text-text-muted'}`}
+                      >
+                        Görüş
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setPickerMode('destination')}
+                        className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${pickerMode === 'destination' ? 'bg-white shadow-sm text-brand-600' : 'text-text-muted'}`}
+                      >
+                        Eniş
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-hidden rounded-xl border border-border">
+                    <MapContainer>
+                      <LocationPicker 
+                        mode={pickerMode}
+                        origin={form.origin}
+                        destination={form.destination}
+                        onSelectOrigin={(pos) => update('origin', pos)}
+                        onSelectDestination={(pos) => update('destination', pos)}
+                      />
+                    </MapContainer>
+                  </div>
+                  <p className="text-center text-xs text-text-muted">
+                    {pickerMode === 'origin' ? 'Xəritədə görüş nöqtəsini seçin' : 'Xəritədə eniş nöqtəsini seçin'}
+                  </p>
+                </div>
+
                 <Input label="Görüş nöqtəsi" placeholder="Məs: 28 May metro" value={form.meetingPoint} onChange={(e) => update('meetingPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
                 <Input label="Eniş nöqtəsi" placeholder="Məs: Gəncə avtovağzal" value={form.dropoffPoint} onChange={(e) => update('dropoffPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
               </div>
