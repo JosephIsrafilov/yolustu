@@ -5,10 +5,10 @@ import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 // Fix for default marker icons in Leaflet + Next.js
-// Note: You may need to download these markers or use CDN links if public/images is empty
 const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: '/images/leaflet/marker-icon.png',
+  iconRetinaUrl: '/images/leaflet/marker-icon-2x.png',
+  shadowUrl: '/images/leaflet/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
