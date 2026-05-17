@@ -12,6 +12,8 @@ export interface ApiTrip {
   description?: string | null;
   status: Trip['status'];
   created_at: string;
+  origin_location?: { lat: number; lon: number };
+  destination_location?: { lat: number; lon: number };
 }
 
 export interface ApiBooking {
@@ -62,6 +64,8 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     comment: apiTrip.description ?? undefined,
     status: apiTrip.status,
     createdAt: apiTrip.created_at,
+    origin: apiTrip.origin_location ? { lat: apiTrip.origin_location.lat, lng: apiTrip.origin_location.lon } : undefined,
+    destination: apiTrip.destination_location ? { lat: apiTrip.destination_location.lat, lng: apiTrip.destination_location.lon } : undefined,
   };
 }
 

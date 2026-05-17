@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+from geoalchemy2.shape import to_shape
 
 class UserBase(BaseModel):
     phone: str
@@ -79,6 +80,23 @@ class RideResponse(RideBase):
     driver_id: UUID
     vehicle_id: UUID
     created_at: datetime
+    origin_location: Location
+    destination_location: Location
+
+    @field_validator("origin_location", "destination_location", mode="before")
+    @classmethod
+    def convert_geometry(cls, v):
+        if v is None:
+            return None
+        # If it's already a dict or Location object, return as is
+        if isinstance(v, (dict, Location)):
+            return v
+        # Otherwise assume it's a GeoAlchemy2 element
+        try:
+            shape = to_shape(v)
+            return {"lat": shape.y, "lon": shape.x}
+        except Exception:
+            return v
 
 class BookingBase(BaseModel):
     seats_booked: int

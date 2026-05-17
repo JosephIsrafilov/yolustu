@@ -44,6 +44,8 @@ export interface Trip {
   comment?: string;
   status: TripStatus;
   createdAt: string;
+  origin?: { lat: number; lng: number };
+  destination?: { lat: number; lng: number };
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
@@ -106,4 +108,6 @@ export interface CreateTripData {
   pricePerSeat: number;
   carModel: string;
   comment: string;
+  origin?: { lat: number; lng: number };
+  destination?: { lat: number; lng: number };
 }
