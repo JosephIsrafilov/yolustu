@@ -1,5 +1,5 @@
 import React from 'react';
-import { Marker, Popup } from 'react-leaflet';
+import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Link from 'next/link';
 import { Trip, User } from '@/types';
@@ -18,12 +18,26 @@ interface RideMarkersProps {
 }
 
 const RideMarkers = ({ trips, users }: RideMarkersProps) => {
+  const map = useMap();
+  const visibleTrips = React.useMemo(
+    () => trips.filter((trip) => trip.origin),
+    [trips],
+  );
+
+  React.useEffect(() => {
+    if (visibleTrips.length === 0) return;
+    const bounds = L.latLngBounds(
+      visibleTrips.map((trip) => [trip.origin!.lat, trip.origin!.lng] as [number, number]),
+    );
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 12 });
+  }, [map, visibleTrips]);
+
   return (
     <>
-      {trips.map((trip) => {
+      {visibleTrips.map((trip) => {
         if (!trip.origin) return null;
         
-        const driver = users.find(u => u.id === trip.driverId);
+        const driver = trip.driver ?? users.find(u => u.id === trip.driverId);
         
         return (
           <Marker 

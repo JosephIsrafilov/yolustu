@@ -78,6 +78,7 @@ def seed_db():
                     last_name=u_data["last_name"],
                     hashed_password=default_password_hash,
                     is_verified=True,
+                    role=u_data["role"],
                     rating=u_data["rating"],
                 )
                 db.add(user)

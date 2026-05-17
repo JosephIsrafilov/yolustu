@@ -1,7 +1,43 @@
 import { apiClient } from '@/services/api-client';
 import type { TripsService } from '@/services/contracts/trips-service';
 import type { TripSearchFilters } from '@/types';
-import { mapApiTripToTrip, type ApiTrip } from './mappers';
+import { getCityCoordinates } from '@/lib/utils';
+import { mapApiTripToTrip, mapApiVehicleToVehicle, type ApiTrip, type ApiVehicle } from './mappers';
+
+async function resolveVehicleId(input: Parameters<TripsService['createTrip']>[0]): Promise<string> {
+  if (input.vehicleId) return input.vehicleId;
+
+  if (input.newVehicle) {
+    const vehicle = await apiClient.post<ApiVehicle>('/vehicles', {
+      brand: input.newVehicle.brand,
+      model: input.newVehicle.model,
+      year: input.newVehicle.year,
+      color: input.newVehicle.color,
+      plate_number: input.newVehicle.plateNumber,
+    });
+    return vehicle.id;
+  }
+
+  const vehicles = await apiClient.get<ApiVehicle[]>('/vehicles/my');
+  if (vehicles[0]) return mapApiVehicleToVehicle(vehicles[0]).id;
+
+  const vehicle = await apiClient.post<ApiVehicle>('/vehicles', {
+    brand: 'Other',
+    model: input.carModel || 'Car',
+    year: 2020,
+    color: 'Unknown',
+    plate_number: `AUTO-${Date.now().toString().slice(-6)}`,
+  });
+  return vehicle.id;
+}
+
+function resolveCoordinates(
+  selected: { lat: number; lng: number } | undefined,
+  city: string,
+): { lat: number; lon: number } {
+  const coords = selected ?? getCityCoordinates(city) ?? getCityCoordinates('Bakı') ?? { lat: 40.4093, lng: 49.8671 };
+  return { lat: coords.lat, lon: coords.lng };
+}
 
 function buildSearchQuery(filters: TripSearchFilters): string {
   const params = new URLSearchParams();
@@ -30,7 +66,9 @@ export const apiTripsService: TripsService = {
   },
 
   async createTrip(input) {
-    
+    const vehicleId = await resolveVehicleId(input);
+    const origin = resolveCoordinates(input.origin, input.departureCity);
+    const destination = resolveCoordinates(input.destination, input.arrivalCity);
     const backendInput = {
       departure_time: `${input.date}T${input.time}:00`,
       total_seats: input.seatsTotal,
@@ -38,9 +76,10 @@ export const apiTripsService: TripsService = {
       price_per_seat: input.pricePerSeat,
       origin_city: input.departureCity,
       destination_city: input.arrivalCity,
-      vehicle_id: '00000000-0000-0000-0000-000000000000', 
-      origin: { lat: 0, lon: 0 }, 
-      destination: { lat: 0, lon: 0 }, 
+      vehicle_id: vehicleId,
+      origin,
+      destination,
+      car_model: input.carModel,
       description: input.comment,
     };
     const response = await apiClient.post<ApiTrip>('/rides', backendInput);

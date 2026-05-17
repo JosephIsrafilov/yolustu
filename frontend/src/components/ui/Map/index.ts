@@ -18,3 +18,8 @@ export const RideMarkers = dynamic(
   () => import('./RideMarkers'),
   { ssr: false }
 );
+
+export const TripRoute = dynamic(
+  () => import('./TripRoute'),
+  { ssr: false }
+);

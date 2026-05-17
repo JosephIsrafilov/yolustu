@@ -7,19 +7,49 @@ from datetime import date
 
 from core.database import get_db
 from api.deps import get_current_user
-from models.models import Ride, User
+from models.models import Ride, User, Vehicle
 from schemas.schemas import RideCreate, RideResponse
 
 router = APIRouter()
 
 @router.post("/", response_model=RideResponse)
 def create_ride(ride_in: RideCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if ride_in.total_seats < 1 or ride_in.total_seats > 4:
+        raise HTTPException(status_code=400, detail="total_seats must be between 1 and 4")
+    if ride_in.available_seats < 0 or ride_in.available_seats > ride_in.total_seats:
+        raise HTTPException(status_code=400, detail="available_seats must be between 0 and total_seats")
+    if ride_in.price_per_seat <= 0:
+        raise HTTPException(status_code=400, detail="price_per_seat must be positive")
+
+    vehicle = None
+    if ride_in.vehicle_id:
+        vehicle = db.query(Vehicle).filter(
+            Vehicle.id == ride_in.vehicle_id,
+            Vehicle.user_id == current_user.id,
+        ).first()
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+    else:
+        vehicle = db.query(Vehicle).filter(Vehicle.user_id == current_user.id).first()
+        if not vehicle:
+            model_name = ride_in.car_model or "Car"
+            vehicle = Vehicle(
+                user_id=current_user.id,
+                brand="Other",
+                model=model_name,
+                year=2020,
+                color="Unknown",
+                plate_number=f"AUTO-{str(current_user.id)[:8]}",
+            )
+            db.add(vehicle)
+            db.flush()
+
     origin_pt = f"POINT({ride_in.origin.lon} {ride_in.origin.lat})"
     dest_pt = f"POINT({ride_in.destination.lon} {ride_in.destination.lat})"
     
     new_ride = Ride(
         driver_id=current_user.id,
-        vehicle_id=ride_in.vehicle_id,
+        vehicle_id=vehicle.id,
         origin_location=origin_pt,
         origin_city=ride_in.origin_city,
         destination_location=dest_pt,

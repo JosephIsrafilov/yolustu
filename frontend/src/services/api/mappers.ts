@@ -1,4 +1,30 @@
-import type { Trip, Booking, User, Review } from '@/types';
+import type { Trip, Booking, User, Review, Vehicle } from '@/types';
+
+export interface ApiUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  rating: number;
+  total_rides: number;
+  created_at: string;
+  avatar_url?: string | null;
+  role?: User['role'] | null;
+  city?: string | null;
+  bio?: string | null;
+  is_blocked?: boolean | null;
+}
+
+export interface ApiVehicle {
+  id: string;
+  user_id: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  plate_number: string;
+  created_at: string;
+}
 
 export interface ApiTrip {
   id: string;
@@ -14,6 +40,8 @@ export interface ApiTrip {
   created_at: string;
   origin_location?: { lat: number; lon: number };
   destination_location?: { lat: number; lon: number };
+  vehicle?: ApiVehicle | null;
+  driver?: ApiUser | null;
 }
 
 export interface ApiBooking {
@@ -23,17 +51,8 @@ export interface ApiBooking {
   status: Booking['status'];
   seats_booked: number;
   created_at: string;
-}
-
-export interface ApiUser {
-  id: string;
-  first_name: string;
-  last_name: string;
-  phone: string;
-  rating: number;
-  total_rides: number;
-  created_at: string;
-  avatar_url?: string | null;
+  ride?: ApiTrip | null;
+  passenger?: ApiUser | null;
 }
 
 export interface ApiReview {
@@ -46,8 +65,22 @@ export interface ApiReview {
   created_at: string;
 }
 
+export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
+  return {
+    id: apiVehicle.id,
+    userId: apiVehicle.user_id,
+    brand: apiVehicle.brand,
+    model: apiVehicle.model,
+    year: apiVehicle.year,
+    color: apiVehicle.color,
+    plateNumber: apiVehicle.plate_number,
+    createdAt: apiVehicle.created_at,
+  };
+}
+
 export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
   const departureDate = new Date(apiTrip.departure_time);
+  const vehicle = apiTrip.vehicle ? mapApiVehicleToVehicle(apiTrip.vehicle) : undefined;
   return {
     id: apiTrip.id,
     driverId: apiTrip.driver_id,
@@ -60,12 +93,14 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     seatsTotal: apiTrip.total_seats,
     seatsAvailable: apiTrip.available_seats,
     pricePerSeat: apiTrip.price_per_seat,
-    carModel: '', 
+    carModel: vehicle ? `${vehicle.brand} ${vehicle.model}`.trim() : '', 
     comment: apiTrip.description ?? undefined,
     status: apiTrip.status,
     createdAt: apiTrip.created_at,
     origin: apiTrip.origin_location ? { lat: apiTrip.origin_location.lat, lng: apiTrip.origin_location.lon } : undefined,
     destination: apiTrip.destination_location ? { lat: apiTrip.destination_location.lat, lng: apiTrip.destination_location.lon } : undefined,
+    driver: apiTrip.driver ? mapApiUserToUser(apiTrip.driver) : undefined,
+    vehicle,
   };
 }
 
@@ -77,6 +112,8 @@ export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
     status: apiBooking.status,
     seatsRequested: apiBooking.seats_booked,
     createdAt: apiBooking.created_at,
+    trip: apiBooking.ride ? mapApiTripToTrip(apiBooking.ride) : undefined,
+    passenger: apiBooking.passenger ? mapApiUserToUser(apiBooking.passenger) : undefined,
   };
 }
 
@@ -86,11 +123,13 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     fullName: `${apiUser.first_name} ${apiUser.last_name}`,
     email: '', 
     phone: apiUser.phone,
-    city: '', 
-    role: 'passenger', 
+    city: apiUser.city ?? '', 
+    avatarUrl: apiUser.avatar_url ?? undefined,
+    role: apiUser.role ?? 'passenger', 
     rating: apiUser.rating,
     totalTrips: apiUser.total_rides, 
-    isBlocked: false, 
+    isBlocked: apiUser.is_blocked ?? false, 
+    bio: apiUser.bio ?? undefined,
     createdAt: apiUser.created_at,
   };
 }

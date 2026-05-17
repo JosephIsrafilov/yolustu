@@ -26,6 +26,14 @@ def create_booking(booking_in: BookingCreate, db: Session = Depends(get_db), cur
     
     if ride.driver_id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot book your own ride")
+
+    existing_booking = db.query(Booking).filter(
+        Booking.ride_id == ride.id,
+        Booking.passenger_id == current_user.id,
+        Booking.status.notin_(["cancelled", "rejected"]),
+    ).first()
+    if existing_booking:
+        raise HTTPException(status_code=400, detail="Booking already exists for this ride")
     
     new_booking = Booking(
         ride_id=ride.id,

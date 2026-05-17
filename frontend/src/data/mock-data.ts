@@ -134,6 +134,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Rahat maşın, AC var. Yolda 1 dayanacaq.',
     status: 'active',
     createdAt: '2026-05-07T06:00:00Z',
+    origin: { lat: 40.4093, lng: 49.8671 },
+    destination: { lat: 40.6828, lng: 46.3606 },
   },
   {
     id: 't2',
@@ -151,6 +153,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Qubaya birbaşa gediş.',
     status: 'active',
     createdAt: '2026-05-07T07:00:00Z',
+    origin: { lat: 40.4093, lng: 49.8671 },
+    destination: { lat: 41.3643, lng: 48.5134 },
   },
   {
     id: 't3',
@@ -168,6 +172,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Hər gün sürürəm, vaxtında gəlirəm.',
     status: 'active',
     createdAt: '2026-05-06T20:00:00Z',
+    origin: { lat: 40.5897, lng: 49.6686 },
+    destination: { lat: 40.4093, lng: 49.8671 },
   },
   {
     id: 't4',
@@ -185,6 +191,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Şəkiyə rahat gediş, yol yaxşıdır.',
     status: 'active',
     createdAt: '2026-05-07T08:00:00Z',
+    origin: { lat: 40.4093, lng: 49.8671 },
+    destination: { lat: 41.1919, lng: 47.1706 },
   },
   {
     id: 't5',
@@ -202,6 +210,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Lənkərana birbaşa, dayanacaq yoxdur.',
     status: 'active',
     createdAt: '2026-05-07T09:00:00Z',
+    origin: { lat: 40.4093, lng: 49.8671 },
+    destination: { lat: 38.7536, lng: 48.8511 },
   },
   {
     id: 't6',
@@ -219,6 +229,8 @@ export const MOCK_TRIPS: Trip[] = [
     comment: 'Gəncədən Bakıya axşam gedişi.',
     status: 'active',
     createdAt: '2026-05-07T10:00:00Z',
+    origin: { lat: 40.6828, lng: 46.3606 },
+    destination: { lat: 40.4093, lng: 49.8671 },
   },
   {
     id: 't7',
@@ -235,6 +247,8 @@ export const MOCK_TRIPS: Trip[] = [
     carModel: 'Kia Rio',
     status: 'completed',
     createdAt: '2026-05-05T16:00:00Z',
+    origin: { lat: 40.4093, lng: 49.8671 },
+    destination: { lat: 40.6314, lng: 48.6414 },
   },
   {
     id: 't8',
@@ -251,6 +265,8 @@ export const MOCK_TRIPS: Trip[] = [
     carModel: 'Toyota Corolla',
     status: 'cancelled',
     createdAt: '2026-05-04T12:00:00Z',
+    origin: { lat: 41.3643, lng: 48.5134 },
+    destination: { lat: 40.4093, lng: 49.8671 },
   },
 ];
 

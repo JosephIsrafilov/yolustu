@@ -5,54 +5,68 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import type { BookingStatus } from '@/types';
+import type { Booking, BookingStatus } from '@/types';
+import { adminService } from '@/services';
 
 const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'completed'];
 
 export default function AdminBookingsPage() {
-  const { bookings, trips, users } = useAppStore();
+  const { trips, users } = useAppStore();
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
 
-  const filtered = filter === 'all' ? bookings : bookings.filter((b) => b.status === filter);
+  React.useEffect(() => {
+    adminService.getBookings()
+      .then(setBookings)
+      .catch((error) => {
+        console.error('Fetch admin bookings error:', error);
+      });
+  }, []);
+
+  const filtered = filter === 'all' ? bookings : bookings.filter((booking) => booking.status === filter);
 
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold text-text mb-4">Rezervlər</h1>
+      <h1 className="mb-4 text-2xl font-bold text-text">Rezervlər</h1>
 
-      {}
-      <div className="flex gap-1 flex-wrap mb-4">
-        {STATUSES.map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-              filter === s ? 'bg-brand-600 text-white' : 'bg-surface-muted text-text-muted hover:bg-surface-dim')}>
-            {s === 'all' ? 'Hamısı' : s}
+      <div className="mb-4 flex flex-wrap gap-1">
+        {STATUSES.map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={cn(
+              'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+              filter === status ? 'bg-brand-600 text-white' : 'bg-surface-muted text-text-muted hover:bg-surface-dim',
+            )}
+          >
+            {status === 'all' ? 'Hamısı' : status}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-border bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-dim">
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Sərnişin</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Marşrut</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Yerlər</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Tarix</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Sərnişin</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Marşrut</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Yerlər</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Tarix</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((b) => {
-                const trip = trips.find((t) => t.id === b.tripId);
-                const passenger = users.find((u) => u.id === b.passengerId);
+              {filtered.map((booking) => {
+                const trip = booking.trip ?? trips.find((item) => item.id === booking.tripId);
+                const passenger = booking.passenger ?? users.find((user) => user.id === booking.passengerId);
                 return (
-                  <tr key={b.id} className="border-b border-border last:border-0 hover:bg-surface-dim transition-colors">
+                  <tr key={booking.id} className="border-b border-border transition-colors last:border-0 hover:bg-surface-dim">
                     <td className="px-4 py-3 font-medium">{passenger?.fullName || '—'}</td>
                     <td className="px-4 py-3">{trip ? `${trip.departureCity} → ${trip.arrivalCity}` : '—'}</td>
-                    <td className="px-4 py-3">{b.seatsRequested}</td>
-                    <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
-                    <td className="px-4 py-3 text-text-muted">{new Date(b.createdAt).toLocaleDateString('az-AZ')}</td>
+                    <td className="px-4 py-3">{booking.seatsRequested}</td>
+                    <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
+                    <td className="px-4 py-3 text-text-muted">{new Date(booking.createdAt).toLocaleDateString('az-AZ')}</td>
                   </tr>
                 );
               })}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import Card from '@/components/ui/Card';
@@ -12,9 +12,12 @@ import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
 import { CAR_MODELS } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
-import type { CreateTripData } from '@/types';
+import type { CreateTripData, Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
+import { apiClient } from '@/services/api-client';
+import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
+import { isMockDataMode } from '@/lib/env';
 
 const STEPS = ['Marşrut', 'Tarix', 'Yerlər', 'Maşın', 'Baxış'];
 
@@ -23,6 +26,8 @@ export default function CreateTripPage() {
   const { createTrip, lastError, clearError } = useAppStore();
   const [step, setStep] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState(!isMockDataMode);
   const [form, setForm] = useState<CreateTripData>({
     departureCity: '',
     arrivalCity: '',
@@ -37,12 +42,48 @@ export default function CreateTripPage() {
     origin: undefined,
     destination: undefined,
   });
+  const [vehicleForm, setVehicleForm] = useState({
+    brand: 'Other',
+    model: '',
+    year: new Date().getFullYear(),
+    color: '',
+    plateNumber: '',
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (key: keyof CreateTripData, value: any) => {
+  const update = <K extends keyof CreateTripData>(key: K, value: CreateTripData[K]) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
   };
+
+  useEffect(() => {
+    if (isMockDataMode) return;
+
+    let isMounted = true;
+    apiClient.get<ApiVehicle[]>('/vehicles/my')
+      .then((response) => {
+        if (!isMounted) return;
+        const mapped = response.map(mapApiVehicleToVehicle);
+        setVehicles(mapped);
+        if (mapped[0]) {
+          setForm((current) => ({
+            ...current,
+            vehicleId: mapped[0].id,
+            carModel: `${mapped[0].brand} ${mapped[0].model}`.trim(),
+          }));
+        }
+      })
+      .catch((error) => {
+        console.error('Fetch vehicles error:', error);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingVehicles(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const validateStep = () => {
     const e: Record<string, string> = {};
@@ -61,6 +102,12 @@ export default function CreateTripPage() {
     }
     if (step === 3) {
       if (!form.carModel) e.carModel = 'Tələb olunur';
+      if (!isMockDataMode && vehicles.length === 0) {
+        if (!vehicleForm.model.trim()) e.vehicleModel = 'Tələb olunur';
+        if (!vehicleForm.color.trim()) e.vehicleColor = 'Tələb olunur';
+        if (!vehicleForm.plateNumber.trim()) e.vehiclePlate = 'Tələb olunur';
+        if (vehicleForm.year < 1980 || vehicleForm.year > new Date().getFullYear() + 1) e.vehicleYear = 'Düzgün il seçin';
+      }
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -83,6 +130,14 @@ export default function CreateTripPage() {
       comment: form.comment,
       origin: form.origin,
       destination: form.destination,
+      vehicleId: form.vehicleId,
+      newVehicle: !isMockDataMode && vehicles.length === 0 ? {
+        brand: vehicleForm.brand.trim() || 'Other',
+        model: vehicleForm.model.trim(),
+        year: vehicleForm.year,
+        color: vehicleForm.color.trim(),
+        plateNumber: vehicleForm.plateNumber.trim(),
+      } : undefined,
     });
     if (id) router.push(ROUTES.myTrips);
   };
@@ -196,6 +251,27 @@ export default function CreateTripPage() {
 
             {step === 3 && (
               <div className="flex flex-col gap-4">
+                {!isMockDataMode && vehicles.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">Maşın</label>
+                    <select
+                      value={form.vehicleId || ''}
+                      onChange={(e) => {
+                        const selected = vehicles.find((vehicle) => vehicle.id === e.target.value);
+                        update('vehicleId', e.target.value);
+                        if (selected) update('carModel', `${selected.brand} ${selected.model}`.trim());
+                      }}
+                      className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    >
+                      {vehicles.map((vehicle) => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.brand} {vehicle.model} · {vehicle.plateNumber}
+                        </option>
+                      ))}
+                    </select>
+                    {isLoadingVehicles && <p className="text-xs text-text-muted">Maşınlar yüklənir...</p>}
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Maşın modeli</label>
                   <select value={form.carModel} onChange={(e) => update('carModel', e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -204,6 +280,25 @@ export default function CreateTripPage() {
                   </select>
                   {errors.carModel && <p className="text-xs text-danger-500">{errors.carModel}</p>}
                 </div>
+                {!isMockDataMode && vehicles.length === 0 && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input label="Marka" value={vehicleForm.brand} onChange={(e) => setVehicleForm((p) => ({ ...p, brand: e.target.value }))} />
+                    <Input
+                      label="Model"
+                      value={vehicleForm.model}
+                      onChange={(e) => {
+                        setVehicleForm((p) => ({ ...p, model: e.target.value }));
+                        update('carModel', e.target.value);
+                      }}
+                      error={errors.vehicleModel}
+                    />
+                    <Input label="İl" type="number" value={vehicleForm.year} onChange={(e) => setVehicleForm((p) => ({ ...p, year: Number(e.target.value) }))} error={errors.vehicleYear} />
+                    <Input label="Rəng" value={vehicleForm.color} onChange={(e) => setVehicleForm((p) => ({ ...p, color: e.target.value }))} error={errors.vehicleColor} />
+                    <div className="sm:col-span-2">
+                      <Input label="Dövlət nömrəsi" value={vehicleForm.plateNumber} onChange={(e) => setVehicleForm((p) => ({ ...p, plateNumber: e.target.value }))} error={errors.vehiclePlate} />
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Əlavə qeyd (ixtiyari)</label>
                   <textarea value={form.comment} onChange={(e) => update('comment', e.target.value)} rows={3} placeholder="Məs: AC var, yolda 1 dayanacaq" className="w-full resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />

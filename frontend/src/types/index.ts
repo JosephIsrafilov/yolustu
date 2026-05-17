@@ -17,6 +17,17 @@ export interface User {
   createdAt: string;
 }
 
+export interface Vehicle {
+  id: string;
+  userId: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  plateNumber: string;
+  createdAt: string;
+}
+
 export interface Profile {
   userId: string;
   bio: string;
@@ -46,6 +57,8 @@ export interface Trip {
   createdAt: string;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
+  driver?: User;
+  vehicle?: Vehicle;
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
@@ -57,6 +70,8 @@ export interface Booking {
   status: BookingStatus;
   seatsRequested: number;
   createdAt: string;
+  trip?: Trip;
+  passenger?: User;
 }
 
 export interface Review {
@@ -110,4 +125,12 @@ export interface CreateTripData {
   comment: string;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
+  vehicleId?: string;
+  newVehicle?: {
+    brand: string;
+    model: string;
+    year: number;
+    color: string;
+    plateNumber: string;
+  };
 }

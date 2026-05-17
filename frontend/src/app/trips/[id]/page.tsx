@@ -14,6 +14,9 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, formatRating } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
+import { MapContainer, TripRoute } from '@/components/ui/Map';
+import { tripsService } from '@/services';
+import type { Trip } from '@/types';
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -21,18 +24,29 @@ export default function TripDetailsPage() {
   const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated, lastError, clearError } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
+  const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
+  const tripId = Array.isArray(id) ? id[0] : id;
 
-  const trip = trips.find((t) => t.id === id);
+  React.useEffect(() => {
+    if (!tripId || trips.some((t) => t.id === tripId)) return;
+    tripsService.getTripById(tripId)
+      .then(setLoadedTrip)
+      .catch((error) => {
+        console.error('Fetch trip details error:', error);
+      });
+  }, [tripId, trips]);
+
+  const trip = trips.find((t) => t.id === tripId) ?? loadedTrip;
   if (!trip) return <WebLayout title="Gediş" showBack><EmptyState title="Gediş tapılmadı" /></WebLayout>;
 
-  const driver = users.find((u) => u.id === trip.driverId);
+  const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
   const tripReviews = reviews.filter((r) => r.targetUserId === trip.driverId);
   const isOwnTrip = currentUser?.id === trip.driverId;
   const existingBooking = bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser?.id && b.status !== 'cancelled' && b.status !== 'rejected');
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!isAuthenticated || isOwnTrip || existingBooking) return;
-    const bookingId = createBooking(trip.id, seats);
+    const bookingId = await createBooking(trip.id, seats);
     if (!bookingId) return;
     setBooked(true);
     setTimeout(() => router.push(ROUTES.bookings), 1000);
@@ -43,6 +57,20 @@ export default function TripDetailsPage() {
       <div className="grid lg:grid-cols-3 gap-6 stagger-children">
         <div className="lg:col-span-2 flex flex-col gap-4">
           <Card><RouteTimeline departure={trip.departureCity} arrival={trip.arrivalCity} meetingPoint={trip.meetingPoint} dropoffPoint={trip.dropoffPoint} /></Card>
+          {trip.origin && trip.destination && (
+            <Card className="overflow-hidden p-0">
+              <div className="h-[320px] w-full">
+                <MapContainer className="min-h-[320px]">
+                  <TripRoute
+                    origin={trip.origin}
+                    destination={trip.destination}
+                    departureCity={trip.departureCity}
+                    arrivalCity={trip.arrivalCity}
+                  />
+                </MapContainer>
+              </div>
+            </Card>
+          )}
           <Card>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Tarix</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>

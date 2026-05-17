@@ -6,40 +6,56 @@ import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
+import { adminService } from '@/services';
+import type { Trip } from '@/types';
 
 export default function AdminTripsPage() {
-  const { trips, users, deleteTrip } = useAppStore();
+  const { users } = useAppStore();
+  const [trips, setTrips] = React.useState<Trip[]>([]);
+
+  React.useEffect(() => {
+    adminService.getTrips()
+      .then(setTrips)
+      .catch((error) => {
+        console.error('Fetch admin trips error:', error);
+      });
+  }, []);
+
+  const deleteTrip = async (tripId: string) => {
+    await adminService.deleteTrip(tripId);
+    setTrips((current) => current.filter((trip) => trip.id !== tripId));
+  };
 
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold text-text mb-4">Gedişlər</h1>
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      <h1 className="mb-4 text-2xl font-bold text-text">Gedişlər</h1>
+      <div className="overflow-hidden rounded-2xl border border-border bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-dim">
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Marşrut</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Sürücü</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Tarix</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Qiymət</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Yerlər</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">Əməliyyat</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Marşrut</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Sürücü</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Tarix</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Qiymət</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Yerlər</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">Əməliyyat</th>
               </tr>
             </thead>
             <tbody>
-              {trips.map((t) => {
-                const driver = users.find((u) => u.id === t.driverId);
+              {trips.map((trip) => {
+                const driver = trip.driver ?? users.find((user) => user.id === trip.driverId);
                 return (
-                  <tr key={t.id} className="border-b border-border last:border-0 hover:bg-surface-dim transition-colors">
-                    <td className="px-4 py-3 font-medium">{t.departureCity} → {t.arrivalCity}</td>
+                  <tr key={trip.id} className="border-b border-border transition-colors last:border-0 hover:bg-surface-dim">
+                    <td className="px-4 py-3 font-medium">{trip.departureCity} → {trip.arrivalCity}</td>
                     <td className="px-4 py-3 text-text-muted">{driver?.fullName || '—'}</td>
-                    <td className="px-4 py-3">{t.date}</td>
-                    <td className="px-4 py-3">{t.pricePerSeat} ₼</td>
-                    <td className="px-4 py-3">{t.seatsAvailable}/{t.seatsTotal}</td>
-                    <td className="px-4 py-3"><StatusBadge status={t.status} type="trip" /></td>
+                    <td className="px-4 py-3">{trip.date}</td>
+                    <td className="px-4 py-3">{trip.pricePerSeat} ₼</td>
+                    <td className="px-4 py-3">{trip.seatsAvailable}/{trip.seatsTotal}</td>
+                    <td className="px-4 py-3"><StatusBadge status={trip.status} type="trip" /></td>
                     <td className="px-4 py-3">
-                      <Button size="sm" variant="danger" onClick={() => deleteTrip(t.id)}>
+                      <Button size="sm" variant="danger" onClick={() => deleteTrip(trip.id)}>
                         <Icon name="trash-2" size={14} /> Sil
                       </Button>
                     </td>

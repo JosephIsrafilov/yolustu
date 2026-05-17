@@ -1,6 +1,13 @@
 import { apiClient } from '@/services/api-client';
 import type { AdminService, AdminStats } from '@/services/contracts/admin-service';
-import type { Booking, Trip, User } from '@/types';
+import {
+  mapApiBookingToBooking,
+  mapApiTripToTrip,
+  mapApiUserToUser,
+  type ApiBooking,
+  type ApiTrip,
+  type ApiUser,
+} from './mappers';
 
 export const apiAdminService: AdminService = {
   async getAdminStats() {
@@ -8,19 +15,23 @@ export const apiAdminService: AdminService = {
   },
 
   async getUsers() {
-    return apiClient.get<User[]>('/admin/users');
+    const users = await apiClient.get<ApiUser[]>('/admin/users');
+    return users.map(mapApiUserToUser);
   },
 
   async blockUser(userId) {
-    return apiClient.patch<User>(`/admin/users/${userId}/block`);
+    const user = await apiClient.patch<ApiUser>(`/admin/users/${userId}/block`);
+    return mapApiUserToUser(user);
   },
 
   async unblockUser(userId) {
-    return apiClient.patch<User>(`/admin/users/${userId}/unblock`);
+    const user = await apiClient.patch<ApiUser>(`/admin/users/${userId}/unblock`);
+    return mapApiUserToUser(user);
   },
 
   async getTrips() {
-    return apiClient.get<Trip[]>('/admin/rides');
+    const trips = await apiClient.get<ApiTrip[]>('/admin/rides');
+    return trips.map(mapApiTripToTrip);
   },
 
   async deleteTrip(tripId) {
@@ -28,6 +39,7 @@ export const apiAdminService: AdminService = {
   },
 
   async getBookings() {
-    return apiClient.get<Booking[]>('/admin/bookings');
+    const bookings = await apiClient.get<ApiBooking[]>('/admin/bookings');
+    return bookings.map(mapApiBookingToBooking);
   },
 };

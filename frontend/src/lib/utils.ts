@@ -38,3 +38,24 @@ export const AZ_CITIES = [
 ] as const;
 
 export type AZCity = (typeof AZ_CITIES)[number];
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export const AZ_CITY_COORDINATES: Record<AZCity, Coordinates> = {
+  'Bakı': { lat: 40.4093, lng: 49.8671 },
+  'Gəncə': { lat: 40.6828, lng: 46.3606 },
+  'Sumqayıt': { lat: 40.5897, lng: 49.6686 },
+  'Şəki': { lat: 41.1919, lng: 47.1706 },
+  'Quba': { lat: 41.3643, lng: 48.5134 },
+  'Lənkəran': { lat: 38.7536, lng: 48.8511 },
+  'Şamaxı': { lat: 40.6314, lng: 48.6414 },
+  'Mingəçevir': { lat: 40.7703, lng: 47.0486 },
+  'Naftalan': { lat: 40.5067, lng: 46.8250 },
+};
+
+export function getCityCoordinates(city: string): Coordinates | undefined {
+  return AZ_CITY_COORDINATES[city as AZCity];
+}

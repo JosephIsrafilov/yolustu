@@ -175,7 +175,7 @@ function TripsContent() {
           ) : filteredTrips.length > 0 ? (
             <div className="flex flex-col gap-3 stagger-children">
               {filteredTrips.map((trip) => {
-                const driver = users.find((u) => u.id === trip.driverId);
+                const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
                 const isFull = trip.seatsAvailable === 0;
                 return (
                   <article key={trip.id}

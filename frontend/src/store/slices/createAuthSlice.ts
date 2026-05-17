@@ -1,9 +1,10 @@
 import { StateCreator } from 'zustand';
 import { AppState, AuthSlice } from '../types';
-import { authService } from '@/services';
+import { adminService, authService } from '@/services';
 import { MOCK_USERS } from '@/data/mock-data';
 import { toApiError } from '@/services/api-error';
 import type { UserRole } from '@/types';
+import { isMockDataMode } from '@/lib/env';
 
 export const createAuthSlice: StateCreator<
   AppState,
@@ -15,7 +16,7 @@ export const createAuthSlice: StateCreator<
   isAuthenticated: false,
   activeRole: 'passenger',
   lastError: null,
-  users: [...MOCK_USERS],
+  users: isMockDataMode ? [...MOCK_USERS] : [],
 
   requestOtp: async (phone) => {
     try {
@@ -156,8 +157,11 @@ export const createAuthSlice: StateCreator<
 
   blockUser: async (userId) => {
     try {
+      const updated = isMockDataMode
+        ? undefined
+        : await adminService.blockUser(userId);
       set((s) => ({
-        users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: true } : u)),
+        users: s.users.map((u) => (u.id === userId ? updated ?? { ...u, isBlocked: true } : u)),
       }));
     } catch (error) {
       console.error('Block user error:', error);
@@ -166,8 +170,11 @@ export const createAuthSlice: StateCreator<
 
   unblockUser: async (userId) => {
     try {
+      const updated = isMockDataMode
+        ? undefined
+        : await adminService.unblockUser(userId);
       set((s) => ({
-        users: s.users.map((u) => (u.id === userId ? { ...u, isBlocked: false } : u)),
+        users: s.users.map((u) => (u.id === userId ? updated ?? { ...u, isBlocked: false } : u)),
       }));
     } catch (error) {
       console.error('Unblock user error:', error);
@@ -176,7 +183,9 @@ export const createAuthSlice: StateCreator<
 
   fetchUsers: async () => {
     try {
-      
+      if (isMockDataMode) return;
+      const users = await adminService.getUsers();
+      set({ users });
     } catch (error) {
       console.error('Fetch users error:', error);
     }

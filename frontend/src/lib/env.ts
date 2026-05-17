@@ -9,3 +9,5 @@ export const env = {
   wsUrl: string;
   dataMode: DataMode;
 };
+
+export const isMockDataMode = env.dataMode === 'mock';

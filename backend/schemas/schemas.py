@@ -10,6 +10,9 @@ class UserBase(BaseModel):
     last_name: str
     avatar_url: Optional[str] = None
     language: Optional[str] = "az"
+    role: Optional[str] = "passenger"
+    city: Optional[str] = None
+    bio: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -20,11 +23,15 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     avatar_url: Optional[str] = None
     language: Optional[str] = None
+    role: Optional[str] = None
+    city: Optional[str] = None
+    bio: Optional[str] = None
 
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    is_blocked: bool
     is_verified: bool
     rating: float
     total_rides: int
@@ -69,7 +76,8 @@ class RideBase(BaseModel):
     female_only: bool = False
 
 class RideCreate(RideBase):
-    vehicle_id: UUID
+    vehicle_id: Optional[UUID] = None
+    car_model: Optional[str] = None
     origin: Location
     destination: Location
 
@@ -82,6 +90,8 @@ class RideResponse(RideBase):
     created_at: datetime
     origin_location: Location
     destination_location: Location
+    vehicle: Optional[VehicleResponse] = None
+    driver: Optional[UserResponse] = None
 
     @field_validator("origin_location", "destination_location", mode="before")
     @classmethod
@@ -89,8 +99,7 @@ class RideResponse(RideBase):
         if v is None:
             return None
         
-        # If it's already a dict or Location object, return as is
-        if isinstance(v, (dict, cls.__annotations__.get('origin_location', Location))):
+        if isinstance(v, (dict, Location)):
             return v
             
         # Handle GeoAlchemy2 elements
@@ -124,6 +133,8 @@ class BookingResponse(BookingBase):
     status: str
     total_price: Optional[float] = None
     created_at: datetime
+    ride: Optional[RideResponse] = None
+    passenger: Optional[UserResponse] = None
 
 class ReviewBase(BaseModel):
     rating: int

@@ -25,7 +25,7 @@ def update_user_me(
             raise HTTPException(status_code=400, detail="Phone already registered")
         current_user.phone = user_in.phone
 
-    for field in ("first_name", "last_name", "avatar_url", "language"):
+    for field in ("first_name", "last_name", "avatar_url", "language", "role", "city", "bio"):
         value = getattr(user_in, field)
         if value is not None:
             setattr(current_user, field, value)

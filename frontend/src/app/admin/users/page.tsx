@@ -8,7 +8,11 @@ import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 
 export default function AdminUsersPage() {
-  const { users, blockUser, unblockUser } = useAppStore();
+  const { users, blockUser, unblockUser, fetchUsers } = useAppStore();
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
     <AdminLayout>

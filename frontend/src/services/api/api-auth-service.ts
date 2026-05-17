@@ -57,6 +57,8 @@ export const apiAuthService: AuthService = {
       first_name: names[0],
       last_name: names.length > 1 ? names.slice(1).join(' ') : undefined,
       avatar_url: input.avatarUrl,
+      city: input.city,
+      bio: input.bio,
     };
     const user = await apiClient.put<ApiUser>('/users/me', payload);
     return mapApiUserToUser(user);

@@ -1,9 +1,6 @@
-import type { Trip, TripSearchFilters } from '@/types';
+import type { CreateTripData, Trip, TripSearchFilters } from '@/types';
 
-export type CreateTripInput = Omit<
-  Trip,
-  'id' | 'driverId' | 'seatsAvailable' | 'status' | 'createdAt'
->;
+export type CreateTripInput = CreateTripData;
 
 export interface TripsService {
   searchTrips(filters: TripSearchFilters): Promise<Trip[]>;
