@@ -88,14 +88,25 @@ class RideResponse(RideBase):
     def convert_geometry(cls, v):
         if v is None:
             return None
+        
         # If it's already a dict or Location object, return as is
-        if isinstance(v, (dict, Location)):
+        if isinstance(v, (dict, cls.__annotations__.get('origin_location', Location))):
             return v
-        # Otherwise assume it's a GeoAlchemy2 element
+            
+        # Handle GeoAlchemy2 elements
         try:
+            from geoalchemy2.shape import to_shape
+            from geoalchemy2.elements import WKBElement, WKTElement
+            
+            if isinstance(v, (WKBElement, WKTElement)):
+                shape = to_shape(v)
+                return {"lat": shape.y, "lon": shape.x}
+            
+            # Fallback for other potential types that to_shape might handle
             shape = to_shape(v)
             return {"lat": shape.y, "lon": shape.x}
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG: Error converting geometry: {e}, type(v): {type(v)}")
             return v
 
 class BookingBase(BaseModel):
