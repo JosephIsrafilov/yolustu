@@ -1,5 +1,3 @@
-from pydantic import BaseModel
+from app.domains.identity.schemas import LoginInput
 
-class LoginInput(BaseModel):
-    phone: str
-    password: str
+__all__ = ["LoginInput"]

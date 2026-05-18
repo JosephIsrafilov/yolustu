@@ -3,9 +3,9 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from core.database import Base
-from core.config import settings
-from models.models import *
+from app.core.database import Base
+from app.core.config import settings
+import app.domains.models
 import geoalchemy2
 
 config = context.config
