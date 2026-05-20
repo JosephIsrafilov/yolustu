@@ -61,3 +61,26 @@ def delete_ride(
 @router.get("/bookings", response_model=list[BookingResponse])
 def get_bookings(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
     return AdminService(db).get_bookings(current_user)
+
+
+@router.get("/verifications", response_model=list[UserResponse])
+def get_pending_verifications(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
+    return AdminService(db).get_pending_verifications(current_user)
+
+
+@router.patch("/verifications/{user_id}/approve", response_model=UserResponse)
+def approve_verification(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return AdminService(db).approve_verification(user_id, current_user)
+
+
+@router.patch("/verifications/{user_id}/reject", response_model=UserResponse)
+def reject_verification(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return AdminService(db).reject_verification(user_id, current_user)

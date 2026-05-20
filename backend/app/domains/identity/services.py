@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import create_access_token, create_refresh_token, get_password_hash, verify_password
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.models import User
 from app.domains.identity.repositories import UserRepository
@@ -42,7 +42,7 @@ class IdentityService:
         self._send_otp_simulation(user.phone, redis_client)
         return user
 
-    def login(self, login_data: LoginInput):
+    def login(self, login_data: LoginInput, redis_client):
         user = self.users.get_by_phone(login_data.phone)
         if not user or not verify_password(login_data.password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect phone or password")
@@ -53,9 +53,31 @@ class IdentityService:
                 detail="Account not verified. Please verify your phone via OTP.",
             )
 
+        return self._create_tokens(user.phone, redis_client)
+
+    def refresh_token(self, refresh_token: str, redis_client):
+        phone = redis_client.get(f"refresh_token:{refresh_token}")
+        if not phone:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+
+        # Invalidate old refresh token (Rotation)
+        redis_client.delete(f"refresh_token:{refresh_token}")
+
+        return self._create_tokens(phone, redis_client)
+
+    def _create_tokens(self, phone: str, redis_client):
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(data={"sub": user.phone}, expires_delta=access_token_expires)
-        return {"access_token": access_token, "token_type": "bearer"}
+        access_token = create_access_token(data={"sub": phone}, expires_delta=access_token_expires)
+
+        refresh_token = create_refresh_token()
+        # Store refresh token in Redis for 30 days
+        redis_client.setex(f"refresh_token:{refresh_token}", 30 * 24 * 60 * 60, phone)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+        }
 
     def get_user(self, user_id: UUID) -> User:
         user = self.users.get_by_id(user_id)
@@ -71,6 +93,10 @@ class IdentityService:
         if user_in.phone and user_in.phone != user.phone and self.users.get_by_phone(user_in.phone):
             raise HTTPException(status_code=400, detail="Phone already registered")
         return self.users.update(user, user_in)
+
+    def submit_verification(self, current_user: CurrentUser, document_url: str) -> User:
+        user = self.get_current_user_model(current_user)
+        return self.users.update_verification_status(user, "pending", document_url)
 
     @staticmethod
     def _send_otp_simulation(phone: str, redis_client):

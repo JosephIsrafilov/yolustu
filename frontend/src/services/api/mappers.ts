@@ -13,6 +13,8 @@ export interface ApiUser {
   city?: string | null;
   bio?: string | null;
   is_blocked?: boolean | null;
+  verification_status?: User['verificationStatus'] | null;
+  document_url?: string | null;
 }
 
 export interface ApiVehicle {
@@ -129,6 +131,8 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     rating: apiUser.rating,
     totalTrips: apiUser.total_rides, 
     isBlocked: apiUser.is_blocked ?? false, 
+    verificationStatus: apiUser.verification_status ?? 'none',
+    documentUrl: apiUser.document_url ?? undefined,
     bio: apiUser.bio ?? undefined,
     createdAt: apiUser.created_at,
   };

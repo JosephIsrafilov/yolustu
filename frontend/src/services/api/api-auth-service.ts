@@ -63,4 +63,11 @@ export const apiAuthService: AuthService = {
     const user = await apiClient.put<ApiUser>('/users/me', payload);
     return mapApiUserToUser(user);
   },
+
+  async submitVerification(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const user = await apiClient.post<ApiUser>('/users/me/verify', formData);
+    return mapApiUserToUser(user);
+  },
 };

@@ -52,3 +52,21 @@ class AdminService:
     def get_bookings(self, current_user: CurrentUser):
         self.require_admin(current_user)
         return self.bookings.list_all()
+
+    def get_pending_verifications(self, current_user: CurrentUser):
+        self.require_admin(current_user)
+        return self.admin.list_pending_verifications()
+
+    def approve_verification(self, user_id: UUID, current_user: CurrentUser):
+        self.require_admin(current_user)
+        user = self.users.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return self.users.update_verification_status(user, "approved")
+
+    def reject_verification(self, user_id: UUID, current_user: CurrentUser):
+        self.require_admin(current_user)
+        user = self.users.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return self.users.update_verification_status(user, "rejected")

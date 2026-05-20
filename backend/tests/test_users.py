@@ -15,7 +15,7 @@ SEED_PASSWORD = "password123"
 @pytest.fixture(scope="module")
 def access_token():
     response = client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"phone": SEED_PHONE, "password": SEED_PASSWORD}
     )
     assert response.status_code == 200, f"Login failed: {response.text}"
@@ -23,7 +23,7 @@ def access_token():
 
 def test_get_current_user(access_token):
     response = client.get(
-        "/api/users/me",
+        "/api/v1/users/me",
         headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
@@ -33,7 +33,7 @@ def test_get_current_user(access_token):
 
 def test_update_current_user(access_token):
     response = client.put(
-        "/api/users/me",
+        "/api/v1/users/me",
         headers={"Authorization": f"Bearer {access_token}"},
         json={"first_name": "Elvin Updated"}
     )
@@ -43,7 +43,7 @@ def test_update_current_user(access_token):
 
     
     client.put(
-        "/api/users/me",
+        "/api/v1/users/me",
         headers={"Authorization": f"Bearer {access_token}"},
         json={"first_name": "Elvin"}
     )

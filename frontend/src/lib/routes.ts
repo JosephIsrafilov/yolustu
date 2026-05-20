@@ -19,4 +19,5 @@ export const ROUTES = {
   adminUsers: '/admin/users',
   adminTrips: '/admin/trips',
   adminBookings: '/admin/bookings',
+  adminVerifications: '/admin/verifications',
 } as const;

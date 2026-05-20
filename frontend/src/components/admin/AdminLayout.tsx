@@ -13,6 +13,7 @@ const ADMIN_LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: ROUTES.adminUsers, label: 'İstifadəçilər', icon: 'users' },
   { href: ROUTES.adminTrips, label: 'Gedişlər', icon: 'map' },
   { href: ROUTES.adminBookings, label: 'Rezervlər', icon: 'calendar-check' },
+  { href: ROUTES.adminVerifications, label: 'Təsdiqləmələr', icon: 'shield-check' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

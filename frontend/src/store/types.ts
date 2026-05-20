@@ -6,6 +6,7 @@ export interface AuthSlice {
   activeRole: 'passenger' | 'driver';
   lastError: string | null;
   users: User[];
+  pendingVerifications: User[];
 
   register: (data: { fullName: string; phone: string; password: string }) => Promise<boolean>;
   login: (phone: string, password: string) => Promise<boolean>;
@@ -23,6 +24,11 @@ export interface AuthSlice {
   unblockUser: (userId: string) => Promise<void>;
   
   fetchUsers: () => Promise<void>;
+  
+  fetchPendingVerifications: () => Promise<void>;
+  approveVerification: (userId: string) => Promise<void>;
+  rejectVerification: (userId: string) => Promise<void>;
+  submitVerification: (file: File) => Promise<void>;
 }
 
 export interface TripSlice {

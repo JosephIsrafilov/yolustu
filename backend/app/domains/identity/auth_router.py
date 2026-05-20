@@ -25,5 +25,10 @@ def register(user_in: UserCreate, db: Session = Depends(get_db), redis_client=De
 
 
 @router.post("/login", response_model=Token)
-def login(login_data: LoginInput, db: Session = Depends(get_db)):
-    return IdentityService(db).login(login_data)
+def login(login_data: LoginInput, db: Session = Depends(get_db), redis_client=Depends(get_redis)):
+    return IdentityService(db).login(login_data, redis_client)
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(refresh_token: str, db: Session = Depends(get_db), redis_client=Depends(get_redis)):
+    return IdentityService(db).refresh_token(refresh_token, redis_client)

@@ -17,6 +17,7 @@ export const createAuthSlice: StateCreator<
   activeRole: 'passenger',
   lastError: null,
   users: isMockDataMode ? [...MOCK_USERS] : [],
+  pendingVerifications: [],
 
   requestOtp: async (phone) => {
     try {
@@ -143,7 +144,7 @@ export const createAuthSlice: StateCreator<
 
   updateProfile: async (data) => {
     try {
-      const updated = await authService.updateProfile(data);
+      const updated = await authService.updateProfile(data as any);
       set((s) => ({
         currentUser: updated,
         users: s.users.map((u) => (u.id === updated.id ? updated : u)),
@@ -188,6 +189,52 @@ export const createAuthSlice: StateCreator<
       set({ users });
     } catch (error) {
       console.error('Fetch users error:', error);
+    }
+  },
+
+  fetchPendingVerifications: async () => {
+    try {
+      if (isMockDataMode) return;
+      const users = await adminService.getPendingVerifications();
+      set({ pendingVerifications: users });
+    } catch (error) {
+      console.error('Fetch pending verifications error:', error);
+    }
+  },
+
+  approveVerification: async (userId) => {
+    try {
+      const updated = await adminService.approveVerification(userId);
+      set((s) => ({
+        pendingVerifications: s.pendingVerifications.filter((u) => u.id !== userId),
+        users: s.users.map((u) => (u.id === userId ? updated : u)),
+      }));
+    } catch (error) {
+      console.error('Approve verification error:', error);
+    }
+  },
+
+  rejectVerification: async (userId) => {
+    try {
+      const updated = await adminService.rejectVerification(userId);
+      set((s) => ({
+        pendingVerifications: s.pendingVerifications.filter((u) => u.id !== userId),
+        users: s.users.map((u) => (u.id === userId ? updated : u)),
+      }));
+    } catch (error) {
+      console.error('Reject verification error:', error);
+    }
+  },
+
+  submitVerification: async (file) => {
+    try {
+      set({ lastError: null });
+      const updated = await authService.submitVerification(file);
+      set({ currentUser: updated });
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Verifikasiya göndərilməsi zamanı xəta baş verdi.' });
+      throw error;
     }
   },
 });

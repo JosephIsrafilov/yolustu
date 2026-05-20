@@ -37,6 +37,8 @@ class UserResponse(UserBase):
     id: UUID
     is_blocked: bool
     is_verified: bool
+    verification_status: str
+    document_url: Optional[str] = None
     rating: float
     total_rides: int
     created_at: datetime
@@ -44,6 +46,7 @@ class UserResponse(UserBase):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 

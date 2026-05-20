@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
     { label: 'Aktiv gedişlər', value: apiStats?.activeTrips ?? activeTrips.length, icon: 'map', color: 'text-success-500' },
     { label: 'Ümumi rezervlər', value: apiStats?.totalBookings ?? bookings.length, icon: 'calendar-check', color: 'text-accent-500' },
     { label: 'Gözləyən', value: apiStats?.pendingBookings ?? pendingBookings.length, icon: 'clock', color: 'text-warn-500' },
-    { label: 'Tamamlanmış', value: trips.filter((trip) => trip.status === 'completed').length, icon: 'check-circle', color: 'text-brand-600' },
+    { label: 'Təsdiqləmələr', value: apiStats?.pendingVerifications ?? 0, icon: 'shield-check', color: 'text-brand-600' },
     { label: 'Bloklanmış', value: apiStats?.blockedUsers ?? blockedUsers.length, icon: 'alert-triangle', color: 'text-danger-500' },
   ];
 

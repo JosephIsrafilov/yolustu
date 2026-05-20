@@ -13,6 +13,8 @@ export interface User {
   rating: number;
   totalTrips: number;
   isBlocked: boolean;
+  verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  documentUrl?: string;
   bio?: string;
   createdAt: string;
 }

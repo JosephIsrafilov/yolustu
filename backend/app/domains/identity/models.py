@@ -22,6 +22,8 @@ class User(Base):
     bio = Column(Text, nullable=True)
     is_blocked = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False)
+    verification_status = Column(String(20), default="none", nullable=False) # none, pending, approved, rejected
+    document_url = Column(String(255), nullable=True)
     rating = Column(Float, default=0.0)
     total_rides = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -60,6 +60,14 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
+    def update_verification_status(self, user: User, status: str, document_url: str = None) -> User:
+        user.verification_status = status
+        if document_url:
+            user.document_url = document_url
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
     def increment_total_rides(self, user_id: UUID):
         user = self.get_by_id(user_id)
         if user:

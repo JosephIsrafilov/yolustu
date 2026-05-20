@@ -7,6 +7,7 @@ export interface AdminStats {
   activeTrips: number;
   totalBookings: number;
   pendingBookings: number;
+  pendingVerifications: number;
 }
 
 export interface AdminService {
@@ -17,4 +18,7 @@ export interface AdminService {
   getTrips(): Promise<Trip[]>;
   deleteTrip(tripId: string): Promise<void>;
   getBookings(): Promise<Booking[]>;
+  getPendingVerifications(): Promise<User[]>;
+  approveVerification(userId: string): Promise<User>;
+  rejectVerification(userId: string): Promise<User>;
 }

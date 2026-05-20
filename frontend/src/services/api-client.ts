@@ -48,10 +48,14 @@ async function parseResponseBody(response: Response): Promise<unknown> {
 
 function extractErrorMessage(responseBody: unknown, status: number): string {
   if (typeof responseBody === 'object' && responseBody !== null) {
-    const body = responseBody as { message?: unknown; detail?: unknown; error?: unknown };
+    const body = responseBody as {
+      message?: unknown;
+      detail?: unknown;
+      error?: { message?: string };
+    };
     if (typeof body.message === 'string') return body.message;
     if (typeof body.detail === 'string') return body.detail;
-    if (typeof body.error === 'string') return body.error;
+    if (body.error && typeof body.error.message === 'string') return body.error.message;
   }
 
   if (typeof responseBody === 'string' && responseBody.trim()) {
@@ -63,6 +67,8 @@ function extractErrorMessage(responseBody: unknown, status: number): string {
 
 class ApiClient {
   private readonly baseUrl: string;
+  private isRefreshing = false;
+  private refreshSubscribers: ((token: string) => void)[] = [];
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
@@ -88,6 +94,11 @@ class ApiClient {
       });
 
       const responseBody = await parseResponseBody(response);
+
+      if (response.status === 401 && typeof window !== 'undefined' && !path.includes('/auth/refresh')) {
+        return this.handleUnauthorized<T>(method, path, body);
+      }
+
       if (!response.ok) {
         const message = extractErrorMessage(responseBody, response.status);
         throw new ApiError({
@@ -101,6 +112,51 @@ class ApiClient {
     } catch (error) {
       throw toApiError(error);
     }
+  }
+
+  private async handleUnauthorized<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) throw new Error('No refresh token');
+
+        const { access_token, refresh_token } = await this.post<{
+          access_token: string;
+          refresh_token: string;
+        }>('/auth/refresh', { refresh_token: refreshToken });
+
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+
+        this.onTokenRefreshed(access_token);
+        this.isRefreshing = false;
+        return this.request<T>(method, path, body);
+      } catch (error) {
+        this.isRefreshing = false;
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        throw error;
+      }
+    }
+
+    return new Promise((resolve) => {
+      this.subscribeTokenRefresh((token) => {
+        resolve(this.request<T>(method, path, body));
+      });
+    });
+  }
+
+  private subscribeTokenRefresh(cb: (token: string) => void) {
+    this.refreshSubscribers.push(cb);
+  }
+
+  private onTokenRefreshed(token: string) {
+    this.refreshSubscribers.forEach((cb) => cb(token));
+    this.refreshSubscribers = [];
   }
 
   get<T>(path: string): Promise<T> {

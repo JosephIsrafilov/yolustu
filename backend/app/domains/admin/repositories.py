@@ -18,4 +18,8 @@ class AdminRepository:
             "activeTrips": self.db.query(func.count(Ride.id)).filter(Ride.status == "active").scalar() or 0,
             "totalBookings": self.db.query(func.count(Booking.id)).scalar() or 0,
             "pendingBookings": self.db.query(func.count(Booking.id)).filter(Booking.status == "pending").scalar() or 0,
+            "pendingVerifications": self.db.query(func.count(User.id)).filter(User.verification_status == "pending").scalar() or 0,
         }
+
+    def list_pending_verifications(self) -> list[User]:
+        return self.db.query(User).filter(User.verification_status == "pending").all()

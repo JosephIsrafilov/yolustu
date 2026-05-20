@@ -42,4 +42,19 @@ export const apiAdminService: AdminService = {
     const bookings = await apiClient.get<ApiBooking[]>('/admin/bookings');
     return bookings.map(mapApiBookingToBooking);
   },
+  
+  async getPendingVerifications() {
+    const users = await apiClient.get<ApiUser[]>('/admin/verifications');
+    return users.map(mapApiUserToUser);
+  },
+
+  async approveVerification(userId) {
+    const user = await apiClient.patch<ApiUser>(`/admin/verifications/${userId}/approve`);
+    return mapApiUserToUser(user);
+  },
+
+  async rejectVerification(userId) {
+    const user = await apiClient.patch<ApiUser>(`/admin/verifications/${userId}/reject`);
+    return mapApiUserToUser(user);
+  },
 };

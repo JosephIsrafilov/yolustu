@@ -32,4 +32,5 @@ export interface AuthService {
   logout(): Promise<void>;
   getCurrentUser(): Promise<User | null>;
   updateProfile(input: UpdateProfileInput): Promise<User>;
+  submitVerification(file: File): Promise<User>;
 }

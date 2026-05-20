@@ -15,7 +15,7 @@ TEST_PASSWORD = "testpassword123"
 
 def test_register_user():
     response = client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={
             "phone": TEST_PHONE,
             "first_name": "Test",
@@ -31,7 +31,7 @@ def test_register_user():
 
 def test_login_unverified_user():
     response = client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={
             "phone": TEST_PHONE,
             "password": TEST_PASSWORD
@@ -39,10 +39,10 @@ def test_login_unverified_user():
     )
     
     assert response.status_code == 403
-    assert "not verified" in response.json()["detail"]
+    assert "not verified" in response.json()["error"]["message"]
 
 def test_request_otp():
-    response = client.post(f"/api/auth/request-otp?phone={TEST_PHONE}")
+    response = client.post(f"/api/v1/auth/request-otp?phone={TEST_PHONE}")
     assert response.status_code == 200
     assert response.json()["message"] == "OTP sent successfully"
 
@@ -50,6 +50,6 @@ def test_request_otp():
 
 
 def test_verify_otp_invalid():
-    response = client.post(f"/api/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
+    response = client.post(f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
     assert response.status_code == 400
-    assert "Invalid or expired OTP" in response.json()["detail"]
+    assert "Invalid or expired OTP" in response.json()["error"]["message"]
