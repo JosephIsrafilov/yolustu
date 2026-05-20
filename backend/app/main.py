@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import app.domains.models
+from app.core.config import UPLOADS_DIR
 from app.core.logging_config import setup_logging
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
@@ -22,7 +23,8 @@ setup_logging()
 app = FastAPI(title="Yolustu API")
 
 # Mount uploads directory
-app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 origins = [
     "http://localhost:3000",

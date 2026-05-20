@@ -1,5 +1,10 @@
+from pathlib import Path
+
 from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+UPLOADS_DIR = BACKEND_DIR / "uploads"
 
 
 class Settings(BaseSettings):

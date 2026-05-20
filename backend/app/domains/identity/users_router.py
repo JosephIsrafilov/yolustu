@@ -1,11 +1,12 @@
-import os
 import shutil
 import uuid
+from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import UPLOADS_DIR
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
 from app.domains.identity.schemas import UserResponse, UserUpdate
@@ -34,22 +35,21 @@ async def submit_verification(
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Ensure directory exists (redundant but safe)
-    os.makedirs("backend/uploads", exist_ok=True)
-    
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
     # Generate unique filename
-    file_ext = os.path.splitext(file.filename)[1]
+    file_ext = Path(file.filename or "").suffix
     filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join("backend/uploads", filename)
-    
+    file_path = UPLOADS_DIR / filename
+
     # Save file
-    with open(file_path, "wb") as buffer:
+    with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    
+
     # URL to be stored (relative to server root or full URL)
     # Assuming the app is served at the root
     document_url = f"/uploads/{filename}"
-    
+
     return IdentityService(db).submit_verification(current_user, document_url)
 
 
