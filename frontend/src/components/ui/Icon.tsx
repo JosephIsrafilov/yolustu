@@ -12,10 +12,10 @@ export type IconName =
   | 'search' | 'search-x' | 'menu' | 'x' | 'log-out' | 'arrow-left' | 'arrow-right'
   | 'chevron-right' | 'map-pin' | 'calendar' | 'calendar-check' | 'users' | 'user'
   | 'user-circle' | 'clock' | 'star' | 'car' | 'shield' | 'shield-check' | 'shield-off'
-  | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
+  | 'shield-x' | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
-  | 'dog' | 'repeat' | 'send';
+  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -38,6 +38,7 @@ const PATHS: Record<IconName, string> = {
   'shield': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   'shield-check': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
   'shield-off': 'M19.69 14a6.9 6.9 0 00.31-2V5l-8-3-3.16 1.18M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 005.62-4.38M1 1l22 22',
+  'shield-x': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9.5 9.5l5 5M14.5 9.5l-5 5',
   'banknote': 'M2 8.5h20M2 15.5h20M6 8.5V6a2 2 0 012-2h8a2 2 0 012 2v2.5M6 15.5V18a2 2 0 002 2h8a2 2 0 002-2v-2.5M12 14a2 2 0 100-4 2 2 0 000 4z',
   'leaf': 'M11 20A7 7 0 019.8 6.9C15.5 4.9 20 2 20 2s-2.9 4.5-4.9 10.1A7 7 0 0111 20zM2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12 13',
   'check': 'M20 6L9 17l-5-5',
@@ -61,6 +62,9 @@ const PATHS: Record<IconName, string> = {
   'dog': 'M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .137 1.217.17 1.727 1.5 3 .426.408 1.143.884 2 1.33V19a2 2 0 002 2h8a2 2 0 002-2v-4.67c.857-.447 1.574-.922 2-1.33 1.33-1.273 1.363-1.783 1.5-3 .113-.994-1.177-6.53-4-7C15.577 2.679 14 3.782 14 5.172V6M12 6v3M12 13h.01',
   'repeat': 'M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3',
   'send': 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
+  'refresh-cw': 'M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16',
+  'file-text': 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
+  'upload': 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

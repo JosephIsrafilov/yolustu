@@ -2,7 +2,7 @@
 
 import type { User, Trip, Booking, Review, AdminModerationItem } from '@/types';
 
-export const MOCK_USERS: User[] = [
+const MOCK_USERS_WITHOUT_VERIFICATION_STATUS: Array<Omit<User, 'verificationStatus'>> = [
   {
     id: 'u1',
     fullName: 'Elvin Məmmədov',
@@ -116,6 +116,11 @@ export const MOCK_USERS: User[] = [
     createdAt: '2025-01-01T00:00:00Z',
   },
 ];
+
+export const MOCK_USERS: User[] = MOCK_USERS_WITHOUT_VERIFICATION_STATUS.map((user) => ({
+  ...user,
+  verificationStatus: 'none',
+}));
 
 export const MOCK_TRIPS: Trip[] = [
   {

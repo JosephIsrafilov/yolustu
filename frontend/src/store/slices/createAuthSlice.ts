@@ -144,7 +144,7 @@ export const createAuthSlice: StateCreator<
 
   updateProfile: async (data) => {
     try {
-      const updated = await authService.updateProfile(data as any);
+      const updated = await authService.updateProfile(data);
       set((s) => ({
         currentUser: updated,
         users: s.users.map((u) => (u.id === updated.id ? updated : u)),

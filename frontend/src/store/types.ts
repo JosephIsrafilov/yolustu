@@ -1,4 +1,5 @@
 import type { User, Trip, Booking, Review, TripSearchFilters, CreateTripData } from '@/types';
+import type { UpdateProfileInput } from '@/services/contracts/auth-service';
 
 export interface AuthSlice {
   currentUser: User | null;
@@ -18,7 +19,7 @@ export interface AuthSlice {
   clearError: () => void;
   initAuth: () => Promise<void>;
 
-  updateProfile: (data: Partial<User>) => Promise<void>;
+  updateProfile: (data: UpdateProfileInput) => Promise<void>;
 
   blockUser: (userId: string) => Promise<void>;
   unblockUser: (userId: string) => Promise<void>;

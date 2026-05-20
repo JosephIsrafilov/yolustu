@@ -59,6 +59,7 @@ export const mockAuthService: AuthService = {
       rating: 0,
       totalTrips: 0,
       isBlocked: false,
+      verificationStatus: 'none',
       createdAt: new Date().toISOString(),
     };
     useAppStore.setState((current) => ({
@@ -102,6 +103,22 @@ export const mockAuthService: AuthService = {
     useAppStore.setState((state) => ({
       currentUser: updatedUser,
       users: state.users.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+    }));
+    return updatedUser;
+  },
+
+  async submitVerification(file: File) {
+    const currentUser = requireCurrentUser();
+    const updatedUser: User = {
+      ...currentUser,
+      verificationStatus: 'pending',
+      documentUrl: URL.createObjectURL(file),
+    };
+
+    useAppStore.setState((state) => ({
+      currentUser: updatedUser,
+      users: state.users.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+      pendingVerifications: [updatedUser, ...state.pendingVerifications.filter((user) => user.id !== updatedUser.id)],
     }));
     return updatedUser;
   },

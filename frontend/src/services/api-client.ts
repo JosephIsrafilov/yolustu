@@ -144,7 +144,7 @@ class ApiClient {
     }
 
     return new Promise((resolve) => {
-      this.subscribeTokenRefresh((token) => {
+      this.subscribeTokenRefresh(() => {
         resolve(this.request<T>(method, path, body));
       });
     });

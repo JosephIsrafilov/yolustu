@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Card from '@/components/ui/Card';
@@ -54,7 +55,13 @@ export default function AdminVerificationsPage() {
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.fullName} className="h-12 w-12 rounded-full object-cover" />
+                    <Image
+                      src={user.avatarUrl}
+                      alt={user.fullName}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600">
                       <Icon name="user" size={24} />

@@ -12,7 +12,7 @@ import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
-import Icon from '@/components/ui/Icon';
+import Icon, { type IconName } from '@/components/ui/Icon';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -109,7 +109,7 @@ function DriverVerificationSection() {
     pending: { label: 'Gözləyir', color: 'bg-warn-50 text-warn-600', icon: 'clock' },
     approved: { label: 'Təsdiqlənib', color: 'bg-success-50 text-success-600', icon: 'shield-check' },
     rejected: { label: 'Rədd edilib', color: 'bg-danger-50 text-danger-600', icon: 'shield-x' },
-  };
+  } satisfies Record<string, { label: string; color: string; icon: IconName }>;
 
   const currentStatus = statusMap[currentUser.verificationStatus || 'none'];
 
@@ -118,7 +118,7 @@ function DriverVerificationSection() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-text">Sürücü Təsdiqləməsi</h3>
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${currentStatus.color}`}>
-          <Icon name={currentStatus.icon as any} size={14} />
+          <Icon name={currentStatus.icon} size={14} />
           {currentStatus.label}
         </div>
       </div>
