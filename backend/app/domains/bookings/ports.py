@@ -11,3 +11,6 @@ class BookingParticipantPort:
 
     def is_accepted_passenger(self, ride_id: UUID, user_id: UUID) -> bool:
         return self.bookings.has_accepted_booking(ride_id, user_id)
+
+    def get_accepted_passenger_ids(self, ride_id: UUID) -> list[UUID]:
+        return self.bookings.get_accepted_passenger_ids(ride_id)

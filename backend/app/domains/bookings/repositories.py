@@ -44,6 +44,10 @@ class BookingRepository:
             is not None
         )
 
+    def get_accepted_passenger_ids(self, ride_id: UUID) -> list[UUID]:
+        bookings = self.db.query(Booking).filter(Booking.ride_id == ride_id, Booking.status == "accepted").all()
+        return [b.passenger_id for b in bookings]
+
     def list_for_passenger(self, passenger_id: UUID) -> list[Booking]:
         return self.db.query(Booking).filter(Booking.passenger_id == passenger_id).all()
 

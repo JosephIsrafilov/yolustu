@@ -85,6 +85,10 @@ export const mockAuthService: AuthService = {
     return;
   },
 
+  async registerDeviceToken() {
+    return;
+  },
+
   async getCurrentUser() {
     return useAppStore.getState().currentUser;
   },

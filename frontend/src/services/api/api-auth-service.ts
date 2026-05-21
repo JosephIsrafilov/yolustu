@@ -10,8 +10,9 @@ import { mapApiUserToUser, type ApiUser } from './mappers';
 
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
-    const res = await apiClient.post<{ access_token: string }>('/auth/login', input);
+    const res = await apiClient.post<{ access_token: string; refresh_token: string }>('/auth/login', input);
     localStorage.setItem('token', res.access_token);
+    localStorage.setItem('refresh_token', res.refresh_token);
     const user = await apiClient.get<ApiUser | null>('/users/me');
     if (!user) throw new Error('User not found after login');
     return mapApiUserToUser(user);
@@ -43,6 +44,7 @@ export const apiAuthService: AuthService = {
 
   async logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
   },
 
   async getCurrentUser() {
@@ -69,5 +71,9 @@ export const apiAuthService: AuthService = {
     formData.append('file', file);
     const user = await apiClient.post<ApiUser>('/users/me/verify', formData);
     return mapApiUserToUser(user);
+  },
+
+  async registerDeviceToken(token: string) {
+    await apiClient.post('/users/me/device-token', { token });
   },
 };

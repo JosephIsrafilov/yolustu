@@ -98,6 +98,9 @@ class IdentityService:
         user = self.get_current_user_model(current_user)
         return self.users.update_verification_status(user, "pending", document_url)
 
+    def register_device_token(self, current_user: CurrentUser, token: str):
+        self.users.add_device_token(current_user.id, token)
+
     @staticmethod
     def _send_otp_simulation(phone: str, redis_client):
         otp = str(random.randint(100000, 999999))

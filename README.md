@@ -99,16 +99,27 @@ The frontend application is available at `http://localhost:3000`.
 
 ## Demo Users
 
-**Important Note for Developers:** Previously, the Sprint 0 prototype used hardcoded mock users in the frontend (`elvin@example.com`, `aysel@example.com`, etc.). Now that the real PostgreSQL database is connected, **the database is initially empty**. 
+To populate your local PostgreSQL database with demo data (users, vehicles, trips), you can run the seed script:
+```bash
+cd backend
+python seed.py
+```
+This will create standard test users with the password `password123` and `is_verified=True`:
+- Elvin (Driver): `+994501234567`
+- Murad (Driver): `+994703456789`
+- Kamran (Driver): `+994775678901`
+- Aysel (Passenger): `+994552345678`
+- Sanan (Admin): `+994708901234`
 
-You will need to register new users through the application interface or API to test the flows. The old mock users will no longer work until you create them in your local database.
+## API Integration & Stripe
 
-## API Integration Status
-
-We are currently in Sprint 1, replacing mock-only behavior with server-backed functionality:
-- Backend project structure is set up.
-- Database schema and migrations are ready.
-- **Pending:** Replacing frontend mock Zustand stores with real API calls using Axios/Fetch to the local backend.
+The frontend is now successfully connected to the FastAPI backend! We have completed:
+- Core backend architecture (auth, rides, bookings, user profiles)
+- Frontend real-API integration (Zustand persists tokens correctly)
+- **Stripe Payments**: Real Stripe Checkout integration. To test payments and webhooks locally, ensure you have the Stripe CLI installed and run:
+  ```bash
+  stripe listen --forward-to localhost:8000/api/v1/payments/webhook
+  ```
 
 ## License
 

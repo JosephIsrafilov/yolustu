@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.domains.identity.models import User
+from app.domains.identity.models import DeviceToken, User
 from app.domains.identity.schemas import UserCreate, UserUpdate
 
 
@@ -75,3 +75,15 @@ class UserRepository:
 
     def list_all(self) -> list[User]:
         return self.db.query(User).order_by(User.created_at.desc()).all()
+
+    def add_device_token(self, user_id: UUID, token: str):
+        existing_token = self.db.query(DeviceToken).filter(DeviceToken.token == token).first()
+        if existing_token:
+            if existing_token.user_id != user_id:
+                existing_token.user_id = user_id
+                self.db.commit()
+            return
+        
+        device_token = DeviceToken(user_id=user_id, token=token)
+        self.db.add(device_token)
+        self.db.commit()

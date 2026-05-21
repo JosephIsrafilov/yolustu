@@ -63,6 +63,15 @@ export default function BookingsPage() {
                   driver={driver}
                   onCancel={() => cancelBooking(booking.id)}
                   onReview={() => router.push(`${ROUTES.createReview}?tripId=${booking.tripId}&targetUserId=${trip?.driverId}`)}
+                  onPay={async () => {
+                    try {
+                      const res = await import('@/services').then(m => m.paymentsService.createPaymentSession(booking.id));
+                      window.location.href = res.checkout_url;
+                    } catch (error) {
+                      console.error('Payment start failed', error);
+                      alert('Ödənişə başlamaq mümkün olmadı.');
+                    }
+                  }}
                 />
               );
             })}

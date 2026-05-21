@@ -14,6 +14,7 @@ interface BookingCardProps {
   driver?: User;
   onCancel?: () => void;
   onReview?: () => void;
+  onPay?: () => void;
 }
 
 export default function BookingCard({
@@ -22,6 +23,7 @@ export default function BookingCard({
   driver,
   onCancel,
   onReview,
+  onPay,
 }: BookingCardProps) {
   if (!trip) return null;
 
@@ -67,15 +69,21 @@ export default function BookingCard({
       )}
 
       {}
-      {(canCancel || canReview) && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+      {(canCancel || canReview || (booking.status === 'accepted' && onPay)) && (
+        <div className="flex gap-2 mt-3 pt-3 border-t border-border flex-wrap">
+          {booking.status === 'accepted' && onPay && (
+            <Button variant="primary" size="sm" onClick={onPay} className="flex-1">
+              <Icon name="credit-card" size={14} className="mr-1" />
+              Ödəniş et
+            </Button>
+          )}
           {canCancel && onCancel && (
-            <Button variant="outline" size="sm" onClick={onCancel} fullWidth>
+            <Button variant="outline" size="sm" onClick={onCancel} className="flex-1">
               Ləğv et
             </Button>
           )}
           {canReview && onReview && (
-            <Button variant="secondary" size="sm" onClick={onReview} fullWidth>
+            <Button variant="secondary" size="sm" onClick={onReview} className="flex-1">
               <Icon name="star" size={14} />
               Rəy yaz
             </Button>

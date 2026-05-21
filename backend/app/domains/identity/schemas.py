@@ -57,3 +57,7 @@ class TokenData(BaseModel):
 class LoginInput(BaseModel):
     phone: str
     password: str
+
+
+class DeviceTokenInput(BaseModel):
+    token: str

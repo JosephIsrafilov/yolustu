@@ -10,6 +10,7 @@ from app.domains.engagement.schemas import MessageCreate, ReviewCreate
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.ports import UserLookupPort
 from app.domains.trips.ports import RideLookupPort
+from app.core.notifications import NotificationService
 
 
 class EngagementService:
@@ -19,6 +20,7 @@ class EngagementService:
         self.rides = RideLookupPort(db)
         self.bookings = BookingParticipantPort(db)
         self.users = UserLookupPort(db)
+        self.notifications = NotificationService(db)
 
     def create_review(self, review_in: ReviewCreate, current_user: CurrentUser) -> Review:
         ride = self.rides.get_ride(review_in.ride_id)
@@ -66,6 +68,18 @@ class EngagementService:
             "sender_name": f"{current_user.first_name} {current_user.last_name}",
         }
         await manager.broadcast_to_ride(message_data, message_in.ride_id)
+
+        participants = self.bookings.get_accepted_passenger_ids(ride.id)
+        participants.append(ride.driver_id)
+        for participant_id in participants:
+            if participant_id != current_user.id:
+                self.notifications.send_push_notification(
+                    user_id=participant_id,
+                    title=f"New Message from {current_user.first_name}",
+                    body=message.content,
+                    data={"ride_id": str(ride.id), "type": "new_message"}
+                )
+
         return message
 
     def get_ride_messages(self, ride_id: UUID, current_user: CurrentUser) -> list[Message]:

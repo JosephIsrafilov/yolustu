@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import UPLOADS_DIR
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.identity.schemas import UserResponse, UserUpdate
+from app.domains.identity.schemas import DeviceTokenInput, UserResponse, UserUpdate
 from app.domains.identity.services import IdentityService
 
 router = APIRouter()
@@ -51,6 +51,16 @@ async def submit_verification(
     document_url = f"/uploads/{filename}"
 
     return IdentityService(db).submit_verification(current_user, document_url)
+
+
+@router.post("/me/device-token")
+def register_device_token(
+    token_in: DeviceTokenInput,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    IdentityService(db).register_device_token(current_user, token_in.token)
+    return {"detail": "Device token registered successfully"}
 
 
 @router.get("/{user_id}", response_model=UserResponse)

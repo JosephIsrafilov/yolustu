@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 
 def seed_db():
     db = SessionLocal()
@@ -84,6 +87,14 @@ def seed_db():
                 db.add(user)
                 db.flush()
                 print(f"User {u_data['phone']} created.")
+            else:
+                user.first_name = u_data["first_name"]
+                user.last_name = u_data["last_name"]
+                user.hashed_password = default_password_hash
+                user.is_verified = True
+                user.role = u_data["role"]
+                user.rating = u_data["rating"]
+                print(f"User {u_data['phone']} updated.")
             user_map[u_data["id"]] = user
         
         vehicles_data = [
@@ -136,6 +147,13 @@ def seed_db():
                 db.add(vehicle)
                 db.flush()
                 print(f"Vehicle {v_data['plate_number']} created.")
+            else:
+                vehicle.user_id = owner.id
+                vehicle.brand = v_data["brand"]
+                vehicle.model = v_data["model"]
+                vehicle.year = v_data["year"]
+                vehicle.color = v_data["color"]
+                print(f"Vehicle {v_data['plate_number']} updated.")
             vehicle_map[v_data["id"]] = vehicle
         
         rides_data = [
@@ -178,22 +196,42 @@ def seed_db():
             vehicle = vehicle_map[r_data["vehicle_id"]]
             
             departure = datetime.now() + timedelta(days=2)
-            ride = Ride(
-                id=uuid.uuid4(),
-                driver_id=driver.id,
-                vehicle_id=vehicle.id,
-                origin_location=r_data["origin_coords"],
-                origin_city=r_data["origin"],
-                destination_location=r_data["dest_coords"],
-                destination_city=r_data["dest"],
-                departure_time=departure,
-                total_seats=r_data["seats"],
-                available_seats=r_data["seats"],
-                price_per_seat=r_data["price"],
-                status="active",
+            ride = (
+                db.query(Ride)
+                .filter(
+                    Ride.driver_id == driver.id,
+                    Ride.vehicle_id == vehicle.id,
+                    Ride.origin_city == r_data["origin"],
+                    Ride.destination_city == r_data["dest"],
+                    Ride.status == "active",
+                )
+                .first()
             )
-            db.add(ride)
-            print(f"Ride {r_data['origin']} -> {r_data['dest']} created.")
+            if not ride:
+                ride = Ride(
+                    id=uuid.uuid4(),
+                    driver_id=driver.id,
+                    vehicle_id=vehicle.id,
+                    origin_location=r_data["origin_coords"],
+                    origin_city=r_data["origin"],
+                    destination_location=r_data["dest_coords"],
+                    destination_city=r_data["dest"],
+                    departure_time=departure,
+                    total_seats=r_data["seats"],
+                    available_seats=r_data["seats"],
+                    price_per_seat=r_data["price"],
+                    status="active",
+                )
+                db.add(ride)
+                print(f"Ride {r_data['origin']} -> {r_data['dest']} created.")
+            else:
+                ride.origin_location = r_data["origin_coords"]
+                ride.destination_location = r_data["dest_coords"]
+                ride.departure_time = departure
+                ride.total_seats = r_data["seats"]
+                ride.available_seats = max(0, min(ride.available_seats, r_data["seats"]))
+                ride.price_per_seat = r_data["price"]
+                print(f"Ride {r_data['origin']} -> {r_data['dest']} updated.")
         db.commit()
         print("Seeding completed successfully!")
     except Exception as e:

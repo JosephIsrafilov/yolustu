@@ -16,6 +16,7 @@ from app.domains.identity.auth_router import router as auth_router
 from app.domains.identity.users_router import router as users_router
 from app.domains.trips.rides_router import router as rides_router
 from app.domains.trips.vehicles_router import router as vehicles_router
+from app.domains.payments.router import router as payments_router
 
 # Setup logging
 setup_logging()
@@ -87,6 +88,7 @@ v1_router.include_router(vehicles_router, prefix="/vehicles", tags=["vehicles"])
 v1_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])
 v1_router.include_router(messages_router, prefix="/messages", tags=["messages"])
 v1_router.include_router(admin_router, prefix="/admin", tags=["admin"])
+v1_router.include_router(payments_router, prefix="/payments", tags=["payments"])
 
 app.include_router(v1_router)
 

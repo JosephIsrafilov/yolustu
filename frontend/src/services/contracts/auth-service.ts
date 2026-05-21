@@ -33,4 +33,5 @@ export interface AuthService {
   getCurrentUser(): Promise<User | null>;
   updateProfile(input: UpdateProfileInput): Promise<User>;
   submitVerification(file: File): Promise<User>;
+  registerDeviceToken(token: string): Promise<void>;
 }
