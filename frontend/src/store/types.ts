@@ -1,5 +1,6 @@
 import type { User, Trip, Booking, Review, TripSearchFilters, CreateTripData } from '@/types';
 import type { UpdateProfileInput } from '@/services/contracts/auth-service';
+import type { Language } from '@/lib/i18n';
 
 export interface AuthSlice {
   currentUser: User | null;
@@ -61,4 +62,9 @@ export interface ReviewSlice {
   createReview: (data: { tripId: string; targetUserId: string; rating: number; comment: string }) => Promise<boolean>;
 }
 
-export type AppState = AuthSlice & TripSlice & BookingSlice & ReviewSlice;
+export interface UiSlice {
+  language: Language;
+  setLanguage: (language: Language) => void;
+}
+
+export type AppState = AuthSlice & TripSlice & BookingSlice & ReviewSlice & UiSlice;

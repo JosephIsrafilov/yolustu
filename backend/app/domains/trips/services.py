@@ -9,7 +9,7 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.repositories import RideRepository, VehicleRepository
-from app.domains.trips.schemas import RideCreate, RideSearch, VehicleCreate
+from app.domains.trips.schemas import RideCreate, RideResponse, RideSearch, VehicleCreate, ride_to_response
 
 
 class TripsService:
@@ -18,7 +18,7 @@ class TripsService:
         self.vehicles = VehicleRepository(db)
         self.users = UserRepository(db)
 
-    def create_ride(self, ride_in: RideCreate, current_user: CurrentUser) -> Ride:
+    def create_ride(self, ride_in: RideCreate, current_user: CurrentUser) -> RideResponse:
         if ride_in.total_seats < 1 or ride_in.total_seats > 4:
             raise HTTPException(status_code=400, detail="total_seats must be between 1 and 4")
         if ride_in.available_seats < 0 or ride_in.available_seats > ride_in.total_seats:
@@ -35,7 +35,7 @@ class TripsService:
             if not vehicle:
                 vehicle = self.vehicles.create_default(current_user.id, ride_in.car_model or "Car")
 
-        return self.rides.create(current_user.id, vehicle.id, ride_in)
+        return ride_to_response(self.rides.create(current_user.id, vehicle.id, ride_in))
 
     def search_rides(
         self,
@@ -48,8 +48,8 @@ class TripsService:
         departure_date: Optional[date] = None,
         min_seats: int = 1,
         radius_meters: float = 10000,
-    ) -> list[Ride]:
-        return self.rides.search(
+    ) -> list[RideResponse]:
+        rides = self.rides.search(
             RideSearch(
                 origin_lat=origin_lat,
                 origin_lon=origin_lon,
@@ -62,30 +62,34 @@ class TripsService:
                 radius_meters=radius_meters,
             )
         )
+        return [ride_to_response(ride) for ride in rides]
 
-    def get_my_rides(self, current_user: CurrentUser) -> list[Ride]:
-        return self.rides.list_for_driver(current_user.id)
+    def get_my_rides(self, current_user: CurrentUser) -> list[RideResponse]:
+        return [ride_to_response(ride) for ride in self.rides.list_for_driver(current_user.id)]
 
-    def get_ride(self, ride_id: UUID) -> Ride:
+    def get_ride_model(self, ride_id: UUID) -> Ride:
         ride = self.rides.get(ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         return ride
 
-    def cancel_ride(self, ride_id: UUID, current_user: CurrentUser) -> Ride:
-        ride = self.get_ride(ride_id)
+    def get_ride(self, ride_id: UUID) -> RideResponse:
+        return ride_to_response(self.get_ride_model(ride_id))
+
+    def cancel_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
+        ride = self.get_ride_model(ride_id)
         if ride.driver_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized")
         ride.status = "cancelled"
-        return self.rides.save(ride)
+        return ride_to_response(self.rides.save(ride))
 
-    def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> Ride:
-        ride = self.get_ride(ride_id)
+    def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
+        ride = self.get_ride_model(ride_id)
         if ride.driver_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized")
         ride.status = "completed"
         self.users.increment_total_rides(current_user.id)
-        return self.rides.save(ride)
+        return ride_to_response(self.rides.save(ride))
 
     def create_vehicle(self, vehicle_in: VehicleCreate, current_user: CurrentUser) -> Vehicle:
         return self.vehicles.create(current_user.id, vehicle_in)

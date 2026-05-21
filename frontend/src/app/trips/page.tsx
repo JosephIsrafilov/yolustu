@@ -11,11 +11,13 @@ import { AZ_CITIES } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer, RideMarkers } from '@/components/ui/Map';
+import { I18N } from '@/lib/i18n';
 
 function TripsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { trips, users, fetchTrips } = useAppStore();
+  const { trips, users, fetchTrips, language } = useAppStore();
+  const copy = I18N[language];
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const [filters, setFilters] = useState<TripSearchFilters>({
@@ -31,16 +33,16 @@ function TripsContent() {
 
   const filteredTrips = trips; 
 
-  const from = filters.departureCity || 'Bütün';
-  const to = filters.arrivalCity || 'Bütün';
+  const from = filters.departureCity || copy.common.all;
+  const to = filters.arrivalCity || copy.common.all;
   const updateMinSeats = (nextSeats: number) => {
     setFilters((p) => ({ ...p, minSeats: nextSeats > 1 ? nextSeats : undefined }));
   };
   const activeFilters = [
-    filters.departureCity && `Haradan: ${filters.departureCity}`,
-    filters.arrivalCity && `Haraya: ${filters.arrivalCity}`,
-    filters.date && `Tarix: ${filters.date}`,
-    filters.minSeats && `Sərnişin: ${filters.minSeats}+`,
+    filters.departureCity && `${copy.tripsPage.filterFrom}: ${filters.departureCity}`,
+    filters.arrivalCity && `${copy.tripsPage.filterTo}: ${filters.arrivalCity}`,
+    filters.date && `${copy.tripsPage.filterDate}: ${filters.date}`,
+    filters.minSeats && `${copy.common.passenger}: ${filters.minSeats}+`,
   ].filter(Boolean);
 
   return (
@@ -50,49 +52,49 @@ function TripsContent() {
         <aside className="order-2 w-full md:order-1 md:w-[280px] shrink-0">
           <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
             <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
-              <h2 className="text-[18px] font-semibold text-[#002f37]">Filtrlər</h2>
-              <button onClick={() => setFilters({})} className="text-[#054752] text-[12px] font-bold hover:underline">Sıfırla</button>
+              <h2 className="text-[18px] font-semibold text-[#002f37]">{copy.tripsPage.filters}</h2>
+              <button onClick={() => setFilters({})} className="text-[#054752] text-[12px] font-bold hover:underline">{copy.tripsPage.reset}</button>
             </div>
 
             {}
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haradan</h3>
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.from}</h3>
               <div className="relative">
                 <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
                 <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
                   className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                  <option value="">Bütün şəhərlər</option>
+                  <option value="">{copy.common.allCities}</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Haraya</h3>
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.to}</h3>
               <div className="relative">
                 <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
                 <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
                   className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                  <option value="">Bütün şəhərlər</option>
+                  <option value="">{copy.common.allCities}</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Tarix</h3>
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.date}</h3>
               <input type="date" value={filters.date || ''} onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
                 className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">Sərnişin sayı</h3>
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.tripsPage.passengerCount}</h3>
               <div className="flex items-center justify-between rounded-xl border border-[#c0c8ca] bg-white px-2 py-1.5">
                 <button
                   type="button"
                   onClick={() => updateMinSeats(Math.max(1, (filters.minSeats || 1) - 1))}
                   className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
-                  aria-label="Sərnişin sayını azalt"
+                  aria-label={`${copy.common.passenger} -`}
                 >
                   −
                 </button>
@@ -101,7 +103,7 @@ function TripsContent() {
                   type="button"
                   onClick={() => updateMinSeats(Math.min(4, (filters.minSeats || 1) + 1))}
                   className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
-                  aria-label="Sərnişin sayını artır"
+                  aria-label={`${copy.common.passenger} +`}
                 >
                   +
                 </button>
@@ -109,7 +111,7 @@ function TripsContent() {
             </div>
 
             <div className="rounded-xl bg-[#edfcff] p-3 text-[13px] leading-5 text-[#40484a]">
-              Daha detallı vaxt və xüsusiyyət filtrləri Sprint 1 üçün saxlanılıb. Bu prototipdə yalnız şəhər, tarix və yer sayı işləyir.
+              {copy.tripsPage.helper}
             </div>
           </div>
         </aside>
@@ -126,7 +128,7 @@ function TripsContent() {
               </div>
               <div className="text-[14px] text-[#40484a] flex items-center gap-2">
                 <Icon name="calendar" size={14} />
-                <span>{filters.date || 'Bütün tarixlər'}</span>
+                <span>{filters.date || copy.common.allDates}</span>
               </div>
             </div>
             <div className="mt-2 sm:mt-0 flex flex-col items-end gap-2">
@@ -138,7 +140,7 @@ function TripsContent() {
                   }`}
                 >
                   <Icon name="list" size={14} />
-                  Siyahı
+                  {copy.tripsPage.list}
                 </button>
                 <button 
                   onClick={() => setViewMode('map')}
@@ -147,11 +149,11 @@ function TripsContent() {
                   }`}
                 >
                   <Icon name="map" size={14} />
-                  Xəritə
+                  {copy.tripsPage.map}
                 </button>
               </div>
               <span className="text-[14px] text-[#40484a] font-medium">
-                {filteredTrips.length} nəticə tapıldı
+                {filteredTrips.length} {copy.tripsPage.resultsFound}
               </span>
             </div>
           </div>
@@ -201,7 +203,7 @@ function TripsContent() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-[15px] font-bold text-[#002f37]">{driver?.fullName.split(' ')[0] || 'Naməlum'}</h4>
+                          <h4 className="text-[15px] font-bold text-[#002f37]">{driver?.fullName.split(' ')[0] || copy.common.unknown}</h4>
                           <div className="flex items-center gap-1 text-[13px] text-[#40484a]">
                             <Icon name="star" size={13} className="text-[#F5A623]" fill="currentColor" />
                             <span className="font-bold">{driver?.rating.toFixed(1)}</span>
@@ -239,9 +241,9 @@ function TripsContent() {
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
                         <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
-                          <span>{isFull ? 'Yer yoxdur' : `${trip.seatsAvailable} yer qalıb`}</span>
+                          <span>{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
                         </div>
-                        {!isFull && <span className="mt-2 text-[12px] font-bold text-[#054752]">Ətraflı bax</span>}
+                        {!isFull && <span className="mt-2 text-[12px] font-bold text-[#054752]">{copy.common.details}</span>}
                       </div>
                     </div>
                   </article>
@@ -249,7 +251,7 @@ function TripsContent() {
               })}
             </div>
           ) : (
-            <EmptyState title="Gediş tapılmadı" description="Filtrləri dəyişdirin və ya başqa tarix seçin" />
+            <EmptyState title={copy.tripsPage.emptyTitle} description={copy.tripsPage.emptyDescription} />
           )}
         </section>
       </div>

@@ -11,10 +11,12 @@ import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES, formatPrice } from '@/lib/utils';
 import { POPULAR_ROUTES } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
+import { I18N } from '@/lib/i18n';
 
 export default function SearchPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAppStore();
+  const { isAuthenticated, language } = useAppStore();
+  const copy = I18N[language];
   const [dep, setDep] = useState('');
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
@@ -53,18 +55,18 @@ export default function SearchPage() {
   }
 
   return (
-    <WebLayout title="Gediş axtar">
+    <WebLayout title={copy.searchPage.title}>
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <div className="mb-4">
-              <h2 className="text-lg font-bold text-text">Marşrut</h2>
-              <p className="text-xs text-text-muted">Haradan, haraya və tarixi seçin</p>
+              <h2 className="text-lg font-bold text-text">{copy.searchPage.route}</h2>
+              <p className="text-xs text-text-muted">{copy.searchPage.routeDesc}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <div className="relative lg:flex lg:flex-col lg:gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">Haradan</label>
+                  <label className="text-sm font-medium text-text-secondary">{copy.common.from}</label>
                   <div className="relative">
                     <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                     <select
@@ -72,7 +74,7 @@ export default function SearchPage() {
                       onChange={(e) => setDep(e.target.value)}
                       className="w-full appearance-none rounded-xl border border-border bg-white pl-10 pr-4 py-2.5 text-sm transition-all duration-200 ease-out focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                     >
-                      <option value="">Haradan seçin</option>
+                      <option value="">{copy.searchPage.selectFrom}</option>
                       {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -83,8 +85,8 @@ export default function SearchPage() {
                     type="button"
                     onClick={swapRoute}
                     className={`group flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-brand-600 shadow-sm transition-all duration-300 hover:border-brand-500 hover:bg-brand-50 hover:shadow-md active:scale-90 focus:outline-none focus:ring-2 focus:ring-brand-500 ${isSwapping ? 'rotate-180' : ''}`}
-                    aria-label="Marşrutu dəyiş"
-                    title="Marşrutu dəyiş"
+                    aria-label={copy.common.routeSwap}
+                    title={copy.common.routeSwap}
                   >
                     <Icon
                       name="repeat"
@@ -95,7 +97,7 @@ export default function SearchPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">Haraya</label>
+                  <label className="text-sm font-medium text-text-secondary">{copy.common.to}</label>
                   <div className="relative">
                     <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                     <select
@@ -103,21 +105,21 @@ export default function SearchPage() {
                       onChange={(e) => setArr(e.target.value)}
                       className="w-full appearance-none rounded-xl border border-border bg-white pl-10 pr-4 py-2.5 text-sm transition-all duration-200 ease-out focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                     >
-                      <option value="">Haraya seçin</option>
+                      <option value="">{copy.searchPage.selectTo}</option>
                       {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                 </div>
               </div>
-              <DatePicker value={date} onChange={setDate} label="Tarix" placeholder="Tarix seçin" />
+              <DatePicker value={date} onChange={setDate} label={copy.common.date} placeholder={copy.common.selectDate} />
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Sərnişin</label>
+                <label className="text-sm font-medium text-text-secondary">{copy.common.passenger}</label>
                 <div className="flex items-center justify-between rounded-xl border border-border bg-white px-2 py-1.5">
                   <button
                     type="button"
                     onClick={() => setPassengers((value) => Math.max(1, value - 1))}
                     className="h-8 w-8 rounded-lg bg-surface-muted text-sm font-bold text-text transition-colors hover:bg-surface-dim"
-                    aria-label="Sərnişin sayını azalt"
+                    aria-label={`${copy.common.passenger} -`}
                   >
                     −
                   </button>
@@ -126,14 +128,14 @@ export default function SearchPage() {
                     type="button"
                     onClick={() => setPassengers((value) => Math.min(4, value + 1))}
                     className="h-8 w-8 rounded-lg bg-surface-muted text-sm font-bold text-text transition-colors hover:bg-surface-dim"
-                    aria-label="Sərnişin sayını artır"
+                    aria-label={`${copy.common.passenger} +`}
                   >
                     +
                   </button>
                 </div>
               </div>
               <div className="sm:flex sm:items-end lg:block">
-                <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> Axtar</Button>
+                <Button fullWidth onClick={handleSearch}><Icon name="search" size={16} /> {copy.common.search}</Button>
               </div>
             </div>
           </Card>
@@ -145,12 +147,12 @@ export default function SearchPage() {
                 <Icon name="shield" size={24} />
               </div>
               <div>
-                <p className="text-base font-semibold text-text">Təhlükəsiz gedişlər</p>
-                <p className="text-sm text-text-muted">Bütün sürücülər reytinqə malikdir. Profillər yoxlanılır.</p>
+                <p className="text-base font-semibold text-text">{copy.searchPage.safeTitle}</p>
+                <p className="text-sm text-text-muted">{copy.searchPage.safeDesc}</p>
               </div>
             </div>
           </Card>
-          <h3 className="mb-3 text-lg font-bold text-text">Populyar marşrutlar</h3>
+          <h3 className="mb-3 text-lg font-bold text-text">{copy.searchPage.popularRoutes}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {POPULAR_ROUTES.map((r) => (
               <Card key={`${r.from}-${r.to}`} hoverable padding="md" onClick={() => openPopularRoute(r.from, r.to)}>
@@ -161,7 +163,7 @@ export default function SearchPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-text">{r.from} → {r.to}</p>
-                      <p className="text-xs text-text-muted">Uyğun gedişləri göstər</p>
+                      <p className="text-xs text-text-muted">{copy.searchPage.showMatching}</p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">

@@ -7,6 +7,7 @@ import { createAuthSlice } from './slices/createAuthSlice';
 import { createTripSlice } from './slices/createTripSlice';
 import { createBookingSlice } from './slices/createBookingSlice';
 import { createReviewSlice } from './slices/createReviewSlice';
+import { createUiSlice } from './slices/createUiSlice';
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -15,6 +16,7 @@ export const useAppStore = create<AppState>()(
       ...createTripSlice(...a),
       ...createBookingSlice(...a),
       ...createReviewSlice(...a),
+      ...createUiSlice(...a),
     }),
     {
       name: 'yolustu-storage',
@@ -23,6 +25,7 @@ export const useAppStore = create<AppState>()(
         currentUser: state.currentUser,
         isAuthenticated: state.isAuthenticated,
         activeRole: state.activeRole,
+        language: state.language,
       }),
     }
   )

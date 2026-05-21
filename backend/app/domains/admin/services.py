@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.domains.admin.repositories import AdminRepository
 from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.schemas import booking_to_response
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.trips.repositories import RideRepository
+from app.domains.trips.schemas import ride_to_response
 
 
 class AdminService:
@@ -39,7 +41,7 @@ class AdminService:
 
     def get_rides(self, current_user: CurrentUser):
         self.require_admin(current_user)
-        return self.rides.list_all()
+        return [ride_to_response(ride) for ride in self.rides.list_all()]
 
     def delete_ride(self, ride_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)
@@ -51,7 +53,7 @@ class AdminService:
 
     def get_bookings(self, current_user: CurrentUser):
         self.require_admin(current_user)
-        return self.bookings.list_all()
+        return [booking_to_response(booking) for booking in self.bookings.list_all()]
 
     def get_pending_verifications(self, current_user: CurrentUser):
         self.require_admin(current_user)

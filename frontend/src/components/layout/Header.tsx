@@ -7,18 +7,20 @@ import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
+import { I18N } from '@/lib/i18n';
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuthenticated, currentUser, logout } = useAppStore();
+  const { isAuthenticated, currentUser, logout, language } = useAppStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const copy = I18N[language];
 
   const navLinks = [
-    { label: 'Gediş axtar', href: ROUTES.search, match: '/search' },
-    { label: 'Gediş təklif et', href: ROUTES.createTrip, match: '/driver/create-trip' },
+    { label: copy.header.findRide, href: ROUTES.search, match: '/search' },
+    { label: copy.header.offerRide, href: ROUTES.createTrip, match: '/driver/create-trip' },
     ...(isAuthenticated ? [
-      { label: 'Gedişlər', href: ROUTES.trips, match: '/trips' },
-      { label: 'Sürücü paneli', href: ROUTES.driverDashboard, match: '/driver' },
+      { label: copy.header.trips, href: ROUTES.trips, match: '/trips' },
+      { label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' },
     ] : []),
   ];
 
@@ -62,7 +64,7 @@ export default function Header() {
                 href={ROUTES.bookings}
                 className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
               >
-                Rezervlər
+                {copy.header.bookings}
               </Link>
               {currentUser.role === 'admin' && (
                 <Link
@@ -103,13 +105,13 @@ export default function Header() {
                 href={ROUTES.login}
                 className="hidden rounded-lg px-4 py-2 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] md:block"
               >
-                Daxil ol
+                {copy.header.login}
               </Link>
               <Link
                 href={ROUTES.register}
                 className="rounded-xl bg-[#002f37] px-4 py-2.5 text-[12px] font-bold text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#054752] hover:shadow-md active:scale-[0.98]"
               >
-                Qeydiyyat
+                {copy.header.register}
               </Link>
             </>
           )}
