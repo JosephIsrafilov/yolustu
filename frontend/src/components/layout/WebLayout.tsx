@@ -4,6 +4,7 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Icon from '@/components/ui/Icon';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface WebLayoutProps {
   children: React.ReactNode;
@@ -14,8 +15,10 @@ interface WebLayoutProps {
 }
 
 export default function WebLayout({ children, title, narrow, showBack, hideFooter }: WebLayoutProps) {
+  const { activeToast, setActiveToast } = usePushNotifications();
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Header />
       <main className={`flex-grow w-full mx-auto px-6 py-8 ${narrow ? 'max-w-2xl' : 'max-w-[1140px]'}`}>
         {(title || showBack) && (
@@ -34,6 +37,28 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
         {children}
       </main>
       {!hideFooter && <Footer />}
+
+      {/* Toast Notification Container */}
+      {activeToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white rounded-xl border border-[#c0c8ca] shadow-lg p-4 max-w-sm flex gap-3 items-start relative overflow-hidden">
+            <div className="w-1.5 h-full bg-[#054752] absolute left-0 top-0"></div>
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#d5f3f9] flex items-center justify-center text-[#054752]">
+              <Icon name="bell" size={16} />
+            </div>
+            <div className="flex-1 pr-6">
+              <h4 className="text-[14px] font-semibold text-[#002f37] mb-0.5">{activeToast.title}</h4>
+              <p className="text-[13px] text-[#40484a] leading-tight">{activeToast.body}</p>
+            </div>
+            <button 
+              onClick={() => setActiveToast(null)}
+              className="absolute top-3 right-3 text-[#70787b] hover:text-[#002f37] transition-colors"
+            >
+              <Icon name="x" size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

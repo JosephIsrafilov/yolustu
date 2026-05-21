@@ -1,105 +1,98 @@
-# Yolüstü — Azerbaijan Carpooling Prototype
+# Yolüstü — Azerbaijan Carpooling Platform 🚗
 
-Yolüstü is a carpooling product for Azerbaijan. The project has transitioned from a Sprint 0 mock prototype to a structured setup with separate frontend and backend directories, preparing for full database integration.
+**Yolüstü** is a modern car‑pooling prototype tailored for Azerbaijan. It now includes:
+- **Real‑time push notifications** via WebSockets
+- **AI Smart Pricing** powered by NVIDIA NIM (LLaMA‑3.1) that suggests optimal seat prices based on route and time
+- Full Stripe integration for secure payments
+- Secure JWT authentication for drivers and passengers
+
+---
 
 ## Project Structure
 
-The codebase is divided into frontend and backend applications, along with a containerized database setup.
-
 ```text
 yolustu/
-├── backend/            # FastAPI Python backend
-│   ├── alembic/        # Database migrations
-│   ├── api/            # API endpoints
-│   ├── core/           # Configuration and security
-│   ├── models/         # SQLAlchemy database models
-│   ├── schemas/        # Pydantic schemas
-│   └── main.py         # FastAPI application entry point
-├── frontend/           # Next.js 16 frontend
-│   ├── public/         # Static assets
-│   └── src/            # Next.js App Router source code
-├── docs/               # Project documentation and specifications
-└── docker-compose.yml  # Docker infrastructure (PostgreSQL, Redis)
+├── backend/               # FastAPI Python backend
+│   ├── alembic/           # DB migrations
+│   ├── app/
+│   │   ├── core/          # Config, security, env vars
+│   │   ├── domains/       # Feature routers (auth, rides, ai, …)
+│   │   │   └── ai/        # AI pricing endpoint
+│   │   └── main.py        # FastAPI entry point
+│   ├── requirements.txt   # Python deps (incl. openai)
+│   └── .env               # Local secrets (NVIDIA_API_KEY, DB URL)
+│
+├── frontend/              # Next.js 16 (App Router) with TypeScript
+│   ├── public/            # Static assets
+│   └── src/
+│       ├── app/
+│       │   ├── driver/
+│       │   │   └── create-trip/page.tsx   # Ride‑creation wizard with AI button
+│       │   └── (dashboard)/rides/create/page.tsx  # Legacy UI (still works)
+│       ├── components/    # UI primitives (Card, Button, Input, …)
+│       ├── services/
+│       │   ├── api/api-client.ts            # Axios wrapper
+│       │   └── api/api-ai-service.ts        # Calls /ai/pricing-suggestion
+│       └── lib/            # Constants, utils (AZ_CITIES, routes, env)
+│
+├── docs/                  # Additional documentation
+├── docker-compose.yml     # PostgreSQL + Redis containers
+└── README.md              # ↗️ This file (updated)
 ```
+
+---
 
 ## Technology Stack
 
-| Area | Current implementation |
+| Area | Implementation |
 |---|---|
-| Frontend Framework | Next.js 16 App Router (TypeScript) |
-| Frontend Styling | Tailwind CSS v4 |
-| Frontend State | Zustand |
-| Backend Framework | FastAPI (Python) |
-| Database | PostgreSQL (via Docker) |
-| ORM & Migrations | SQLAlchemy, Alembic |
-| Cache/Queue | Redis (via Docker) |
+| **Frontend Framework** | Next.js 16 App Router (TypeScript) |
+| **Frontend Styling** | Tailwind CSS v4 |
+| **Frontend State** | Zustand |
+| **Backend Framework** | FastAPI (Python 3.11) |
+| **AI Integration** | NVIDIA NIM (`meta/llama-3.1-8b-instruct`) via `openai` SDK |
+| **Database** | PostgreSQL (via Docker) |
+| **Cache/Queue** | Redis (via Docker) |
+| **Realtime** | WebSockets (FastAPI + React hook) |
+| **Payments** | Stripe Checkout & Webhooks |
 
-## How To Run
+---
 
-To run the full stack locally, you need to start the database, the backend API, and the frontend server.
+## Setup & Development
 
-### 1. Infrastructure (Database & Redis)
-
-Start the PostgreSQL and Redis containers using Docker:
-
+### 1️⃣ Infrastructure (PostgreSQL & Redis)
 ```bash
-docker-compose up -d
+docker-compose up -d   # starts db and redis containers
 ```
 
-### 2. Backend (FastAPI)
-
-Open a new terminal and navigate to the backend directory:
-
+### 2️⃣ Backend (FastAPI)
 ```bash
 cd backend
-```
-
-Create and activate a virtual environment (Windows example):
-
-```bash
 python -m venv venv
+# Windows:
 .\venv\Scripts\Activate
-```
+# Linux/macOS:
+source venv/bin/activate
 
-Install the dependencies:
-
-```bash
 pip install -r requirements.txt
+# Copy .env.example → .env and add your NVIDIA_API_KEY (free on build.nvidia.com)
+alembic upgrade head   # apply migrations
+uvicorn main:app --reload   # API at http://localhost:8000
 ```
+Visit `http://localhost:8000/docs` for the Swagger UI.
 
-Run database migrations to create the tables:
-
-```bash
-alembic upgrade head
-```
-*Note: If `alembic` is not recognized, run `python -m alembic upgrade head` instead.*
-
-Start the backend server:
-
-```bash
-uvicorn main:app --reload
-```
-The API documentation (Swagger UI) is available at `http://127.0.0.1:8000/docs`.
-
-### 3. Frontend (Next.js)
-
-Open a new terminal and navigate to the frontend directory:
-
+### 3️⃣ Frontend (Next.js)
 ```bash
 cd frontend
-```
-
-Install dependencies and start the development server:
-
-```bash
 npm install
-npm run dev
+npm run dev   # http://localhost:3000
 ```
-The frontend application is available at `http://localhost:3000`.
+
+---
 
 ## Demo Users
 
-To populate your local PostgreSQL database with demo data (users, vehicles, trips), you can run the seed script:
+To populate your local PostgreSQL database with demo data (users, vehicles, trips), run:
 ```bash
 cd backend
 python seed.py
@@ -111,15 +104,35 @@ This will create standard test users with the password `password123` and `is_ver
 - Aysel (Passenger): `+994552345678`
 - Sanan (Admin): `+994708901234`
 
-## API Integration & Stripe
+---
 
-The frontend is now successfully connected to the FastAPI backend! We have completed:
-- Core backend architecture (auth, rides, bookings, user profiles)
-- Frontend real-API integration (Zustand persists tokens correctly)
-- **Stripe Payments**: Real Stripe Checkout integration. To test payments and webhooks locally, ensure you have the Stripe CLI installed and run:
-  ```bash
-  stripe listen --forward-to localhost:8000/api/v1/payments/webhook
-  ```
+## AI Smart Pricing (NVIDIA NIM)
+
+### Backend Endpoint
+- **Path:** `POST /api/v1/ai/pricing-suggestion`
+- **Request:** `{ "origin": "Bakı", "destination": "Gəncə", "departure_time": "12:00" }`
+- **Response:** `{ "suggested_price": 15, "reasoning": "Friday afternoon rides from Baku to Ganja have high demand..." }`
+
+### Frontend UI
+- Integrates seamlessly in Step 2 of the Trip Creation flow (`frontend/src/app/driver/create-trip/page.tsx`).
+- Offers a simple button to fetch pricing recommendations and auto-fills the price per seat while showing AI-driven reasoning context.
+
+---
+
+## Running Tests & Linting
+
+**Backend**
+```bash
+pytest          # unit tests
+```
+
+**Frontend**
+```bash
+npm run lint    # ESLint
+npm run typecheck   # TypeScript compiler check
+```
+
+---
 
 ## License
 

@@ -13,3 +13,4 @@ pydantic-settings
 python-multipart
 redis
 stripe
+openai

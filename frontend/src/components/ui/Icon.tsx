@@ -15,7 +15,7 @@ export type IconName =
   | 'shield-x' | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
-  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card';
+  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -66,6 +66,7 @@ const PATHS: Record<IconName, string> = {
   'file-text': 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
   'upload': 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
   'credit-card': 'M2 7h20M2 11h20M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2zM6 15h4',
+  'bell': 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

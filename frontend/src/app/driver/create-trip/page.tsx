@@ -17,6 +17,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
 import { apiClient } from '@/services/api-client';
 import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
+import { apiAiService } from '@/services/api/api-ai-service';
 import { isMockDataMode } from '@/lib/env';
 
 const STEPS = ['Marşrut', 'Tarix', 'Yerlər', 'Maşın', 'Baxış'];
@@ -51,9 +52,33 @@ export default function CreateTripPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiReasoning, setAiReasoning] = useState('');
+
   const update = <K extends keyof CreateTripData>(key: K, value: CreateTripData[K]) => {
     setForm((p) => ({ ...p, [key]: value }));
     if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
+  };
+
+  const getAiSuggestion = async () => {
+    if (!form.departureCity || !form.arrivalCity || !form.time) return;
+    setIsAiLoading(true);
+    try {
+      const response = await apiAiService.getSmartPricingSuggestion({
+        origin: form.departureCity,
+        destination: form.arrivalCity,
+        departure_time: form.time,
+      });
+      if (response?.suggested_price) {
+        update('pricePerSeat', response.suggested_price);
+        setAiReasoning(response.reasoning);
+      }
+    } catch (error) {
+      console.error('AI Suggestion Error:', error);
+      setAiReasoning('Qiymət təklifi alınarkən xəta baş verdi.');
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -245,7 +270,29 @@ export default function CreateTripPage() {
                   </div>
                   {errors.seatsTotal && <p className="text-xs text-danger-500">{errors.seatsTotal}</p>}
                 </div>
-                <Input label="Yer başına qiymət (₼)" type="number" value={form.pricePerSeat} onChange={(e) => update('pricePerSeat', Number(e.target.value))} error={errors.pricePerSeat} />
+                
+                <div className="flex flex-col gap-1.5">
+                  <Input label="Yer başına qiymət (₼)" type="number" value={form.pricePerSeat} onChange={(e) => update('pricePerSeat', Number(e.target.value))} error={errors.pricePerSeat} />
+                  
+                  <div className="mt-2 flex flex-col items-start gap-2 rounded-xl bg-gradient-to-r from-[#e8f5e9] to-[#c8e6c9] p-3 dark:from-[#1b5e20] dark:to-[#004d40]">
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-sm font-bold text-[#2e7d32] dark:text-[#81c784]">✨ AI Smart Pricing</span>
+                      <button 
+                        type="button" 
+                        onClick={getAiSuggestion}
+                        disabled={isAiLoading || !form.departureCity || !form.arrivalCity || !form.time}
+                        className="rounded-lg bg-[#2e7d32] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#1b5e20] disabled:opacity-50 dark:bg-[#4caf50] dark:text-black dark:hover:bg-[#81c784]"
+                      >
+                        {isAiLoading ? 'Yüklənir...' : 'Qiymət təklif et'}
+                      </button>
+                    </div>
+                    {aiReasoning ? (
+                      <p className="text-xs text-[#1b5e20] dark:text-[#a5d6a7]">{aiReasoning}</p>
+                    ) : (
+                      <p className="text-xs text-[#2e7d32] dark:text-[#81c784]">Süni intellektə marşrut və saata görə optimal qiymət seçdirmək üçün klikləyin. (Şəhər və saat seçilməlidir)</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

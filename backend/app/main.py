@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
@@ -8,20 +9,27 @@ from fastapi.staticfiles import StaticFiles
 import app.domains.models
 from app.core.config import UPLOADS_DIR
 from app.core.logging_config import setup_logging
+from app.core.websocket import manager
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
 from app.domains.engagement.messages_router import router as messages_router
+from app.domains.engagement.notifications_router import router as notifications_router
 from app.domains.engagement.reviews_router import router as reviews_router
 from app.domains.identity.auth_router import router as auth_router
 from app.domains.identity.users_router import router as users_router
 from app.domains.trips.rides_router import router as rides_router
 from app.domains.trips.vehicles_router import router as vehicles_router
 from app.domains.payments.router import router as payments_router
+from app.domains.ai.router import router as ai_router
 
 # Setup logging
 setup_logging()
 
 app = FastAPI(title="Yolustu API")
+
+@app.on_event("startup")
+async def startup_event():
+    manager.loop = asyncio.get_running_loop()
 
 # Mount uploads directory
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -87,8 +95,10 @@ v1_router.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
 v1_router.include_router(vehicles_router, prefix="/vehicles", tags=["vehicles"])
 v1_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])
 v1_router.include_router(messages_router, prefix="/messages", tags=["messages"])
+v1_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 v1_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 v1_router.include_router(payments_router, prefix="/payments", tags=["payments"])
+v1_router.include_router(ai_router, prefix="/ai", tags=["ai"])
 
 app.include_router(v1_router)
 
