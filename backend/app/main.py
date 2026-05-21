@@ -80,7 +80,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "success": False,
             "error": {
                 "code": exc.__class__.__name__,
-                "message": str(exc),
+                "message": "Internal server error",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         },
