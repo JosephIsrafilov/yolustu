@@ -15,12 +15,18 @@ export function usePushNotifications() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldReconnectRef = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated || env.dataMode !== 'api') {
+      shouldReconnectRef.current = false;
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       return;
     }
@@ -28,6 +34,7 @@ export function usePushNotifications() {
     const connectWebSocket = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
+      shouldReconnectRef.current = true;
 
       const wsUrl = `${env.wsUrl}/notifications/ws?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
@@ -58,15 +65,25 @@ export function usePushNotifications() {
         }
       };
 
-      ws.onclose = () => {
-        console.log('[WebSocket] Disconnected from push notifications. Reconnecting in 5s...');
+      ws.onclose = (event) => {
         wsRef.current = null;
+
+        if (!shouldReconnectRef.current) {
+          return;
+        }
+
+        if (event.code === 1008) {
+          shouldReconnectRef.current = false;
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          return;
+        }
+
         reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
       };
 
-      ws.onerror = (error) => {
-        console.error('[WebSocket] Error', error);
-        ws.close();
+      ws.onerror = () => {
+        // Let onclose decide whether this was a real disconnect worth reconnecting.
       };
 
       wsRef.current = ws;
@@ -75,6 +92,7 @@ export function usePushNotifications() {
     connectWebSocket();
 
     return () => {
+      shouldReconnectRef.current = false;
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       if (wsRef.current) {
