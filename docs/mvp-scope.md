@@ -2,62 +2,51 @@
 
 ## MVP-yə Daxil Olanlar
 
-### Mobil Tətbiq
-- Qeydiyyat
-- Giriş
-- Profil yaratma/redaktə
-- Sürücü/Sərnişin rolu bir hesabda
-- Gediş yaratma (multi-step)
-- Gediş redaktə/ləğv etmə
-- Gediş axtarışı
-- Gediş filtrləmə
-- Gediş detalları
-- Rezerv sorğusu göndərmə
-- Rezerv statusları
-- Sərnişin rezervləri
-- Sürücü rezerv sorğuları
-- Rəy və reytinqlər
-- Mobil naviqasiya
+### Mobil-First Veb Tətbiqi (Next.js 16 + Zustand)
+- Telefon nömrəsi ilə qeydiyyat və daxil olma.
+- Simulyasiya edilmiş SMS OTP təsdiqi (Redis bazalı).
+- Sürücü və Sərnişin rollarının bir profil daxilində idarə olunması.
+- Gediş elan etmə forması (Addımlı sehrbaz / Multi-step form).
+- İnteraktiv Leaflet Xəritəsi üzərində başlanğıc və son nöqtələrin kliklə seçilməsi.
+- Seçilmiş koordinatların avtomatik olaraq "Meeting Point" və "Dropoff Point" sahələri ilə sinxronizasiyası.
+- Gedişlərin PostGIS vasitəsilə axtarışı və filtrlənməsi (tarix, yer sayı, axtarış radiusu).
+- Gedişin ətraflı məlumat səhifəsi, sürücü profili, avtomobil məlumatları və rəylər.
+- Rezervasiya (Booking) və Stripe vasitəsilə ödəniş axını.
+- Gözləyən (Pending), təsdiqlənmiş (Confirmed / Paid), rədd edilmiş (Rejected), ləğv edilmiş (Cancelled) və tamamlanmış (Completed) rezerv statusları.
+- Hər gediş üzrə real-time WebSocket qrup çatı.
+- Sürücü sənədinin yüklənilməsi və Admin Panel vasitəsilə sürücülük statusunun idarə edilməsi.
+- Tamamlanmış gedişlər üzrə rəylər və reytinqlərin yazılması.
 
-### Backend API
-- Auth endpointləri (register, login)
-- Users/Profile endpointləri
-- Trips endpointləri (CRUD)
-- Bookings endpointləri (create, accept, reject, cancel)
-- Reviews endpointləri
-- Admin endpointləri
-- Verilənlər bazası sxemi
+### Backend API (FastAPI + SQLAlchemy + PostgreSQL + Redis)
+- Auth endpointləri (OTP sorğu, OTP yoxlanılması, login, register, refresh token).
+- Profilin oxunması, yenilənməsi, sənədlərin yüklənilməsi.
+- Rides CRUD və axtarış/süzgəc endpointləri (PostGIS).
+- Bookings CRUD (yaradılması, təsdiqi, rəddi, ləğvi).
+- Stripe Checkout sessiyalarının yaradılması və asinxron Stripe Webhooks idarəedilməsi.
+- AI Smart Pricing (NVIDIA NIM LLaMA-3.1-8b-instruct) vasitəsilə marşrut və vaxta uyğun optimal qiymət məsləhətləri.
+- WebSocket əlaqələri üçün FastAPI Lifespan idarəetməsi.
 
 ### Admin Panel
-- İstifadəçiləri görmə
-- Gedişləri görmə
-- Rezervləri görmə
-- Şübhəli istifadəçiləri bloklama
-- Uyğunsuz gedişləri silmə
-- Moderasiya panel
+- Bütün istifadəçilərin siyahısı və onların bloklanması/blokdan çıxarılması.
+- Sürücülük üçün yüklənmiş sənədlərin yoxlanılması və verifikasiya statusunun dəyişdirilməsi.
+- Bütün gedişlərin və rezervasiyaların monitorinqi və moderasiyası.
 
-## MVP-yə Daxil Olmayanlar
+---
+
+## MVP-yə Daxil Olmayanlar (Gələcək Planlar)
 
 | Xüsusiyyət | Səbəb |
 |---|---|
-| Online ödəniş | MVP-də ödəniş nağd və ya birbaşa razılaşma ilə olur |
-| Avtobus/qatar bileti | Yalnız fərdi maşınlara fokuslanırıq |
-| GPS izləmə | Mürəkkəblik əlavə edir |
-| Xəritə inteqrasiyası | Sprint 0-da lazım deyil |
-| Avtomatik məsafə/vaxt hesabı | Əlavə API xərcləri |
-| Sürücü sənəd yoxlanışı | Real verifikasiya infrastrukturu lazımdır |
-| Şikayət/mübahisə sistemi | MVP üçün çox mürəkkəb |
-| Push bildirişlər | Real notification infrastrukturu lazımdır |
+| Avtobus/qatar bileti | MVP-də yalnız fərdi nəqliyyat vasitələrinə fokuslanırıq |
+| GPS real-time izləmə | Mürəkkəblik əlavə edir, növbəti versiyalarda baxılacaq |
+| Avtomatik məsafə/vaxt hesabı | Əlavə xarici API xərcləri |
+| Dövlət Asan İmza inteqrasiyası| Real dövlət lisenziyaları və API icazələri tələb olunur |
+| Avtomatik sərnişin sığortası | Sığorta şirkətləri ilə xüsusi müqavilələr tələb edir |
+
+---
 
 ## Ödəniş Modeli
 
-MVP-də ödəniş sistem xaricində baş verir:
-- Nağd ödəniş sürücüyə
-- Birbaşa razılaşma
-- Real ödəniş inteqrasiyası yoxdur
-
-## Verifikasiya
-
-- Real sənəd verifikasiyası yoxdur
-- Placeholder verifikasiya statusu UI göstərilə bilər
-- Real verifikasiya logikası implementasiya edilmir
+Ödəniş tam şəkildə Stripe sandboks (test rejimi) e-ticarət sistemi vasitəsilə inteqrasiya edilib. 
+- Ödəniş zamanı sərnişin Stripe ödəniş səhifəsinə yönləndirilir.
+- Uğurlu ödənişdən sonra Stripe backend-ə webhook göndərir və rezerv statusu `confirmed` (ödənildi) olaraq qeyd edilir, yerlər balansdan avtomatik silinir.

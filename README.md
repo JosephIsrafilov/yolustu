@@ -1,10 +1,11 @@
 # Yolüstü — Azerbaijan Carpooling Platform 🚗
 
-**Yolüstü** is a modern car‑pooling prototype tailored for Azerbaijan. It now includes:
-- **Real‑time push notifications** via WebSockets
+**Yolüstü** is a modern car‑pooling prototype tailored for Azerbaijan. It includes:
+- **Real‑time chat and notifications** via WebSockets
 - **AI Smart Pricing** powered by NVIDIA NIM (LLaMA‑3.1) that suggests optimal seat prices based on route and time
-- Full Stripe integration for secure payments
-- Secure JWT authentication for drivers and passengers
+- Full Stripe integration for secure sandbox payments
+- Secure JWT authentication with simulated SMS OTP verification
+- Interactive Leaflet Maps on OpenStreetMap tiles (no Google Maps API key required)
 
 ---
 
@@ -15,28 +16,31 @@ yolustu/
 ├── backend/               # FastAPI Python backend
 │   ├── alembic/           # DB migrations
 │   ├── app/
-│   │   ├── core/          # Config, security, env vars
-│   │   ├── domains/       # Feature routers (auth, rides, ai, …)
-│   │   │   └── ai/        # AI pricing endpoint
-│   │   └── main.py        # FastAPI entry point
-│   ├── requirements.txt   # Python deps (incl. openai)
-│   └── .env               # Local secrets (NVIDIA_API_KEY, DB URL)
+│   │   ├── core/          # Config, database, security, WebSockets event loop
+│   │   ├── domains/       # Feature domains (auth, rides, bookings, engagement, payments, ai)
+│   │   │   ├── identity/  # User profile & authentication
+│   │   │   ├── trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
+│   │   │   ├── bookings/  # Seat reservations
+│   │   │   ├── engagement/# Chat messages & ratings
+│   │   │   ├── payments/  # Stripe sessions & Webhooks
+│   │   │   └── ai/        # AI pricing suggestion
+│   │   └── main.py        # FastAPI entry point & lifespan manager
+│   ├── requirements.txt   # Python deps
+│   └── .env               # Local secrets (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
 │
 ├── frontend/              # Next.js 16 (App Router) with TypeScript
 │   ├── public/            # Static assets
 │   └── src/
 │       ├── app/
 │       │   ├── driver/
-│       │   │   └── create-trip/page.tsx   # Ride‑creation wizard with AI button
-│       │   └── (dashboard)/rides/create/page.tsx  # Legacy UI (still works)
-│       ├── components/    # UI primitives (Card, Button, Input, …)
-│       ├── services/
-│       │   ├── api/api-client.ts            # Axios wrapper
-│       │   └── api/api-ai-service.ts        # Calls /ai/pricing-suggestion
-│       └── lib/            # Constants, utils (AZ_CITIES, routes, env)
+│       │   │   └── create-trip/page.tsx   # Ride‑creation wizard with Leaflet Map & AI Smart Pricing
+│       │   └── (dashboard)/rides/create/page.tsx
+│       ├── components/    # UI primitives & helpers (TimePicker, CitySelect, Icon, Map)
+│       ├── services/      # Axios wrappers for API and AI services
+│       └── lib/           # Constants, utils (AZ_CITIES, mapping configs)
 │
-├── docs/                  # Additional documentation
-├── docker-compose.yml     # PostgreSQL + Redis containers
+├── docs/                  # Project roadmap, database schema, API contracts, acceptance criteria
+├── docker-compose.yml     # PostgreSQL + PostGIS & Redis container configurations
 └── README.md              # ↗️ This file (updated)
 ```
 
@@ -49,11 +53,12 @@ yolustu/
 | **Frontend Framework** | Next.js 16 App Router (TypeScript) |
 | **Frontend Styling** | Tailwind CSS v4 |
 | **Frontend State** | Zustand |
+| **Interactive Maps** | Leaflet.js (React-Leaflet) on OpenStreetMap |
 | **Backend Framework** | FastAPI (Python 3.11) |
 | **AI Integration** | NVIDIA NIM (`meta/llama-3.1-8b-instruct`) via `openai` SDK |
-| **Database** | PostgreSQL (via Docker) |
+| **Database** | PostgreSQL + PostGIS (via Docker) |
 | **Cache/Queue** | Redis (via Docker) |
-| **Realtime** | WebSockets (FastAPI + React hook) |
+| **Realtime Layers** | WebSockets (FastAPI + React hooks) |
 | **Payments** | Stripe Checkout & Webhooks |
 
 ---
@@ -75,7 +80,7 @@ python -m venv venv
 source venv/bin/activate
 
 pip install -r requirements.txt
-# Copy .env.example → .env and add your NVIDIA_API_KEY (free on build.nvidia.com)
+# Copy .env.example → .env and configure keys (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
 alembic upgrade head   # apply migrations
 uvicorn main:app --reload   # API at http://localhost:8000
 ```
@@ -106,16 +111,18 @@ This will create standard test users with the password `password123` and `is_ver
 
 ---
 
-## AI Smart Pricing (NVIDIA NIM)
+## Technical Improvements & React 19 Compatibility
 
-### Backend Endpoint
-- **Path:** `POST /api/v1/ai/pricing-suggestion`
-- **Request:** `{ "origin": "Bakı", "destination": "Gəncə", "departure_time": "12:00" }`
-- **Response:** `{ "suggested_price": 15, "reasoning": "Friday afternoon rides from Baku to Ganja have high demand..." }`
+### 1. React 19 Strict Typing
+- **CitySelect.tsx**: Upgraded to handle `readonly string[]` arrays for Azerbaijan cities, preventing client-side array mutations.
+- **TimePicker.tsx**: Upgraded to typed `RefObject` interfaces and refactored state management to utilize `useRef` to store debouncing timer IDs, avoiding state mutations and duplicated API requests on re-renders.
 
-### Frontend UI
-- Integrates seamlessly in Step 2 of the Trip Creation flow (`frontend/src/app/driver/create-trip/page.tsx`).
-- Offers a simple button to fetch pricing recommendations and auto-fills the price per seat while showing AI-driven reasoning context.
+### 2. Leaflet Overlay & Map Fixes
+- Added `z-index` layering styles (`z-index: 10` for Leaflet container, `z-[1000]` for layout dropdowns) to prevent the map container from covering route inputs.
+- Integrated map click handlers to automatically synchronize coordinates with "Meeting Point" and "Dropoff Point" inputs.
+
+### 3. FastAPI Lifecycle Stability
+- Replaced legacy startup/shutdown event handlers with the `lifespan` context manager in `backend/app/main.py`. This correctly binds the WebSocket manager's event loop in the context of the running asyncio loop, ensuring real-time messages are dispatched concurrently without hanging.
 
 ---
 

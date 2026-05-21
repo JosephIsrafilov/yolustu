@@ -1,52 +1,106 @@
-# API Contract — Yolüstü
+# API Kontraktı — Yolüstü
 
-Bu sənəd gələcək backend API endpointlərinin kontraktını təsvir edir.
-Sprint 0-da bu endpointlər implementasiya edilmir, yalnız mock funksiyalarla simulyasiya olunur.
+Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və cavab formalarını (request/response models) təsvir edir. Bütün endpointlər `/api/v1` prefiksi altındadır.
 
 ---
 
-## Authentication
+## 1. Authentication (Autentifikasiya)
 
-### POST /api/auth/register/
+### POST /api/v1/auth/request-otp
 
-**Məqsəd:** Yeni istifadəçi qeydiyyatı
+**Məqsəd:** İstifadəçinin telefon nömrəsinə OTP təsdiq kodu göndərilməsini simulyasiya edir və kodu Redis-də saxlayır (TTL 5 dəqiqə).
+
+**Query Parameters:**
+- `phone` (str) — Nömrə (məs. `+994501234567`)
+
+**Response (200):**
+```json
+{
+  "message": "OTP sent successfully (Simulated)",
+  "otp": "123456"
+}
+```
+
+---
+
+### POST /api/v1/auth/verify-otp
+
+**Məqsəd:** Daxil edilmiş OTP kodunu yoxlayır. Əgər nömrə qeydiyyatda yoxdursa, register etmək lazım olduğunu bildirir. Əgər nömrə varsa, birbaşa JWT tokenlərini qaytarır.
+
+**Query Parameters:**
+- `phone` (str) — Telefon nömrəsi
+- `otp` (str) — 6 rəqəmli kod
+
+**Response (200) - Qeydiyyatlı istifadəçi:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsIn...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsIn...",
+  "token_type": "bearer"
+}
+```
+
+**Response (200) - Yeni istifadəçi (Qeydiyyat lazımdır):**
+```json
+{
+  "message": "OTP verified successfully. Registration required.",
+  "phone": "+994501234567"
+}
+```
+
+---
+
+### POST /api/v1/auth/register
+
+**Məqsəd:** OTP təsdiqindən sonra yeni istifadəçi yaradır və JWT tokenləri təqdim edir.
 
 **Request Body:**
 ```json
 {
-  "fullName": "Elvin Məmmədov",
-  "email": "elvin@example.com",
   "phone": "+994501234567",
-  "password": "securepass123"
+  "first_name": "Elvin",
+  "last_name": "Məmmədov",
+  "password": "securepass123",
+  "avatar_url": null,
+  "language": "az",
+  "role": "passenger",
+  "city": "Bakı",
+  "bio": "Yeni istifadəçi"
 }
 ```
 
-**Response (201):**
+**Response (200):**
 ```json
 {
-  "id": "u1",
-  "fullName": "Elvin Məmmədov",
-  "email": "elvin@example.com",
-  "token": "jwt_token_here"
+  "id": "7a26f04c-83b3-4f27-8025-01e4a3b7c02b",
+  "phone": "+994501234567",
+  "first_name": "Elvin",
+  "last_name": "Məmmədov",
+  "avatar_url": null,
+  "language": "az",
+  "role": "passenger",
+  "city": "Bakı",
+  "bio": "Yeni istifadəçi",
+  "is_blocked": false,
+  "is_verified": false,
+  "verification_status": "none",
+  "document_url": null,
+  "rating": 0.0,
+  "total_rides": 0,
+  "created_at": "2026-05-21T20:00:00Z"
 }
 ```
-
-**Validasiya:**
-- fullName: tələb olunur, 2-100 simvol
-- email: tələb olunur, unikal, düzgün format
-- phone: tələb olunur, +994 prefiksi
-- password: tələb olunur, ən azı 6 simvol
 
 ---
 
-### POST /api/auth/login/
+### POST /api/v1/auth/login
 
-**Məqsəd:** İstifadəçi girişi
+**Məqsəd:** Mövcud istifadəçinin telefon nömrəsi və şifrə ilə daxil olması.
 
 **Request Body:**
 ```json
 {
-  "email": "elvin@example.com",
+  "phone": "+994501234567",
   "password": "securepass123"
 }
 ```
@@ -54,237 +108,209 @@ Sprint 0-da bu endpointlər implementasiya edilmir, yalnız mock funksiyalarla s
 **Response (200):**
 ```json
 {
-  "id": "u1",
-  "fullName": "Elvin Məmmədov",
-  "email": "elvin@example.com",
-  "role": "driver",
-  "token": "jwt_token_here"
+  "access_token": "eyJhbGciOiJIUzI1NiIsIn...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsIn...",
+  "token_type": "bearer"
 }
 ```
 
 ---
 
-## Profile
+## 2. Users & Profile (İstifadəçi Profilləri)
 
-### GET /api/profile/
+### GET /api/v1/users/me
 
-**Məqsəd:** Cari istifadəçinin profilini al
+**Məqsəd:** Cari giriş etmiş istifadəçinin profil məlumatlarını gətirir.
 
 **Headers:** `Authorization: Bearer <token>`
 
+**Response (200):** [İstifadəçi Obyekti]
+
+---
+
+### PUT /api/v1/users/me
+
+**Məqsəd:** Cari istifadəçinin məlumatlarını yeniləyir.
+
+**Request Body (bütün sahələr optionaldır):**
+```json
+{
+  "first_name": "Tural",
+  "last_name": "İsgəndərov",
+  "city": "Sumqayıt",
+  "bio": "Yenilənmiş bioqrafiya"
+}
+```
+
+**Response (200):** Yenilənmiş [İstifadəçi Obyekti]
+
+---
+
+### POST /api/v1/users/me/verify
+
+**Məqsəd:** Sürücü sənədini (vəsiqəsini) serverə yükləyir və verifikasiya statusunu `pending` edir.
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body:**
+- `file` (UploadFile) — Sənədin şəkli/faylı
+
 **Response (200):**
 ```json
 {
-  "id": "u1",
-  "fullName": "Elvin Məmmədov",
-  "email": "elvin@example.com",
+  "id": "7a26f04c-83b3-4f27-8025-01e4a3b7c02b",
   "phone": "+994501234567",
-  "city": "Bakı",
-  "bio": "Bakıdan Gəncəyə tez-tez gediş-gəliş edirəm.",
-  "rating": 4.8,
-  "totalTrips": 34,
-  "reviewsCount": 12
+  "first_name": "Elvin",
+  "last_name": "Məmmədov",
+  "is_verified": false,
+  "verification_status": "pending",
+  "document_url": "/uploads/unique_filename.jpg",
+  "created_at": "2026-05-21T20:00:00Z"
 }
 ```
 
 ---
 
-### PUT /api/profile/
+## 3. Rides & Vehicles (Gedişlər və Nəqliyyat)
 
-**Məqsəd:** Profili yenilə
+### POST /api/v1/rides/
+
+**Məqsəd:** Sürücü tərəfindən yeni gediş elan edilməsi.
 
 **Request Body:**
 ```json
 {
-  "fullName": "Elvin Məmmədov",
-  "phone": "+994501234567",
-  "city": "Bakı",
-  "bio": "Yenilənmiş bio"
+  "vehicle_id": "8b0821fb-0fe2-4be7-ba48-910bb97b25ad",
+  "origin_lat": 40.4093,
+  "origin_lon": 49.8671,
+  "origin_city": "Bakı",
+  "destination_lat": 40.6828,
+  "destination_lon": 46.3606,
+  "destination_city": "Gəncə",
+  "intermediate_cities": "Kürdəmir, Yevlax",
+  "departure_time": "2026-05-22T08:00:00Z",
+  "total_seats": 3,
+  "price_per_seat": 15.0,
+  "description": "Prius ilə rahat səfər. AC var.",
+  "smoking_allowed": false,
+  "pets_allowed": true,
+  "music_allowed": true,
+  "female_only": false
 }
 ```
 
-**Response (200):** Yenilənmiş profil obyekti
+**Response (200):**
+```json
+{
+  "id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
+  "driver_id": "7a26f04c-83b3-4f27-8025-01e4a3b7c02b",
+  "vehicle_id": "8b0821fb-0fe2-4be7-ba48-910bb97b25ad",
+  "origin_city": "Bakı",
+  "destination_city": "Gəncə",
+  "departure_time": "2026-05-22T08:00:00Z",
+  "available_seats": 3,
+  "price_per_seat": 15.0,
+  "status": "active"
+}
+```
 
 ---
 
-## Trips
+### GET /api/v1/rides/search
 
-### POST /api/trips/
-
-**Məqsəd:** Yeni gediş yarat
-
-**Request Body:**
-```json
-{
-  "departureCity": "Bakı",
-  "arrivalCity": "Gəncə",
-  "meetingPoint": "28 May metro, çıxış 2",
-  "dropoffPoint": "Gəncə avtovağzal",
-  "date": "2026-05-12",
-  "time": "08:00",
-  "seatsTotal": 3,
-  "pricePerSeat": 15,
-  "carModel": "Toyota Prius",
-  "comment": "Rahat maşın, AC var."
-}
-```
-
-**Response (201):**
-```json
-{
-  "id": "t1",
-  "driverId": "u1",
-  "departureCity": "Bakı",
-  "arrivalCity": "Gəncə",
-  "seatsAvailable": 3,
-  "status": "active",
-  "createdAt": "2026-05-07T06:00:00Z"
-}
-```
-
-**Validasiya:**
-- departureCity, arrivalCity: tələb olunur
-- departureCity ≠ arrivalCity
-- date: gələcək tarix olmalı
-- seatsTotal: 1-4
-- pricePerSeat: > 0
-
----
-
-### GET /api/trips/
-
-**Məqsəd:** Gedişləri axtar
+**Məqsəd:** Koordinatlar və ya şəhər adı ilə gedişlərin PostGIS vasitəsilə axtarılması.
 
 **Query Parameters:**
-- `departureCity` — filtrlə
-- `arrivalCity` — filtrlə
-- `date` — filtrlə
-- `maxPrice` — filtrlə
-- `minSeats` — filtrlə
+- `origin_lat`, `origin_lon` (float) — Başlanğıc nöqtənin koordinatları
+- `dest_lat`, `dest_lon` (float) — Son nöqtənin koordinatları
+- `origin_city`, `dest_city` (str) — Şəhər adları
+- `departure_date` (date) — Səfər tarixi (`YYYY-MM-DD`)
+- `min_seats` (int, default 1) — Minimum tələb olunan yer
+- `radius_meters` (float, default 10000) — Axtarış radiusu
+
+**Response (200):** [Gediş Obyektlərinin siyahısı]
+
+---
+
+### PATCH /api/v1/rides/{ride_id}/cancel
+
+**Məqsəd:** Sürücü tərəfindən gedişin ləğv edilməsi.
 
 **Response (200):**
 ```json
-[
-  {
-    "id": "t1",
-    "departureCity": "Bakı",
-    "arrivalCity": "Gəncə",
-    "date": "2026-05-12",
-    "time": "08:00",
-    "seatsAvailable": 2,
-    "pricePerSeat": 15,
-    "driver": { "id": "u1", "fullName": "Elvin Məmmədov", "rating": 4.8 },
-    "carModel": "Toyota Prius",
-    "status": "active"
-  }
-]
+{
+  "id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
+  "status": "cancelled"
+}
 ```
 
 ---
 
-### GET /api/trips/{id}/
+## 4. Bookings & Payments (Rezervasiya və Ödənişlər)
 
-**Məqsəd:** Gediş detalları
+### POST /api/v1/bookings/
 
-**Response (200):** Tam Trip obyekti + driver profili + rəylər
-
----
-
-### PATCH /api/trips/{id}/cancel/
-
-**Məqsəd:** Gedişi ləğv et (yalnız sürücü)
-
-**Response (200):**
-```json
-{ "id": "t1", "status": "cancelled" }
-```
-
----
-
-## Bookings
-
-### POST /api/bookings/
-
-**Məqsəd:** Rezerv sorğusu göndər
+**Məqsəd:** Sərnişin tərəfindən gedişdə yer rezerv etmək üçün müraciət göndərilməsi. Həmçinin Stripe ödəmə sessiyasını yaradır.
 
 **Request Body:**
 ```json
 {
-  "tripId": "t1",
-  "seatsRequested": 1
+  "ride_id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
+  "seats_booked": 1
 }
 ```
 
-**Validasiya:**
-- Istifadəçi öz gedişinə sorğu göndərə bilmir
-- Kifayət qədər boş yer olmalıdır
-- Eyni gedişə təkrar sorğu göndərilmir
-
-**Response (201):**
+**Response (200):**
 ```json
-{ "id": "b1", "tripId": "t1", "status": "pending" }
+{
+  "booking": {
+    "id": "d50a232f-bc3f-4e0a-b28e-5b12ee9c7821",
+    "ride_id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
+    "passenger_id": "e81d774a-1a22-491c-99d8-910ee2ba8e22",
+    "seats_booked": 1,
+    "total_price": 15.0,
+    "status": "pending"
+  },
+  "stripe_session_id": "cs_test_a1b2c3d...",
+  "stripe_session_url": "https://checkout.stripe.com/c/pay/cs_test_..."
+}
 ```
 
 ---
 
-### PATCH /api/bookings/{id}/accept/
+### POST /api/v1/payments/webhook
 
-**Məqsəd:** Sorğunu qəbul et (yalnız sürücü)
-
-**Davranış:** Boş yer sayı azalır
+**Məqsəd:** Stripe ödəmə statusunun dəyişməsi barədə bildirişlərin (webhooks) qəbulu. Uğurlu ödənişdən sonra müvafiq Booking `confirmed` statusuna keçir, gedişdəki yer sayı azaldılır.
 
 ---
 
-### PATCH /api/bookings/{id}/reject/
+## 5. WebSockets & Chat (Canlı Çat və Bildirişlər)
 
-**Məqsəd:** Sorğunu rədd et (yalnız sürücü)
+### WebSocket /api/v1/messages/ws/{ride_id}
 
----
-
-### PATCH /api/bookings/{id}/cancel/
-
-**Məqsəd:** Rezervi ləğv et (sərnişin)
-
-**Davranış:** Əgər əvvəl qəbul edilmişsə, boş yer geri qaytarılır
+**Məqsəd:** Gediş üzrə sürücü və təsdiqlənmiş sərnişinlər arasında real-time mesajlaşma.
 
 ---
 
-## Reviews
+## 6. AI Smart Pricing (NVIDIA NIM İİ Qiymət Hesablanması)
 
-### POST /api/reviews/
+### POST /api/v1/ai/pricing-suggestion
 
-**Məqsəd:** Rəy yaz
+**Məqsəd:** NVIDIA NIM (LLaMA-3.1) modelindən istifadə etməklə təklif olunan gediş qiymətinin və əsaslandırmasının gətirilməsi.
 
 **Request Body:**
 ```json
 {
-  "tripId": "t1",
-  "targetUserId": "u1",
-  "rating": 5,
-  "comment": "Çox rahat gediş idi!"
+  "origin": "Bakı",
+  "destination": "Gəncə",
+  "departure_time": "Friday 18:00"
 }
 ```
 
-**Validasiya:**
-- Yalnız tamamlanmış gediş üçün
-- Rating: 1-5
-- Eyni gediş üçün təkrar rəy yoxdur
-
----
-
-## Admin
-
-### GET /api/admin/users/
-İstifadəçilər siyahısı (admin only)
-
-### PATCH /api/admin/users/{id}/block/
-İstifadəçini blokla/bloku aç
-
-### GET /api/admin/trips/
-Bütün gedişlər siyahısı (admin only)
-
-### DELETE /api/admin/trips/{id}/
-Uyğunsuz gedişi sil
-
-### GET /api/admin/bookings/
-Bütün rezervlər siyahısı (admin only)
+**Response (200):**
+```json
+{
+  "suggested_price": 18.0,
+  "reasoning": "Cümə günü axşam saatlarında Bakıdan Gəncəyə tələbat çox olduğu üçün qiymətin bir qədər yüksək (18 AZN) təyin edilməsi tövsiyə olunur."
+}
+```
