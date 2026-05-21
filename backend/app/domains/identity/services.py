@@ -1,4 +1,5 @@
 import random
+import secrets
 from datetime import timedelta
 from uuid import UUID
 
@@ -103,7 +104,8 @@ class IdentityService:
 
     @staticmethod
     def _send_otp_simulation(phone: str, redis_client):
-        otp = str(random.randint(100000, 999999))
+        # Use cryptographically secure random number generator for OTP
+        otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
         print("--- [SMS SIMULATION] ---")
         print(f"To: {phone}")

@@ -60,7 +60,8 @@ class PaymentService:
                     payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
                 )
             except Exception as e:
-                raise HTTPException(status_code=400, detail=str(e))
+                # Do not leak internal exception details to the user
+                raise HTTPException(status_code=400, detail="Error confirming payment.")
                 
             if event['type'] == 'checkout.session.completed':
                 session = event['data']['object']
