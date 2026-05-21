@@ -10,10 +10,13 @@ import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import { toApiError } from '@/services/api-error';
+import { I18N } from '@/lib/i18n';
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useAppStore((s) => s.login);
+  const language = useAppStore((s) => s.language);
+  const copy = I18N[language];
   
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +26,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!phone) e.phone = 'Nömrəni daxil edin';
-    if (!password) e.password = 'Şifrəni daxil edin';
+    if (!phone) e.phone = copy.auth.phoneError;
+    if (!password) e.password = copy.auth.passwordError;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -44,15 +47,14 @@ export default function LoginPage() {
       
       const lastError = useAppStore.getState().lastError;
       if (lastError && lastError.toLowerCase().includes('verify')) {
-        
         router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
       } else {
-        setSubmitError(lastError || 'Nömrə və ya şifrə yanlışdır.');
+        setSubmitError(lastError || copy.auth.loginFail);
       }
     } catch (err) {
       const error = toApiError(err);
       setLoading(false);
-      setSubmitError(error.message || 'Xəta baş verdi');
+      setSubmitError(error.message || copy.common.error);
     }
   };
 
@@ -65,17 +67,17 @@ export default function LoginPage() {
             <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
           </div>
           
-          <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">Daxil ol</h1>
-          <p className="text-[14px] text-[#40484a] text-center mb-6">Hesabınıza daxil olun</p>
+          <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.loginTitle}</h1>
+          <p className="text-[14px] text-[#40484a] text-center mb-6">{copy.auth.loginSubtitle}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-semibold text-[#011f23]">Mobil Nömrə</label>
+              <label className="text-[14px] font-semibold text-[#011f23]">{copy.auth.phoneLabel}</label>
               <div className="relative">
                 <Icon name="phone" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input 
                   type="text" 
-                  placeholder="+994501234567" 
+                  placeholder={copy.auth.phonePlaceholder} 
                   value={phone}
                   onChange={(e) => { 
                     setPhone(e.target.value); 
@@ -88,12 +90,12 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-semibold text-[#011f23]">Şifrə</label>
+              <label className="text-[14px] font-semibold text-[#011f23]">{copy.auth.passwordLabel}</label>
               <div className="relative">
                 <Icon name="lock" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input 
                   type="password" 
-                  placeholder="Şifrənizi daxil edin" 
+                  placeholder={copy.auth.passwordPlaceholder} 
                   value={password}
                   onChange={(e) => { 
                     setPassword(e.target.value); 
@@ -112,13 +114,13 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
-              {loading ? 'Daxil olunur...' : 'Daxil ol'}
+              {loading ? copy.auth.loggingIn : copy.auth.loginBtn}
             </Button>
           </form>
 
           <p className="text-[14px] text-[#40484a] text-center mt-6">
-            Hesabınız yoxdur?{' '}
-            <Link href={ROUTES.register} className="text-[#054752] font-semibold hover:underline">Qeydiyyatdan keçin</Link>
+            {copy.auth.noAccount}{' '}
+            <Link href={ROUTES.register} className="text-[#054752] font-semibold hover:underline">{copy.auth.registerLink}</Link>
           </p>
         </div>
       </div>

@@ -11,15 +11,44 @@ import { useChat } from '@/hooks/useChat';
 import { messagesService } from '@/services';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
+import { I18N } from '@/lib/i18n';
+
+const CHAT_PAGE_I18N = {
+  az: {
+    statusOnline: 'Onlayn',
+    statusOffline: 'Bağlantı kəsilib',
+    noMessages: 'Hələ mesaj yoxdur',
+    chatInstructions: 'Sürücü və ya sərnişinlərlə burada danışa bilərsiniz.',
+    userFallback: 'İstifadəçi',
+  },
+  ru: {
+    statusOnline: 'Онлайн',
+    statusOffline: 'Соединение разорвано',
+    noMessages: 'Сообщений нет',
+    chatInstructions: 'Здесь вы можете общаться с водителем или другими пассажирами.',
+    userFallback: 'Пользователь',
+  },
+  en: {
+    statusOnline: 'Online',
+    statusOffline: 'Disconnected',
+    noMessages: 'No messages yet',
+    chatInstructions: 'You can communicate with the driver or other passengers here.',
+    userFallback: 'User',
+  },
+};
 
 export default function ChatPage() {
   const { id: rideId } = useParams() as { id: string };
   const router = useRouter();
   const currentUser = useAppStore((s) => s.currentUser);
+  const language = useAppStore((s) => s.language);
   const { messages, setMessages, isConnected } = useChat(rideId);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const copy = I18N[language].chat;
+  const localCopy = CHAT_PAGE_I18N[language] || CHAT_PAGE_I18N.en;
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -75,11 +104,11 @@ export default function ChatPage() {
             <Icon name="arrow-left" size={20} />
           </button>
           <div>
-            <h1 className="text-lg font-bold text-text">Söhbət</h1>
+            <h1 className="text-lg font-bold text-text">{copy.title}</h1>
             <div className="flex items-center gap-1.5 text-xs">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-text-secondary">
-                {isConnected ? 'Onlayn' : 'Bağlantı kəsilib'}
+                {isConnected ? localCopy.statusOnline : localCopy.statusOffline}
               </span>
             </div>
           </div>
@@ -93,9 +122,9 @@ export default function ChatPage() {
             {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-text-muted opacity-50">
                 <Icon name="message-square" size={48} className="mb-2" />
-                <p>Hələ mesaj yoxdur</p>
+                <p>{localCopy.noMessages}</p>
                 <p className="text-xs text-center px-8 mt-1">
-                  Sürücü və ya sərnişinlərlə burada danışa bilərsiniz.
+                  {localCopy.chatInstructions}
                 </p>
               </div>
             ) : (
@@ -108,7 +137,7 @@ export default function ChatPage() {
                   >
                     {!isMe && (
                       <span className="text-[10px] text-text-muted mb-0.5 ml-2 font-medium">
-                        {msg.sender_name || 'İstifadəçi'}
+                        {msg.sender_name || localCopy.userFallback}
                       </span>
                     )}
                     <div 
@@ -137,7 +166,7 @@ export default function ChatPage() {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Mesajınızı yazın..."
+              placeholder={copy.placeholder}
               className="flex-1 px-4 py-2 rounded-full bg-bg border border-border focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all text-sm"
             />
             <Button 

@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
@@ -25,11 +26,12 @@ from app.domains.ai.router import router as ai_router
 # Setup logging
 setup_logging()
 
-app = FastAPI(title="Yolustu API")
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     manager.loop = asyncio.get_running_loop()
+    yield
+
+app = FastAPI(title="Yolustu API", lifespan=lifespan)
 
 # Mount uploads directory
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)

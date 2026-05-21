@@ -10,11 +10,15 @@ import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { I18N } from '@/lib/i18n';
 
 export default function BookingsPage() {
   const router = useRouter();
-  const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, lastError, clearError } = useAppStore();
+  const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, lastError, clearError, language } = useAppStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+
+  const copy = I18N[language].bookings;
+  const common = I18N[language].common;
 
   React.useEffect(() => {
     fetchBookings();
@@ -26,13 +30,13 @@ export default function BookingsPage() {
   const current = tab === 'upcoming' ? upcoming : past;
 
   return (
-    <WebLayout title="Rezervlərim">
+    <WebLayout title={copy.title}>
       <ProtectedRoute>
         {lastError && (
           <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
             <div className="flex items-center justify-between gap-3">
               <span>{lastError}</span>
-              <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+              <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">{common.close}</button>
             </div>
           </div>
         )}
@@ -46,7 +50,7 @@ export default function BookingsPage() {
                 tab === item ? 'bg-white text-brand-600 shadow-sm' : 'text-text-muted',
               )}
             >
-              {item === 'upcoming' ? 'Gələn' : 'Keçmiş'}
+              {item === 'upcoming' ? copy.upcomingTab : copy.pastTab}
             </button>
           ))}
         </div>
@@ -69,7 +73,7 @@ export default function BookingsPage() {
                       window.location.href = res.checkout_url;
                     } catch (error) {
                       console.error('Payment start failed', error);
-                      alert('Ödənişə başlamaq mümkün olmadı.');
+                      alert(copy.paymentFail);
                     }
                   }}
                 />
@@ -79,8 +83,8 @@ export default function BookingsPage() {
         ) : (
           <EmptyState
             icon={<Icon name="calendar-check" size={28} />}
-            title={tab === 'upcoming' ? 'Gələn rezerv yoxdur' : 'Keçmiş rezerv yoxdur'}
-            description="Gediş axtarın və ilk rezervinizi edin"
+            title={tab === 'upcoming' ? copy.emptyUpcoming : copy.emptyPast}
+            description={copy.searchAction}
           />
         )}
       </ProtectedRoute>

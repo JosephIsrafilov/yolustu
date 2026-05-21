@@ -9,10 +9,14 @@ import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
+import { I18N } from '@/lib/i18n';
 
 export default function RegisterPage() {
   const router = useRouter();
   const register = useAppStore((s) => s.register);
+  const language = useAppStore((s) => s.language);
+  const copy = I18N[language];
+
   const [form, setForm] = useState({ fullName: '', phone: '', password: '', confirm: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
@@ -20,14 +24,14 @@ export default function RegisterPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.fullName.trim()) e.fullName = 'Ad tələb olunur';
+    if (!form.fullName.trim()) e.fullName = copy.auth.fullNameError;
     if (!form.phone.trim()) {
-      e.phone = 'Telefon tələb olunur';
+      e.phone = copy.auth.phoneError;
     } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ''))) {
-      e.phone = 'Düzgün telefon nömrəsi daxil edin';
+      e.phone = language === 'az' ? 'Düzgün telefon nömrəsi daxil edin' : language === 'ru' ? 'Введите правильный номер телефона' : 'Enter a valid phone number';
     }
-    if (form.password.length < 6) e.password = 'Ən azı 6 simvol';
-    if (form.password !== form.confirm) e.confirm = 'Şifrələr uyğun gəlmir';
+    if (form.password.length < 6) e.password = language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters';
+    if (form.password !== form.confirm) e.confirm = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -45,14 +49,13 @@ export default function RegisterPage() {
       });
       setLoading(false);
       if (ok) {
-        
         router.push(`/auth/verify?phone=${encodeURIComponent(form.phone)}`);
       } else {
-        setSubmitError(useAppStore.getState().lastError || 'Xəta baş verdi');
+        setSubmitError(useAppStore.getState().lastError || copy.common.error);
       }
     } catch {
       setLoading(false);
-      setSubmitError('Xəta baş verdi. Zəhmət olmasa yenidən yoxlayın.');
+      setSubmitError(copy.common.error);
     }
   };
 
@@ -62,10 +65,10 @@ export default function RegisterPage() {
   };
 
   const fields: { key: string; label: string; icon: IconName; placeholder: string; type: string }[] = [
-    { key: 'fullName', label: 'Ad və Soyad', icon: 'user', placeholder: 'Məs: Elvin Məmmədov', type: 'text' },
-    { key: 'phone', label: 'Telefon', icon: 'phone', placeholder: '+994501234567', type: 'tel' },
-    { key: 'password', label: 'Şifrə', icon: 'lock', placeholder: 'Ən azı 6 simvol', type: 'password' },
-    { key: 'confirm', label: 'Şifrəni təsdiqləyin', icon: 'lock', placeholder: 'Təkrar daxil edin', type: 'password' },
+    { key: 'fullName', label: copy.auth.fullNameLabel, icon: 'user', placeholder: copy.auth.fullNamePlaceholder, type: 'text' },
+    { key: 'phone', label: copy.auth.phoneLabel, icon: 'phone', placeholder: copy.auth.phonePlaceholder, type: 'tel' },
+    { key: 'password', label: copy.auth.passwordLabel, icon: 'lock', placeholder: language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters', type: 'password' },
+    { key: 'confirm', label: language === 'az' ? 'Şifrəni təsdiqləyin' : language === 'ru' ? 'Подтвердите пароль' : 'Confirm password', icon: 'lock', placeholder: language === 'az' ? 'Təkrar daxil edin' : language === 'ru' ? 'Повторите пароль' : 'Confirm password', type: 'password' },
   ];
 
   return (
@@ -76,8 +79,8 @@ export default function RegisterPage() {
           <div className="text-center mb-6">
             <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
           </div>
-          <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">Qeydiyyat</h1>
-          <p className="text-[14px] text-[#40484a] text-center mb-6">Hesab yaradın və gedişlərə qoşulun</p>
+          <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.registerTitle}</h1>
+          <p className="text-[14px] text-[#40484a] text-center mb-6">{language === 'az' ? 'Hesab yaradın və gedişlərə qoşulun' : language === 'ru' ? 'Создайте аккаунт и присоединяйтесь к поездкам' : 'Create an account and join rides'}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {fields.map((f) => (
@@ -104,13 +107,13 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
-              {loading ? 'Yüklənir...' : 'Qeydiyyatdan keç'}
+              {loading ? copy.auth.registering : copy.auth.registerBtn}
             </Button>
           </form>
 
           <p className="text-[14px] text-[#40484a] text-center mt-6">
-            Artıq hesabınız var?{' '}
-            <Link href={ROUTES.login} className="text-[#054752] font-semibold hover:underline">Daxil olun</Link>
+            {copy.auth.hasAccount}{' '}
+            <Link href={ROUTES.login} className="text-[#054752] font-semibold hover:underline">{copy.auth.loginLink}</Link>
           </p>
         </div>
       </div>

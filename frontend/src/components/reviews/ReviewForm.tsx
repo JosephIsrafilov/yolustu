@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
+import { useAppStore } from '@/store/useAppStore';
+import { I18N } from '@/lib/i18n';
 
 interface ReviewFormProps {
   onSubmit: (data: { rating: number; comment: string }) => void;
@@ -13,6 +15,15 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
+  const { language } = useAppStore();
+
+  const copy = I18N[language].reviews;
+
+  const starSelectError = {
+    az: 'Ulduz seçin',
+    ru: 'Выберите оценку',
+    en: 'Select stars',
+  }[language] || 'Select stars';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +33,8 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {}
       <div>
-        <label className="text-sm font-medium text-text mb-2 block">Qiymətləndirmə</label>
+        <label className="text-sm font-medium text-text mb-2 block">{copy.ratingLabel}</label>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -49,24 +59,23 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
           ))}
         </div>
         {rating === 0 && (
-          <p className="text-xs text-text-muted mt-1">Ulduz seçin</p>
+          <p className="text-xs text-text-muted mt-1">{starSelectError}</p>
         )}
       </div>
 
-      {}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-text">Şərh (ixtiyari)</label>
+        <label className="text-sm font-medium text-text">{copy.commentLabel}</label>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={3}
-          placeholder="Gediş haqqında nə düşünürsünüz?"
+          placeholder={copy.commentPlaceholder}
           className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
         />
       </div>
 
       <Button type="submit" fullWidth disabled={rating === 0} loading={loading}>
-        Rəy göndər
+        {copy.submitBtn}
       </Button>
     </form>
   );

@@ -10,12 +10,12 @@ interface IconProps {
 
 export type IconName =
   | 'search' | 'search-x' | 'menu' | 'x' | 'log-out' | 'arrow-left' | 'arrow-right'
-  | 'chevron-right' | 'map-pin' | 'calendar' | 'calendar-check' | 'users' | 'user'
+  | 'chevron-right' | 'chevron-down' | 'chevron-up' | 'map-pin' | 'calendar' | 'calendar-check' | 'users' | 'user'
   | 'user-circle' | 'clock' | 'star' | 'car' | 'shield' | 'shield-check' | 'shield-off'
   | 'shield-x' | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
-  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell';
+  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell' | 'sparkles';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -26,6 +26,8 @@ const PATHS: Record<IconName, string> = {
   'arrow-left': 'M19 12H5M12 19l-7-7 7-7',
   'arrow-right': 'M5 12h14M12 5l7 7-7 7',
   'chevron-right': 'M9 18l6-6-6-6',
+  'chevron-down': 'M6 9l6 6 6-6',
+  'chevron-up': 'M18 15l-6-6-6 6',
   'map-pin': 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 13a3 3 0 100-6 3 3 0 000 6z',
   'calendar': 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z',
   'calendar-check': 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM9 16l2 2 4-4',
@@ -67,6 +69,7 @@ const PATHS: Record<IconName, string> = {
   'upload': 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
   'credit-card': 'M2 7h20M2 11h20M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2zM6 15h4',
   'bell': 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
+  'sparkles': 'M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z M20 3v4 M22 5h-4 M4 17v2 M5 18H3'
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

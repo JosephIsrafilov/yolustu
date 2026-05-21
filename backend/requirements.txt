@@ -14,3 +14,5 @@ python-multipart
 redis
 stripe
 openai
+httpx
+

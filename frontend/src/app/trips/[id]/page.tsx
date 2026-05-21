@@ -17,15 +17,94 @@ import Icon from '@/components/ui/Icon';
 import { MapContainer, TripRoute } from '@/components/ui/Map';
 import { tripsService } from '@/services';
 import type { Trip } from '@/types';
+import { I18N } from '@/lib/i18n';
+
+const TRIP_DETAILS_I18N = {
+  az: {
+    tripTitle: 'Gediş',
+    tripNotFound: 'Gediş tapılmadı',
+    tripDetailsTitle: 'Gediş detalları',
+    dateLabel: 'Tarix',
+    seatsLabel: 'Yerlər',
+    availableLabel: 'boş',
+    vehicleLabel: 'Maşın',
+    driverReviewsTitle: 'Sürücü rəyləri',
+    pricePerSeatLabel: 'Yer başına qiymət',
+    ridesLabel: (count: number) => `${count} gediş`,
+    ownTripWarning: 'Öz gedişinizə rezerv edə bilməzsiniz.',
+    goToChatBtn: 'Söhbətə keç',
+    bookingRequestTitle: 'Rezerv sorğusu',
+    bookingRequestDesc: 'Sürücü təsdiqlədikdən sonra rezerv aktiv olacaq.',
+    howManySeats: 'Neçə yer?',
+    selectedSeats: 'Seçilən yerlər',
+    perSeat: 'Yer başına',
+    totalLabel: 'Cəmi',
+    warningOffline: 'Ödənişi və razılaşmanı platformadan kənarda etməyin.',
+    submitRequestBtn: 'Rezerv sorğusu göndər',
+    alreadyBooked: 'Bu gediş üçün artıq sorğu göndərmisiniz.',
+    bookedSuccess: 'Sorğu göndərildi! Yönləndirilirsiniz...',
+  },
+  ru: {
+    tripTitle: 'Поездка',
+    tripNotFound: 'Поездка не найдена',
+    tripDetailsTitle: 'Детали поездки',
+    dateLabel: 'Дата',
+    seatsLabel: 'Места',
+    availableLabel: 'свободно',
+    vehicleLabel: 'Машина',
+    driverReviewsTitle: 'Отзывы о водителе',
+    pricePerSeatLabel: 'Цена за место',
+    ridesLabel: (count: number) => `${count} поездок`,
+    ownTripWarning: 'Вы не можете забронировать собственную поездку.',
+    goToChatBtn: 'Перейти к чату',
+    bookingRequestTitle: 'Запрос бронирования',
+    bookingRequestDesc: 'Бронирование станет активным после подтверждения водителем.',
+    howManySeats: 'Сколько мест?',
+    selectedSeats: 'Выбранные места',
+    perSeat: 'За место',
+    totalLabel: 'Итого',
+    warningOffline: 'Не производите оплату и договоренности вне платформы.',
+    submitRequestBtn: 'Отправить запрос',
+    alreadyBooked: 'Вы уже отправили запрос на эту поездку.',
+    bookedSuccess: 'Запрос отправлен! Перенаправление...',
+  },
+  en: {
+    tripTitle: 'Trip',
+    tripNotFound: 'Trip not found',
+    tripDetailsTitle: 'Trip Details',
+    dateLabel: 'Date',
+    seatsLabel: 'Seats',
+    availableLabel: 'available',
+    vehicleLabel: 'Vehicle',
+    driverReviewsTitle: 'Driver reviews',
+    pricePerSeatLabel: 'Price per seat',
+    ridesLabel: (count: number) => `${count} rides`,
+    ownTripWarning: 'You cannot book your own trip.',
+    goToChatBtn: 'Go to chat',
+    bookingRequestTitle: 'Booking request',
+    bookingRequestDesc: 'Booking will be active after driver confirmation.',
+    howManySeats: 'How many seats?',
+    selectedSeats: 'Selected seats',
+    perSeat: 'Per seat',
+    totalLabel: 'Total',
+    warningOffline: 'Do not make payments or agreements outside the platform.',
+    submitRequestBtn: 'Send booking request',
+    alreadyBooked: 'You have already sent a request for this trip.',
+    bookedSuccess: 'Request sent! Redirecting...',
+  },
+};
 
 export default function TripDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated, lastError, clearError } = useAppStore();
+  const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated, lastError, clearError, language } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
   const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
   const tripId = Array.isArray(id) ? id[0] : id;
+
+  const copy = TRIP_DETAILS_I18N[language] || TRIP_DETAILS_I18N.en;
+  const common = I18N[language].common;
 
   React.useEffect(() => {
     if (!tripId || trips.some((t) => t.id === tripId)) return;
@@ -37,7 +116,7 @@ export default function TripDetailsPage() {
   }, [tripId, trips]);
 
   const trip = trips.find((t) => t.id === tripId) ?? loadedTrip;
-  if (!trip) return <WebLayout title="Gediş" showBack><EmptyState title="Gediş tapılmadı" /></WebLayout>;
+  if (!trip) return <WebLayout title={copy.tripTitle} showBack><EmptyState title={copy.tripNotFound} /></WebLayout>;
 
   const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
   const tripReviews = reviews.filter((r) => r.targetUserId === trip.driverId);
@@ -53,7 +132,7 @@ export default function TripDetailsPage() {
   };
 
   return (
-    <WebLayout title="Gediş detalları" showBack>
+    <WebLayout title={copy.tripDetailsTitle} showBack>
       <div className="grid lg:grid-cols-3 gap-6 stagger-children">
         <div className="lg:col-span-2 flex flex-col gap-4">
           <Card><RouteTimeline departure={trip.departureCity} arrival={trip.arrivalCity} meetingPoint={trip.meetingPoint} dropoffPoint={trip.dropoffPoint} /></Card>
@@ -73,23 +152,23 @@ export default function TripDetailsPage() {
           )}
           <Card>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Tarix</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>
-              <div><Icon name="users" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Yerlər</p><p className="text-sm font-semibold">{trip.seatsAvailable}/{trip.seatsTotal}</p><p className="text-xs text-text-muted">boş</p></div>
-              <div><Icon name="car" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">Maşın</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
+              <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.dateLabel}</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>
+              <div><Icon name="users" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.seatsLabel}</p><p className="text-sm font-semibold">{trip.seatsAvailable}/{trip.seatsTotal}</p><p className="text-xs text-text-muted">{copy.availableLabel}</p></div>
+              <div><Icon name="car" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.vehicleLabel}</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
             </div>
           </Card>
           {trip.comment && (<Card padding="md"><div className="flex items-start gap-3"><Icon name="message-square" size={16} className="text-text-muted mt-0.5 shrink-0" /><p className="text-sm text-text-secondary">{trip.comment}</p></div></Card>)}
           <StatusBadge status={trip.status} type="trip" />
-          {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">Sürücü rəyləri</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
+          {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.driverReviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         </div>
         <div className="lg:col-span-1">
           <div className="sticky top-24 flex flex-col gap-4">
-            <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">Yer başına qiymət</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
+            <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">{copy.pricePerSeatLabel}</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
             {lastError && (
               <Card padding="sm" className="bg-[#fff4f2] border-[#ffdad6]">
                 <div className="flex items-center justify-between gap-3 text-sm font-medium text-[#93000a]">
                   <span>{lastError}</span>
-                  <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+                  <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">{common.close}</button>
                 </div>
               </Card>
             )}
@@ -110,14 +189,14 @@ export default function TripDetailsPage() {
                         <Icon name="star" size={11} className="text-accent-500" fill="currentColor" />
                         {formatRating(driver.rating)}
                       </span>
-                      <span>{driver.totalTrips} gediş</span>
+                      <span>{copy.ridesLabel(driver.totalTrips)}</span>
                       <span>{driver.city}</span>
                     </div>
                   </div>
                 </div>
               </Card>
             )}
-            {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />Öz gedişinizə rezerv edə bilməzsiniz.</div></Card>)}
+            {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />{copy.ownTripWarning}</div></Card>)}
             
             {(isOwnTrip || existingBooking?.status === 'accepted') && (
               <Button 
@@ -127,31 +206,31 @@ export default function TripDetailsPage() {
                 className="flex items-center justify-center gap-2"
               >
                 <Icon name="message-square" size={18} />
-                Söhbətə keç
+                {copy.goToChatBtn}
               </Button>
             )}
             
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
               <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
                 <div>
-                  <p className="text-base font-bold text-text">Rezerv sorğusu</p>
-                  <p className="text-xs text-text-muted">Sürücü təsdiqlədikdən sonra rezerv aktiv olacaq.</p>
+                  <p className="text-base font-bold text-text">{copy.bookingRequestTitle}</p>
+                  <p className="text-xs text-text-muted">{copy.bookingRequestDesc}</p>
                 </div>
-                <div className="flex items-center justify-between"><span className="text-sm font-medium">Neçə yer?</span><div className="flex items-center gap-2"><button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">−</button><span className="w-8 text-center font-bold">{seats}</span><button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button></div></div>
+                <div className="flex items-center justify-between"><span className="text-sm font-medium">{copy.howManySeats}</span><div className="flex items-center gap-2"><button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">−</button><span className="w-8 text-center font-bold">{seats}</span><button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button></div></div>
                 <div className="rounded-xl bg-surface-muted p-3 text-sm">
-                  <div className="flex items-center justify-between"><span className="text-text-muted">Seçilən yerlər</span><span className="font-semibold">{seats}</span></div>
-                  <div className="mt-2 flex items-center justify-between"><span className="text-text-muted">Yer başına</span><span className="font-semibold">{formatPrice(trip.pricePerSeat)}</span></div>
-                  <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">Cəmi</span><span className="text-lg font-bold text-brand-600">{formatPrice(trip.pricePerSeat * seats)}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-text-muted">{copy.selectedSeats}</span><span className="font-semibold">{seats}</span></div>
+                  <div className="mt-2 flex items-center justify-between"><span className="text-text-muted">{copy.perSeat}</span><span className="font-semibold">{formatPrice(trip.pricePerSeat)}</span></div>
+                  <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">{copy.totalLabel}</span><span className="text-lg font-bold text-brand-600">{formatPrice(trip.pricePerSeat * seats)}</span></div>
                 </div>
                 <div className="flex items-start gap-2 rounded-xl bg-[#fff8e8] p-3 text-xs leading-5 text-[#6b4b00]">
                   <Icon name="shield-check" size={16} className="mt-0.5 shrink-0" />
-                  <span>Ödənişi və razılaşmanı platformadan kənarda etməyin.</span>
+                  <span>{copy.warningOffline}</span>
                 </div>
-                <Button fullWidth size="lg" onClick={handleBook}>Rezerv sorğusu göndər</Button>
+                <Button fullWidth size="lg" onClick={handleBook}>{copy.submitRequestBtn}</Button>
               </div></Card>
             )}
-            {existingBooking && (<Card padding="sm" className="bg-brand-50 border-brand-200"><p className="text-sm text-brand-700 font-medium">Bu gediş üçün artıq sorğu göndərmisiniz.</p></Card>)}
-            {booked && (<Card padding="sm" className="bg-green-50 border-green-200"><p className="text-sm text-green-700 font-medium">Sorğu göndərildi! Yönləndirilirsiniz...</p></Card>)}
+            {existingBooking && (<Card padding="sm" className="bg-brand-50 border-brand-200"><p className="text-sm text-brand-700 font-medium">{copy.alreadyBooked}</p></Card>)}
+            {booked && (<Card padding="sm" className="bg-green-50 border-green-200"><p className="text-sm text-green-700 font-medium">{copy.bookedSuccess}</p></Card>)}
           </div>
         </div>
       </div>

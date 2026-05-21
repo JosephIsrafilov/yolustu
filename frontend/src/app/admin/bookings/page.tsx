@@ -10,8 +10,70 @@ import { adminService } from '@/services';
 
 const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'completed'];
 
+const BOOKINGS_I18N = {
+  az: {
+    title: 'Rezervlər',
+    locale: 'az-AZ',
+    statuses: {
+      all: 'Hamısı',
+      pending: 'Gözləmədə',
+      accepted: 'Qəbul edildi',
+      rejected: 'Rədd edildi',
+      cancelled: 'Ləğv edildi',
+      completed: 'Tamamlandı',
+    },
+    table: {
+      passenger: 'Sərnişin',
+      route: 'Marşrut',
+      seats: 'Yerlər',
+      status: 'Status',
+      date: 'Tarix',
+    }
+  },
+  ru: {
+    title: 'Бронирования',
+    locale: 'ru-RU',
+    statuses: {
+      all: 'Все',
+      pending: 'В ожидании',
+      accepted: 'Принято',
+      rejected: 'Отклонено',
+      cancelled: 'Отменено',
+      completed: 'Завершено',
+    },
+    table: {
+      passenger: 'Пассажир',
+      route: 'Маршрут',
+      seats: 'Места',
+      status: 'Статус',
+      date: 'Дата',
+    }
+  },
+  en: {
+    title: 'Bookings',
+    locale: 'en-US',
+    statuses: {
+      all: 'All',
+      pending: 'Pending',
+      accepted: 'Accepted',
+      rejected: 'Rejected',
+      cancelled: 'Cancelled',
+      completed: 'Completed',
+    },
+    table: {
+      passenger: 'Passenger',
+      route: 'Route',
+      seats: 'Seats',
+      status: 'Status',
+      date: 'Date',
+    }
+  }
+} as const;
+
 export default function AdminBookingsPage() {
   const { trips, users } = useAppStore();
+  const language = useAppStore((s) => s.language);
+  const t = BOOKINGS_I18N[language];
   const [bookings, setBookings] = React.useState<Booking[]>([]);
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
 
@@ -27,7 +89,7 @@ export default function AdminBookingsPage() {
 
   return (
     <AdminLayout>
-      <h1 className="mb-4 text-2xl font-bold text-text">Rezervlər</h1>
+      <h1 className="mb-4 text-2xl font-bold text-text">{t.title}</h1>
 
       <div className="mb-4 flex flex-wrap gap-1">
         {STATUSES.map((status) => (
@@ -39,7 +101,7 @@ export default function AdminBookingsPage() {
               filter === status ? 'bg-brand-600 text-white' : 'bg-surface-muted text-text-muted hover:bg-surface-dim',
             )}
           >
-            {status === 'all' ? 'Hamısı' : status}
+            {t.statuses[status]}
           </button>
         ))}
       </div>
@@ -49,11 +111,11 @@ export default function AdminBookingsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-dim">
-                <th className="px-4 py-3 text-left font-medium text-text-secondary">Sərnişin</th>
-                <th className="px-4 py-3 text-left font-medium text-text-secondary">Marşrut</th>
-                <th className="px-4 py-3 text-left font-medium text-text-secondary">Yerlər</th>
-                <th className="px-4 py-3 text-left font-medium text-text-secondary">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-text-secondary">Tarix</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">{t.table.passenger}</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">{t.table.route}</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">{t.table.seats}</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">{t.table.status}</th>
+                <th className="px-4 py-3 text-left font-medium text-text-secondary">{t.table.date}</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +128,7 @@ export default function AdminBookingsPage() {
                     <td className="px-4 py-3">{trip ? `${trip.departureCity} → ${trip.arrivalCity}` : '—'}</td>
                     <td className="px-4 py-3">{booking.seatsRequested}</td>
                     <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
-                    <td className="px-4 py-3 text-text-muted">{new Date(booking.createdAt).toLocaleDateString('az-AZ')}</td>
+                    <td className="px-4 py-3 text-text-muted">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
                   </tr>
                 );
               })}
@@ -77,3 +139,4 @@ export default function AdminBookingsPage() {
     </AdminLayout>
   );
 }
+

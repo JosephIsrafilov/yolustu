@@ -8,8 +8,52 @@ import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import { useAppStore } from '@/store/useAppStore';
 
+const VERIFICATIONS_I18N = {
+  az: {
+    title: 'Sürücü Təsdiqləmələri',
+    refresh: 'Yenilə',
+    confirmApprove: 'Bu istifadəçini təsdiqləmək istədiyinizə əminsiniz?',
+    confirmReject: 'Bu istifadəçini rədd etmək istədiyinizə əminsiniz?',
+    empty: 'Hal-hazırda gözləyən təsdiqləmə sorğusu yoxdur.',
+    registered: 'Qeydiyyat:',
+    viewDoc: 'Sənədə bax',
+    noDoc: 'Sənəd yüklənməyib',
+    reject: 'Rədd et',
+    approve: 'Təsdiqlə',
+    locale: 'az-AZ',
+  },
+  ru: {
+    title: 'Подтверждение водителей',
+    refresh: 'Обновить',
+    confirmApprove: 'Вы уверены, что хотите подтвердить этого пользователя?',
+    confirmReject: 'Вы уверены, что хотите отклонить этого пользователя?',
+    empty: 'В настоящее время нет ожидающих запросов на подтверждение.',
+    registered: 'Регистрация:',
+    viewDoc: 'Посмотреть документ',
+    noDoc: 'Документ не загружен',
+    reject: 'Отклонить',
+    approve: 'Подтвердить',
+    locale: 'ru-RU',
+  },
+  en: {
+    title: 'Driver Verifications',
+    refresh: 'Refresh',
+    confirmApprove: 'Are you sure you want to approve this user?',
+    confirmReject: 'Are you sure you want to reject this user?',
+    empty: 'There are currently no pending verification requests.',
+    registered: 'Registered:',
+    viewDoc: 'View Document',
+    noDoc: 'No document uploaded',
+    reject: 'Reject',
+    approve: 'Approve',
+    locale: 'en-US',
+  }
+} as const;
+
 export default function AdminVerificationsPage() {
   const { pendingVerifications, fetchPendingVerifications, approveVerification, rejectVerification } = useAppStore();
+  const language = useAppStore((s) => s.language);
+  const t = VERIFICATIONS_I18N[language];
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -17,13 +61,13 @@ export default function AdminVerificationsPage() {
   }, [fetchPendingVerifications]);
 
   const handleApprove = async (userId: string) => {
-    if (confirm('Bu istifadəçini təsdiqləmək istədiyinizə əminsiniz?')) {
+    if (confirm(t.confirmApprove)) {
       await approveVerification(userId);
     }
   };
 
   const handleReject = async (userId: string) => {
-    if (confirm('Bu istifadəçini rədd etmək istədiyinizə əminsiniz?')) {
+    if (confirm(t.confirmReject)) {
       await rejectVerification(userId);
     }
   };
@@ -31,9 +75,9 @@ export default function AdminVerificationsPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Sürücü Təsdiqləmələri</h1>
+        <h1 className="text-2xl font-bold text-text">{t.title}</h1>
         <Button variant="outline" size="sm" onClick={() => fetchPendingVerifications()}>
-          <Icon name="refresh-cw" size={16} className="mr-2" /> Yenilə
+          <Icon name="refresh-cw" size={16} className="mr-2" /> {t.refresh}
         </Button>
       </div>
 
@@ -46,7 +90,7 @@ export default function AdminVerificationsPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-text-muted">
             <Icon name="shield-check" size={24} />
           </div>
-          <p className="text-text-secondary">Hal-hazırda gözləyən təsdiqləmə sorğusu yoxdur.</p>
+          <p className="text-text-secondary">{t.empty}</p>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -70,7 +114,9 @@ export default function AdminVerificationsPage() {
                   <div>
                     <h3 className="font-bold text-text">{user.fullName}</h3>
                     <p className="text-sm text-text-muted">{user.phone}</p>
-                    <p className="text-xs text-text-muted">Qeydiyyat: {new Date(user.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-text-muted">
+                      {t.registered} {new Date(user.createdAt).toLocaleDateString(t.locale)}
+                    </p>
                   </div>
                 </div>
 
@@ -82,19 +128,19 @@ export default function AdminVerificationsPage() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 rounded-lg bg-surface-muted px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors"
                     >
-                      <Icon name="file-text" size={16} /> Sənədə bax
+                      <Icon name="file-text" size={16} /> {t.viewDoc}
                     </a>
                   ) : (
-                    <span className="text-xs text-danger-500 italic">Sənəd yüklənməyib</span>
+                    <span className="text-xs text-danger-500 italic">{t.noDoc}</span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button variant="danger" size="sm" onClick={() => handleReject(user.id)}>
-                    Rədd et
+                    {t.reject}
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => handleApprove(user.id)}>
-                    Təsdiqlə
+                    {t.approve}
                   </Button>
                 </div>
               </div>
@@ -105,3 +151,4 @@ export default function AdminVerificationsPage() {
     </AdminLayout>
   );
 }
+

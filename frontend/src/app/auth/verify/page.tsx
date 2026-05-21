@@ -9,6 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import { toApiError } from '@/services/api-error';
+import { I18N } from '@/lib/i18n';
 
 function VerifyContent() {
   const router = useRouter();
@@ -17,6 +18,8 @@ function VerifyContent() {
   
   const verifyAccount = useAppStore((s) => s.verifyAccount);
   const requestOtp = useAppStore((s) => s.requestOtp);
+  const language = useAppStore((s) => s.language);
+  const copy = I18N[language];
   
   const [otp, setOtp] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,8 +29,8 @@ function VerifyContent() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!otp) e.otp = 'Kodu daxil edin';
-    if (otp && otp.length !== 6) e.otp = 'Kod 6 rəqəmli olmalıdır';
+    if (!otp) e.otp = copy.auth.otpError;
+    if (otp && otp.length !== 6) e.otp = language === 'az' ? 'Kod 6 rəqəmli olmalıdır' : language === 'ru' ? 'Код должен быть 6-значным' : 'Code must be 6 digits';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -41,15 +44,15 @@ function VerifyContent() {
       const ok = await verifyAccount(phone, otp);
       setLoading(false);
       if (ok) {
-        setSuccessMessage('Hesabınız təsdiqləndi! İndi daxil ola bilərsiniz.');
+        setSuccessMessage(language === 'az' ? 'Hesabınız təsdiqləndi! İndi daxil ola bilərsiniz.' : language === 'ru' ? 'Аккаунт подтвержден! Теперь вы можете войти.' : 'Account verified! You can now log in.');
         setTimeout(() => router.push(ROUTES.login), 2000);
         return;
       }
-      setSubmitError(useAppStore.getState().lastError || 'Kod yanlışdır.');
+      setSubmitError(useAppStore.getState().lastError || copy.auth.otpError);
     } catch (err) {
       const error = toApiError(err);
       setLoading(false);
-      setSubmitError(error.message || 'Xəta baş verdi');
+      setSubmitError(error.message || copy.common.error);
     }
   };
 
@@ -61,11 +64,11 @@ function VerifyContent() {
       const ok = await requestOtp(phone);
       setLoading(false);
       if (ok) {
-        setSuccessMessage('Yeni kod göndərildi.');
+        setSuccessMessage(language === 'az' ? 'Yeni kod göndərildi.' : language === 'ru' ? 'Новый код отправлен.' : 'New code sent.');
       }
     } catch {
       setLoading(false);
-      setSubmitError('Kodu təkrar göndərmək mümkün olmadı.');
+      setSubmitError(language === 'az' ? 'Kodu təkrar göndərmək mümkün olmadı.' : language === 'ru' ? 'Не удалось отправить код повторно.' : 'Failed to resend code.');
     }
   };
 
@@ -75,19 +78,19 @@ function VerifyContent() {
         <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
       </div>
       
-      <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">Hesabı təsdiqlə</h1>
+      <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.verifyTitle}</h1>
       <p className="text-[14px] text-[#40484a] text-center mb-6">
-        {phone ? `${phone} nömrəsinə göndərilən 6 rəqəmli kodu daxil edin` : 'Nömrənizə göndərilən kodu daxil edin'}
+        {phone ? (language === 'az' ? `${phone} nömrəsinə göndərilən 6 rəqəmli kodu daxil edin` : language === 'ru' ? `Введите 6-значный код, отправленный на номер ${phone}` : `Enter the 6-digit code sent to ${phone}`) : copy.auth.verifySubtitle}
       </p>
 
       <form onSubmit={handleVerify} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-[14px] font-semibold text-[#011f23]">Təsdiq kodu</label>
+          <label className="text-[14px] font-semibold text-[#011f23]">{language === 'az' ? 'Təsdiq kodu' : language === 'ru' ? 'Код подтверждения' : 'Verification code'}</label>
           <div className="relative">
             <Icon name="lock" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
             <input 
               type="text" 
-              placeholder="000000" 
+              placeholder={copy.auth.verifyPlaceholder} 
               value={otp}
               maxLength={6}
               onChange={(e) => { 
@@ -113,7 +116,7 @@ function VerifyContent() {
         )}
 
         <Button type="submit" size="lg" fullWidth loading={loading} className="text-[16px]">
-          Təsdiqlə
+          {loading ? copy.auth.verifying : copy.auth.verifyBtn}
         </Button>
         
         <button 
@@ -122,7 +125,7 @@ function VerifyContent() {
           disabled={loading}
           className="text-[14px] text-[#054752] font-medium hover:underline mt-2"
         >
-          Kodu yenidən göndər
+          {language === 'az' ? 'Kodu yenidən göndər' : language === 'ru' ? 'Отправить код еще раз' : 'Resend code'}
         </button>
       </form>
     </div>
@@ -130,11 +133,12 @@ function VerifyContent() {
 }
 
 export default function VerifyPage() {
+  const language = useAppStore((s) => s.language);
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#edfcff' }}>
       <Header />
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>{language === 'az' ? 'Yüklənir...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}</div>}>
           <VerifyContent />
         </Suspense>
       </div>

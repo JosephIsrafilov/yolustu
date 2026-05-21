@@ -7,6 +7,28 @@ import EmptyState from '@/components/ui/EmptyState';
 import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { I18N } from '@/lib/i18n';
+
+const REQUESTS_I18N = {
+  az: {
+    pendingHeading: (count: number) => `Gözləyən sorğular (${count})`,
+    pastHeading: 'Keçmiş sorğular',
+    noRequestsTitle: 'Sorğu yoxdur',
+    noRequestsDesc: 'Gedişlərinizə sorğu gəldikdə burada görünəcək',
+  },
+  ru: {
+    pendingHeading: (count: number) => `Ожидающие запросы (${count})`,
+    pastHeading: 'Прошедшие запросы',
+    noRequestsTitle: 'Запросов нет',
+    noRequestsDesc: 'Когда на ваши поездки придут запросы, они появятся здесь',
+  },
+  en: {
+    pendingHeading: (count: number) => `Pending requests (${count})`,
+    pastHeading: 'Past requests',
+    noRequestsTitle: 'No requests',
+    noRequestsDesc: 'Requests for your trips will appear here',
+  },
+};
 
 export default function BookingRequestsPage() {
   const {
@@ -19,11 +41,16 @@ export default function BookingRequestsPage() {
     fetchBookingRequests,
     lastError,
     clearError,
+    language,
   } = useAppStore();
 
   React.useEffect(() => {
     fetchBookingRequests();
   }, [fetchBookingRequests]);
+
+  const copy = I18N[language].bookings;
+  const common = I18N[language].common;
+  const localCopy = REQUESTS_I18N[language] || REQUESTS_I18N.en;
 
   const driverTrips = trips.filter((trip) => trip.driverId === currentUser?.id);
   const driverTripIds = new Set(driverTrips.map((trip) => trip.id));
@@ -48,20 +75,20 @@ export default function BookingRequestsPage() {
   };
 
   return (
-    <WebLayout title="Rezerv sorğuları" showBack>
+    <WebLayout title={copy.requestsTitle} showBack>
       <ProtectedRoute mode="driver">
         {lastError && (
           <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
             <div className="flex items-center justify-between gap-3">
               <span>{lastError}</span>
-              <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">Bağla</button>
+              <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">{common.close}</button>
             </div>
           </div>
         )}
         <div className="stagger-children">
           {pending.length > 0 && (
             <>
-              <h3 className="mb-3 text-lg font-semibold text-text">Gözləyən sorğular ({pending.length})</h3>
+              <h3 className="mb-3 text-lg font-semibold text-text">{localCopy.pendingHeading(pending.length)}</h3>
               <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {pending.map((booking) => renderRequest(booking))}
               </div>
@@ -70,7 +97,7 @@ export default function BookingRequestsPage() {
 
           {others.length > 0 && (
             <>
-              <h3 className="mb-3 text-lg font-semibold text-text">Keçmiş sorğular</h3>
+              <h3 className="mb-3 text-lg font-semibold text-text">{localCopy.pastHeading}</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {others.map((booking) => renderRequest(booking, true))}
               </div>
@@ -80,8 +107,8 @@ export default function BookingRequestsPage() {
           {requests.length === 0 && (
             <EmptyState
               icon={<Icon name="inbox" size={28} />}
-              title="Sorğu yoxdur"
-              description="Gedişlərinizə sorğu gəldikdə burada görünəcək"
+              title={localCopy.noRequestsTitle}
+              description={localCopy.noRequestsDesc}
             />
           )}
         </div>
