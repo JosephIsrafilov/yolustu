@@ -106,4 +106,8 @@ class IdentityService:
         # Use cryptographically secure random number generator for OTP
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
+        print("--- [SMS SIMULATION] ---")
+        print(f"To: {phone}")
+        print(f"Code: {otp}")
+        print("------------------------")
         return otp
