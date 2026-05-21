@@ -68,4 +68,4 @@ def get_smart_pricing_suggestion(
             reasoning=data["reasoning"]
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI pricing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="AI pricing recommendation failed to process.")
