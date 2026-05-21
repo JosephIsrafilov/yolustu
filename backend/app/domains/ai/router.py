@@ -8,12 +8,6 @@ from app.domains.identity.dependencies import CurrentUser, get_current_user
 
 router = APIRouter()
 
-# Initialize the NVIDIA NIM OpenAI client
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=settings.NVIDIA_API_KEY
-)
-
 class PricingSuggestionRequest(BaseModel):
     origin: str
     destination: str
@@ -30,6 +24,11 @@ def get_smart_pricing_suggestion(
 ):
     if not settings.NVIDIA_API_KEY:
         raise HTTPException(status_code=500, detail="NVIDIA API key is missing.")
+
+    client = OpenAI(
+        base_url="https://integrate.api.nvidia.com/v1",
+        api_key=settings.NVIDIA_API_KEY,
+    )
 
     prompt = (
         "You are an AI pricing analyst for an Azerbaijani carpooling application called Yolüstü. "
