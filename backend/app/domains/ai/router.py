@@ -73,8 +73,11 @@ async def get_smart_pricing_suggestion(
     # Load market rates
     try:
         import os
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        with open(os.path.join(base_dir, "market_rates.json"), "r", encoding="utf-8") as f:
+        with open(
+            os.path.join(base_dir, "market_rates.json"), "r", encoding="utf-8"
+        ) as f:
             market_rates = json.load(f)
     except Exception as e:
         logger.warning(f"Failed to load market rates: {e}")
@@ -82,7 +85,7 @@ async def get_smart_pricing_suggestion(
 
     def normalize_city(name: str) -> str:
         # Simple normalization for matching
-        mapping = {'ə': 'a', 'ö': 'o', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ç': 'c', 'ı': 'i'}
+        mapping = {"ə": "a", "ö": "o", "ğ": "g", "ü": "u", "ş": "s", "ç": "c", "ı": "i"}
         name = name.lower()
         for k, v in mapping.items():
             name = name.replace(k, v)
@@ -100,7 +103,7 @@ async def get_smart_pricing_suggestion(
         if k_norm == route_key or k_norm == reverse_route_key:
             baseline_price = v
             break
-            
+
     if not baseline_price and distance_km:
         # Fallback to 0.05 AZN per km for a standard trip if no market rate found
         baseline_price = int(max(distance_km * 0.05, 1))
@@ -111,7 +114,9 @@ async def get_smart_pricing_suggestion(
     )
 
     if baseline_price:
-        details += f"BASELINE MARKET PRICE FOR THIS ROUTE: {baseline_price} AZN per seat.\n"
+        details += (
+            f"BASELINE MARKET PRICE FOR THIS ROUTE: {baseline_price} AZN per seat.\n"
+        )
 
     if distance_km and duration_min:
         details += f"Driving Distance: {distance_km:.1f} km\n"
