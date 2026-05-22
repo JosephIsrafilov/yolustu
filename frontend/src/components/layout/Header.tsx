@@ -16,10 +16,9 @@ export default function Header() {
   const copy = I18N[language];
 
   const navLinks = [
-    { label: copy.header.findRide, href: ROUTES.search, match: '/search' },
+    { label: copy.header.findRide, href: ROUTES.trips, match: '/trips' },
     { label: copy.header.offerRide, href: ROUTES.createTrip, match: '/driver/create-trip' },
     ...(isAuthenticated ? [
-      { label: copy.header.trips, href: ROUTES.trips, match: '/trips' },
       { label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' },
     ] : []),
   ];

@@ -169,8 +169,8 @@ function TripsContent() {
 
           {}
           {viewMode === 'map' ? (
-            <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
-              <MapContainer>
+            <div className="h-[400px] md:h-[600px] w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
+              <MapContainer className="h-full">
                 <RideMarkers trips={filteredTrips} users={users} />
               </MapContainer>
             </div>

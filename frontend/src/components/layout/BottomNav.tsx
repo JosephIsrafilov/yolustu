@@ -3,19 +3,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Icon, { type IconName } from '@/components/ui/Icon';
+import { useAppStore } from '@/store/useAppStore';
+import { I18N } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 
 const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
-  { href: ROUTES.search, label: 'Axtar', icon: 'search' },
-  { href: ROUTES.bookings, label: 'Rezervlər', icon: 'calendar-check' },
-  { href: ROUTES.driverDashboard, label: 'Sür', icon: 'car' },
-  { href: ROUTES.profile, label: 'Profil', icon: 'user-circle' },
+  { href: ROUTES.search, label: t.header.findRide, icon: 'search' },
+  { href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' },
+  { href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' },
+  { href: ROUTES.profile, label: t.profile.title, icon: 'user-circle' },
 ];
 
 export default function BottomNav() {
-  const pathname = usePathname();
+  const { language } = useAppStore();
+  const t = I18N[language];
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl border-t border-border pb-safe">

@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
+import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 
 export default function RoleSwitch() {
   const { activeRole, switchRole } = useAppStore();
+  const { language } = useAppStore();
+  const t = I18N[language].auth;
 
   return (
     <div className="flex items-center gap-1 bg-surface-muted rounded-xl p-1">
@@ -20,7 +23,7 @@ export default function RoleSwitch() {
         )}
       >
         <Icon name="users" size={14} />
-        Sərnişin
+        {t.rolePassenger}
       </button>
       <button
         onClick={() => switchRole('driver')}
@@ -32,7 +35,7 @@ export default function RoleSwitch() {
         )}
       >
         <Icon name="car" size={14} />
-        Sürücü
+        {t.roleDriver}
       </button>
     </div>
   );

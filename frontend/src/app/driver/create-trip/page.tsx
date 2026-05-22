@@ -29,7 +29,7 @@ import { isMockDataMode } from '@/lib/env';
 import { I18N } from '@/lib/i18n';
 
 // Dynamic Zod Validation Schema
-const getValidationSchema = (hasVehicles: boolean, requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string, yearErrorMsg: string) => {
+const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string) => {
   return z.object({
     departureCity: z.string().min(1, requiredErrorMsg),
     arrivalCity: z.string().min(1, requiredErrorMsg),
@@ -39,18 +39,9 @@ const getValidationSchema = (hasVehicles: boolean, requiredErrorMsg: string, sam
     time: z.string().min(1, requiredErrorMsg),
     seatsTotal: z.number().int().min(1, seatsErrorMsg).max(4, seatsErrorMsg),
     pricePerSeat: z.number().min(0.01, priceErrorMsg),
-    carModel: z.string().min(1, requiredErrorMsg),
     comment: z.string().optional(),
     origin: z.object({ lat: z.number(), lng: z.number() }).optional(),
     destination: z.object({ lat: z.number(), lng: z.number() }).optional(),
-    vehicleId: z.string().optional(),
-    
-    // New vehicle fields if user has no vehicles
-    vehicleBrand: z.string().optional(),
-    vehicleModel: z.string().optional(),
-    vehicleYear: z.coerce.number().optional(),
-    vehicleColor: z.string().optional(),
-    vehiclePlate: z.string().optional(),
   }).superRefine((data, ctx) => {
     if (data.departureCity === data.arrivalCity && data.departureCity) {
       ctx.addIssue({
@@ -58,20 +49,6 @@ const getValidationSchema = (hasVehicles: boolean, requiredErrorMsg: string, sam
         message: sameCityErrorMsg,
         path: ['arrivalCity'],
       });
-    }
-    if (!isMockDataMode && !hasVehicles) {
-      if (!data.vehicleModel?.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehicleModel'] });
-      }
-      if (!data.vehicleColor?.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehicleColor'] });
-      }
-      if (!data.vehiclePlate?.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehiclePlate'] });
-      }
-      if (!data.vehicleYear || data.vehicleYear < 1980 || data.vehicleYear > new Date().getFullYear() + 1) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: yearErrorMsg, path: ['vehicleYear'] });
-      }
     }
   });
 };
@@ -85,7 +62,7 @@ export default function CreateTripPage() {
   const copy = I18N[language].createTrip;
   const common = I18N[language].common;
   
-  const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepVehicle, copy.stepOverview];
+  const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepOverview];
   const [step, setStep] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
 
@@ -107,14 +84,12 @@ export default function CreateTripPage() {
 
   const validationSchema = useMemo(() => {
     return getValidationSchema(
-      vehicles.length > 0,
       copy.requiredError,
       copy.sameCityError,
       copy.seatsError,
-      copy.priceError,
-      copy.yearError
+      copy.priceError
     );
-  }, [vehicles.length, copy]);
+  }, [copy]);
 
   // React Hook Form Configuration
   const { control, handleSubmit, trigger, setValue, getValues, watch, formState: { errors } } = useForm<FormValues>({
@@ -128,29 +103,14 @@ export default function CreateTripPage() {
       time: '',
       seatsTotal: 3,
       pricePerSeat: 10,
-      carModel: '',
       comment: '',
       origin: undefined,
       destination: undefined,
-      vehicleId: '',
-      vehicleBrand: 'Other',
-      vehicleModel: '',
-      vehicleYear: new Date().getFullYear(),
-      vehicleColor: '',
-      vehiclePlate: '',
     }
   });
 
   // Watch values reactively for the UI
   const formValues = watch();
-
-  // Set default vehicle when fetched
-  useEffect(() => {
-    if (vehicles.length > 0) {
-      setValue('vehicleId', vehicles[0].id);
-      setValue('carModel', `${vehicles[0].brand} ${vehicles[0].model}`.trim());
-    }
-  }, [vehicles, setValue]);
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');
@@ -167,7 +127,7 @@ export default function CreateTripPage() {
         origin: values.departureCity,
         destination: values.arrivalCity,
         departure_time: values.time,
-        car_model: values.carModel,
+        car_model: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : 'Standard Vehicle',
         seats_total: values.seatsTotal,
         origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,
         destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
@@ -194,19 +154,12 @@ export default function CreateTripPage() {
     if (step === 2) {
       return await trigger(['seatsTotal', 'pricePerSeat']);
     }
-    if (step === 3) {
-      const fields: (keyof FormValues)[] = ['carModel'];
-      if (!isMockDataMode && vehicles.length === 0) {
-        fields.push('vehicleModel', 'vehicleColor', 'vehiclePlate', 'vehicleYear');
-      }
-      return await trigger(fields);
-    }
     return true;
   };
 
   const next = async () => {
     const isValid = await validateStep();
-    if (isValid) setStep((s) => Math.min(s + 1, 4));
+    if (isValid) setStep((s) => Math.min(s + 1, 3));
   };
   
   const back = () => setStep((s) => Math.max(s - 1, 0));
@@ -223,18 +176,11 @@ export default function CreateTripPage() {
         time: values.time,
         seatsTotal: values.seatsTotal,
         pricePerSeat: values.pricePerSeat,
-        carModel: values.carModel,
+        carModel: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : '',
         comment: values.comment || '',
         origin: values.origin,
         destination: values.destination,
-        vehicleId: values.vehicleId,
-        newVehicle: !isMockDataMode && vehicles.length === 0 ? {
-          brand: values.vehicleBrand?.trim() || 'Other',
-          model: values.vehicleModel?.trim() || '',
-          year: values.vehicleYear || new Date().getFullYear(),
-          color: values.vehicleColor?.trim() || '',
-          plateNumber: values.vehiclePlate?.trim() || '',
-        } : undefined,
+        vehicleId: vehicles[0]?.id || '',
       });
     },
     onSuccess: (id) => {
@@ -276,7 +222,22 @@ export default function CreateTripPage() {
           </div>
         )}
         
-        {/* Clickable Stepper */}
+        {!isLoadingVehicles && !isMockDataMode && vehicles.length === 0 ? (
+          <div className="mb-6 rounded-2xl border border-warn-500/20 bg-warn-500/10 p-6 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warn-500/20 text-warn-500 mb-4">
+              <Icon name="alert-triangle" size={28} />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-text">Avtomobil tapılmadı</h3>
+            <p className="mb-6 text-sm text-text-muted max-w-md mx-auto">
+              Səfər yaratmaq üçün əvvəlcə profilinizdə avtomobil əlavə etməlisiniz. Avtomobil əlavə etdikdən sonra İS avtomatik olaraq həmin avtomobili nəzərə alaraq qiymət təyin edəcək.
+            </p>
+            <Button onClick={() => router.push(ROUTES.profile)} size="lg" className="w-full sm:w-auto">
+              Profilə keç <Icon name="arrow-right" size={16} />
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Clickable Stepper */}
         <div className="mb-6 flex items-center gap-2">
           {steps.map((s, i) => {
             const isCompleted = i < step;
@@ -476,17 +437,17 @@ export default function CreateTripPage() {
                     error={errors.pricePerSeat?.message} 
                   />
                   
-                  <div className="mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 p-4 shadow-sm border border-indigo-100/50 backdrop-blur-md dark:from-indigo-950/30 dark:to-purple-950/30 dark:border-indigo-800/30 transition-all duration-300">
+                  <div className="mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50/60 to-white p-4.5 shadow-[0_2px_12px_rgba(5,71,82,0.03)] border border-brand-100 transition-all duration-300">
                     {isAiLoading && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/5 animate-[shimmer_1.5s_infinite] -skew-x-12" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent animate-[shimmer_1.5s_infinite] -skew-x-12" />
                     )}
                     <div className="relative z-10 flex w-full flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-sm">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-accent-500 to-accent-600 shadow-sm">
                             <Icon name="sparkles" size={14} className="text-white" />
                           </div>
-                          <span className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400">
+                          <span className="text-sm font-extrabold text-brand-700 tracking-wide">
                             {copy.aiTitle}
                           </span>
                         </div>
@@ -494,7 +455,7 @@ export default function CreateTripPage() {
                           type="button" 
                           onClick={getAiSuggestion}
                           disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm border border-indigo-100 transition-all hover:bg-indigo-50 active:scale-95 disabled:opacity-50 dark:bg-indigo-900/50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-800/50"
+                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-brand-600 shadow-sm border border-brand-200 transition-all hover:bg-brand-50 hover:border-brand-300 active:scale-95 disabled:opacity-50"
                         >
                           {isAiLoading ? copy.aiLoading : copy.aiSuggestBtn}
                         </button>
@@ -502,26 +463,26 @@ export default function CreateTripPage() {
                       
                       {aiSuggestedPrice ? (
                         <div className="flex flex-col gap-3 mt-1 animate-fade-in">
-                          <div className="flex items-end justify-between bg-white/60 dark:bg-black/20 p-3 rounded-xl border border-white/40 dark:border-white/5">
+                          <div className="flex items-end justify-between bg-brand-50/30 p-3.5 rounded-xl border border-brand-100">
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-0.5">Suggested Price</p>
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-brand-600/80 mb-0.5">Suggested Price</p>
                               <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{aiSuggestedPrice}</span>
-                                <span className="text-sm font-bold text-indigo-400 dark:text-indigo-600">₼</span>
+                                <span className="text-3xl font-black text-brand-800">{aiSuggestedPrice}</span>
+                                <span className="text-sm font-bold text-brand-500">₼</span>
                               </div>
                             </div>
                             <button
                               type="button"
                               onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
-                              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
+                              className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-md transition-all active:scale-95"
                             >
                               <Icon name="check" size={16} /> Apply
                             </button>
                           </div>
-                          <p className="text-xs font-medium text-text-muted leading-relaxed">{aiReasoning}</p>
+                          <p className="text-xs font-medium text-text-secondary leading-relaxed">{aiReasoning}</p>
                         </div>
                       ) : (
-                        <p className="text-xs text-text-muted leading-relaxed mt-1">
+                        <p className="text-xs font-medium text-text-muted leading-relaxed mt-1">
                           {aiReasoning || copy.aiPlaceholder}
                         </p>
                       )}
@@ -532,93 +493,6 @@ export default function CreateTripPage() {
             )}
 
             {step === 3 && (
-              <div className="flex flex-col gap-4">
-                {!isMockDataMode && vehicles.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">{copy.summaryVehicle}</label>
-                    <select
-                      value={formValues.vehicleId || ''}
-                      onChange={(e) => {
-                        const selected = vehicles.find((vehicle) => vehicle.id === e.target.value);
-                        setValue('vehicleId', e.target.value);
-                        if (selected) setValue('carModel', `${selected.brand} ${selected.model}`.trim());
-                      }}
-                      className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    >
-                      {vehicles.map((vehicle) => (
-                        <option key={vehicle.id} value={vehicle.id}>
-                          {vehicle.brand} {vehicle.model} · {vehicle.plateNumber}
-                        </option>
-                      ))}
-                    </select>
-                    {isLoadingVehicles && <p className="text-xs text-text-muted">{copy.vehiclesLoading}</p>}
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{copy.carModel}</label>
-                  <select 
-                    value={formValues.carModel} 
-                    onChange={(e) => setValue('carModel', e.target.value)} 
-                    className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  >
-                    <option value="">{copy.select}</option>
-                    {CAR_MODELS.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  {errors.carModel && <p className="text-xs text-danger-500">{errors.carModel.message}</p>}
-                </div>
-                {!isMockDataMode && vehicles.length === 0 && (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input 
-                      label={copy.brandLabel} 
-                      value={formValues.vehicleBrand || ''} 
-                      onChange={(e) => setValue('vehicleBrand', e.target.value)} 
-                    />
-                    <Input
-                      label={copy.modelLabel}
-                      value={formValues.vehicleModel || ''}
-                      onChange={(e) => {
-                        setValue('vehicleModel', e.target.value);
-                        setValue('carModel', e.target.value);
-                      }}
-                      error={errors.vehicleModel?.message}
-                    />
-                    <Input 
-                      label={copy.yearLabel} 
-                      type="number" 
-                      value={formValues.vehicleYear || ''} 
-                      onChange={(e) => setValue('vehicleYear', Number(e.target.value))} 
-                      error={errors.vehicleYear?.message} 
-                    />
-                    <Input 
-                      label={copy.colorLabel} 
-                      value={formValues.vehicleColor || ''} 
-                      onChange={(e) => setValue('vehicleColor', e.target.value)} 
-                      error={errors.vehicleColor?.message} 
-                    />
-                    <div className="sm:col-span-2">
-                      <Input 
-                        label={copy.plateLabel} 
-                        value={formValues.vehiclePlate || ''} 
-                        onChange={(e) => setValue('vehiclePlate', e.target.value)} 
-                        error={errors.vehiclePlate?.message} 
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{copy.commentLabel}</label>
-                  <textarea 
-                    value={formValues.comment || ''} 
-                    onChange={(e) => setValue('comment', e.target.value)} 
-                    rows={3} 
-                    placeholder={copy.commentPlaceholder} 
-                    className="w-full resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" 
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 4 && (
               <div>
                 <h3 className="mb-4 text-lg font-bold">{copy.summaryTitle}</h3>
                 <div className="flex flex-col gap-3 text-sm">
@@ -627,7 +501,7 @@ export default function CreateTripPage() {
                   <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryDate}</span><span className="font-medium">{formValues.date} • {formValues.time}</span></div>
                   <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summarySeats}</span><span className="font-medium">{formValues.seatsTotal}</span></div>
                   <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryPrice}</span><span className="font-bold text-brand-600">{formValues.pricePerSeat} ₼</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryVehicle}</span><span className="font-medium">{formValues.carModel}</span></div>
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryVehicle}</span><span className="font-medium">{vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : ''}</span></div>
                   {formValues.comment && <div className="flex justify-between py-2"><span className="text-text-muted">{copy.summaryComment}</span><span className="font-medium">{formValues.comment}</span></div>}
                 </div>
               </div>
@@ -635,7 +509,7 @@ export default function CreateTripPage() {
           </div>
           <div className="mt-8 flex gap-3">
             {step > 0 && <Button variant="outline" fullWidth onClick={back}><Icon name="arrow-left" size={16} /> {copy.backBtn}</Button>}
-            {step < 4 ? (
+            {step < 3 ? (
               <Button fullWidth onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
             ) : (
               <Button fullWidth size="lg" onClick={publish} disabled={createTripMutation.isPending}>
@@ -653,6 +527,8 @@ export default function CreateTripPage() {
             )}
           </div>
         </Card>
+          </>
+        )}
       </ProtectedRoute>
     </WebLayout>
   );

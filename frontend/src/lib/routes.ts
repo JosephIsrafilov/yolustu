@@ -6,7 +6,7 @@ export const ROUTES = {
   login: '/auth/login',
   profileSetup: '/profile/setup',
   profile: '/profile',
-  search: '/search',
+  search: '/trips',
   trips: '/trips',
   tripDetails: (id: string) => `/trips/${id}`,
   bookings: '/bookings',

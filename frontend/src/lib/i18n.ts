@@ -72,7 +72,8 @@ export const I18N = {
       driverImageAlt: 'Yolüstü sürücü gedişi',
       heroImageAlt: 'Azərbaycan yol mənzərəsi',
     },
-    searchPage: {
+    testMap: { title: 'Test kartı', },
+  searchPage: {
       title: 'Gediş axtar',
       route: 'Marşrut',
       routeDesc: 'Haradan, haraya və tarixi seçin',
@@ -297,6 +298,7 @@ export const I18N = {
       close: 'Закрыть',
       error: 'Произошла ошибка',
     },
+    testMap: { title: 'Тестовая карта', },
     header: {
       findRide: 'Найти поездку',
       offerRide: 'Предложить поездку',
@@ -567,6 +569,7 @@ export const I18N = {
       close: 'Close',
       error: 'An error occurred',
     },
+    testMap: { title: 'Test map', },
     header: {
       findRide: 'Find a ride',
       offerRide: 'Offer a ride',
