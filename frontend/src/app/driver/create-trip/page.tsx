@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -17,7 +17,6 @@ import CitySelect from '@/components/ui/CitySelect';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
-import { CAR_MODELS } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -92,7 +91,7 @@ export default function CreateTripPage() {
   }, [copy]);
 
   // React Hook Form Configuration
-  const { control, handleSubmit, trigger, setValue, getValues, watch, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, trigger, setValue, getValues, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       departureCity: '',
@@ -110,7 +109,7 @@ export default function CreateTripPage() {
   });
 
   // Watch values reactively for the UI
-  const formValues = watch();
+  const formValues = useWatch({ control }) as FormValues;
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');

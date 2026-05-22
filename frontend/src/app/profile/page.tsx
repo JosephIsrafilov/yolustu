@@ -208,6 +208,17 @@ interface VerificationSectionProps {
   copy: typeof PROFILE_I18N['az'];
 }
 
+type ProfileCopy = typeof PROFILE_I18N['az'];
+type FocusableRef = React.RefObject<{ focus: () => void } | null>;
+
+interface VehiclePayload {
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  plate_number: string;
+}
+
 function DriverVerificationSection({ copy }: VerificationSectionProps) {
   const { currentUser, submitVerification } = useAppStore();
   const [file, setFile] = useState<File | null>(null);
@@ -397,7 +408,7 @@ interface CustomPlateDropdownProps {
   placeholder: string;
   widthClass: string;
   dropdownWidthClass?: string;
-  nextRef?: React.RefObject<any>;
+  nextRef?: FocusableRef;
   buttonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
@@ -538,13 +549,17 @@ function AnimatedAlertModal({ isOpen, message, onClose }: { isOpen: boolean, mes
   const [render, setRender] = useState(false);
 
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
     if (isOpen) {
-      setRender(true);
-      setTimeout(() => setShow(true), 10);
+      timers.push(setTimeout(() => setRender(true), 0));
+      timers.push(setTimeout(() => setShow(true), 10));
     } else {
-      setShow(false);
-      setTimeout(() => setRender(false), 300);
+      timers.push(setTimeout(() => setShow(false), 0));
+      timers.push(setTimeout(() => setRender(false), 300));
     }
+
+    return () => timers.forEach(clearTimeout);
   }, [isOpen]);
 
   if (!render) return null;
@@ -565,7 +580,7 @@ function AnimatedAlertModal({ isOpen, message, onClose }: { isOpen: boolean, mes
   );
 }
 
-function DriverVehiclesSection({ copy, isDriver }: { copy: any, isDriver: boolean }) {
+function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver: boolean }) {
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), color: '' });
@@ -593,7 +608,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: any, isDriver: boolea
       try {
         const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
         return response.map(mapApiVehicleToVehicle);
-      } catch (e) {
+      } catch {
         return [];
       }
     },
@@ -601,7 +616,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: any, isDriver: boolea
   });
 
   const addMutation = useMutation({
-    mutationFn: async (data: any) => apiClient.post('/vehicles', data),
+    mutationFn: async (data: VehiclePayload) => apiClient.post('/vehicles', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-vehicles'] });
       setAdding(false);

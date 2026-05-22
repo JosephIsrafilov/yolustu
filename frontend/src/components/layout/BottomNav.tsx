@@ -7,22 +7,25 @@ import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
+import Icon, { type IconName } from '@/components/ui/Icon';
 
-const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
-  { href: ROUTES.search, label: t.header.findRide, icon: 'search' },
-  { href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' },
-  { href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' },
-  { href: ROUTES.profile, label: t.profile.title, icon: 'user-circle' },
-];
+type NavItem = { href: string; label: string; icon: IconName };
 
 export default function BottomNav() {
+  const pathname = usePathname();
   const { language } = useAppStore();
   const t = I18N[language];
+  const navItems: NavItem[] = [
+    { href: ROUTES.search, label: t.header.findRide, icon: 'search' },
+    { href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' },
+    { href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' },
+    { href: ROUTES.profile, label: t.profile.title, icon: 'user-circle' },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl border-t border-border pb-safe">
       <div className="flex items-center justify-around h-16">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + '/');
           return (

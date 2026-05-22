@@ -228,10 +228,10 @@ async def validate_vehicle(
 
         # Robust regex extraction of JSON
         import re
-        
+
         # Remove any markdown code blocks
-        clean_text = response_content.replace('```json', '').replace('```', '').strip()
-        
+        clean_text = response_content.replace("```json", "").replace("```", "").strip()
+
         # Try to find the first flat JSON object
         match = re.search(r"\{[^{}]*\}", clean_text)
         if match:
@@ -239,10 +239,10 @@ async def validate_vehicle(
             data = json.loads(json_str)
         else:
             # Fallback to finding first { and last }
-            start_idx = clean_text.find('{')
-            end_idx = clean_text.rfind('}')
+            start_idx = clean_text.find("{")
+            end_idx = clean_text.rfind("}")
             if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                data = json.loads(clean_text[start_idx:end_idx+1])
+                data = json.loads(clean_text[start_idx : end_idx + 1])
             else:
                 raise ValueError("No JSON object found in response")
 
@@ -250,7 +250,7 @@ async def validate_vehicle(
             is_valid=bool(data.get("is_valid")),
             brand=str(data.get("brand", "")),
             model=str(data.get("model", "")),
-            reason=str(data.get("reason", ""))
+            reason=str(data.get("reason", "")),
         )
     except Exception as e:
         logger.error(f"AI vehicle validation failed: {e}")
@@ -259,5 +259,5 @@ async def validate_vehicle(
             is_valid=False,
             brand=request.brand,
             model=request.model,
-            reason="Произошла ошибка при проверке автомобиля. Пожалуйста, попробуйте еще раз."
+            reason="Произошла ошибка при проверке автомобиля. Пожалуйста, попробуйте еще раз.",
         )
