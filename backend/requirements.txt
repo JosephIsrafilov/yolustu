@@ -15,4 +15,4 @@ redis
 stripe
 openai
 httpx
-
+slowapi

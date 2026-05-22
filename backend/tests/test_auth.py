@@ -53,3 +53,28 @@ def test_verify_otp_invalid():
     response = client.post(f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
     assert response.status_code == 400
     assert "Invalid or expired OTP" in response.json()["error"]["message"]
+
+
+def test_request_otp_rate_limit():
+    # We trigger request_otp multiple times to hit the 5/minute rate limit
+    responses = []
+    # Make 6 requests
+    for _ in range(6):
+        response = client.post(f"/api/v1/auth/request-otp?phone={TEST_PHONE}")
+        responses.append(response)
+    
+    status_codes = [r.status_code for r in responses]
+    assert 429 in status_codes
+
+
+def test_verify_otp_rate_limit():
+    # We trigger verify_otp multiple times to hit the 10/minute rate limit
+    responses = []
+    # Make 11 requests
+    for _ in range(11):
+        response = client.post(f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
+        responses.append(response)
+    
+    status_codes = [r.status_code for r in responses]
+    assert 429 in status_codes
+

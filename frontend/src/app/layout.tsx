@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LanguageSync from "@/components/layout/LanguageSync";
+import QueryProvider from "@/providers/QueryProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,10 +17,12 @@ export default function RootLayout({
   return (
     <html lang="az" data-scroll-behavior="smooth">
       <body className="antialiased" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        <AuthProvider>
-          <LanguageSync />
-          {children}
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <LanguageSync />
+            {children}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

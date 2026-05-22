@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useQuery, useMutation } from '@tanstack/react-query';
+
 import WebLayout from '@/components/layout/WebLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -23,6 +28,56 @@ import { apiAiService } from '@/services/api/api-ai-service';
 import { isMockDataMode } from '@/lib/env';
 import { I18N } from '@/lib/i18n';
 
+// Dynamic Zod Validation Schema
+const getValidationSchema = (hasVehicles: boolean, requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string, yearErrorMsg: string) => {
+  return z.object({
+    departureCity: z.string().min(1, requiredErrorMsg),
+    arrivalCity: z.string().min(1, requiredErrorMsg),
+    meetingPoint: z.string().optional(),
+    dropoffPoint: z.string().optional(),
+    date: z.string().min(1, requiredErrorMsg),
+    time: z.string().min(1, requiredErrorMsg),
+    seatsTotal: z.number().int().min(1, seatsErrorMsg).max(4, seatsErrorMsg),
+    pricePerSeat: z.number().min(0.01, priceErrorMsg),
+    carModel: z.string().min(1, requiredErrorMsg),
+    comment: z.string().optional(),
+    origin: z.object({ lat: z.number(), lng: z.number() }).optional(),
+    destination: z.object({ lat: z.number(), lng: z.number() }).optional(),
+    vehicleId: z.string().optional(),
+    
+    // New vehicle fields if user has no vehicles
+    vehicleBrand: z.string().optional(),
+    vehicleModel: z.string().optional(),
+    vehicleYear: z.coerce.number().optional(),
+    vehicleColor: z.string().optional(),
+    vehiclePlate: z.string().optional(),
+  }).superRefine((data, ctx) => {
+    if (data.departureCity === data.arrivalCity && data.departureCity) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: sameCityErrorMsg,
+        path: ['arrivalCity'],
+      });
+    }
+    if (!isMockDataMode && !hasVehicles) {
+      if (!data.vehicleModel?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehicleModel'] });
+      }
+      if (!data.vehicleColor?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehicleColor'] });
+      }
+      if (!data.vehiclePlate?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredErrorMsg, path: ['vehiclePlate'] });
+      }
+      if (!data.vehicleYear || data.vehicleYear < 1980 || data.vehicleYear > new Date().getFullYear() + 1) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: yearErrorMsg, path: ['vehicleYear'] });
+      }
+    }
+  });
+};
+
+type FormValues = z.infer<ReturnType<typeof getValidationSchema>>;
+
 export default function CreateTripPage() {
   const router = useRouter();
   const { createTrip, lastError, clearError, language } = useAppStore();
@@ -33,54 +88,89 @@ export default function CreateTripPage() {
   const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepVehicle, copy.stepOverview];
   const [step, setStep] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [isLoadingVehicles, setIsLoadingVehicles] = useState(!isMockDataMode);
-  const [form, setForm] = useState<CreateTripData>({
-    departureCity: '',
-    arrivalCity: '',
-    meetingPoint: '',
-    dropoffPoint: '',
-    date: '',
-    time: '',
-    seatsTotal: 3,
-    pricePerSeat: 10,
-    carModel: '',
-    comment: '',
-    origin: undefined,
-    destination: undefined,
+
+  // Fetch vehicles with React Query
+  const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
+    queryKey: ['my-vehicles'],
+    queryFn: async () => {
+      if (isMockDataMode) return [];
+      try {
+        const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
+        return response.map(mapApiVehicleToVehicle);
+      } catch (err) {
+        console.error('Fetch vehicles error:', err);
+        return [];
+      }
+    },
+    enabled: !isMockDataMode,
   });
-  const [vehicleForm, setVehicleForm] = useState({
-    brand: 'Other',
-    model: '',
-    year: new Date().getFullYear(),
-    color: '',
-    plateNumber: '',
+
+  const validationSchema = useMemo(() => {
+    return getValidationSchema(
+      vehicles.length > 0,
+      copy.requiredError,
+      copy.sameCityError,
+      copy.seatsError,
+      copy.priceError,
+      copy.yearError
+    );
+  }, [vehicles.length, copy]);
+
+  // React Hook Form Configuration
+  const { control, register, handleSubmit, trigger, setValue, getValues, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      departureCity: '',
+      arrivalCity: '',
+      meetingPoint: '',
+      dropoffPoint: '',
+      date: '',
+      time: '',
+      seatsTotal: 3,
+      pricePerSeat: 10,
+      carModel: '',
+      comment: '',
+      origin: undefined,
+      destination: undefined,
+      vehicleId: '',
+      vehicleBrand: 'Other',
+      vehicleModel: '',
+      vehicleYear: new Date().getFullYear(),
+      vehicleColor: '',
+      vehiclePlate: '',
+    }
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Watch values reactively for the UI
+  const formValues = watch();
+
+  // Set default vehicle when fetched
+  useEffect(() => {
+    if (vehicles.length > 0) {
+      setValue('vehicleId', vehicles[0].id);
+      setValue('carModel', `${vehicles[0].brand} ${vehicles[0].model}`.trim());
+    }
+  }, [vehicles, setValue]);
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');
 
-  const update = <K extends keyof CreateTripData>(key: K, value: CreateTripData[K]) => {
-    setForm((p) => ({ ...p, [key]: value }));
-    if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
-  };
-
   const getAiSuggestion = async () => {
-    if (!form.departureCity || !form.arrivalCity || !form.time) return;
+    const values = getValues();
+    if (!values.departureCity || !values.arrivalCity || !values.time) return;
     setIsAiLoading(true);
     try {
       const response = await apiAiService.getSmartPricingSuggestion({
-        origin: form.departureCity,
-        destination: form.arrivalCity,
-        departure_time: form.time,
-        car_model: form.carModel,
-        seats_total: form.seatsTotal,
-        origin_coords: form.origin ? { lat: form.origin.lat, lng: form.origin.lng } : undefined,
-        destination_coords: form.destination ? { lat: form.destination.lat, lng: form.destination.lng } : undefined,
+        origin: values.departureCity,
+        destination: values.arrivalCity,
+        departure_time: values.time,
+        car_model: values.carModel,
+        seats_total: values.seatsTotal,
+        origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,
+        destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
       });
       if (response?.suggested_price) {
-        update('pricePerSeat', response.suggested_price);
+        setValue('pricePerSeat', response.suggested_price);
         setAiReasoning(response.reasoning);
       }
     } catch (error) {
@@ -91,90 +181,68 @@ export default function CreateTripPage() {
     }
   };
 
-  useEffect(() => {
-    if (isMockDataMode) return;
-
-    let isMounted = true;
-    apiClient.get<ApiVehicle[]>('/vehicles/my')
-      .then((response) => {
-        if (!isMounted) return;
-        const mapped = response.map(mapApiVehicleToVehicle);
-        setVehicles(mapped);
-        if (mapped[0]) {
-          setForm((current) => ({
-            ...current,
-            vehicleId: mapped[0].id,
-            carModel: `${mapped[0].brand} ${mapped[0].model}`.trim(),
-          }));
-        }
-      })
-      .catch((error) => {
-        console.error('Fetch vehicles error:', error);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingVehicles(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const validateStep = () => {
-    const e: Record<string, string> = {};
+  const validateStep = async () => {
     if (step === 0) {
-      if (!form.departureCity) e.departureCity = copy.requiredError;
-      if (!form.arrivalCity) e.arrivalCity = copy.requiredError;
-      if (form.departureCity === form.arrivalCity && form.departureCity) e.arrivalCity = copy.sameCityError;
+      return await trigger(['departureCity', 'arrivalCity']);
     }
     if (step === 1) {
-      if (!form.date) e.date = copy.requiredError;
-      if (!form.time) e.time = copy.requiredError;
+      return await trigger(['date', 'time']);
     }
     if (step === 2) {
-      if (form.seatsTotal < 1 || form.seatsTotal > 4) e.seatsTotal = copy.seatsError;
-      if (form.pricePerSeat <= 0) e.pricePerSeat = copy.priceError;
+      return await trigger(['seatsTotal', 'pricePerSeat']);
     }
     if (step === 3) {
-      if (!form.carModel) e.carModel = copy.requiredError;
+      const fields: any[] = ['carModel'];
       if (!isMockDataMode && vehicles.length === 0) {
-        if (!vehicleForm.model.trim()) e.vehicleModel = copy.requiredError;
-        if (!vehicleForm.color.trim()) e.vehicleColor = copy.requiredError;
-        if (!vehicleForm.plateNumber.trim()) e.vehiclePlate = copy.requiredError;
-        if (vehicleForm.year < 1980 || vehicleForm.year > new Date().getFullYear() + 1) e.vehicleYear = copy.yearError;
+        fields.push('vehicleModel', 'vehicleColor', 'vehiclePlate', 'vehicleYear');
       }
+      return await trigger(fields);
     }
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    return true;
   };
 
-  const next = () => { if (validateStep()) setStep((s) => Math.min(s + 1, 4)); };
+  const next = async () => {
+    const isValid = await validateStep();
+    if (isValid) setStep((s) => Math.min(s + 1, 4));
+  };
+  
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  const publish = async () => {
-    const id = await createTrip({
-      departureCity: form.departureCity,
-      arrivalCity: form.arrivalCity,
-      meetingPoint: form.meetingPoint,
-      dropoffPoint: form.dropoffPoint,
-      date: form.date,
-      time: form.time,
-      seatsTotal: form.seatsTotal,
-      pricePerSeat: form.pricePerSeat,
-      carModel: form.carModel,
-      comment: form.comment,
-      origin: form.origin,
-      destination: form.destination,
-      vehicleId: form.vehicleId,
-      newVehicle: !isMockDataMode && vehicles.length === 0 ? {
-        brand: vehicleForm.brand.trim() || 'Other',
-        model: vehicleForm.model.trim(),
-        year: vehicleForm.year,
-        color: vehicleForm.color.trim(),
-        plateNumber: vehicleForm.plateNumber.trim(),
-      } : undefined,
-    });
-    if (id) router.push(ROUTES.myTrips);
+  // Mutation for creating trip
+  const createTripMutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      return await createTrip({
+        departureCity: values.departureCity,
+        arrivalCity: values.arrivalCity,
+        meetingPoint: values.meetingPoint || '',
+        dropoffPoint: values.dropoffPoint || '',
+        date: values.date,
+        time: values.time,
+        seatsTotal: values.seatsTotal,
+        pricePerSeat: values.pricePerSeat,
+        carModel: values.carModel,
+        comment: values.comment || '',
+        origin: values.origin,
+        destination: values.destination,
+        vehicleId: values.vehicleId,
+        newVehicle: !isMockDataMode && vehicles.length === 0 ? {
+          brand: values.vehicleBrand?.trim() || 'Other',
+          model: values.vehicleModel?.trim() || '',
+          year: values.vehicleYear || new Date().getFullYear(),
+          color: values.vehicleColor?.trim() || '',
+          plateNumber: values.vehiclePlate?.trim() || '',
+        } : undefined,
+      });
+    },
+    onSuccess: (id) => {
+      if (id) router.push(ROUTES.myTrips);
+    }
+  });
+
+  const publish = () => {
+    handleSubmit((values) => {
+      createTripMutation.mutate(values);
+    })();
   };
 
   const reverseGeocode = async (lat: number, lng: number, field: 'meetingPoint' | 'dropoffPoint') => {
@@ -186,7 +254,7 @@ export default function CreateTripPage() {
         const shortName = addr.road 
           ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}` 
           : data.display_name.split(',').slice(0, 2).join(',');
-        update(field, shortName.replace(/,\s*$/, '').trim());
+        setValue(field, shortName.replace(/,\s*$/, '').trim());
       }
     } catch (err) {
       console.error('Failed to reverse geocode', err);
@@ -215,7 +283,6 @@ export default function CreateTripPage() {
                 key={s} 
                 className="flex-1"
                 onClick={() => {
-                  // Allow navigating backwards
                   if (isCompleted) setStep(i);
                 }}
               >
@@ -234,8 +301,8 @@ export default function CreateTripPage() {
           })}
         </div>
 
-        {/* Persistent Route Summary (shown on steps > 0) */}
-        {step > 0 && form.departureCity && form.arrivalCity && (
+        {/* Persistent Route Summary */}
+        {step > 0 && formValues.departureCity && formValues.arrivalCity && (
           <div className="mb-6 flex items-center justify-between rounded-2xl bg-gradient-to-r from-brand-50 to-white p-3.5 shadow-sm border border-brand-100 dark:from-[#00282d] dark:to-[#001f24] dark:border-[#00383f] animate-fade-in">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
@@ -244,7 +311,7 @@ export default function CreateTripPage() {
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-0.5">{copy.summaryRoute}</p>
                 <p className="text-[15px] font-bold text-text truncate">
-                  {form.departureCity} <Icon name="arrow-right" size={14} className="inline mx-1 text-text-muted" /> {form.arrivalCity}
+                  {formValues.departureCity} <Icon name="arrow-right" size={14} className="inline mx-1 text-text-muted" /> {formValues.arrivalCity}
                 </p>
               </div>
             </div>
@@ -262,19 +329,32 @@ export default function CreateTripPage() {
           <div className="animate-fade-in">
             {step === 0 && (
               <div className="flex flex-col gap-4">
-                <CitySelect 
-                  label={copy.fromCity} 
-                  value={form.departureCity} 
-                  onChange={(val) => update('departureCity', val)} 
-                  options={AZ_CITIES} 
-                  error={errors.departureCity} 
+                <Controller
+                  name="departureCity"
+                  control={control}
+                  render={({ field }) => (
+                    <CitySelect 
+                      label={copy.fromCity} 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      options={AZ_CITIES} 
+                      error={errors.departureCity?.message} 
+                    />
+                  )}
                 />
-                <CitySelect 
-                  label={copy.toCity} 
-                  value={form.arrivalCity} 
-                  onChange={(val) => update('arrivalCity', val)} 
-                  options={AZ_CITIES} 
-                  error={errors.arrivalCity} 
+
+                <Controller
+                  name="arrivalCity"
+                  control={control}
+                  render={({ field }) => (
+                    <CitySelect 
+                      label={copy.toCity} 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      options={AZ_CITIES} 
+                      error={errors.arrivalCity?.message} 
+                    />
+                  )}
                 />
 
                 <div className="mt-2 flex flex-col gap-3">
@@ -302,14 +382,14 @@ export default function CreateTripPage() {
                     <MapContainer>
                       <LocationPicker 
                         mode={pickerMode}
-                        origin={form.origin}
-                        destination={form.destination}
+                        origin={formValues.origin}
+                        destination={formValues.destination}
                         onSelectOrigin={(pos) => { 
-                          update('origin', pos); 
+                          setValue('origin', pos); 
                           reverseGeocode(pos.lat, pos.lng, 'meetingPoint'); 
                         }}
                         onSelectDestination={(pos) => { 
-                          update('destination', pos); 
+                          setValue('destination', pos); 
                           reverseGeocode(pos.lat, pos.lng, 'dropoffPoint'); 
                         }}
                       />
@@ -322,18 +402,53 @@ export default function CreateTripPage() {
                   </p>
                 </div>
 
-                <Input label={copy.meetingPoint} placeholder={copy.meetingPlaceholder} value={form.meetingPoint} onChange={(e) => update('meetingPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
-                <Input label={copy.dropoffPoint} placeholder={copy.dropoffPlaceholder} value={form.dropoffPoint} onChange={(e) => update('dropoffPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
+                <Input 
+                  label={copy.meetingPoint} 
+                  placeholder={copy.meetingPlaceholder} 
+                  value={formValues.meetingPoint || ''} 
+                  onChange={(e) => setValue('meetingPoint', e.target.value)} 
+                  icon={<Icon name="map-pin" size={16} />} 
+                />
+                <Input 
+                  label={copy.dropoffPoint} 
+                  placeholder={copy.dropoffPlaceholder} 
+                  value={formValues.dropoffPoint || ''} 
+                  onChange={(e) => setValue('dropoffPoint', e.target.value)} 
+                  icon={<Icon name="map-pin" size={16} />} 
+                />
               </div>
             )}
 
             {step === 1 && (
               <div className="flex flex-col gap-4">
                 <div>
-                  <DatePicker value={form.date} onChange={(value) => update('date', value)} label={copy.dateLabel} placeholder={common.selectDate} />
-                  {errors.date && <p className="mt-1.5 text-xs text-danger-500">{errors.date}</p>}
+                  <Controller
+                    name="date"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker 
+                        value={field.value} 
+                        onChange={field.onChange} 
+                        label={copy.dateLabel} 
+                        placeholder={common.selectDate} 
+                      />
+                    )}
+                  />
+                  {errors.date && <p className="mt-1.5 text-xs text-danger-500">{errors.date.message}</p>}
                 </div>
-                <TimePicker label={copy.timeLabel} value={form.time} onChange={(val) => update('time', val)} error={errors.time} placeholder={copy.timeLabel} />
+                <Controller
+                  name="time"
+                  control={control}
+                  render={({ field }) => (
+                    <TimePicker 
+                      label={copy.timeLabel} 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      error={errors.time?.message} 
+                      placeholder={copy.timeLabel} 
+                    />
+                  )}
+                />
               </div>
             )}
 
@@ -342,15 +457,21 @@ export default function CreateTripPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{copy.seatsCount}</label>
                   <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => update('seatsTotal', Math.max(1, form.seatsTotal - 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">−</button>
-                    <span className="w-8 text-center text-2xl font-bold">{form.seatsTotal}</span>
-                    <button type="button" onClick={() => update('seatsTotal', Math.min(4, form.seatsTotal + 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">+</button>
+                    <button type="button" onClick={() => setValue('seatsTotal', Math.max(1, formValues.seatsTotal - 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">−</button>
+                    <span className="w-8 text-center text-2xl font-bold">{formValues.seatsTotal}</span>
+                    <button type="button" onClick={() => setValue('seatsTotal', Math.min(4, formValues.seatsTotal + 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">+</button>
                   </div>
-                  {errors.seatsTotal && <p className="text-xs text-danger-500">{errors.seatsTotal}</p>}
+                  {errors.seatsTotal && <p className="text-xs text-danger-500">{errors.seatsTotal.message}</p>}
                 </div>
                 
                 <div className="flex flex-col gap-1.5">
-                  <Input label={copy.pricePerSeat} type="number" value={form.pricePerSeat} onChange={(e) => update('pricePerSeat', Number(e.target.value))} error={errors.pricePerSeat} />
+                  <Input 
+                    label={copy.pricePerSeat} 
+                    type="number" 
+                    value={formValues.pricePerSeat} 
+                    onChange={(e) => setValue('pricePerSeat', Number(e.target.value))} 
+                    error={errors.pricePerSeat?.message} 
+                  />
                   
                   <div className="mt-2 flex flex-col items-start gap-3 rounded-xl bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] p-4 shadow-sm border border-[#a5d6a7] dark:from-[#1b5e20] dark:to-[#004d40] dark:border-[#2e7d32]">
                     <div className="flex w-full items-center justify-between">
@@ -361,7 +482,7 @@ export default function CreateTripPage() {
                       <button 
                         type="button" 
                         onClick={getAiSuggestion}
-                        disabled={isAiLoading || !form.departureCity || !form.arrivalCity || !form.time}
+                        disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
                         className="rounded-lg bg-[#2e7d32] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#1b5e20] active:scale-95 disabled:opacity-50 dark:bg-[#4caf50] dark:text-black dark:hover:bg-[#81c784]"
                       >
                         {isAiLoading ? copy.aiLoading : copy.aiSuggestBtn}
@@ -383,11 +504,11 @@ export default function CreateTripPage() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium">{copy.summaryVehicle}</label>
                     <select
-                      value={form.vehicleId || ''}
+                      value={formValues.vehicleId || ''}
                       onChange={(e) => {
                         const selected = vehicles.find((vehicle) => vehicle.id === e.target.value);
-                        update('vehicleId', e.target.value);
-                        if (selected) update('carModel', `${selected.brand} ${selected.model}`.trim());
+                        setValue('vehicleId', e.target.value);
+                        if (selected) setValue('carModel', `${selected.brand} ${selected.model}`.trim());
                       }}
                       className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     >
@@ -402,34 +523,64 @@ export default function CreateTripPage() {
                 )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{copy.carModel}</label>
-                  <select value={form.carModel} onChange={(e) => update('carModel', e.target.value)} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <select 
+                    value={formValues.carModel} 
+                    onChange={(e) => setValue('carModel', e.target.value)} 
+                    className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
                     <option value="">{copy.select}</option>
                     {CAR_MODELS.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  {errors.carModel && <p className="text-xs text-danger-500">{errors.carModel}</p>}
+                  {errors.carModel && <p className="text-xs text-danger-500">{errors.carModel.message}</p>}
                 </div>
                 {!isMockDataMode && vehicles.length === 0 && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input label={copy.brandLabel} value={vehicleForm.brand} onChange={(e) => setVehicleForm((p) => ({ ...p, brand: e.target.value }))} />
+                    <Input 
+                      label={copy.brandLabel} 
+                      value={formValues.vehicleBrand || ''} 
+                      onChange={(e) => setValue('vehicleBrand', e.target.value)} 
+                    />
                     <Input
                       label={copy.modelLabel}
-                      value={vehicleForm.model}
+                      value={formValues.vehicleModel || ''}
                       onChange={(e) => {
-                        setVehicleForm((p) => ({ ...p, model: e.target.value }));
-                        update('carModel', e.target.value);
+                        setValue('vehicleModel', e.target.value);
+                        setValue('carModel', e.target.value);
                       }}
-                      error={errors.vehicleModel}
+                      error={errors.vehicleModel?.message}
                     />
-                    <Input label={copy.yearLabel} type="number" value={vehicleForm.year} onChange={(e) => setVehicleForm((p) => ({ ...p, year: Number(e.target.value) }))} error={errors.vehicleYear} />
-                    <Input label={copy.colorLabel} value={vehicleForm.color} onChange={(e) => setVehicleForm((p) => ({ ...p, color: e.target.value }))} error={errors.vehicleColor} />
+                    <Input 
+                      label={copy.yearLabel} 
+                      type="number" 
+                      value={formValues.vehicleYear || ''} 
+                      onChange={(e) => setValue('vehicleYear', Number(e.target.value))} 
+                      error={errors.vehicleYear?.message} 
+                    />
+                    <Input 
+                      label={copy.colorLabel} 
+                      value={formValues.vehicleColor || ''} 
+                      onChange={(e) => setValue('vehicleColor', e.target.value)} 
+                      error={errors.vehicleColor?.message} 
+                    />
                     <div className="sm:col-span-2">
-                      <Input label={copy.plateLabel} value={vehicleForm.plateNumber} onChange={(e) => setVehicleForm((p) => ({ ...p, plateNumber: e.target.value }))} error={errors.vehiclePlate} />
+                      <Input 
+                        label={copy.plateLabel} 
+                        value={formValues.vehiclePlate || ''} 
+                        onChange={(e) => setValue('vehiclePlate', e.target.value)} 
+                        error={errors.vehiclePlate?.message} 
+                      />
                     </div>
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{copy.commentLabel}</label>
-                  <textarea value={form.comment} onChange={(e) => update('comment', e.target.value)} rows={3} placeholder={copy.commentPlaceholder} className="w-full resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                  <textarea 
+                    value={formValues.comment || ''} 
+                    onChange={(e) => setValue('comment', e.target.value)} 
+                    rows={3} 
+                    placeholder={copy.commentPlaceholder} 
+                    className="w-full resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" 
+                  />
                 </div>
               </div>
             )}
@@ -438,13 +589,13 @@ export default function CreateTripPage() {
               <div>
                 <h3 className="mb-4 text-lg font-bold">{copy.summaryTitle}</h3>
                 <div className="flex flex-col gap-3 text-sm">
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryRoute}</span><span className="font-medium">{form.departureCity} → {form.arrivalCity}</span></div>
-                  {form.meetingPoint && <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryMeeting}</span><span className="font-medium">{form.meetingPoint}</span></div>}
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryDate}</span><span className="font-medium">{form.date} • {form.time}</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summarySeats}</span><span className="font-medium">{form.seatsTotal}</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryPrice}</span><span className="font-bold text-brand-600">{form.pricePerSeat} ₼</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryVehicle}</span><span className="font-medium">{form.carModel}</span></div>
-                  {form.comment && <div className="flex justify-between py-2"><span className="text-text-muted">{copy.summaryComment}</span><span className="font-medium">{form.comment}</span></div>}
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryRoute}</span><span className="font-medium">{formValues.departureCity} → {formValues.arrivalCity}</span></div>
+                  {formValues.meetingPoint && <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryMeeting}</span><span className="font-medium">{formValues.meetingPoint}</span></div>}
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryDate}</span><span className="font-medium">{formValues.date} • {formValues.time}</span></div>
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summarySeats}</span><span className="font-medium">{formValues.seatsTotal}</span></div>
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryPrice}</span><span className="font-bold text-brand-600">{formValues.pricePerSeat} ₼</span></div>
+                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryVehicle}</span><span className="font-medium">{formValues.carModel}</span></div>
+                  {formValues.comment && <div className="flex justify-between py-2"><span className="text-text-muted">{copy.summaryComment}</span><span className="font-medium">{formValues.comment}</span></div>}
                 </div>
               </div>
             )}
@@ -452,9 +603,20 @@ export default function CreateTripPage() {
           <div className="mt-8 flex gap-3">
             {step > 0 && <Button variant="outline" fullWidth onClick={back}><Icon name="arrow-left" size={16} /> {copy.backBtn}</Button>}
             {step < 4 ? (
-              <Button fullWidth onClick={next}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
+              <Button fullWidth onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
             ) : (
-              <Button fullWidth size="lg" onClick={publish}><Icon name="check" size={16} /> {copy.publishBtn}</Button>
+              <Button fullWidth size="lg" onClick={publish} disabled={createTripMutation.isPending}>
+                {createTripMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </span>
+                ) : (
+                  <>
+                    <Icon name="check" size={16} /> {copy.publishBtn}
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </Card>

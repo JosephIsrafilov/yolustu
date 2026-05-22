@@ -8,8 +8,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import app.domains.models
-from app.core.config import UPLOADS_DIR
+from app.core.config import UPLOADS_DIR, settings
 from app.core.logging_config import setup_logging
+from app.core.limiter import limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 from app.core.websocket import manager
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
@@ -32,13 +35,15 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Yolustu API", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Mount uploads directory
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 origins = [
-    "http://localhost:3000",
+    settings.FRONTEND_URL,
     "http://127.0.0.1:3000",
 ]
 
