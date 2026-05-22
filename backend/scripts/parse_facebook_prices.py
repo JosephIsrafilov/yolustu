@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
 
