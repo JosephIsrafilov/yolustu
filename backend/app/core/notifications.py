@@ -1,6 +1,9 @@
 import logging
+from typing import Any
 from uuid import UUID
+
 from sqlalchemy.orm import Session
+
 from app.domains.identity.models import DeviceToken
 from app.core.websocket import manager
 
@@ -12,7 +15,7 @@ class NotificationService:
         self.db = db
 
     def send_push_notification(
-        self, user_id: UUID, title: str, body: str, data: dict = None
+        self, user_id: UUID, title: str, body: str, data: dict[str, Any] | None = None
     ):
         """
         Mock implementation of push notification delivery.

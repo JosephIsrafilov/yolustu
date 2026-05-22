@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-import app.domains.models
+import app.domains.models as _domain_models  # noqa: F401
 from app.core.config import UPLOADS_DIR, settings
 from app.core.logging_config import setup_logging
 from app.core.limiter import limiter
@@ -38,7 +38,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Yolustu API", lifespan=lifespan)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,  # type: ignore[arg-type]
+)
 
 # Mount uploads directory
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)

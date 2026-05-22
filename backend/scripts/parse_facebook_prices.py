@@ -49,7 +49,7 @@ def parse_text_with_ai(raw_text: str):
             stream=False,
         )
 
-        response_content = completion.choices[0].message.content.strip()
+        response_content = (completion.choices[0].message.content or "").strip()
 
         # Clean up markdown if the model hallucinates it
         if response_content.startswith("```json"):

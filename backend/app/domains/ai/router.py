@@ -154,7 +154,7 @@ async def get_smart_pricing_suggestion(
             stream=False,
         )
 
-        response_content = completion.choices[0].message.content.strip()
+        response_content = (completion.choices[0].message.content or "").strip()
 
         # In case the model wrapped it in markdown
         if response_content.startswith("```json"):
