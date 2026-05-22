@@ -32,7 +32,9 @@ class AdminService:
         self.require_admin(current_user)
         return self.users.list_all()
 
-    def set_user_blocked(self, user_id: UUID, is_blocked: bool, current_user: CurrentUser):
+    def set_user_blocked(
+        self, user_id: UUID, is_blocked: bool, current_user: CurrentUser
+    ):
         self.require_admin(current_user)
         user = self.users.get_by_id(user_id)
         if not user:

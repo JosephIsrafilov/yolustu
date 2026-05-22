@@ -2,6 +2,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from app.domains.payments.models import Payment
 
+
 class PaymentRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -19,7 +20,11 @@ class PaymentRepository:
         return payment
 
     def get_by_transaction_id(self, transaction_id: str) -> Payment | None:
-        return self.db.query(Payment).filter(Payment.transaction_id == transaction_id).first()
+        return (
+            self.db.query(Payment)
+            .filter(Payment.transaction_id == transaction_id)
+            .first()
+        )
 
     def update_status(self, payment: Payment, status: str) -> Payment:
         payment.status = status

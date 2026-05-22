@@ -16,7 +16,9 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=UserResponse)
-def read_user_me(current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+def read_user_me(
+    current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
+):
     return IdentityService(db).get_current_user_model(current_user)
 
 

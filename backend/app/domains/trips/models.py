@@ -1,7 +1,17 @@
 import uuid
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -32,7 +42,9 @@ class Ride(Base):
     vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False)
     origin_location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
     origin_city = Column(String(100), nullable=False)
-    destination_location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+    destination_location = Column(
+        Geometry(geometry_type="POINT", srid=4326), nullable=False
+    )
     destination_city = Column(String(100), nullable=False)
     intermediate_cities = Column(Text, nullable=True)
     departure_time = Column(DateTime(timezone=True), nullable=False)

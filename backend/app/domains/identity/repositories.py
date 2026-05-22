@@ -33,7 +33,15 @@ class UserRepository:
         if user_in.phone and user_in.phone != user.phone:
             user.phone = user_in.phone
 
-        for field in ("first_name", "last_name", "avatar_url", "language", "role", "city", "bio"):
+        for field in (
+            "first_name",
+            "last_name",
+            "avatar_url",
+            "language",
+            "role",
+            "city",
+            "bio",
+        ):
             value = getattr(user_in, field)
             if value is not None:
                 setattr(user, field, value)
@@ -60,7 +68,9 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def update_verification_status(self, user: User, status: str, document_url: str = None) -> User:
+    def update_verification_status(
+        self, user: User, status: str, document_url: str = None
+    ) -> User:
         user.verification_status = status
         if document_url:
             user.document_url = document_url
@@ -77,13 +87,15 @@ class UserRepository:
         return self.db.query(User).order_by(User.created_at.desc()).all()
 
     def add_device_token(self, user_id: UUID, token: str):
-        existing_token = self.db.query(DeviceToken).filter(DeviceToken.token == token).first()
+        existing_token = (
+            self.db.query(DeviceToken).filter(DeviceToken.token == token).first()
+        )
         if existing_token:
             if existing_token.user_id != user_id:
                 existing_token.user_id = user_id
                 self.db.commit()
             return
-        
+
         device_token = DeviceToken(user_id=user_id, token=token)
         self.db.add(device_token)
         self.db.commit()

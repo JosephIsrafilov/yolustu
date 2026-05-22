@@ -5,7 +5,6 @@ from sqlalchemy import text
 def reset_db():
     print("Resetting database...")
     with engine.connect() as conn:
-        
         tables = [
             "bookings",
             "messages",
@@ -21,7 +20,7 @@ def reset_db():
                 print(f"Dropped table {table} (if it existed)")
             except Exception as e:
                 print(f"Error dropping table {table}: {e}")
-        
+
         try:
             conn.execute(text("DROP INDEX IF EXISTS idx_rides_destination_location"))
             conn.execute(text("DROP INDEX IF EXISTS idx_rides_origin_location"))

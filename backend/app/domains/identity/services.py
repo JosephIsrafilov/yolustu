@@ -6,7 +6,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, get_password_hash, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_password_hash,
+    verify_password,
+)
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.models import User
 from app.domains.identity.repositories import UserRepository
@@ -24,7 +29,9 @@ class IdentityService:
     def verify_otp(self, phone: str, otp: str, redis_client):
         stored_otp = redis_client.get(f"otp:{phone}")
         if not stored_otp or stored_otp != otp:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP"
+            )
 
         redis_client.delete(f"otp:{phone}")
         user = self.users.get_by_phone(phone)
@@ -45,7 +52,10 @@ class IdentityService:
     def login(self, login_data: LoginInput, redis_client):
         user = self.users.get_by_phone(login_data.phone)
         if not user or not verify_password(login_data.password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect phone or password")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect phone or password",
+            )
 
         if not user.is_verified:
             raise HTTPException(
@@ -58,7 +68,10 @@ class IdentityService:
     def refresh_token(self, refresh_token: str, redis_client):
         phone = redis_client.get(f"refresh_token:{refresh_token}")
         if not phone:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+            )
 
         # Invalidate old refresh token (Rotation)
         redis_client.delete(f"refresh_token:{refresh_token}")
@@ -67,7 +80,9 @@ class IdentityService:
 
     def _create_tokens(self, phone: str, redis_client):
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(data={"sub": phone}, expires_delta=access_token_expires)
+        access_token = create_access_token(
+            data={"sub": phone}, expires_delta=access_token_expires
+        )
 
         refresh_token = create_refresh_token()
         # Store refresh token in Redis for 30 days
@@ -88,9 +103,15 @@ class IdentityService:
     def get_current_user_model(self, current_user: CurrentUser) -> User:
         return self.get_user(current_user.id)
 
-    def update_current_user(self, current_user: CurrentUser, user_in: UserUpdate) -> User:
+    def update_current_user(
+        self, current_user: CurrentUser, user_in: UserUpdate
+    ) -> User:
         user = self.get_current_user_model(current_user)
-        if user_in.phone and user_in.phone != user.phone and self.users.get_by_phone(user_in.phone):
+        if (
+            user_in.phone
+            and user_in.phone != user.phone
+            and self.users.get_by_phone(user_in.phone)
+        ):
             raise HTTPException(status_code=400, detail="Phone already registered")
         return self.users.update(user, user_in)
 

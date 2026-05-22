@@ -9,7 +9,13 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.repositories import RideRepository, VehicleRepository
-from app.domains.trips.schemas import RideCreate, RideResponse, RideSearch, VehicleCreate, ride_to_response
+from app.domains.trips.schemas import (
+    RideCreate,
+    RideResponse,
+    RideSearch,
+    VehicleCreate,
+    ride_to_response,
+)
 
 
 class TripsService:
@@ -18,13 +24,22 @@ class TripsService:
         self.vehicles = VehicleRepository(db)
         self.users = UserRepository(db)
 
-    def create_ride(self, ride_in: RideCreate, current_user: CurrentUser) -> RideResponse:
+    def create_ride(
+        self, ride_in: RideCreate, current_user: CurrentUser
+    ) -> RideResponse:
         if ride_in.total_seats < 1 or ride_in.total_seats > 4:
-            raise HTTPException(status_code=400, detail="total_seats must be between 1 and 4")
+            raise HTTPException(
+                status_code=400, detail="total_seats must be between 1 and 4"
+            )
         if ride_in.available_seats < 0 or ride_in.available_seats > ride_in.total_seats:
-            raise HTTPException(status_code=400, detail="available_seats must be between 0 and total_seats")
+            raise HTTPException(
+                status_code=400,
+                detail="available_seats must be between 0 and total_seats",
+            )
         if ride_in.price_per_seat <= 0:
-            raise HTTPException(status_code=400, detail="price_per_seat must be positive")
+            raise HTTPException(
+                status_code=400, detail="price_per_seat must be positive"
+            )
 
         if ride_in.vehicle_id:
             vehicle = self.vehicles.get_owned(ride_in.vehicle_id, current_user.id)
@@ -33,7 +48,9 @@ class TripsService:
         else:
             vehicle = self.vehicles.get_first_for_user(current_user.id)
             if not vehicle:
-                vehicle = self.vehicles.create_default(current_user.id, ride_in.car_model or "Car")
+                vehicle = self.vehicles.create_default(
+                    current_user.id, ride_in.car_model or "Car"
+                )
 
         return ride_to_response(self.rides.create(current_user.id, vehicle.id, ride_in))
 
@@ -65,7 +82,10 @@ class TripsService:
         return [ride_to_response(ride) for ride in rides]
 
     def get_my_rides(self, current_user: CurrentUser) -> list[RideResponse]:
-        return [ride_to_response(ride) for ride in self.rides.list_for_driver(current_user.id)]
+        return [
+            ride_to_response(ride)
+            for ride in self.rides.list_for_driver(current_user.id)
+        ]
 
     def get_ride_model(self, ride_id: UUID) -> Ride:
         ride = self.rides.get(ride_id)
@@ -91,7 +111,9 @@ class TripsService:
         self.users.increment_total_rides(current_user.id)
         return ride_to_response(self.rides.save(ride))
 
-    def create_vehicle(self, vehicle_in: VehicleCreate, current_user: CurrentUser) -> Vehicle:
+    def create_vehicle(
+        self, vehicle_in: VehicleCreate, current_user: CurrentUser
+    ) -> Vehicle:
         return self.vehicles.create(current_user.id, vehicle_in)
 
     def get_my_vehicles(self, current_user: CurrentUser) -> list[Vehicle]:

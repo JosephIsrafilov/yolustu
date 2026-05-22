@@ -13,12 +13,24 @@ class AdminRepository:
     def stats(self) -> dict:
         return {
             "totalUsers": self.db.query(func.count(User.id)).scalar() or 0,
-            "blockedUsers": self.db.query(func.count(User.id)).filter(User.is_blocked == True).scalar() or 0,
+            "blockedUsers": self.db.query(func.count(User.id))
+            .filter(User.is_blocked)
+            .scalar()
+            or 0,
             "totalTrips": self.db.query(func.count(Ride.id)).scalar() or 0,
-            "activeTrips": self.db.query(func.count(Ride.id)).filter(Ride.status == "active").scalar() or 0,
+            "activeTrips": self.db.query(func.count(Ride.id))
+            .filter(Ride.status == "active")
+            .scalar()
+            or 0,
             "totalBookings": self.db.query(func.count(Booking.id)).scalar() or 0,
-            "pendingBookings": self.db.query(func.count(Booking.id)).filter(Booking.status == "pending").scalar() or 0,
-            "pendingVerifications": self.db.query(func.count(User.id)).filter(User.verification_status == "pending").scalar() or 0,
+            "pendingBookings": self.db.query(func.count(Booking.id))
+            .filter(Booking.status == "pending")
+            .scalar()
+            or 0,
+            "pendingVerifications": self.db.query(func.count(User.id))
+            .filter(User.verification_status == "pending")
+            .scalar()
+            or 0,
         }
 
     def list_pending_verifications(self) -> list[User]:

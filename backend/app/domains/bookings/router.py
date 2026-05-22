@@ -22,12 +22,16 @@ def create_booking(
 
 
 @router.get("/my", response_model=List[BookingResponse])
-def get_my_bookings(current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_my_bookings(
+    current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
+):
     return BookingsService(db).get_my_bookings(current_user)
 
 
 @router.get("/requests", response_model=List[BookingResponse])
-def get_booking_requests(current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_booking_requests(
+    current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
+):
     return BookingsService(db).get_booking_requests(current_user)
 
 

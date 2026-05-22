@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, Header
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.payments.schemas import PaymentCreateRequest, PaymentSessionResponse, WebhookPayload
+from app.domains.payments.schemas import PaymentCreateRequest, PaymentSessionResponse
 from app.domains.payments.services import PaymentService
 
 router = APIRouter()
@@ -18,8 +18,6 @@ def create_payment(
     service = PaymentService(db)
     return service.create_payment_session(request.booking_id, current_user)
 
-
-from fastapi import Request, Header
 
 @router.post("/webhook")
 async def payment_webhook(

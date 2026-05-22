@@ -14,7 +14,6 @@ def check_all_relations():
         rows = result.fetchall()
         print(f"Found {len(rows)} relations:")
         for row in rows:
-            
             print(row)
 
 

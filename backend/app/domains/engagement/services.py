@@ -22,18 +22,26 @@ class EngagementService:
         self.users = UserLookupPort(db)
         self.notifications = NotificationService(db)
 
-    def create_review(self, review_in: ReviewCreate, current_user: CurrentUser) -> Review:
+    def create_review(
+        self, review_in: ReviewCreate, current_user: CurrentUser
+    ) -> Review:
         ride = self.rides.get_ride(review_in.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
 
         if not self._is_participant(ride, current_user.id):
-            raise HTTPException(status_code=403, detail="Only participants can leave reviews")
+            raise HTTPException(
+                status_code=403, detail="Only participants can leave reviews"
+            )
 
         target_is_driver = ride.driver_id == review_in.target_id
-        target_is_passenger = self.bookings.is_accepted_passenger(ride.id, review_in.target_id)
+        target_is_passenger = self.bookings.is_accepted_passenger(
+            ride.id, review_in.target_id
+        )
         if not (target_is_driver or target_is_passenger):
-            raise HTTPException(status_code=400, detail="Target user was not part of this ride")
+            raise HTTPException(
+                status_code=400, detail="Target user was not part of this ride"
+            )
         if current_user.id == review_in.target_id:
             raise HTTPException(status_code=400, detail="You cannot review yourself")
 
@@ -42,7 +50,9 @@ class EngagementService:
             raise HTTPException(status_code=404, detail="Target user not found")
 
         existing_reviews = self.reviews.list_for_target(review_in.target_id)
-        total_rating = sum(review.rating for review in existing_reviews) + review_in.rating
+        total_rating = (
+            sum(review.rating for review in existing_reviews) + review_in.rating
+        )
         target_user.rating = total_rating / (len(existing_reviews) + 1)
 
         review = self.reviews.create(current_user.id, review_in)
@@ -51,12 +61,16 @@ class EngagementService:
     def get_user_reviews(self, user_id: UUID) -> list[Review]:
         return self.reviews.list_for_target(user_id)
 
-    async def send_message(self, message_in: MessageCreate, current_user: CurrentUser, manager) -> Message:
+    async def send_message(
+        self, message_in: MessageCreate, current_user: CurrentUser, manager
+    ) -> Message:
         ride = self.rides.get_ride(message_in.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         if not self._is_participant(ride, current_user.id):
-            raise HTTPException(status_code=403, detail="Only participants can send messages")
+            raise HTTPException(
+                status_code=403, detail="Only participants can send messages"
+            )
 
         message = self.messages.create(current_user.id, message_in)
         message_data = {
@@ -77,18 +91,24 @@ class EngagementService:
                     user_id=participant_id,
                     title=f"New Message from {current_user.first_name}",
                     body=message.content,
-                    data={"ride_id": str(ride.id), "type": "new_message"}
+                    data={"ride_id": str(ride.id), "type": "new_message"},
                 )
 
         return message
 
-    def get_ride_messages(self, ride_id: UUID, current_user: CurrentUser) -> list[Message]:
+    def get_ride_messages(
+        self, ride_id: UUID, current_user: CurrentUser
+    ) -> list[Message]:
         ride = self.rides.get_ride(ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         if not self._is_participant(ride, current_user.id):
-            raise HTTPException(status_code=403, detail="Only participants can read messages")
+            raise HTTPException(
+                status_code=403, detail="Only participants can read messages"
+            )
         return self.messages.list_for_ride(ride_id)
 
     def _is_participant(self, ride, user_id: UUID) -> bool:
-        return ride.driver_id == user_id or self.bookings.is_accepted_passenger(ride.id, user_id)
+        return ride.driver_id == user_id or self.bookings.is_accepted_passenger(
+            ride.id, user_id
+        )

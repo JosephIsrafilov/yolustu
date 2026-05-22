@@ -8,7 +8,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 import geoalchemy2
-from sqlalchemy.dialects import postgresql
 
 
 revision: str = "a18f0b3882e4"
@@ -18,7 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    
+
     op.create_table(
         "users",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -36,7 +35,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_users_phone"), "users", ["phone"], unique=True)
-    
+
     op.create_table(
         "vehicles",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -58,7 +57,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
+
     op.create_table(
         "rides",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -112,8 +111,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
-    
+
     op.create_table(
         "bookings",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -137,7 +135,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
+
     op.create_table(
         "messages",
         sa.Column("id", sa.UUID(), nullable=False),
@@ -160,7 +158,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
+
     op.create_table(
         "reviews",
         sa.Column("id", sa.UUID(), nullable=False),

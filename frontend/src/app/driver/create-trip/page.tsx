@@ -19,7 +19,7 @@ import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
 import { CAR_MODELS } from '@/data/mock-data';
 import Icon from '@/components/ui/Icon';
-import type { CreateTripData, Vehicle } from '@/types';
+import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
 import { apiClient } from '@/services/api-client';
@@ -117,7 +117,7 @@ export default function CreateTripPage() {
   }, [vehicles.length, copy]);
 
   // React Hook Form Configuration
-  const { control, register, handleSubmit, trigger, setValue, getValues, watch, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, trigger, setValue, getValues, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       departureCity: '',
@@ -192,7 +192,7 @@ export default function CreateTripPage() {
       return await trigger(['seatsTotal', 'pricePerSeat']);
     }
     if (step === 3) {
-      const fields: any[] = ['carModel'];
+      const fields: (keyof FormValues)[] = ['carModel'];
       if (!isMockDataMode && vehicles.length === 0) {
         fields.push('vehicleModel', 'vehicleColor', 'vehiclePlate', 'vehicleYear');
       }

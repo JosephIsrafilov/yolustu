@@ -24,12 +24,14 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
     Base.metadata.create_all(bind=engine, tables=[User.__table__])
     seed_user()
     yield
     User.__table__.drop(bind=engine)
+
 
 def seed_user():
     db = TestingSessionLocal()
@@ -49,12 +51,14 @@ def seed_user():
     finally:
         db.close()
 
+
 def override_get_db():
     try:
         db = TestingSessionLocal()
         yield db
     finally:
         db.close()
+
 
 # Mock Redis
 mock_redis_client = MagicMock()
@@ -63,16 +67,20 @@ mock_redis_client.set.return_value = True
 mock_redis_client.setex.return_value = True
 mock_redis_client.delete.return_value = True
 
+
 def override_get_redis():
     return mock_redis_client
+
 
 # Apply overrides
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_redis] = override_get_redis
 
+
 @pytest.fixture
 def db():
     return TestingSessionLocal()
+
 
 @pytest.fixture
 def redis_mock():

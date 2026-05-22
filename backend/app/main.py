@@ -29,10 +29,12 @@ from app.domains.ai.router import router as ai_router
 # Setup logging
 setup_logging()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     manager.loop = asyncio.get_running_loop()
     yield
+
 
 app = FastAPI(title="Yolustu API", lifespan=lifespan)
 app.state.limiter = limiter
@@ -102,7 +104,9 @@ v1_router.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
 v1_router.include_router(vehicles_router, prefix="/vehicles", tags=["vehicles"])
 v1_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])
 v1_router.include_router(messages_router, prefix="/messages", tags=["messages"])
-v1_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
+v1_router.include_router(
+    notifications_router, prefix="/notifications", tags=["notifications"]
+)
 v1_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 v1_router.include_router(payments_router, prefix="/payments", tags=["payments"])
 v1_router.include_router(ai_router, prefix="/ai", tags=["ai"])

@@ -1,6 +1,16 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    func,
+    ForeignKey,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -22,7 +32,9 @@ class User(Base):
     bio = Column(Text, nullable=True)
     is_blocked = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False)
-    verification_status = Column(String(20), default="none", nullable=False) # none, pending, approved, rejected
+    verification_status = Column(
+        String(20), default="none", nullable=False
+    )  # none, pending, approved, rejected
     document_url = Column(String(255), nullable=True)
     rating = Column(Float, default=0.0)
     total_rides = Column(Integer, default=0)
@@ -31,17 +43,25 @@ class User(Base):
     vehicles = relationship("Vehicle", back_populates="owner")
     rides_driven = relationship("Ride", back_populates="driver")
     bookings = relationship("Booking", back_populates="passenger")
-    reviews_written = relationship("Review", foreign_keys="Review.author_id", back_populates="author")
-    reviews_received = relationship("Review", foreign_keys="Review.target_id", back_populates="target")
+    reviews_written = relationship(
+        "Review", foreign_keys="Review.author_id", back_populates="author"
+    )
+    reviews_received = relationship(
+        "Review", foreign_keys="Review.target_id", back_populates="target"
+    )
     messages_sent = relationship("Message", back_populates="sender")
-    device_tokens = relationship("DeviceToken", back_populates="user", cascade="all, delete-orphan")
+    device_tokens = relationship(
+        "DeviceToken", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class DeviceToken(Base):
     __tablename__ = "device_tokens"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     token = Column(String(255), unique=True, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

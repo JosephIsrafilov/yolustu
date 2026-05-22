@@ -9,7 +9,9 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-async def notifications_websocket(websocket: WebSocket, token: str, db: Session = Depends(get_db)):
+async def notifications_websocket(
+    websocket: WebSocket, token: str, db: Session = Depends(get_db)
+):
     try:
         # Extract the user from the token passed via query parameter
         # Since get_current_user is usually a dependency expecting a bearer token, we pass it manually.

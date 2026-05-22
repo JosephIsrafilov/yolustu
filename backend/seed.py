@@ -1,7 +1,6 @@
-from models.models import User, Vehicle, Ride, Booking, Review
+from models.models import User, Vehicle, Ride
 from core.database import SessionLocal
 from core.security import get_password_hash
-from sqlalchemy.orm import Session
 import sys
 import os
 import uuid
@@ -17,7 +16,7 @@ def seed_db():
     db = SessionLocal()
     try:
         print("Starting seeding process...")
-        
+
         mock_users = [
             {
                 "id": "u1",
@@ -68,7 +67,7 @@ def seed_db():
                 "rating": 0.0,
             },
         ]
-        
+
         default_password_hash = get_password_hash("password123")
         user_map = {}
         for u_data in mock_users:
@@ -96,7 +95,7 @@ def seed_db():
                 user.rating = u_data["rating"]
                 print(f"User {u_data['phone']} updated.")
             user_map[u_data["id"]] = user
-        
+
         vehicles_data = [
             {
                 "id": "v1",
@@ -155,7 +154,7 @@ def seed_db():
                 vehicle.color = v_data["color"]
                 print(f"Vehicle {v_data['plate_number']} updated.")
             vehicle_map[v_data["id"]] = vehicle
-        
+
         rides_data = [
             {
                 "id": "t1",
@@ -194,7 +193,7 @@ def seed_db():
         for r_data in rides_data:
             driver = user_map[r_data["driver_id"]]
             vehicle = vehicle_map[r_data["vehicle_id"]]
-            
+
             departure = datetime.now() + timedelta(days=2)
             ride = (
                 db.query(Ride)
@@ -229,7 +228,9 @@ def seed_db():
                 ride.destination_location = r_data["dest_coords"]
                 ride.departure_time = departure
                 ride.total_seats = r_data["seats"]
-                ride.available_seats = max(0, min(ride.available_seats, r_data["seats"]))
+                ride.available_seats = max(
+                    0, min(ride.available_seats, r_data["seats"])
+                )
                 ride.price_per_seat = r_data["price"]
                 print(f"Ride {r_data['origin']} -> {r_data['dest']} updated.")
         db.commit()

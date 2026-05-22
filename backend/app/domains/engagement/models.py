@@ -18,8 +18,12 @@ class Review(Base):
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    author = relationship("User", foreign_keys=[author_id], back_populates="reviews_written")
-    target = relationship("User", foreign_keys=[target_id], back_populates="reviews_received")
+    author = relationship(
+        "User", foreign_keys=[author_id], back_populates="reviews_written"
+    )
+    target = relationship(
+        "User", foreign_keys=[target_id], back_populates="reviews_received"
+    )
     ride = relationship("Ride", back_populates="reviews")
 
 

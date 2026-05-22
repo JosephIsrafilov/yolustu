@@ -22,7 +22,9 @@ def create_vehicle(
 
 
 @router.get("/my", response_model=List[VehicleResponse])
-def get_my_vehicles(current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_my_vehicles(
+    current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
+):
     return TripsService(db).get_my_vehicles(current_user)
 
 

@@ -45,7 +45,9 @@ class ConnectionManager:
             message_json = json.dumps(message, default=str)
             for connection in self.user_connections[user_id]:
                 try:
-                    asyncio.run_coroutine_threadsafe(connection.send_text(message_json), self.loop)
+                    asyncio.run_coroutine_threadsafe(
+                        connection.send_text(message_json), self.loop
+                    )
                 except RuntimeError:
                     pass
 

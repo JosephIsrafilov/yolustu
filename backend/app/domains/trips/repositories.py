@@ -1,4 +1,3 @@
-from datetime import date
 from uuid import UUID
 
 from sqlalchemy import Date, cast, func
@@ -36,7 +35,11 @@ class VehicleRepository:
         return self.db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     def get_owned(self, vehicle_id: UUID, user_id: UUID) -> Vehicle | None:
-        return self.db.query(Vehicle).filter(Vehicle.id == vehicle_id, Vehicle.user_id == user_id).first()
+        return (
+            self.db.query(Vehicle)
+            .filter(Vehicle.id == vehicle_id, Vehicle.user_id == user_id)
+            .first()
+        )
 
     def get_first_for_user(self, user_id: UUID) -> Vehicle | None:
         return self.db.query(Vehicle).filter(Vehicle.user_id == user_id).first()
@@ -91,10 +94,14 @@ class RideRepository:
         return self.db.query(Ride).order_by(Ride.created_at.desc()).all()
 
     def search(self, criteria: RideSearch) -> list[Ride]:
-        query = self.db.query(Ride).filter(Ride.status == "active", Ride.available_seats >= criteria.min_seats)
+        query = self.db.query(Ride).filter(
+            Ride.status == "active", Ride.available_seats >= criteria.min_seats
+        )
 
         if criteria.departure_date:
-            query = query.filter(cast(Ride.departure_time, Date) == criteria.departure_date)
+            query = query.filter(
+                cast(Ride.departure_time, Date) == criteria.departure_date
+            )
 
         dist_origin = None
         dist_dest = None

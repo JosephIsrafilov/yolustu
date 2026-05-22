@@ -22,7 +22,9 @@ def get_admin_stats(
 
 
 @router.get("/users", response_model=list[UserResponse])
-def get_users(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
+def get_users(
+    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+):
     return AdminService(db).get_users(current_user)
 
 
@@ -45,7 +47,9 @@ def unblock_user(
 
 
 @router.get("/rides", response_model=list[RideResponse])
-def get_rides(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
+def get_rides(
+    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+):
     return AdminService(db).get_rides(current_user)
 
 
@@ -59,12 +63,16 @@ def delete_ride(
 
 
 @router.get("/bookings", response_model=list[BookingResponse])
-def get_bookings(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
+def get_bookings(
+    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+):
     return AdminService(db).get_bookings(current_user)
 
 
 @router.get("/verifications", response_model=list[UserResponse])
-def get_pending_verifications(db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)):
+def get_pending_verifications(
+    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+):
     return AdminService(db).get_pending_verifications(current_user)
 
 

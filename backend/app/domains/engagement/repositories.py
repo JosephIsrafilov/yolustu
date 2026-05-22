@@ -35,11 +35,18 @@ class MessageRepository:
         self.db = db
 
     def create(self, sender_id: UUID, message_in: MessageCreate) -> Message:
-        message = Message(ride_id=message_in.ride_id, sender_id=sender_id, content=message_in.content)
+        message = Message(
+            ride_id=message_in.ride_id, sender_id=sender_id, content=message_in.content
+        )
         self.db.add(message)
         self.db.commit()
         self.db.refresh(message)
         return message
 
     def list_for_ride(self, ride_id: UUID) -> list[Message]:
-        return self.db.query(Message).filter(Message.ride_id == ride_id).order_by(Message.created_at.asc()).all()
+        return (
+            self.db.query(Message)
+            .filter(Message.ride_id == ride_id)
+            .order_by(Message.created_at.asc())
+            .all()
+        )

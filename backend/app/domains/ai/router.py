@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from openai import OpenAI
 import httpx
 import json
@@ -11,9 +11,11 @@ from app.domains.identity.dependencies import CurrentUser, get_current_user
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 class LocationCoords(BaseModel):
     lat: float
     lng: float
+
 
 class PricingSuggestionRequest(BaseModel):
     origin: str
@@ -24,9 +26,11 @@ class PricingSuggestionRequest(BaseModel):
     car_model: str | None = None
     seats_total: int | None = None
 
+
 class PricingSuggestionResponse(BaseModel):
     suggested_price: int
     reasoning: str
+
 
 async def get_driving_route(origin: LocationCoords, destination: LocationCoords):
     """Fetch exact driving distance and duration from OSRM"""
@@ -46,17 +50,20 @@ async def get_driving_route(origin: LocationCoords, destination: LocationCoords)
         logger.warning(f"OSRM routing failed: {e}")
     return None, None
 
+
 @router.post("/pricing-suggestion", response_model=PricingSuggestionResponse)
 async def get_smart_pricing_suggestion(
     request: PricingSuggestionRequest,
-    current_user: CurrentUser = Depends(get_current_user)
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     if not settings.NVIDIA_API_KEY:
         raise HTTPException(status_code=500, detail="NVIDIA API key is missing.")
 
     distance_km, duration_min = None, None
     if request.origin_coords and request.destination_coords:
-        distance_km, duration_min = await get_driving_route(request.origin_coords, request.destination_coords)
+        distance_km, duration_min = await get_driving_route(
+            request.origin_coords, request.destination_coords
+        )
 
     client = OpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
@@ -67,20 +74,20 @@ async def get_smart_pricing_suggestion(
         f"Route: {request.origin} to {request.destination}\n"
         f"Departure Time: {request.departure_time}\n"
     )
-    
+
     if distance_km and duration_min:
         details += f"Driving Distance: {distance_km:.1f} km\n"
         details += f"Estimated Driving Time: {int(duration_min // 60)}h {int(duration_min % 60)}m\n"
         # Basic fuel calculation context
-        fuel_liters = (distance_km / 100) * 8.5 # Assuming ~8.5L/100km
-        fuel_cost = fuel_liters * 1.00 # Assuming ~1.00 AZN per liter
+        fuel_liters = (distance_km / 100) * 8.5  # Assuming ~8.5L/100km
+        fuel_cost = fuel_liters * 1.00  # Assuming ~1.00 AZN per liter
         details += f"Estimated Total Fuel Cost: {fuel_cost:.1f} AZN\n"
     else:
         details += "Distance: Unknown (Use standard market rates for this route)\n"
 
     car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
     details += f"Vehicle: {car_model}\n"
-    
+
     seats = request.seats_total or 3
     details += f"Passenger Seats Available: {seats}\n"
 
@@ -107,22 +114,23 @@ async def get_smart_pricing_suggestion(
             temperature=0.2,
             top_p=0.7,
             max_tokens=1024,
-            stream=False
+            stream=False,
         )
 
         response_content = completion.choices[0].message.content.strip()
-        
+
         # In case the model wrapped it in markdown
         if response_content.startswith("```json"):
             response_content = response_content[7:]
         if response_content.endswith("```"):
             response_content = response_content[:-3]
-            
+
         data = json.loads(response_content.strip())
         return PricingSuggestionResponse(
-            suggested_price=int(data["suggested_price"]),
-            reasoning=data["reasoning"]
+            suggested_price=int(data["suggested_price"]), reasoning=data["reasoning"]
         )
     except Exception as e:
         logger.error(f"AI pricing failed: {e}")
-        raise HTTPException(status_code=500, detail="AI pricing recommendation failed to process.")
+        raise HTTPException(
+            status_code=500, detail="AI pricing recommendation failed to process."
+        )

@@ -1,6 +1,5 @@
 import logging
 import sys
-from typing import Any
 
 
 class CustomFormatter(logging.Formatter):
