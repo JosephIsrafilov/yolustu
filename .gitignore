@@ -10,7 +10,7 @@ node_modules/
 .vscode/
 .idea/
 .antigravitycli/
-!.jules/
+.jules/
 
 # OS files
 .DS_Store
