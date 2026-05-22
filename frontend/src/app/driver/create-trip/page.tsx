@@ -154,11 +154,14 @@ export default function CreateTripPage() {
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');
+  const [aiSuggestedPrice, setAiSuggestedPrice] = useState<number | null>(null);
 
   const getAiSuggestion = async () => {
     const values = getValues();
     if (!values.departureCity || !values.arrivalCity || !values.time) return;
     setIsAiLoading(true);
+    setAiSuggestedPrice(null);
+    setAiReasoning('');
     try {
       const response = await apiAiService.getSmartPricingSuggestion({
         origin: values.departureCity,
@@ -170,7 +173,7 @@ export default function CreateTripPage() {
         destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
       });
       if (response?.suggested_price) {
-        setValue('pricePerSeat', response.suggested_price);
+        setAiSuggestedPrice(response.suggested_price);
         setAiReasoning(response.reasoning);
       }
     } catch (error) {
@@ -473,26 +476,56 @@ export default function CreateTripPage() {
                     error={errors.pricePerSeat?.message} 
                   />
                   
-                  <div className="mt-2 flex flex-col items-start gap-3 rounded-xl bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] p-4 shadow-sm border border-[#a5d6a7] dark:from-[#1b5e20] dark:to-[#004d40] dark:border-[#2e7d32]">
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Icon name="sparkles" size={16} className="text-[#2e7d32] dark:text-[#81c784]" />
-                        <span className="text-sm font-bold text-[#2e7d32] dark:text-[#81c784]">{copy.aiTitle}</span>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={getAiSuggestion}
-                        disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                        className="rounded-lg bg-[#2e7d32] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#1b5e20] active:scale-95 disabled:opacity-50 dark:bg-[#4caf50] dark:text-black dark:hover:bg-[#81c784]"
-                      >
-                        {isAiLoading ? copy.aiLoading : copy.aiSuggestBtn}
-                      </button>
-                    </div>
-                    {aiReasoning ? (
-                      <p className="text-xs font-medium text-[#1b5e20] dark:text-[#a5d6a7] leading-relaxed">{aiReasoning}</p>
-                    ) : (
-                      <p className="text-xs text-[#2e7d32] dark:text-[#81c784]">{copy.aiPlaceholder}</p>
+                  <div className="mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 p-4 shadow-sm border border-indigo-100/50 backdrop-blur-md dark:from-indigo-950/30 dark:to-purple-950/30 dark:border-indigo-800/30 transition-all duration-300">
+                    {isAiLoading && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/5 animate-[shimmer_1.5s_infinite] -skew-x-12" />
                     )}
+                    <div className="relative z-10 flex w-full flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-sm">
+                            <Icon name="sparkles" size={14} className="text-white" />
+                          </div>
+                          <span className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400">
+                            {copy.aiTitle}
+                          </span>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={getAiSuggestion}
+                          disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
+                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm border border-indigo-100 transition-all hover:bg-indigo-50 active:scale-95 disabled:opacity-50 dark:bg-indigo-900/50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-800/50"
+                        >
+                          {isAiLoading ? copy.aiLoading : copy.aiSuggestBtn}
+                        </button>
+                      </div>
+                      
+                      {aiSuggestedPrice ? (
+                        <div className="flex flex-col gap-3 mt-1 animate-fade-in">
+                          <div className="flex items-end justify-between bg-white/60 dark:bg-black/20 p-3 rounded-xl border border-white/40 dark:border-white/5">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-0.5">Suggested Price</p>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{aiSuggestedPrice}</span>
+                                <span className="text-sm font-bold text-indigo-400 dark:text-indigo-600">₼</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
+                              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
+                            >
+                              <Icon name="check" size={16} /> Apply
+                            </button>
+                          </div>
+                          <p className="text-xs font-medium text-text-muted leading-relaxed">{aiReasoning}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-text-muted leading-relaxed mt-1">
+                          {aiReasoning || copy.aiPlaceholder}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
