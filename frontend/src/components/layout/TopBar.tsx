@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
-import { I18N } from '@/lib/i18n';
 import Icon from '@/components/ui/Icon';
 
 interface TopBarProps {
@@ -14,7 +14,7 @@ interface TopBarProps {
 export default function TopBar({ title, showBack = false, rightAction }: TopBarProps) {
   const router = useRouter();
   const { language } = useAppStore();
-  const t = I18N[language].common;
+  const backLabel = language === 'az' ? 'Geri' : language === 'ru' ? 'Назад' : 'Back';
 
   return (
     <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-border">
@@ -24,7 +24,7 @@ export default function TopBar({ title, showBack = false, rightAction }: TopBarP
             <button
               onClick={() => router.back()}
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-muted transition-colors"
-              aria-label={t.back}
+              aria-label={backLabel}
             >
               <Icon name="arrow-left" size={20} />
             </button>
