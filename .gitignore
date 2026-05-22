@@ -9,6 +9,8 @@ node_modules/
 # IDEs
 .vscode/
 .idea/
+.antigravitycli/
+.jules/
 
 # OS files
 .DS_Store
