@@ -102,9 +102,12 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 Current auth/profile behavior in API mode:
-- `POST /auth/register` returns `accessToken`, `refreshToken`, `user`, and frontend starts session immediately.
+- `POST /auth/register` returns `accessToken`, `refreshToken`, `user`; frontend starts session immediately.
 - `POST /auth/login` returns `accessToken`, `refreshToken`, `user`.
-- `POST /auth/refresh` is called automatically on `401` for non-auth endpoints.
+- `POST /auth/request-otp` returns `{ message, phone }`.
+- `POST /auth/verify-otp` returns `{ message: "Account verified successfully" }` and does not return tokens.
+- `POST /auth/refresh` receives `{ refreshToken }` and returns rotated `accessToken`, `refreshToken`, `user`.
+- Frontend stores tokens in `localStorage` keys: `token` and `refresh_token`.
 - `GET /users/me` is used on app boot to restore session after reload.
 - `PUT /users/me` powers profile/profile-setup updates.
 
