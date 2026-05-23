@@ -3,13 +3,14 @@ import { AppState, TripSlice } from '../types';
 import { tripsService } from '@/services';
 import { MOCK_TRIPS } from '@/data/mock-data';
 import { isMockDataMode } from '@/lib/env';
+import { toApiError } from '@/services/api-error';
 
 export const createTripSlice: StateCreator<
   AppState,
   [],
   [],
   TripSlice
-> = (set) => ({
+> = (set, get) => ({
   trips: isMockDataMode ? [...MOCK_TRIPS] : [],
   isLoadingTrips: false,
 
@@ -23,11 +24,16 @@ export const createTripSlice: StateCreator<
           .filter((driver): driver is NonNullable<typeof driver> => Boolean(driver));
         const usersById = new Map(state.users.map((user) => [user.id, user]));
         drivers.forEach((driver) => usersById.set(driver.id, driver));
-        return { trips, users: [...usersById.values()], isLoadingTrips: false };
+        return {
+          trips,
+          users: [...usersById.values()],
+          isLoadingTrips: false,
+          lastError: null,
+        };
       });
     } catch (error) {
-      console.error('Fetch trips error:', error);
-      set({ isLoadingTrips: false });
+      const apiError = toApiError(error);
+      set({ isLoadingTrips: false, lastError: apiError.message || 'Failed to load trips.' });
     }
   },
 
@@ -39,40 +45,55 @@ export const createTripSlice: StateCreator<
         users: newTrip.driver
           ? [newTrip.driver, ...state.users.filter((user) => user.id !== newTrip.driver?.id)]
           : state.users,
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchTrips();
+      }
       return newTrip.id;
     } catch (error) {
-      console.error('Create trip error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to create trip.' });
       throw error;
     }
   },
 
   cancelTrip: async (tripId) => {
     try {
-      await tripsService.cancelTrip(tripId);
+      const trip = await tripsService.cancelTrip(tripId);
       set((state) => ({
         trips: state.trips.map((t) =>
-          t.id === tripId ? { ...t, status: 'cancelled' } : t
+          t.id === tripId ? { ...t, ...trip } : t
         ),
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchTrips();
+      }
       return true;
     } catch (error) {
-      console.error('Cancel trip error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to cancel trip.' });
       return false;
     }
   },
 
   completeTrip: async (tripId) => {
     try {
-      await tripsService.completeTrip(tripId);
+      const trip = await tripsService.completeTrip(tripId);
       set((state) => ({
         trips: state.trips.map((t) =>
-          t.id === tripId ? { ...t, status: 'completed' } : t
+          t.id === tripId ? { ...t, ...trip } : t
         ),
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchTrips();
+      }
       return true;
     } catch (error) {
-      console.error('Complete trip error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to complete trip.' });
       return false;
     }
   },

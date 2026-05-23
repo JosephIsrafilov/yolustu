@@ -27,6 +27,11 @@ class TripsService:
     def create_ride(
         self, ride_in: RideCreate, current_user: CurrentUser
     ) -> RideResponse:
+        if current_user.role not in ["driver", "admin"]:
+            raise HTTPException(
+                status_code=403, detail="Only drivers can create rides"
+            )
+
         if ride_in.total_seats < 1 or ride_in.total_seats > 4:
             raise HTTPException(
                 status_code=400, detail="total_seats must be between 1 and 4"

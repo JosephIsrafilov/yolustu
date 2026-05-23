@@ -24,6 +24,9 @@ class BookingsService:
     def create_booking(
         self, booking_in: BookingCreate, current_user: CurrentUser
     ) -> BookingResponse:
+        if booking_in.seats_booked < 1:
+            raise HTTPException(status_code=400, detail="seats_booked must be at least 1")
+
         ride = self.rides.get_ride_for_update(booking_in.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
@@ -68,13 +71,15 @@ class BookingsService:
         self, booking_id: UUID, current_user: CurrentUser
     ) -> BookingResponse:
         booking = self._get_booking(booking_id)
-        ride = self._get_booking_ride(booking)
+        ride = self._get_booking_ride_for_update(booking)
         if ride.driver_id != current_user.id:
             raise HTTPException(
                 status_code=403, detail="Only the driver can confirm this booking"
             )
         if booking.status != "pending":
             raise HTTPException(status_code=400, detail="Booking is not pending")
+        if ride.status != "active":
+            raise HTTPException(status_code=400, detail="Ride is not active")
         if ride.available_seats < booking.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough seats left")
 
@@ -100,6 +105,8 @@ class BookingsService:
             raise HTTPException(
                 status_code=403, detail="Only the driver can reject this booking"
             )
+        if booking.status != "pending":
+            raise HTTPException(status_code=400, detail="Booking is not pending")
 
         booking.status = "rejected"
         self.bookings.save(booking)
@@ -122,9 +129,17 @@ class BookingsService:
                 status_code=403, detail="Only the passenger can cancel this booking"
             )
 
-        if booking.status == "accepted":
-            ride = self._get_booking_ride(booking)
-            ride.available_seats += booking.seats_booked
+        if booking.status in ["cancelled", "rejected", "completed"]:
+            raise HTTPException(
+                status_code=400, detail="Booking cannot be cancelled in current status"
+            )
+
+        if booking.status in ["accepted", "paid"]:
+            ride = self._get_booking_ride_for_update(booking)
+            if ride.status != "completed":
+                ride.available_seats = min(
+                    ride.total_seats, ride.available_seats + booking.seats_booked
+                )
 
         booking.status = "cancelled"
         self.bookings.save(booking)
@@ -147,6 +162,12 @@ class BookingsService:
 
     def _get_booking_ride(self, booking: Booking):
         ride = self.rides.get_ride(booking.ride_id)
+        if not ride:
+            raise HTTPException(status_code=404, detail="Ride not found")
+        return ride
+
+    def _get_booking_ride_for_update(self, booking: Booking):
+        ride = self.rides.get_ride_for_update(booking.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         return ride

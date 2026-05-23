@@ -1,4 +1,4 @@
-import type { Trip, Booking, User, Review, Vehicle } from '@/types';
+import type { CreateTripData, Trip, Booking, User, Review, Vehicle } from '@/types';
 
 export interface ApiUser {
   id: string;
@@ -40,6 +40,8 @@ export interface ApiTrip {
   description?: string | null;
   status: Trip['status'];
   created_at: string;
+  meeting_point?: string | null;
+  dropoff_point?: string | null;
   origin_location?: { lat: number; lon: number };
   destination_location?: { lat: number; lon: number };
   vehicle?: ApiVehicle | null;
@@ -67,6 +69,20 @@ export interface ApiReview {
   created_at: string;
 }
 
+export interface ApiRideCreateInput {
+  departure_time: string;
+  total_seats: number;
+  available_seats: number;
+  price_per_seat: number;
+  origin_city: string;
+  destination_city: string;
+  vehicle_id: string;
+  origin: { lat: number; lon: number };
+  destination: { lat: number; lon: number };
+  car_model?: string;
+  description?: string;
+}
+
 export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
   return {
     id: apiVehicle.id,
@@ -83,13 +99,16 @@ export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
 export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
   const departureDate = new Date(apiTrip.departure_time);
   const vehicle = apiTrip.vehicle ? mapApiVehicleToVehicle(apiTrip.vehicle) : undefined;
+  const meetingPoint = apiTrip.meeting_point?.trim() || apiTrip.origin_city;
+  const dropoffPoint = apiTrip.dropoff_point?.trim() || apiTrip.destination_city;
+
   return {
     id: apiTrip.id,
     driverId: apiTrip.driver_id,
     departureCity: apiTrip.origin_city,
     arrivalCity: apiTrip.destination_city,
-    meetingPoint: '', 
-    dropoffPoint: '', 
+    meetingPoint,
+    dropoffPoint,
     date: departureDate.toISOString().split('T')[0],
     time: departureDate.toTimeString().split(' ')[0].substring(0, 5),
     seatsTotal: apiTrip.total_seats,
@@ -103,6 +122,27 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     destination: apiTrip.destination_location ? { lat: apiTrip.destination_location.lat, lng: apiTrip.destination_location.lon } : undefined,
     driver: apiTrip.driver ? mapApiUserToUser(apiTrip.driver) : undefined,
     vehicle,
+  };
+}
+
+export function mapCreateTripToApiRideCreate(
+  input: CreateTripData,
+  vehicleId: string,
+  origin: { lat: number; lon: number },
+  destination: { lat: number; lon: number },
+): ApiRideCreateInput {
+  return {
+    departure_time: `${input.date}T${input.time}:00`,
+    total_seats: input.seatsTotal,
+    available_seats: input.seatsTotal,
+    price_per_seat: input.pricePerSeat,
+    origin_city: input.departureCity,
+    destination_city: input.arrivalCity,
+    vehicle_id: vehicleId,
+    origin,
+    destination,
+    car_model: input.carModel || undefined,
+    description: input.comment || undefined,
   };
 }
 

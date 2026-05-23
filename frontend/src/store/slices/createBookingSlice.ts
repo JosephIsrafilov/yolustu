@@ -3,13 +3,14 @@ import { AppState, BookingSlice } from '../types';
 import { bookingsService } from '@/services';
 import { MOCK_BOOKINGS } from '@/data/mock-data';
 import { isMockDataMode } from '@/lib/env';
+import { toApiError } from '@/services/api-error';
 
 export const createBookingSlice: StateCreator<
   AppState,
   [],
   [],
   BookingSlice
-> = (set) => {
+> = (set, get) => {
   const mergeBookings = (bookings: Awaited<ReturnType<typeof bookingsService.getMyBookings>>) =>
     set((state) => {
       const bookingsById = new Map(state.bookings.map((booking) => [booking.id, booking]));
@@ -27,6 +28,7 @@ export const createBookingSlice: StateCreator<
         bookings: [...bookingsById.values()],
         trips: [...tripsById.values()],
         users: [...usersById.values()],
+        lastError: null,
       };
     });
 
@@ -38,7 +40,8 @@ export const createBookingSlice: StateCreator<
       const bookings = await bookingsService.getMyBookings();
       mergeBookings(bookings);
     } catch (error) {
-      console.error('Fetch bookings error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to load bookings.' });
     }
   },
 
@@ -47,7 +50,8 @@ export const createBookingSlice: StateCreator<
       const bookings = await bookingsService.getBookingRequests();
       mergeBookings(bookings);
     } catch (error) {
-      console.error('Fetch booking requests error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to load booking requests.' });
     }
   },
 
@@ -56,55 +60,90 @@ export const createBookingSlice: StateCreator<
       const booking = await bookingsService.createBooking({ tripId, seatsRequested: seats });
       set((state) => ({
         bookings: [booking, ...state.bookings],
+        trips: booking.trip
+          ? state.trips.map((trip) => (trip.id === booking.trip!.id ? booking.trip! : trip))
+          : state.trips,
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchBookings();
+        await get().fetchTrips();
+      }
       return booking.id;
     } catch (error) {
-      console.error('Create booking error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to create booking.' });
       throw error;
     }
   },
 
   acceptBooking: async (bookingId) => {
     try {
-      await bookingsService.acceptBooking(bookingId);
+      const booking = await bookingsService.acceptBooking(bookingId);
       set((state) => ({
         bookings: state.bookings.map((b) =>
-          b.id === bookingId ? { ...b, status: 'accepted' } : b
+          b.id === bookingId ? { ...b, ...booking } : b
         ),
+        trips: booking.trip
+          ? state.trips.map((trip) => (trip.id === booking.trip!.id ? booking.trip! : trip))
+          : state.trips,
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchBookingRequests();
+        await get().fetchTrips();
+      }
       return true;
     } catch (error) {
-      console.error('Accept booking error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to accept booking.' });
       return false;
     }
   },
 
   rejectBooking: async (bookingId) => {
     try {
-      await bookingsService.rejectBooking(bookingId);
+      const booking = await bookingsService.rejectBooking(bookingId);
       set((state) => ({
         bookings: state.bookings.map((b) =>
-          b.id === bookingId ? { ...b, status: 'rejected' } : b
+          b.id === bookingId ? { ...b, ...booking } : b
         ),
+        trips: booking.trip
+          ? state.trips.map((trip) => (trip.id === booking.trip!.id ? booking.trip! : trip))
+          : state.trips,
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchBookingRequests();
+      }
       return true;
     } catch (error) {
-      console.error('Reject booking error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to reject booking.' });
       return false;
     }
   },
 
   cancelBooking: async (bookingId) => {
     try {
-      await bookingsService.cancelBooking(bookingId);
+      const booking = await bookingsService.cancelBooking(bookingId);
       set((state) => ({
         bookings: state.bookings.map((b) =>
-          b.id === bookingId ? { ...b, status: 'cancelled' } : b
+          b.id === bookingId ? { ...b, ...booking } : b
         ),
+        trips: booking.trip
+          ? state.trips.map((trip) => (trip.id === booking.trip!.id ? booking.trip! : trip))
+          : state.trips,
+        lastError: null,
       }));
+      if (!isMockDataMode) {
+        await get().fetchBookings();
+        await get().fetchTrips();
+      }
       return true;
     } catch (error) {
-      console.error('Cancel booking error:', error);
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to cancel booking.' });
       return false;
     }
   },

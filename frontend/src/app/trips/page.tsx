@@ -16,7 +16,7 @@ import { I18N } from '@/lib/i18n';
 function TripsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { trips, users, fetchTrips, language } = useAppStore();
+  const { trips, users, fetchTrips, isLoadingTrips, lastError, clearError, language } = useAppStore();
   const copy = I18N[language];
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
@@ -174,6 +174,22 @@ function TripsContent() {
                 <RideMarkers trips={filteredTrips} users={users} />
               </MapContainer>
             </div>
+          ) : isLoadingTrips ? (
+            <LoadingState />
+          ) : lastError ? (
+            <EmptyState
+              title={copy.tripsPage.emptyTitle}
+              description={lastError}
+              action={(
+                <button
+                  type="button"
+                  onClick={clearError}
+                  className="rounded-xl border border-[#c0c8ca] px-4 py-2 text-sm font-semibold text-[#054752] hover:bg-[#f7fbfc]"
+                >
+                  {copy.common.close}
+                </button>
+              )}
+            />
           ) : filteredTrips.length > 0 ? (
             <div className="flex flex-col gap-3 stagger-children">
               {filteredTrips.map((trip) => {

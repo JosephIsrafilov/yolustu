@@ -17,6 +17,7 @@ This directory contains a service abstraction between UI/store and data sources.
 ## Environment
 
 - `NEXT_PUBLIC_API_URL` - base URL for future backend API.
+- `NEXT_PUBLIC_WS_URL` - WebSocket base URL for realtime endpoints.
 - `NEXT_PUBLIC_DATA_MODE` - `mock` or `api` (default fallback is `mock`).
 
 Switch examples:
@@ -29,6 +30,34 @@ NEXT_PUBLIC_DATA_MODE=api
 Important:
 - `api` mode requires a running backend at `NEXT_PUBLIC_API_URL`.
 - Without backend, network calls in api mode will fail with `ApiError`.
+
+Recommended local `.env.local` for Sprint 1:
+
+```bash
+NEXT_PUBLIC_DATA_MODE=api
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+```
+
+Recommended local `.env.local` for Sprint 2:
+
+```bash
+NEXT_PUBLIC_DATA_MODE=api
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+```
+
+Sprint 2 API-mode flows covered:
+- driver create trip: `POST /rides/`
+- trip list/search/details: `GET /rides/search`, `GET /rides/:id`
+- passenger booking create/list/cancel: `POST /bookings`, `GET /bookings/my`, `POST /bookings/:id/cancel`
+- driver request list/confirm/reject: `GET /bookings/requests`, `POST /bookings/:id/confirm`, `POST /bookings/:id/reject`
+
+Seat rules expected by UI:
+- `pending` booking does not consume seats
+- `accepted` consumes seats
+- reject does not consume seats
+- cancel accepted/paid returns seats (if trip is not completed)
 
 ## Service Contracts
 
@@ -47,7 +76,7 @@ API implementations are in `src/services/api`.
 Auth:
 - `POST /auth/login`
 - `POST /auth/register`
-- `POST /auth/logout`
+- `POST /auth/refresh`
 - `GET /users/me`
 - `PUT /users/me`
 
@@ -61,11 +90,11 @@ Trips:
 
 Bookings:
 - `POST /bookings`
-- `GET /bookings/me`
+- `GET /bookings/my`
 - `GET /bookings/requests`
-- `PATCH /bookings/:id/accept`
-- `PATCH /bookings/:id/reject`
-- `PATCH /bookings/:id/cancel`
+- `POST /bookings/:id/confirm`
+- `POST /bookings/:id/reject`
+- `POST /bookings/:id/cancel`
 
 Reviews:
 - `POST /reviews`
@@ -88,5 +117,8 @@ Admin:
    - trip search/details
    - bookings
    - driver/admin actions
-3. Add auth token provider and refresh flow in `api-client.ts` (TODO is already placed).
+3. Keep auth lifecycle stable:
+   - `register/login` store `token` + `refresh_token`
+   - expired access token triggers `/auth/refresh`
+   - refresh failure clears session and redirects to `/auth/login`
 4. Move store logic from direct mutations to service-driven actions where needed.

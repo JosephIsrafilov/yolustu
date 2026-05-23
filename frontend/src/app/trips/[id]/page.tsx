@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
+import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, formatRating } from '@/lib/utils';
@@ -97,10 +98,23 @@ const TRIP_DETAILS_I18N = {
 export default function TripDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { trips, users, reviews, bookings, currentUser, createBooking, isAuthenticated, lastError, clearError, language } = useAppStore();
+  const {
+    trips,
+    users,
+    reviews,
+    bookings,
+    currentUser,
+    createBooking,
+    fetchBookings,
+    isAuthenticated,
+    lastError,
+    clearError,
+    language,
+  } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
   const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
+  const [tripLoadError, setTripLoadError] = useState(false);
   const tripId = Array.isArray(id) ? id[0] : id;
 
   const copy = TRIP_DETAILS_I18N[language] || TRIP_DETAILS_I18N.en;
@@ -109,13 +123,29 @@ export default function TripDetailsPage() {
   React.useEffect(() => {
     if (!tripId || trips.some((t) => t.id === tripId)) return;
     tripsService.getTripById(tripId)
-      .then(setLoadedTrip)
+      .then((tripData) => {
+        setLoadedTrip(tripData);
+        setTripLoadError(false);
+      })
       .catch((error) => {
         console.error('Fetch trip details error:', error);
+        setTripLoadError(true);
       });
   }, [tripId, trips]);
 
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchBookings();
+  }, [isAuthenticated, fetchBookings]);
+
   const trip = trips.find((t) => t.id === tripId) ?? loadedTrip;
+  if (!trip && !tripLoadError) {
+    return (
+      <WebLayout title={copy.tripTitle} showBack>
+        <LoadingState />
+      </WebLayout>
+    );
+  }
   if (!trip) return <WebLayout title={copy.tripTitle} showBack><EmptyState title={copy.tripNotFound} /></WebLayout>;
 
   const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
@@ -125,7 +155,12 @@ export default function TripDetailsPage() {
 
   const handleBook = async () => {
     if (!isAuthenticated || isOwnTrip || existingBooking) return;
-    const bookingId = await createBooking(trip.id, seats);
+    let bookingId = '';
+    try {
+      bookingId = await createBooking(trip.id, seats);
+    } catch {
+      bookingId = '';
+    }
     if (!bookingId) return;
     setBooked(true);
     setTimeout(() => router.push(ROUTES.bookings), 1000);
@@ -198,7 +233,7 @@ export default function TripDetailsPage() {
             )}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />{copy.ownTripWarning}</div></Card>)}
             
-            {(isOwnTrip || existingBooking?.status === 'accepted') && (
+            {(isOwnTrip || existingBooking?.status === 'accepted' || existingBooking?.status === 'paid') && (
               <Button 
                 fullWidth 
                 variant="outline" 

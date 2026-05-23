@@ -93,6 +93,29 @@ npm install
 npm run dev   # http://localhost:3000
 ```
 
+### 4️⃣ Frontend API Mode (Sprint 1 Auth/Profile)
+Create `frontend/.env.local`:
+```bash
+NEXT_PUBLIC_DATA_MODE=api
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+```
+
+Current auth/profile behavior in API mode:
+- `POST /auth/register` returns `accessToken`, `refreshToken`, `user`, and frontend starts session immediately.
+- `POST /auth/login` returns `accessToken`, `refreshToken`, `user`.
+- `POST /auth/refresh` is called automatically on `401` for non-auth endpoints.
+- `GET /users/me` is used on app boot to restore session after reload.
+- `PUT /users/me` powers profile/profile-setup updates.
+
+Sprint 2 (current) in API mode:
+- Driver creates ride via `POST /rides/`.
+- Passenger searches rides via `GET /rides/search` and opens details via `GET /rides/{id}`.
+- Passenger creates booking request via `POST /bookings/`.
+- Driver sees requests via `GET /bookings/requests` and confirms/rejects via `POST /bookings/{id}/confirm|reject`.
+- Passenger cancels via `POST /bookings/{id}/cancel`.
+- Seat accounting is backend-driven (`pending` does not decrement, `accepted` decrements, cancel of accepted/paid restores seats before trip completion).
+
 ---
 
 ## Demo Users

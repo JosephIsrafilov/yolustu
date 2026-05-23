@@ -66,7 +66,7 @@ const DASHBOARD_I18N = {
 
 export default function DriverDashboardPage() {
   const router = useRouter();
-  const { trips, bookings, currentUser, language } = useAppStore();
+  const { trips, bookings, currentUser, fetchTrips, fetchBookingRequests, language } = useAppStore();
   const myTrips = trips.filter((t) => t.driverId === currentUser?.id);
   const activeTrips = myTrips.filter((t) => t.status === 'active');
   const pendingBookings = bookings.filter((b) => {
@@ -80,6 +80,11 @@ export default function DriverDashboardPage() {
   const nextRequestTrip = nextRequest ? myTrips.find((t) => t.id === nextRequest.tripId) : undefined;
 
   const copy = DASHBOARD_I18N[language] || DASHBOARD_I18N.en;
+
+  React.useEffect(() => {
+    fetchTrips();
+    fetchBookingRequests();
+  }, [fetchTrips, fetchBookingRequests]);
 
   return (
     <WebLayout title={copy.title}>

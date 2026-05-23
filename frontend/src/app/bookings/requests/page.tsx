@@ -39,6 +39,7 @@ export default function BookingRequestsPage() {
     acceptBooking,
     rejectBooking,
     fetchBookingRequests,
+    fetchTrips,
     lastError,
     clearError,
     language,
@@ -46,7 +47,8 @@ export default function BookingRequestsPage() {
 
   React.useEffect(() => {
     fetchBookingRequests();
-  }, [fetchBookingRequests]);
+    fetchTrips();
+  }, [fetchBookingRequests, fetchTrips]);
 
   const copy = I18N[language].bookings;
   const common = I18N[language].common;

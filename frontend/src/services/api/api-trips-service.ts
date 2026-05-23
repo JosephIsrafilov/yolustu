@@ -2,7 +2,13 @@ import { apiClient } from '@/services/api-client';
 import type { TripsService } from '@/services/contracts/trips-service';
 import type { TripSearchFilters } from '@/types';
 import { getCityCoordinates } from '@/lib/utils';
-import { mapApiTripToTrip, mapApiVehicleToVehicle, type ApiTrip, type ApiVehicle } from './mappers';
+import {
+  mapApiTripToTrip,
+  mapApiVehicleToVehicle,
+  mapCreateTripToApiRideCreate,
+  type ApiTrip,
+  type ApiVehicle,
+} from './mappers';
 
 async function resolveVehicleId(input: Parameters<TripsService['createTrip']>[0]): Promise<string> {
   if (input.vehicleId) return input.vehicleId;
@@ -35,7 +41,7 @@ function resolveCoordinates(
   selected: { lat: number; lng: number } | undefined,
   city: string,
 ): { lat: number; lon: number } {
-  const coords = selected ?? getCityCoordinates(city) ?? getCityCoordinates('Bakı') ?? { lat: 40.4093, lng: 49.8671 };
+  const coords = selected ?? getCityCoordinates(city) ?? getCityCoordinates('Baku') ?? { lat: 40.4093, lng: 49.8671 };
   return { lat: coords.lat, lon: coords.lng };
 }
 
@@ -69,19 +75,7 @@ export const apiTripsService: TripsService = {
     const vehicleId = await resolveVehicleId(input);
     const origin = resolveCoordinates(input.origin, input.departureCity);
     const destination = resolveCoordinates(input.destination, input.arrivalCity);
-    const backendInput = {
-      departure_time: `${input.date}T${input.time}:00`,
-      total_seats: input.seatsTotal,
-      available_seats: input.seatsTotal,
-      price_per_seat: input.pricePerSeat,
-      origin_city: input.departureCity,
-      destination_city: input.arrivalCity,
-      vehicle_id: vehicleId,
-      origin,
-      destination,
-      car_model: input.carModel,
-      description: input.comment,
-    };
+    const backendInput = mapCreateTripToApiRideCreate(input, vehicleId, origin, destination);
     const response = await apiClient.post<ApiTrip>('/rides', backendInput);
     return mapApiTripToTrip(response);
   },
@@ -101,4 +95,3 @@ export const apiTripsService: TripsService = {
     return mapApiTripToTrip(response);
   },
 };
-

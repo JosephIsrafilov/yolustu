@@ -221,21 +221,12 @@ export default function CreateTripPage() {
           </div>
         )}
         
-        {!isLoadingVehicles && !isMockDataMode && vehicles.length === 0 ? (
-          <div className="mb-6 rounded-2xl border border-warn-500/20 bg-warn-500/10 p-6 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warn-500/20 text-warn-500 mb-4">
-              <Icon name="alert-triangle" size={28} />
-            </div>
-            <h3 className="mb-2 text-xl font-bold text-text">Avtomobil tapılmadı</h3>
-            <p className="mb-6 text-sm text-text-muted max-w-md mx-auto">
-              Səfər yaratmaq üçün əvvəlcə profilinizdə avtomobil əlavə etməlisiniz. Avtomobil əlavə etdikdən sonra İS avtomatik olaraq həmin avtomobili nəzərə alaraq qiymət təyin edəcək.
-            </p>
-            <Button onClick={() => router.push(ROUTES.profile)} size="lg" className="w-full sm:w-auto">
-              Profilə keç <Icon name="arrow-right" size={16} />
-            </Button>
+        {!isLoadingVehicles && !isMockDataMode && vehicles.length === 0 && (
+          <div className="mb-6 rounded-2xl border border-warn-500/20 bg-warn-500/10 p-4 text-sm text-text-secondary shadow-sm">
+            Vehicle list is empty. Trip creation will use backend default vehicle fallback.
           </div>
-        ) : (
-          <>
+        )}
+        <>
             {/* Clickable Stepper */}
         <div className="mb-6 flex items-center gap-2">
           {steps.map((s, i) => {
@@ -527,8 +518,8 @@ export default function CreateTripPage() {
           </div>
         </Card>
           </>
-        )}
       </ProtectedRoute>
     </WebLayout>
   );
 }
+

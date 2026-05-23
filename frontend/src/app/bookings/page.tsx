@@ -14,7 +14,7 @@ import { I18N } from '@/lib/i18n';
 
 export default function BookingsPage() {
   const router = useRouter();
-  const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, lastError, clearError, language } = useAppStore();
+  const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, fetchTrips, lastError, clearError, language } = useAppStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
   const copy = I18N[language].bookings;
@@ -22,10 +22,11 @@ export default function BookingsPage() {
 
   React.useEffect(() => {
     fetchBookings();
-  }, [fetchBookings]);
+    fetchTrips();
+  }, [fetchBookings, fetchTrips]);
 
   const myBookings = bookings.filter((booking) => booking.passengerId === currentUser?.id);
-  const upcoming = myBookings.filter((booking) => ['pending', 'accepted'].includes(booking.status));
+  const upcoming = myBookings.filter((booking) => ['pending', 'accepted', 'paid'].includes(booking.status));
   const past = myBookings.filter((booking) => ['completed', 'cancelled', 'rejected'].includes(booking.status));
   const current = tab === 'upcoming' ? upcoming : past;
 
