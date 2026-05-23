@@ -251,7 +251,9 @@ export default function TripDetailsPage() {
                     <p className="text-base font-semibold text-text flex items-center gap-1">
                       <span>{driver.fullName}</span>
                       {driver.verificationStatus === 'approved' && (
-                        <Icon name="shield-check" size={16} className="text-green-600 shrink-0" title="Təsdiqlənmiş Sürücü" />
+                        <span title="Təsdiqlənmiş Sürücü">
+                          <Icon name="shield-check" size={16} className="text-green-600 shrink-0" />
+                        </span>
                       )}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-text-muted">

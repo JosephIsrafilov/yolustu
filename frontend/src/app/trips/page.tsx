@@ -55,7 +55,7 @@ function TripsContent() {
     filters.smokingAllowed && copy.createTrip.smokingAllowedLabel,
     filters.petsAllowed && copy.createTrip.petsAllowedLabel,
     filters.musicAllowed && copy.createTrip.musicAllowedLabel,
-  ].filter(Boolean);
+  ].filter((f): f is string => !!f);
 
   return (
     <WebLayout>
