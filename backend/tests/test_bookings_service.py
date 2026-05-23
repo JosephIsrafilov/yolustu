@@ -58,6 +58,9 @@ class FakeBookingRepository:
     def get(self, booking_id: UUID) -> FakeBooking | None:
         return self.bookings.get(booking_id)
 
+    def get_for_update(self, booking_id: UUID) -> FakeBooking | None:
+        return self.get(booking_id)
+
     def get_active_for_ride_and_passenger(
         self, ride_id: UUID, passenger_id: UUID
     ) -> FakeBooking | None:
