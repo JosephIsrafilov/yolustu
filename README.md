@@ -90,7 +90,17 @@ Visit `http://localhost:8000/docs` for the Swagger UI.
 ```bash
 cd frontend
 npm install
-npm run dev   # http://localhost:3000
+npm run dev:lowmem   # http://localhost:3000 (recommended on Windows)
+```
+
+`npm run dev` uses Turbopack and can fail with `JavaScript heap out of memory` on some Windows machines.
+
+If frontend becomes slow or hits OOM on Windows:
+
+```powershell
+taskkill /F /IM node.exe
+Remove-Item -Recurse -Force .next
+npm run dev:lowmem
 ```
 
 ### 4️⃣ Frontend API Mode (Sprint 1 Auth/Profile)
@@ -141,7 +151,15 @@ What it does:
 - starts backend dev server (`uvicorn app.main:app --reload`)
 - ensures frontend API-mode env keys exist in `frontend/.env.local`
 - installs frontend dependencies if `frontend/node_modules` is missing
-- starts frontend dev server (`npm run dev`)
+- starts frontend dev server (`npm run dev:lowmem`, webpack mode by default)
+
+Useful options:
+- `-FrontendBundler webpack|turbo` (default: `webpack`)
+- `-NoFrontend`
+- `-FrontendOnly`
+- `-BackendOnly`
+- `-InfraOnly`
+- `-Full`
 
 URLs:
 - Backend: `http://localhost:8000`
