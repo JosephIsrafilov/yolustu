@@ -54,7 +54,7 @@ class BookingRepository:
             .filter(
                 Booking.ride_id == ride_id,
                 Booking.passenger_id == passenger_id,
-                Booking.status == "accepted",
+                Booking.status.in_(["accepted", "paid", "completed"]),
             )
             .first()
             is not None
@@ -63,7 +63,10 @@ class BookingRepository:
     def get_accepted_passenger_ids(self, ride_id: UUID) -> list[UUID]:
         bookings = (
             self.db.query(Booking)
-            .filter(Booking.ride_id == ride_id, Booking.status == "accepted")
+            .filter(
+                Booking.ride_id == ride_id,
+                Booking.status.in_(["accepted", "paid", "completed"]),
+            )
             .all()
         )
         return [b.passenger_id for b in bookings]

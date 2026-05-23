@@ -28,6 +28,10 @@ class EngagementService:
         ride = self.rides.get_ride(review_in.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
+        if ride.status != "completed":
+            raise HTTPException(
+                status_code=400, detail="Review is allowed only after trip completion"
+            )
 
         if not self._is_participant(ride, current_user.id):
             raise HTTPException(
@@ -48,6 +52,13 @@ class EngagementService:
         target_user = self.users.get_user(review_in.target_id)
         if not target_user:
             raise HTTPException(status_code=404, detail="Target user not found")
+        if self.reviews.exists_for_author_target_ride(
+            current_user.id, review_in.target_id, ride.id
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="You have already reviewed this user for this ride",
+            )
 
         existing_reviews = self.reviews.list_for_target(review_in.target_id)
         total_rating = (

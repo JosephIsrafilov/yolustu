@@ -41,6 +41,10 @@ class CurrentUser:
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> CurrentUser:
+    return get_current_user_from_token(token, db)
+
+
+def get_current_user_from_token(token: str, db: Session) -> CurrentUser:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

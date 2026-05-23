@@ -12,7 +12,12 @@ export function useChat(rideId: string) {
   useEffect(() => {
     if (!rideId) return;
 
-    const wsUrl = `${env.wsUrl}/api/v1/messages/ws/${rideId}`;
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
+    if (!token) {
+      return;
+    }
+
+    const wsUrl = `${env.wsUrl}/api/v1/messages/ws/${rideId}?token=${encodeURIComponent(token)}`;
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 

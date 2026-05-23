@@ -29,6 +29,20 @@ class ReviewRepository:
         self.db.refresh(review)
         return review
 
+    def exists_for_author_target_ride(
+        self, author_id: UUID, target_id: UUID, ride_id: UUID
+    ) -> bool:
+        return (
+            self.db.query(Review)
+            .filter(
+                Review.author_id == author_id,
+                Review.target_id == target_id,
+                Review.ride_id == ride_id,
+            )
+            .first()
+            is not None
+        )
+
 
 class MessageRepository:
     def __init__(self, db: Session):

@@ -1,14 +1,14 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.websocket import manager
 from app.domains.engagement.schemas import MessageCreate, MessageResponse
 from app.domains.engagement.services import EngagementService
-from app.domains.identity.dependencies import CurrentUser, get_current_user
+from app.domains.identity.dependencies import CurrentUser, get_current_user, get_current_user_from_token
 
 router = APIRouter()
 
@@ -23,7 +23,23 @@ async def send_message(
 
 
 @router.websocket("/ws/{ride_id}")
-async def websocket_endpoint(websocket: WebSocket, ride_id: UUID):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    ride_id: UUID,
+    token: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    try:
+        current_user = get_current_user_from_token(token, db)
+        EngagementService(db).get_ride_messages(ride_id, current_user)
+    except HTTPException:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await manager.connect(websocket, ride_id)
     try:
         while True:

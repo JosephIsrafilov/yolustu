@@ -17,10 +17,17 @@ class UserRepository:
         return self.db.query(User).filter(User.phone == phone).first()
 
     def create(self, user_in: UserCreate, hashed_password: str) -> User:
+        # Keep self-registration constrained to passenger/driver roles.
+        role = user_in.role if user_in.role in {"passenger", "driver"} else "passenger"
         user = User(
             phone=user_in.phone,
             first_name=user_in.first_name,
             last_name=user_in.last_name,
+            avatar_url=user_in.avatar_url,
+            language=user_in.language or "az",
+            role=role,
+            city=user_in.city,
+            bio=user_in.bio,
             hashed_password=hashed_password,
             is_verified=False,
         )
