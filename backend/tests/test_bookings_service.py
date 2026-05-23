@@ -1,14 +1,18 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import cast
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from app.domains.bookings.services import BookingsService
+from app.domains.bookings.repositories import BookingRepository
 from app.domains.bookings.schemas import BookingCreate
 from app.domains.identity.dependencies import CurrentUser
+from app.domains.trips.ports import RideLookupPort
+from app.core.notifications import NotificationService
 
 
 @dataclass
@@ -36,7 +40,7 @@ class FakeBooking:
 
 class FakeBookingRepository:
     def __init__(self):
-        self.bookings: Dict[UUID, FakeBooking] = {}
+        self.bookings: dict[UUID, FakeBooking] = {}
 
     def create(
         self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: float
@@ -66,14 +70,14 @@ class FakeBookingRepository:
                 return booking
         return None
 
-    def list_for_passenger(self, passenger_id: UUID) -> List[FakeBooking]:
+    def list_for_passenger(self, passenger_id: UUID) -> list[FakeBooking]:
         return [
             booking
             for booking in self.bookings.values()
             if booking.passenger_id == passenger_id
         ]
 
-    def list_requests_for_driver(self, driver_id: UUID) -> List[FakeBooking]:
+    def list_requests_for_driver(self, driver_id: UUID) -> list[FakeBooking]:
         return list(self.bookings.values())
 
     def save(self, booking: FakeBooking) -> FakeBooking:
@@ -123,10 +127,10 @@ def make_service(
         status="active",
     )
 
-    service = BookingsService(db=None)  # db is replaced with fakes below
-    service.bookings = FakeBookingRepository()
-    service.rides = FakeRideLookupPort(ride)
-    service.notifications = FakeNotificationService()
+    service = BookingsService(db=cast(Session, None))  # db is replaced with fakes below
+    service.bookings = cast(BookingRepository, FakeBookingRepository())
+    service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
+    service.notifications = cast(NotificationService, FakeNotificationService())
 
     driver = make_current_user(driver_id, role="driver")
     passenger = make_current_user(passenger_id, role="passenger")
