@@ -34,6 +34,43 @@ def test_register_user():
     assert not data["user"]["is_verified"]
 
 
+def test_register_user_with_driver_role():
+    driver_phone = f"+99498{str(uuid4().int)[:7]}"
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "phone": driver_phone,
+            "first_name": "Driver",
+            "last_name": "User",
+            "password": TEST_PASSWORD,
+            "role": "driver",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["phone"] == driver_phone
+    assert data["user"]["role"] == "driver"
+
+
+def test_register_user_without_role_defaults_to_passenger():
+    passenger_phone = f"+99497{str(uuid4().int)[:7]}"
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "phone": passenger_phone,
+            "first_name": "Default",
+            "last_name": "Passenger",
+            "password": TEST_PASSWORD,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["phone"] == passenger_phone
+    assert data["user"]["role"] == "passenger"
+
+
 def test_login_registered_user_returns_tokens_and_user():
     response = client.post(
         "/api/v1/auth/login", json={"phone": TEST_PHONE, "password": TEST_PASSWORD}
