@@ -8,9 +8,13 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.domains.bookings.ports import BookingParticipantPort
 from app.domains.engagement.schemas import ReviewCreate
 from app.domains.engagement.services import EngagementService
+from app.domains.engagement.repositories import MessageRepository, ReviewRepository
 from app.domains.identity.dependencies import CurrentUser
+from app.domains.identity.ports import UserLookupPort
+from app.domains.trips.ports import RideLookupPort
 
 
 @dataclass
@@ -142,17 +146,19 @@ def make_service(
     }
 
     service = EngagementService(db=cast(Session, None))
-    service.rides = cast(object, FakeRideLookupPort(ride))
-    service.bookings = cast(object, FakeBookingParticipantPort(statuses_by_user))
-    service.users = cast(object, FakeUserLookupPort(users))
+    service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
+    service.bookings = cast(
+        BookingParticipantPort, FakeBookingParticipantPort(statuses_by_user)
+    )
+    service.users = cast(UserLookupPort, FakeUserLookupPort(users))
     service.reviews = cast(
-        object,
+        ReviewRepository,
         FakeReviewRepository(
             duplicate_exists=duplicate_exists,
             existing_target_reviews=[],
         ),
     )
-    service.messages = cast(object, FakeMessageRepository())
+    service.messages = cast(MessageRepository, FakeMessageRepository())
 
     driver = make_current_user(driver_id, role="driver")
     passenger = make_current_user(passenger_id, role="passenger")
