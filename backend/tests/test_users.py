@@ -52,3 +52,25 @@ def test_update_current_user(access_token):
         headers={"Authorization": f"Bearer {access_token}"},
         json={"first_name": "Elvin"},
     )
+
+
+def test_update_current_user_cannot_self_assign_admin_role(access_token):
+    before = client.get(
+        "/api/v1/users/me", headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert before.status_code == 200
+    original_role = before.json()["role"]
+
+    response = client.put(
+        "/api/v1/users/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={"role": "admin"},
+    )
+    assert response.status_code == 400
+    assert "Invalid role" in response.json()["error"]["message"]
+
+    after = client.get(
+        "/api/v1/users/me", headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert after.status_code == 200
+    assert after.json()["role"] == original_role
