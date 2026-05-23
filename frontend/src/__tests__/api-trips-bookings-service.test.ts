@@ -122,7 +122,14 @@ describe('api trips/bookings services', () => {
     expect(mapped.dropoffPoint).toBe('Baku');
   });
 
-  it.each<BookingStatus>(['pending', 'accepted', 'rejected', 'cancelled', 'paid', 'completed'])(
+  it.each<[BookingStatus]>([
+    ['pending'],
+    ['accepted'],
+    ['rejected'],
+    ['cancelled'],
+    ['paid'],
+    ['completed'],
+  ])(
     'booking mapper supports status %s',
     (status) => {
       const mapped = mapApiBookingToBooking({ ...baseBooking, status });

@@ -63,7 +63,7 @@ export interface Trip {
   vehicle?: Vehicle;
 }
 
-export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed';
 
 export interface Booking {
   id: string;

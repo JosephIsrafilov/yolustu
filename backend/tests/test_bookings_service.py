@@ -18,7 +18,7 @@ class FakeRide:
     available_seats: int
     total_seats: int
     price_per_seat: float
-    status: str = 'active'
+    status: str = "active"
 
 
 @dataclass
@@ -28,7 +28,7 @@ class FakeBooking:
     passenger_id: UUID
     seats_booked: int
     total_price: float
-    status: str = 'pending'
+    status: str = "pending"
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
     passenger: object | None = None
@@ -38,7 +38,9 @@ class FakeBookingRepository:
     def __init__(self):
         self.bookings: Dict[UUID, FakeBooking] = {}
 
-    def create(self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: float) -> FakeBooking:
+    def create(
+        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: float
+    ) -> FakeBooking:
         booking = FakeBooking(
             id=uuid4(),
             ride_id=ride_id,
@@ -52,14 +54,24 @@ class FakeBookingRepository:
     def get(self, booking_id: UUID) -> FakeBooking | None:
         return self.bookings.get(booking_id)
 
-    def get_active_for_ride_and_passenger(self, ride_id: UUID, passenger_id: UUID) -> FakeBooking | None:
+    def get_active_for_ride_and_passenger(
+        self, ride_id: UUID, passenger_id: UUID
+    ) -> FakeBooking | None:
         for booking in self.bookings.values():
-            if booking.ride_id == ride_id and booking.passenger_id == passenger_id and booking.status not in ['cancelled', 'rejected']:
+            if (
+                booking.ride_id == ride_id
+                and booking.passenger_id == passenger_id
+                and booking.status not in ["cancelled", "rejected"]
+            ):
                 return booking
         return None
 
     def list_for_passenger(self, passenger_id: UUID) -> List[FakeBooking]:
-        return [booking for booking in self.bookings.values() if booking.passenger_id == passenger_id]
+        return [
+            booking
+            for booking in self.bookings.values()
+            if booking.passenger_id == passenger_id
+        ]
 
     def list_requests_for_driver(self, driver_id: UUID) -> List[FakeBooking]:
         return list(self.bookings.values())
@@ -88,16 +100,18 @@ class FakeNotificationService:
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
-        phone='+994000000000',
-        first_name='Test',
-        last_name='User',
+        phone="+994000000000",
+        first_name="Test",
+        last_name="User",
         role=role,
         is_verified=True,
         is_blocked=False,
     )
 
 
-def make_service(ride_available_seats: int = 3) -> tuple[BookingsService, FakeRide, CurrentUser, CurrentUser]:
+def make_service(
+    ride_available_seats: int = 3,
+) -> tuple[BookingsService, FakeRide, CurrentUser, CurrentUser]:
     driver_id = uuid4()
     passenger_id = uuid4()
     ride = FakeRide(
@@ -106,7 +120,7 @@ def make_service(ride_available_seats: int = 3) -> tuple[BookingsService, FakeRi
         available_seats=ride_available_seats,
         total_seats=4,
         price_per_seat=10.0,
-        status='active',
+        status="active",
     )
 
     service = BookingsService(db=None)  # db is replaced with fakes below
@@ -114,8 +128,8 @@ def make_service(ride_available_seats: int = 3) -> tuple[BookingsService, FakeRi
     service.rides = FakeRideLookupPort(ride)
     service.notifications = FakeNotificationService()
 
-    driver = make_current_user(driver_id, role='driver')
-    passenger = make_current_user(passenger_id, role='passenger')
+    driver = make_current_user(driver_id, role="driver")
+    passenger = make_current_user(passenger_id, role="passenger")
     return service, ride, driver, passenger
 
 
@@ -126,63 +140,77 @@ def test_passenger_cannot_book_own_ride():
         service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), driver)
 
     assert exc.value.status_code == 400
-    assert 'own ride' in str(exc.value.detail)
+    assert "own ride" in str(exc.value.detail)
 
 
 def test_create_pending_booking_does_not_decrement_seats():
     service, ride, _, passenger = make_service()
 
-    response = service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=2), passenger)
+    response = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=2), passenger
+    )
 
-    assert response.status == 'pending'
+    assert response.status == "pending"
     assert ride.available_seats == 3
 
 
 def test_confirm_booking_decrements_seats():
     service, ride, driver, passenger = make_service()
-    booking = service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=2), passenger)
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=2), passenger
+    )
 
     confirmed = service.confirm_booking(booking.id, driver)
 
-    assert confirmed.status == 'accepted'
+    assert confirmed.status == "accepted"
     assert ride.available_seats == 1
 
 
 def test_reject_booking_does_not_decrement_seats():
     service, ride, driver, passenger = make_service()
-    booking = service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
 
     rejected = service.reject_booking(booking.id, driver)
 
-    assert rejected.status == 'rejected'
+    assert rejected.status == "rejected"
     assert ride.available_seats == 3
 
 
 def test_cancel_accepted_booking_restores_seats():
     service, ride, driver, passenger = make_service()
-    booking = service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=2), passenger)
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=2), passenger
+    )
     service.confirm_booking(booking.id, driver)
 
     cancelled = service.cancel_booking(booking.id, passenger)
 
-    assert cancelled.status == 'cancelled'
+    assert cancelled.status == "cancelled"
     assert ride.available_seats == 3
 
 
 def test_cannot_confirm_booking_when_seats_are_insufficient():
     service, _, driver, passenger = make_service(ride_available_seats=1)
-    booking = service.create_booking(BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), passenger)
+    booking = service.create_booking(
+        BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), passenger
+    )
 
-    other_passenger = make_current_user(uuid4(), role='passenger')
-    service.create_booking(BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), other_passenger)
+    other_passenger = make_current_user(uuid4(), role="passenger")
+    service.create_booking(
+        BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), other_passenger
+    )
     service.confirm_booking(booking.id, driver)
 
-    second_booking = service.bookings.get_active_for_ride_and_passenger(service.rides.ride.id, other_passenger.id)
+    second_booking = service.bookings.get_active_for_ride_and_passenger(
+        service.rides.ride.id, other_passenger.id
+    )
     with pytest.raises(HTTPException) as exc:
         service.confirm_booking(second_booking.id, driver)
 
     assert exc.value.status_code == 400
-    assert 'Not enough seats' in str(exc.value.detail)
+    assert "Not enough seats" in str(exc.value.detail)
 
 
 def test_duplicate_booking_is_forbidden():
@@ -190,21 +218,25 @@ def test_duplicate_booking_is_forbidden():
     service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
 
     with pytest.raises(HTTPException) as exc:
-        service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
+        service.create_booking(
+            BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+        )
 
     assert exc.value.status_code == 400
-    assert 'already exists' in str(exc.value.detail)
+    assert "already exists" in str(exc.value.detail)
 
 
 def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
     service, ride, driver, passenger = make_service()
-    booking = service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
     service.confirm_booking(booking.id, driver)
 
     stored = service.bookings.get(booking.id)
-    stored.status = 'paid'
+    stored.status = "paid"
 
     cancelled = service.cancel_booking(booking.id, passenger)
 
-    assert cancelled.status == 'cancelled'
+    assert cancelled.status == "cancelled"
     assert ride.available_seats == 3

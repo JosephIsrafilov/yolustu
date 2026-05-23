@@ -28,9 +28,7 @@ class TripsService:
         self, ride_in: RideCreate, current_user: CurrentUser
     ) -> RideResponse:
         if current_user.role not in ["driver", "admin"]:
-            raise HTTPException(
-                status_code=403, detail="Only drivers can create rides"
-            )
+            raise HTTPException(status_code=403, detail="Only drivers can create rides")
 
         if ride_in.total_seats < 1 or ride_in.total_seats > 4:
             raise HTTPException(

@@ -25,7 +25,9 @@ class BookingsService:
         self, booking_in: BookingCreate, current_user: CurrentUser
     ) -> BookingResponse:
         if booking_in.seats_booked < 1:
-            raise HTTPException(status_code=400, detail="seats_booked must be at least 1")
+            raise HTTPException(
+                status_code=400, detail="seats_booked must be at least 1"
+            )
 
         ride = self.rides.get_ride_for_update(booking_in.ride_id)
         if not ride:

@@ -10,6 +10,7 @@ const bookingStatusConfig: Record<BookingStatus, { variant: 'warning' | 'success
   accepted: { variant: 'success' },
   rejected: { variant: 'danger' },
   cancelled: { variant: 'muted' },
+  paid: { variant: 'success' },
   completed: { variant: 'brand' },
 };
 
@@ -25,6 +26,7 @@ const bookingStatusLabels = {
     accepted: 'Qəbul edildi',
     rejected: 'Rədd edildi',
     cancelled: 'Ləğv edildi',
+    paid: 'Ödənildi',
     completed: 'Tamamlandı',
   },
   ru: {
@@ -32,6 +34,7 @@ const bookingStatusLabels = {
     accepted: 'Принято',
     rejected: 'Отклонено',
     cancelled: 'Отменено',
+    paid: 'Оплачено',
     completed: 'Завершено',
   },
   en: {
@@ -39,6 +42,7 @@ const bookingStatusLabels = {
     accepted: 'Accepted',
     rejected: 'Rejected',
     cancelled: 'Cancelled',
+    paid: 'Paid',
     completed: 'Completed',
   }
 } as const;

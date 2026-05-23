@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import type { Booking, BookingStatus } from '@/types';
 import { adminService } from '@/services';
 
-const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'completed'];
+const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'paid', 'completed'];
 
 const BOOKINGS_I18N = {
   az: {
@@ -20,6 +20,7 @@ const BOOKINGS_I18N = {
       accepted: 'Qəbul edildi',
       rejected: 'Rədd edildi',
       cancelled: 'Ləğv edildi',
+      paid: 'Ödənildi',
       completed: 'Tamamlandı',
     },
     table: {
@@ -39,6 +40,7 @@ const BOOKINGS_I18N = {
       accepted: 'Принято',
       rejected: 'Отклонено',
       cancelled: 'Отменено',
+      paid: 'Оплачено',
       completed: 'Завершено',
     },
     table: {
@@ -58,6 +60,7 @@ const BOOKINGS_I18N = {
       accepted: 'Accepted',
       rejected: 'Rejected',
       cancelled: 'Cancelled',
+      paid: 'Paid',
       completed: 'Completed',
     },
     table: {
