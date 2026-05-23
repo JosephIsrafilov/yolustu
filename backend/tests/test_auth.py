@@ -11,6 +11,8 @@ client = TestClient(app)
 
 TEST_PHONE = f"+99499{str(uuid4().int)[:7]}"
 TEST_PASSWORD = "testpassword123"
+SEED_PHONE = "+994501234567"
+SEED_PASSWORD = "password123"
 
 
 def test_register_user():
@@ -25,18 +27,34 @@ def test_register_user():
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["phone"] == TEST_PHONE
-    assert data["first_name"] == "Test"
-    assert not data["is_verified"]
+    assert "accessToken" in data
+    assert "refreshToken" in data
+    assert data["user"]["phone"] == TEST_PHONE
+    assert data["user"]["first_name"] == "Test"
+    assert not data["user"]["is_verified"]
 
 
-def test_login_unverified_user():
+def test_login_registered_user_returns_tokens_and_user():
     response = client.post(
         "/api/v1/auth/login", json={"phone": TEST_PHONE, "password": TEST_PASSWORD}
     )
+    assert response.status_code == 200
+    data = response.json()
+    assert "accessToken" in data
+    assert "refreshToken" in data
+    assert data["user"]["phone"] == TEST_PHONE
 
-    assert response.status_code == 403
-    assert "not verified" in response.json()["error"]["message"]
+
+def test_login_verified_user_returns_tokens_and_user():
+    response = client.post(
+        "/api/v1/auth/login", json={"phone": SEED_PHONE, "password": SEED_PASSWORD}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "accessToken" in data
+    assert "refreshToken" in data
+    assert data["user"]["phone"] == SEED_PHONE
+    assert data["user"]["is_verified"] is True
 
 
 def test_request_otp():
@@ -49,6 +67,34 @@ def test_verify_otp_invalid():
     response = client.post(f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
     assert response.status_code == 400
     assert "Invalid or expired OTP" in response.json()["error"]["message"]
+
+
+def test_refresh_token_contract(redis_mock):
+    previous_get = redis_mock.get.side_effect
+    previous_get_return = redis_mock.get.return_value
+
+    token_value = "refresh-token-123"
+
+    def _get(key):
+        if key == f"refresh_token:{token_value}":
+            return "+994501234567"
+        return None
+
+    redis_mock.get.side_effect = _get
+
+    try:
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refreshToken": token_value},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "accessToken" in data
+        assert "refreshToken" in data
+        assert data["user"]["phone"] == "+994501234567"
+    finally:
+        redis_mock.get.side_effect = previous_get
+        redis_mock.get.return_value = previous_get_return
 
 
 def test_request_otp_rate_limit():

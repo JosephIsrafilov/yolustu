@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Icon from '@/components/ui/Icon';
 import { ROUTES } from '@/lib/routes';
+import { isMockDataMode } from '@/lib/env';
 import { useAppStore } from '@/store/useAppStore';
 
 type GuardMode = 'auth' | 'driver' | 'admin';
@@ -41,7 +42,9 @@ export default function ProtectedRoute({ children, mode = 'auth' }: ProtectedRou
     );
   }
 
-  const hasDriverAccess = currentUser.role === 'driver' || activeRole === 'driver';
+  const hasDriverAccess = isMockDataMode
+    ? currentUser.role === 'driver' || activeRole === 'driver'
+    : currentUser.role === 'driver';
   if (mode === 'driver' && !hasDriverAccess) {
     return (
       <EmptyState

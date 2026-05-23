@@ -8,14 +8,22 @@ import type {
 } from '@/services/contracts/auth-service';
 import { mapApiUserToUser, type ApiUser } from './mappers';
 
+interface AuthSessionResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUser;
+}
+
+function persistAuthTokens(accessToken: string, refreshToken: string) {
+  localStorage.setItem('token', accessToken);
+  localStorage.setItem('refresh_token', refreshToken);
+}
+
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
-    const res = await apiClient.post<{ access_token: string; refresh_token: string }>('/auth/login', input);
-    localStorage.setItem('token', res.access_token);
-    localStorage.setItem('refresh_token', res.refresh_token);
-    const user = await apiClient.get<ApiUser | null>('/users/me');
-    if (!user) throw new Error('User not found after login');
-    return mapApiUserToUser(user);
+    const session = await apiClient.post<AuthSessionResponse>('/auth/login', input);
+    persistAuthTokens(session.accessToken, session.refreshToken);
+    return mapApiUserToUser(session.user);
   },
 
   async register(input: RegisterInput) {
@@ -28,8 +36,9 @@ export const apiAuthService: AuthService = {
       last_name: lastName,
       password: input.password,
     };
-    const user = await apiClient.post<ApiUser>('/auth/register', payload);
-    return mapApiUserToUser(user);
+    const session = await apiClient.post<AuthSessionResponse>('/auth/register', payload);
+    persistAuthTokens(session.accessToken, session.refreshToken);
+    return mapApiUserToUser(session.user);
   },
 
   async requestOtp(phone: string) {

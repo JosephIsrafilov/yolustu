@@ -26,7 +26,7 @@ export const createAuthSlice: StateCreator<
       return true;
     } catch (error) {
       const apiError = toApiError(error);
-      set({ lastError: apiError.message || 'OTP göndərilməsi zamanı xəta baş verdi.' });
+      set({ lastError: apiError.message || 'Failed to request OTP.' });
       return false;
     }
   },
@@ -38,7 +38,7 @@ export const createAuthSlice: StateCreator<
       return true;
     } catch (error) {
       const apiError = toApiError(error);
-      set({ lastError: apiError.message || 'OTP təsdiqlənməsi zamanı xəta baş verdi.' });
+      set({ lastError: apiError.message || 'Failed to verify OTP.' });
       return false;
     }
   },
@@ -46,12 +46,17 @@ export const createAuthSlice: StateCreator<
   register: async (data) => {
     try {
       set({ lastError: null });
-      await authService.register(data);
-      
+      const user = await authService.register(data);
+      set({
+        currentUser: user,
+        isAuthenticated: true,
+        activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+        lastError: null,
+      });
       return true;
     } catch (error) {
       const apiError = toApiError(error);
-      set({ lastError: apiError.message || 'Qeydiyyat zamanı xəta baş verdi.' });
+      set({ lastError: apiError.message || 'Registration failed.' });
       return false;
     }
   },
@@ -72,7 +77,8 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: null,
         isAuthenticated: false,
-        lastError: apiError.message || 'Nömrə və ya şifrə yanlışdır.',
+        activeRole: 'passenger',
+        lastError: apiError.message || 'Invalid phone or password.',
       });
       return false;
     }
@@ -96,6 +102,14 @@ export const createAuthSlice: StateCreator<
   switchRole: (role) => {
     const { currentUser } = get();
     if (!currentUser) return;
+
+    if (!isMockDataMode) {
+      set({
+        lastError: 'Role switching is disabled in API mode.',
+      });
+      return;
+    }
+
     set({
       activeRole: role,
       currentUser: { ...currentUser, role: role as UserRole },
@@ -127,31 +141,56 @@ export const createAuthSlice: StateCreator<
   initAuth: async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        set({
+          currentUser: null,
+          isAuthenticated: false,
+          activeRole: 'passenger',
+        });
+        return;
+      }
+
       const user = await authService.getCurrentUser();
       if (user) {
         set({
           currentUser: user,
           isAuthenticated: true,
           activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+          lastError: null,
+        });
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        set({
+          currentUser: null,
+          isAuthenticated: false,
+          activeRole: 'passenger',
         });
       }
     } catch (error) {
       console.error('Failed to initialize auth:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      set({
+        currentUser: null,
+        isAuthenticated: false,
+        activeRole: 'passenger',
+      });
     }
   },
 
   updateProfile: async (data) => {
     try {
+      set({ lastError: null });
       const updated = await authService.updateProfile(data);
       set((s) => ({
         currentUser: updated,
         users: s.users.map((u) => (u.id === updated.id ? updated : u)),
+        lastError: null,
       }));
     } catch (error) {
       const apiError = toApiError(error);
-      set({ lastError: apiError.message || 'Profil yenilənməsi zamanı xəta baş verdi.' });
+      set({ lastError: apiError.message || 'Failed to update profile.' });
       throw error;
     }
   },
@@ -230,10 +269,10 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       const updated = await authService.submitVerification(file);
-      set({ currentUser: updated });
+      set({ currentUser: updated, lastError: null });
     } catch (error) {
       const apiError = toApiError(error);
-      set({ lastError: apiError.message || 'Verifikasiya göndərilməsi zamanı xəta baş verdi.' });
+      set({ lastError: apiError.message || 'Failed to submit verification.' });
       throw error;
     }
   },

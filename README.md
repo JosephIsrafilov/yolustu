@@ -102,9 +102,12 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 Current auth/profile behavior in API mode:
-- `POST /auth/register` returns `accessToken`, `refreshToken`, `user`, and frontend starts session immediately.
+- `POST /auth/register` returns `accessToken`, `refreshToken`, `user`; frontend starts session immediately.
 - `POST /auth/login` returns `accessToken`, `refreshToken`, `user`.
-- `POST /auth/refresh` is called automatically on `401` for non-auth endpoints.
+- `POST /auth/request-otp` returns `{ message, phone }`.
+- `POST /auth/verify-otp` returns `{ message: "Account verified successfully" }` and does not return tokens.
+- `POST /auth/refresh` receives `{ refreshToken }` and returns rotated `accessToken`, `refreshToken`, `user`.
+- Frontend stores tokens in `localStorage` keys: `token` and `refresh_token`.
 - `GET /users/me` is used on app boot to restore session after reload.
 - `PUT /users/me` powers profile/profile-setup updates.
 
@@ -115,6 +118,45 @@ Sprint 2 (current) in API mode:
 - Driver sees requests via `GET /bookings/requests` and confirms/rejects via `POST /bookings/{id}/confirm|reject`.
 - Passenger cancels via `POST /bookings/{id}/cancel`.
 - Seat accounting is backend-driven (`pending` does not decrement, `accepted` decrements, cancel of accepted/paid restores seats before trip completion).
+
+---
+
+## Local development quick start
+
+Run everything with one command from the repo root:
+
+```powershell
+.\start-dev.ps1
+```
+
+Or double-click:
+
+```text
+start-dev.bat
+```
+
+What it does:
+- starts Docker infrastructure (`db`, `redis`)
+- runs backend migrations (`alembic upgrade head`)
+- starts backend dev server (`uvicorn app.main:app --reload`)
+- ensures frontend API-mode env keys exist in `frontend/.env.local`
+- installs frontend dependencies if `frontend/node_modules` is missing
+- starts frontend dev server (`npm run dev`)
+
+URLs:
+- Backend: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+- Frontend: `http://localhost:3000`
+
+Optional seed:
+
+```powershell
+.\start-dev.ps1 -Seed
+```
+
+Stop:
+- close the backend/frontend PowerShell windows started by the script
+- stop infra when needed: `docker compose down`
 
 ---
 

@@ -41,13 +41,13 @@ class IdentityService:
         self.users.mark_verified(user)
         return {"message": "Account verified successfully"}
 
-    def register(self, user_in: UserCreate, redis_client) -> User:
+    def register(self, user_in: UserCreate, redis_client):
         if self.users.get_by_phone(user_in.phone):
             raise HTTPException(status_code=400, detail="Phone already registered")
 
         user = self.users.create(user_in, get_password_hash(user_in.password))
         self._send_otp_simulation(user.phone, redis_client)
-        return user
+        return self._create_auth_session(user, redis_client)
 
     def login(self, login_data: LoginInput, redis_client):
         user = self.users.get_by_phone(login_data.phone)
@@ -57,13 +57,7 @@ class IdentityService:
                 detail="Incorrect phone or password",
             )
 
-        if not user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account not verified. Please verify your phone via OTP.",
-            )
-
-        return self._create_tokens(user.phone, redis_client)
+        return self._create_auth_session(user, redis_client)
 
     def refresh_token(self, refresh_token: str, redis_client):
         phone = redis_client.get(f"refresh_token:{refresh_token}")
@@ -76,7 +70,25 @@ class IdentityService:
         # Invalidate old refresh token (Rotation)
         redis_client.delete(f"refresh_token:{refresh_token}")
 
-        return self._create_tokens(phone, redis_client)
+        normalized_phone = (
+            phone.decode("utf-8") if isinstance(phone, bytes) else str(phone)
+        )
+        user = self.users.get_by_phone(normalized_phone)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+            )
+
+        return self._create_auth_session(user, redis_client)
+
+    def _create_auth_session(self, user: User, redis_client):
+        tokens = self._create_tokens(user.phone, redis_client)
+        return {
+            "accessToken": tokens["access_token"],
+            "refreshToken": tokens["refresh_token"],
+            "user": user,
+        }
 
     def _create_tokens(self, phone: str, redis_client):
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

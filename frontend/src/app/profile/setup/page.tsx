@@ -54,7 +54,9 @@ const SETUP_I18N = {
 
 export default function ProfileSetupPage() {
   const router = useRouter();
-  const { currentUser, updateProfile, language } = useAppStore();
+  const { currentUser, updateProfile, clearError, lastError, language } = useAppStore();
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [form, setForm] = useState({
     fullName: currentUser?.fullName || '',
     phone: currentUser?.phone || '',
@@ -64,9 +66,18 @@ export default function ProfileSetupPage() {
 
   const copy = SETUP_I18N[language] || SETUP_I18N.en;
 
-  const handleSave = () => {
-    updateProfile(form);
-    router.push(ROUTES.search);
+  const handleSave = async () => {
+    setSaving(true);
+    setSubmitError('');
+    clearError();
+    try {
+      await updateProfile(form);
+      router.push(ROUTES.search);
+    } catch {
+      setSubmitError(useAppStore.getState().lastError || 'Failed to save profile.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -91,8 +102,13 @@ export default function ProfileSetupPage() {
                 <label className="text-sm font-medium text-text">{copy.bioLabel}</label>
                 <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={3} placeholder={copy.bioPlaceholder} className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
               </div>
-              <Button fullWidth size="lg" onClick={handleSave}>{copy.saveBtn}</Button>
-              <Button fullWidth size="lg" variant="ghost" onClick={() => router.push(ROUTES.search)}>{copy.skipBtn}</Button>
+              {(submitError || lastError) && (
+                <div className="rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
+                  {submitError || lastError}
+                </div>
+              )}
+              <Button fullWidth size="lg" onClick={handleSave} loading={saving}>{copy.saveBtn}</Button>
+              <Button fullWidth size="lg" variant="ghost" onClick={() => router.push(ROUTES.search)} disabled={saving}>{copy.skipBtn}</Button>
             </div>
           </Card>
         </ProtectedRoute>

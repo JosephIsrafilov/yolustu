@@ -19,7 +19,7 @@ def access_token():
         "/api/v1/auth/login", json={"phone": SEED_PHONE, "password": SEED_PASSWORD}
     )
     assert response.status_code == 200, f"Login failed: {response.text}"
-    return response.json()["access_token"]
+    return response.json()["accessToken"]
 
 
 @patch("app.domains.ai.router.settings")

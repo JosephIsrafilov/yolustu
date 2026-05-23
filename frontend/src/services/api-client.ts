@@ -93,6 +93,16 @@ interface RefreshSubscriber {
   reject: (err: unknown) => void;
 }
 
+interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: unknown;
+}
+
+function shouldAttemptRefresh(path: string): boolean {
+  return !path.startsWith('/auth/');
+}
+
 class ApiClient {
   private readonly baseUrl: string;
   private isRefreshing = false;
@@ -115,7 +125,7 @@ class ApiClient {
 
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
-        if (token && !path.includes('/auth/refresh')) {
+        if (token && shouldAttemptRefresh(path)) {
           headers['Authorization'] = `Bearer ${token}`;
         }
       }
@@ -137,7 +147,7 @@ class ApiClient {
 
       const responseBody = await parseResponseBody(response);
 
-      if (response.status === 401 && typeof window !== 'undefined' && !path.includes('/auth/refresh')) {
+      if (response.status === 401 && typeof window !== 'undefined' && shouldAttemptRefresh(path)) {
         return this.handleUnauthorized<T>(method, path, body);
       }
 
@@ -167,15 +177,13 @@ class ApiClient {
           throw new Error('No refresh token');
         }
 
-        const { access_token, refresh_token } = await this.post<{
-          access_token: string;
-          refresh_token: string;
-        }>('/auth/refresh', { refresh_token: refreshToken });
+        const { accessToken, refreshToken: rotatedRefreshToken } =
+          await this.post<RefreshResponse>('/auth/refresh', { refreshToken });
 
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('refresh_token', rotatedRefreshToken);
 
-        this.onTokenRefreshed(access_token);
+        this.onTokenRefreshed(accessToken);
         this.isRefreshing = false;
         return this.request<T>(method, path, body);
       } catch (error) {

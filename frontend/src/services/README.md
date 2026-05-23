@@ -76,9 +76,17 @@ API implementations are in `src/services/api`.
 Auth:
 - `POST /auth/login`
 - `POST /auth/register`
+- `POST /auth/request-otp`
+- `POST /auth/verify-otp`
 - `POST /auth/refresh`
 - `GET /users/me`
 - `PUT /users/me`
+
+Auth response contract used by frontend API services:
+- login/register response shape: `{ accessToken, refreshToken, user }`
+- refresh request body: `{ refreshToken }`
+- refresh response shape: `{ accessToken, refreshToken, user }`
+- verify-otp response shape: `{ message }` (no token issuance)
 
 Trips:
 - `GET /rides/search`
@@ -119,6 +127,7 @@ Admin:
    - driver/admin actions
 3. Keep auth lifecycle stable:
    - `register/login` store `token` + `refresh_token`
-   - expired access token triggers `/auth/refresh`
+   - expired access token triggers `/auth/refresh` with `{ refreshToken }`
+   - refresh success replaces both tokens from `{ accessToken, refreshToken }`
    - refresh failure clears session and redirects to `/auth/login`
 4. Move store logic from direct mutations to service-driven actions where needed.

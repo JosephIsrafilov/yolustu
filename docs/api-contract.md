@@ -8,16 +8,16 @@ Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və ca
 
 ### POST /api/v1/auth/request-otp
 
-**Məqsəd:** İstifadəçinin telefon nömrəsinə OTP təsdiq kodu göndərilməsini simulyasiya edir və kodu Redis-də saxlayır (TTL 5 dəqiqə).
+Purpose: generate and store OTP for phone verification.
 
-**Query Parameters:**
-- `phone` (str) — Nömrə (məs. `+994501234567`)
+Query parameters:
+- `phone` (string)
 
-**Response (200):**
+Response (200):
 ```json
 {
-  "message": "OTP sent successfully (Simulated)",
-  "otp": "123456"
+  "message": "OTP sent successfully",
+  "phone": "+994501234567"
 }
 ```
 
@@ -25,69 +25,59 @@ Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və ca
 
 ### POST /api/v1/auth/verify-otp
 
-**Məqsəd:** Daxil edilmiş OTP kodunu yoxlayır. Əgər nömrə qeydiyyatda yoxdursa, register etmək lazım olduğunu bildirir. Əgər nömrə varsa, birbaşa JWT tokenlərini qaytarır.
+Purpose: verify OTP and mark existing user as verified.
 
-**Query Parameters:**
-- `phone` (str) — Telefon nömrəsi
-- `otp` (str) — 6 rəqəmli kod
+Query parameters:
+- `phone` (string)
+- `otp` (string, 6 digits)
 
-**Response (200) - Qeydiyyatlı istifadəçi:**
+Response (200):
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsIn...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsIn...",
-  "token_type": "bearer"
+  "message": "Account verified successfully"
 }
 ```
 
-**Response (200) - Yeni istifadəçi (Qeydiyyat lazımdır):**
-```json
-{
-  "message": "OTP verified successfully. Registration required.",
-  "phone": "+994501234567"
-}
-```
+Error notes:
+- invalid/expired OTP -> `400`
+- user not found -> `404`
 
 ---
 
 ### POST /api/v1/auth/register
 
-**Məqsəd:** OTP təsdiqindən sonra yeni istifadəçi yaradır və JWT tokenləri təqdim edir.
+Purpose: create user account and immediately create auth session.
 
-**Request Body:**
+Request body:
 ```json
 {
   "phone": "+994501234567",
   "first_name": "Elvin",
-  "last_name": "Məmmədov",
+  "last_name": "Mammadov",
   "password": "securepass123",
   "avatar_url": null,
   "language": "az",
   "role": "passenger",
-  "city": "Bakı",
-  "bio": "Yeni istifadəçi"
+  "city": "Baku",
+  "bio": "Yeni istifadeci"
 }
 ```
 
-**Response (200):**
+Response (200):
 ```json
 {
-  "id": "7a26f04c-83b3-4f27-8025-01e4a3b7c02b",
-  "phone": "+994501234567",
-  "first_name": "Elvin",
-  "last_name": "Məmmədov",
-  "avatar_url": null,
-  "language": "az",
-  "role": "passenger",
-  "city": "Bakı",
-  "bio": "Yeni istifadəçi",
-  "is_blocked": false,
-  "is_verified": false,
-  "verification_status": "none",
-  "document_url": null,
-  "rating": 0.0,
-  "total_rides": 0,
-  "created_at": "2026-05-21T20:00:00Z"
+  "accessToken": "string",
+  "refreshToken": "string",
+  "user": {
+    "id": "uuid",
+    "phone": "+994501234567",
+    "first_name": "Elvin",
+    "last_name": "Mammadov",
+    "role": "passenger",
+    "is_verified": false,
+    "verification_status": "none",
+    "created_at": "2026-05-23T10:00:00Z"
+  }
 }
 ```
 
@@ -95,9 +85,9 @@ Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və ca
 
 ### POST /api/v1/auth/login
 
-**Məqsəd:** Mövcud istifadəçinin telefon nömrəsi və şifrə ilə daxil olması.
+Purpose: authenticate existing user by phone/password and return auth session.
 
-**Request Body:**
+Request body:
 ```json
 {
   "phone": "+994501234567",
@@ -105,17 +95,55 @@ Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və ca
 }
 ```
 
-**Response (200):**
+Response (200):
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsIn...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsIn...",
-  "token_type": "bearer"
+  "accessToken": "string",
+  "refreshToken": "string",
+  "user": {
+    "id": "uuid",
+    "phone": "+994501234567",
+    "first_name": "Elvin",
+    "last_name": "Mammadov",
+    "role": "passenger",
+    "is_verified": true,
+    "verification_status": "verified",
+    "created_at": "2026-05-23T10:00:00Z"
+  }
 }
 ```
 
 ---
 
+### POST /api/v1/auth/refresh
+
+Purpose: rotate refresh token and return a new auth session.
+
+Request body:
+```json
+{
+  "refreshToken": "string"
+}
+```
+
+Response (200):
+```json
+{
+  "accessToken": "string",
+  "refreshToken": "string",
+  "user": {
+    "id": "uuid",
+    "phone": "+994501234567",
+    "first_name": "Elvin",
+    "last_name": "Mammadov",
+    "is_verified": true,
+    "verification_status": "none",
+    "created_at": "2026-05-23T10:00:00Z"
+  }
+}
+```
+
+---
 ## 2. Users & Profile (İstifadəçi Profilləri)
 
 ### GET /api/v1/users/me
