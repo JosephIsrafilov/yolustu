@@ -121,6 +121,45 @@ Sprint 2 (current) in API mode:
 
 ---
 
+## Local development quick start
+
+Run everything with one command from the repo root:
+
+```powershell
+.\start-dev.ps1
+```
+
+Or double-click:
+
+```text
+start-dev.bat
+```
+
+What it does:
+- starts Docker infrastructure (`db`, `redis`)
+- runs backend migrations (`alembic upgrade head`)
+- starts backend dev server (`uvicorn app.main:app --reload`)
+- ensures frontend API-mode env keys exist in `frontend/.env.local`
+- installs frontend dependencies if `frontend/node_modules` is missing
+- starts frontend dev server (`npm run dev`)
+
+URLs:
+- Backend: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+- Frontend: `http://localhost:3000`
+
+Optional seed:
+
+```powershell
+.\start-dev.ps1 -Seed
+```
+
+Stop:
+- close the backend/frontend PowerShell windows started by the script
+- stop infra when needed: `docker compose down`
+
+---
+
 ## Demo Users
 
 To populate your local PostgreSQL database with demo data (users, vehicles, trips), run:
