@@ -88,4 +88,3 @@ def test_websocket_with_participant_token_connects(monkeypatch, token: str):
 
     with client.websocket_connect(f"/api/v1/messages/ws/{uuid4()}?token={token}") as ws:
         ws.send_text("ping")
-

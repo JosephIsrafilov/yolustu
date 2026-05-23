@@ -1,14 +1,26 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.websocket import manager
 from app.domains.engagement.schemas import MessageCreate, MessageResponse
 from app.domains.engagement.services import EngagementService
-from app.domains.identity.dependencies import CurrentUser, get_current_user, get_current_user_from_token
+from app.domains.identity.dependencies import (
+    CurrentUser,
+    get_current_user,
+    get_current_user_from_token,
+)
 
 router = APIRouter()
 
