@@ -192,6 +192,36 @@ export default function TripDetailsPage() {
               <div><Icon name="car" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.vehicleLabel}</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
             </div>
           </Card>
+          <Card>
+            <h4 className="text-sm font-bold text-text mb-3">
+              {language === 'az' ? 'Səyahət seçimləri və rahatlıq' : language === 'ru' ? 'Параметры поездки и удобства' : 'Ride Preferences & Comfort'}
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.femaleOnly ? 'bg-pink-50/20 border-pink-200 text-pink-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
+                <Icon name="sparkles" size={20} className={trip.femaleOnly ? 'text-pink-600' : 'text-text-muted'} />
+                <span className="text-xs font-bold">{language === 'az' ? 'Yalnız xanımlar' : language === 'ru' ? 'Только женщины' : 'Female only'}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.femaleOnly ? (language === 'az' ? 'Bəli' : 'Да') : (language === 'az' ? 'Xeyr' : 'Нет')}</span>
+              </div>
+              
+              <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.smokingAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
+                <Icon name="cigarette-off" size={20} className={`rotate-180 ${trip.smokingAllowed ? 'text-brand-600' : 'text-text-muted'}`} />
+                <span className="text-xs font-bold">{language === 'az' ? 'Siqaret çəkmək' : language === 'ru' ? 'Курение' : 'Smoking'}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.smokingAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+              </div>
+
+              <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.petsAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
+                <Icon name="dog" size={20} className={trip.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                <span className="text-xs font-bold">{language === 'az' ? 'Ev heyvanı' : language === 'ru' ? 'Животные' : 'Pets'}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.petsAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+              </div>
+
+              <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.musicAllowed !== false ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
+                <Icon name="repeat" size={20} className={trip.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
+                <span className="text-xs font-bold">{language === 'az' ? 'Musiqi dinləmək' : language === 'ru' ? 'Музыка' : 'Music'}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.musicAllowed !== false ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+              </div>
+            </div>
+          </Card>
           {trip.comment && (<Card padding="md"><div className="flex items-start gap-3"><Icon name="message-square" size={16} className="text-text-muted mt-0.5 shrink-0" /><p className="text-sm text-text-secondary">{trip.comment}</p></div></Card>)}
           <StatusBadge status={trip.status} type="trip" />
           {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.driverReviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
@@ -218,7 +248,12 @@ export default function TripDetailsPage() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-base font-semibold text-text">{driver.fullName}</p>
+                    <p className="text-base font-semibold text-text flex items-center gap-1">
+                      <span>{driver.fullName}</span>
+                      {driver.verificationStatus === 'approved' && (
+                        <Icon name="shield-check" size={16} className="text-green-600 shrink-0" title="Təsdiqlənmiş Sürücü" />
+                      )}
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <span className="flex items-center gap-0.5">
                         <Icon name="star" size={11} className="text-accent-500" fill="currentColor" />
@@ -234,15 +269,35 @@ export default function TripDetailsPage() {
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />{copy.ownTripWarning}</div></Card>)}
             
             {(isOwnTrip || existingBooking?.status === 'accepted' || existingBooking?.status === 'paid') && (
-              <Button 
-                fullWidth 
-                variant="outline" 
-                onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
-                className="flex items-center justify-center gap-2"
-              >
-                <Icon name="message-square" size={18} />
-                {copy.goToChatBtn}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  fullWidth 
+                  variant="outline" 
+                  onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Icon name="message-square" size={18} />
+                  {copy.goToChatBtn}
+                </Button>
+                
+                {existingBooking && (existingBooking.status === 'accepted' || existingBooking.status === 'paid') && (
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                      language === 'az' 
+                        ? `Salam! Mən Yolüstü ilə ${trip.departureCity} şəhərindən ${trip.arrivalCity} şəhərinə gedirəm. Sürücü: ${driver?.fullName || 'Sürücü'}, Vaxt: ${trip.date} ${trip.time}. Gediş detalları: ${window.location.origin}/trips/${trip.id}`
+                        : language === 'ru'
+                        ? `Привет! Я еду с Yolustu из ${trip.departureCity} в ${trip.arrivalCity}. Водитель: ${driver?.fullName || 'Водитель'}, Время: ${trip.date} ${trip.time}. Детали поездки: ${window.location.origin}/trips/${trip.id}`
+                        : `Hi! I am traveling with Yolustu from ${trip.departureCity} to ${trip.arrivalCity}. Driver: ${driver?.fullName || 'Driver'}, Time: ${trip.date} ${trip.time}. Trip details: ${window.location.origin}/trips/${trip.id}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white py-2.5 px-4 font-bold text-sm shadow-md transition-all active:scale-95"
+                  >
+                    <Icon name="send" size={18} />
+                    <span>{I18N[language].createTrip.whatsappShare}</span>
+                  </a>
+                )}
+              </div>
             )}
             
             {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (

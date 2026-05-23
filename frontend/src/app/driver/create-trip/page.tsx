@@ -16,7 +16,7 @@ import TimePicker from '@/components/ui/TimePicker';
 import CitySelect from '@/components/ui/CitySelect';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES } from '@/lib/utils';
+import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, PRESET_LOCATIONS } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -41,6 +41,10 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
     comment: z.string().optional(),
     origin: z.object({ lat: z.number(), lng: z.number() }).optional(),
     destination: z.object({ lat: z.number(), lng: z.number() }).optional(),
+    smokingAllowed: z.boolean().optional(),
+    petsAllowed: z.boolean().optional(),
+    musicAllowed: z.boolean().optional(),
+    femaleOnly: z.boolean().optional(),
   }).superRefine((data, ctx) => {
     if (data.departureCity === data.arrivalCity && data.departureCity) {
       ctx.addIssue({
@@ -64,6 +68,7 @@ export default function CreateTripPage() {
   const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepOverview];
   const [step, setStep] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
+  const [isRecurring, setIsRecurring] = useState(false);
 
   // Fetch vehicles with React Query
   const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
@@ -91,7 +96,7 @@ export default function CreateTripPage() {
   }, [copy]);
 
   // React Hook Form Configuration
-  const { control, handleSubmit, trigger, setValue, getValues, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, trigger, setValue, getValues, setError, clearErrors, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       departureCity: '',
@@ -105,11 +110,45 @@ export default function CreateTripPage() {
       comment: '',
       origin: undefined,
       destination: undefined,
+      smokingAllowed: false,
+      petsAllowed: false,
+      musicAllowed: true,
+      femaleOnly: false,
     }
   });
 
   // Watch values reactively for the UI
   const formValues = useWatch({ control }) as FormValues;
+
+  const mapCenter = useMemo((): [number, number] => {
+    if (pickerMode === 'origin') {
+      if (formValues.origin) {
+        return [formValues.origin.lat, formValues.origin.lng];
+      }
+      if (formValues.departureCity) {
+        const coords = getCityCoordinates(formValues.departureCity);
+        if (coords) return [coords.lat, coords.lng];
+      }
+    } else {
+      if (formValues.destination) {
+        return [formValues.destination.lat, formValues.destination.lng];
+      }
+      if (formValues.arrivalCity) {
+        const coords = getCityCoordinates(formValues.arrivalCity);
+        if (coords) return [coords.lat, coords.lng];
+      }
+    }
+    return [40.4093, 49.8671]; // Default to Baku
+  }, [pickerMode, formValues.origin, formValues.destination, formValues.departureCity, formValues.arrivalCity]);
+
+  const mapZoom = useMemo(() => {
+    if (pickerMode === 'origin') {
+      if (formValues.origin || formValues.departureCity) return 14;
+    } else {
+      if (formValues.destination || formValues.arrivalCity) return 14;
+    }
+    return 12;
+  }, [pickerMode, formValues.origin, formValues.destination, formValues.departureCity, formValues.arrivalCity]);
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');
@@ -166,7 +205,7 @@ export default function CreateTripPage() {
   // Mutation for creating trip
   const createTripMutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      return await createTrip({
+      const baseTripData = {
         departureCity: values.departureCity,
         arrivalCity: values.arrivalCity,
         meetingPoint: values.meetingPoint || '',
@@ -180,7 +219,28 @@ export default function CreateTripPage() {
         origin: values.origin,
         destination: values.destination,
         vehicleId: vehicles[0]?.id || '',
-      });
+        smokingAllowed: values.smokingAllowed ?? false,
+        petsAllowed: values.petsAllowed ?? false,
+        musicAllowed: values.musicAllowed ?? true,
+        femaleOnly: values.femaleOnly ?? false,
+      };
+
+      if (isRecurring) {
+        const { getNextWeekdays } = await import('@/lib/utils');
+        const extraDates = getNextWeekdays(values.date, 4);
+        const datesToCreate = [values.date, ...extraDates];
+        
+        let lastCreatedId = '';
+        for (const targetDate of datesToCreate) {
+          lastCreatedId = await createTrip({
+            ...baseTripData,
+            date: targetDate,
+          });
+        }
+        return lastCreatedId;
+      } else {
+        return await createTrip(baseTripData);
+      }
     },
     onSuccess: (id) => {
       if (id) router.push(ROUTES.myTrips);
@@ -198,6 +258,22 @@ export default function CreateTripPage() {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
       const data = await res.json();
       if (data && data.address) {
+        const countryCode = data.address.country_code;
+        const isMeeting = field === 'meetingPoint';
+        const coordField = isMeeting ? 'origin' : 'destination';
+
+        if (countryCode && countryCode.toLowerCase() !== 'az') {
+          setError(coordField, {
+            type: 'manual',
+            message: copy.onlyAzerbaijanError
+          });
+          setValue(coordField, undefined);
+          setValue(field, '');
+          return;
+        }
+
+        clearErrors(coordField);
+
         const addr = data.address;
         const shortName = addr.road 
           ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}` 
@@ -333,16 +409,36 @@ export default function CreateTripPage() {
                   </div>
                   
                   <div className="overflow-hidden rounded-xl border border-border">
-                    <MapContainer>
+                    <MapContainer center={mapCenter} zoom={mapZoom}>
                       <LocationPicker 
                         mode={pickerMode}
                         origin={formValues.origin}
                         destination={formValues.destination}
                         onSelectOrigin={(pos) => { 
+                          if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
+                            setError('origin', {
+                              type: 'manual',
+                              message: copy.onlyAzerbaijanError
+                            });
+                            setValue('origin', undefined);
+                            setValue('meetingPoint', '');
+                            return;
+                          }
+                          clearErrors('origin');
                           setValue('origin', pos); 
                           reverseGeocode(pos.lat, pos.lng, 'meetingPoint'); 
                         }}
                         onSelectDestination={(pos) => { 
+                          if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
+                            setError('destination', {
+                              type: 'manual',
+                              message: copy.onlyAzerbaijanError
+                            });
+                            setValue('destination', undefined);
+                            setValue('dropoffPoint', '');
+                            return;
+                          }
+                          clearErrors('destination');
                           setValue('destination', pos); 
                           reverseGeocode(pos.lat, pos.lng, 'dropoffPoint'); 
                         }}
@@ -354,6 +450,54 @@ export default function CreateTripPage() {
                       ? (language === 'az' ? 'Xəritədə görüş nöqtəsini seçin' : language === 'ru' ? 'Выберите место встречи на карте' : 'Select meeting point on the map') 
                       : (language === 'az' ? 'Xəritədə eniş nöqtəsini seçin' : language === 'ru' ? 'Выберите место высадки на карте' : 'Select dropoff point on the map')}
                   </p>
+                  
+                  {/* Transit Presets Selector */}
+                  {(() => {
+                    const activeCity = pickerMode === 'origin' ? formValues.departureCity : formValues.arrivalCity;
+                    const presets = activeCity ? PRESET_LOCATIONS[activeCity] : null;
+                    if (!presets || presets.length === 0) return null;
+                    return (
+                      <div className="flex flex-col gap-1.5 mt-1 border-t border-dashed border-border pt-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                          {copy.presetTitle}
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {presets.map((preset) => (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() => {
+                                const pos = { lat: preset.lat, lng: preset.lng };
+                                if (pickerMode === 'origin') {
+                                  setValue('origin', pos);
+                                  setValue('meetingPoint', preset.name);
+                                  clearErrors('origin');
+                                } else {
+                                  setValue('destination', pos);
+                                  setValue('dropoffPoint', preset.name);
+                                  clearErrors('destination');
+                                }
+                              }}
+                              className="rounded-lg bg-brand-50 border border-brand-100 hover:bg-brand-100 hover:border-brand-200 text-brand-700 px-2.5 py-1 text-xs font-semibold transition-colors duration-200"
+                            >
+                              {preset.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {errors.origin?.message && pickerMode === 'origin' && (
+                    <p className="text-center text-xs font-semibold text-[#ba1a1a] mt-1">
+                      {errors.origin.message}
+                    </p>
+                  )}
+                  {errors.destination?.message && pickerMode === 'destination' && (
+                    <p className="text-center text-xs font-semibold text-[#ba1a1a] mt-1">
+                      {errors.destination.message}
+                    </p>
+                  )}
                 </div>
 
                 <Input 
@@ -403,6 +547,20 @@ export default function CreateTripPage() {
                     />
                   )}
                 />
+                
+                <div className="flex items-start gap-3 rounded-xl border border-border p-4 bg-surface-muted/30">
+                  <input
+                    type="checkbox"
+                    id="isRecurring"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                  />
+                  <label htmlFor="isRecurring" className="text-xs sm:text-sm font-medium text-text cursor-pointer select-none">
+                    <span className="block font-bold">{language === 'az' ? 'Təkrarlanan gediş' : language === 'ru' ? 'Повторяющаяся поездка' : 'Recurring Trip'}</span>
+                    <span className="block text-text-muted mt-0.5 text-[11px] leading-relaxed">{copy.recurringLabel}</span>
+                  </label>
+                </div>
               </div>
             )}
 
@@ -476,6 +634,73 @@ export default function CreateTripPage() {
                           {aiReasoning || copy.aiPlaceholder}
                         </p>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comfort Preferences */}
+                <div className="mt-4 border-t border-border pt-4">
+                  <h4 className="text-sm font-bold text-text mb-3">{copy.preferencesTitle}</h4>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Female Only */}
+                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.femaleOnly ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
+                         onClick={() => setValue('femaleOnly', !formValues.femaleOnly)}>
+                      <input
+                        type="checkbox"
+                        checked={formValues.femaleOnly || false}
+                        onChange={() => {}} // handled by div click
+                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Icon name="sparkles" size={16} className={formValues.femaleOnly ? 'text-brand-600' : 'text-text-muted'} />
+                        <span className="text-xs font-semibold text-text">{copy.femaleOnlyLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Smoking Allowed */}
+                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.smokingAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
+                         onClick={() => setValue('smokingAllowed', !formValues.smokingAllowed)}>
+                      <input
+                        type="checkbox"
+                        checked={formValues.smokingAllowed || false}
+                        onChange={() => {}} // handled by div click
+                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Icon name="cigarette-off" size={16} className={formValues.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                        <span className="text-xs font-semibold text-text">{copy.smokingAllowedLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Pets Allowed */}
+                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.petsAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
+                         onClick={() => setValue('petsAllowed', !formValues.petsAllowed)}>
+                      <input
+                        type="checkbox"
+                        checked={formValues.petsAllowed || false}
+                        onChange={() => {}} // handled by div click
+                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Icon name="dog" size={16} className={formValues.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                        <span className="text-xs font-semibold text-text">{copy.petsAllowedLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Music Allowed */}
+                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.musicAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
+                         onClick={() => setValue('musicAllowed', !formValues.musicAllowed)}>
+                      <input
+                        type="checkbox"
+                        checked={formValues.musicAllowed !== false}
+                        onChange={() => {}} // handled by div click
+                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Icon name="repeat" size={16} className={formValues.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
+                        <span className="text-xs font-semibold text-text">{copy.musicAllowedLabel}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -59,3 +59,53 @@ export const AZ_CITY_COORDINATES: Record<AZCity, Coordinates> = {
 export function getCityCoordinates(city: string): Coordinates | undefined {
   return AZ_CITY_COORDINATES[city as AZCity];
 }
+
+export function isWithinAzerbaijan(lat: number, lng: number): boolean {
+  // Mainland Azerbaijan bounding box
+  const inMainland = lat >= 38.38 && lat <= 41.95 && lng >= 45.0 && lng <= 50.9;
+  // Nakhchivan exclave bounding box
+  const inNakhchivan = lat >= 38.83 && lat <= 39.77 && lng >= 44.78 && lng <= 46.0;
+  return inMainland || inNakhchivan;
+}
+
+export interface PresetLocation {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export const PRESET_LOCATIONS: Record<string, PresetLocation[]> = {
+  'Bakı': [
+    { name: '20 Yanvar metro', lat: 40.4032, lng: 49.8105 },
+    { name: 'Koroğlu metro', lat: 40.4203, lng: 49.9179 },
+    { name: 'Avtovağzal metro', lat: 40.4196, lng: 49.7946 },
+    { name: '28 May metro', lat: 40.3798, lng: 49.8486 },
+  ],
+  'Sumqayıt': [
+    { name: 'Sumqayıt Avtovağzalı', lat: 40.5836, lng: 49.6644 },
+    { name: 'Sülh küçəsi (Karvan)', lat: 40.5897, lng: 49.6686 },
+  ],
+  'Gəncə': [
+    { name: 'Gəncə Avtovağzalı', lat: 40.6972, lng: 46.3475 },
+    { name: 'Göygöl dairəsi', lat: 40.6558, lng: 46.3683 },
+  ],
+};
+
+export function getNextWeekdays(startDateStr: string, count: number): string[] {
+  const dates: string[] = [];
+  const current = new Date(startDateStr);
+  
+  // Find subsequent weekdays starting from the day after startDate
+  let added = 0;
+  while (added < count) {
+    current.setDate(current.getDate() + 1);
+    const day = current.getDay(); // 0 = Sunday, 6 = Saturday
+    if (day !== 0 && day !== 6) {
+      dates.push(current.toISOString().split('T')[0]);
+      added++;
+    }
+  }
+  return dates;
+}
+
+

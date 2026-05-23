@@ -82,6 +82,10 @@ class RideSearch(BaseModel):
     departure_date: Optional[date] = None
     min_seats: int = 1
     radius_meters: float = 10000
+    female_only: Optional[bool] = None
+    smoking_allowed: Optional[bool] = None
+    pets_allowed: Optional[bool] = None
+    music_allowed: Optional[bool] = None
 
 
 class RideResponse(RideBase):

@@ -41,6 +41,16 @@ function ResizeMap() {
   return null;
 }
 
+function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+
+  return null;
+}
+
 const MapContainer = ({ center = [40.4093, 49.8671], zoom = 12, children, className }: MapProps) => {
   const hasHeight = className && (className.includes('h-') || className.includes('min-h-'));
 
@@ -52,6 +62,7 @@ const MapContainer = ({ center = [40.4093, 49.8671], zoom = 12, children, classN
         style={{ height: '100%', width: '100%', minHeight: '100%', flexGrow: 1 }}
       >
         <ResizeMap />
+        <ChangeView center={center} zoom={zoom} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -61,5 +72,6 @@ const MapContainer = ({ center = [40.4093, 49.8671], zoom = 12, children, classN
     </div>
   );
 };
+
 
 export default MapContainer;

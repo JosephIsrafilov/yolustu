@@ -15,6 +15,10 @@ export function filterTrips(trips: Trip[], filters: TripSearchFilters): Trip[] {
     if (filters.date && t.date !== filters.date) return false;
     if (filters.maxPrice && t.pricePerSeat > filters.maxPrice) return false;
     if (filters.minSeats && t.seatsAvailable < filters.minSeats) return false;
+    if (filters.femaleOnly && !t.femaleOnly) return false;
+    if (filters.smokingAllowed && !t.smokingAllowed) return false;
+    if (filters.petsAllowed && !t.petsAllowed) return false;
+    if (filters.musicAllowed && !t.musicAllowed) return false;
     return true;
   });
 }

@@ -33,6 +33,10 @@ def search_rides(
     departure_date: Optional[date] = None,
     min_seats: int = 1,
     radius_meters: float = 10000,
+    female_only: Optional[bool] = None,
+    smoking_allowed: Optional[bool] = None,
+    pets_allowed: Optional[bool] = None,
+    music_allowed: Optional[bool] = None,
     db: Session = Depends(get_db),
 ):
     return TripsService(db).search_rides(
@@ -45,6 +49,10 @@ def search_rides(
         departure_date=departure_date,
         min_seats=min_seats,
         radius_meters=radius_meters,
+        female_only=female_only,
+        smoking_allowed=smoking_allowed,
+        pets_allowed=pets_allowed,
+        music_allowed=music_allowed,
     )
 
 

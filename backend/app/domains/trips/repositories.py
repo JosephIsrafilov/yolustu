@@ -151,6 +151,15 @@ class RideRepository:
         elif dist_origin is not None:
             query = query.order_by(dist_origin.asc())
 
+        if criteria.female_only is not None:
+            query = query.filter(Ride.female_only == criteria.female_only)
+        if criteria.smoking_allowed is not None:
+            query = query.filter(Ride.smoking_allowed == criteria.smoking_allowed)
+        if criteria.pets_allowed is not None:
+            query = query.filter(Ride.pets_allowed == criteria.pets_allowed)
+        if criteria.music_allowed is not None:
+            query = query.filter(Ride.music_allowed == criteria.music_allowed)
+
         return query.all()
 
     def save(self, ride: Ride) -> Ride:

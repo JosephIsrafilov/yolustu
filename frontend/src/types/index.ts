@@ -61,6 +61,10 @@ export interface Trip {
   destination?: { lat: number; lng: number };
   driver?: User;
   vehicle?: Vehicle;
+  smokingAllowed?: boolean;
+  petsAllowed?: boolean;
+  musicAllowed?: boolean;
+  femaleOnly?: boolean;
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed';
@@ -112,6 +116,10 @@ export interface TripSearchFilters {
   date?: string;
   maxPrice?: number;
   minSeats?: number;
+  femaleOnly?: boolean;
+  smokingAllowed?: boolean;
+  petsAllowed?: boolean;
+  musicAllowed?: boolean;
 }
 
 export interface CreateTripData {
@@ -135,4 +143,8 @@ export interface CreateTripData {
     color: string;
     plateNumber: string;
   };
+  smokingAllowed?: boolean;
+  petsAllowed?: boolean;
+  musicAllowed?: boolean;
+  femaleOnly?: boolean;
 }

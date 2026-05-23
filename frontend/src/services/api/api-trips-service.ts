@@ -52,6 +52,10 @@ function buildSearchQuery(filters: TripSearchFilters): string {
   if (filters.arrivalCity) params.set('dest_city', filters.arrivalCity);
   if (filters.date) params.set('departure_date', filters.date);
   if (typeof filters.minSeats === 'number') params.set('min_seats', String(filters.minSeats));
+  if (filters.femaleOnly !== undefined) params.set('female_only', String(filters.femaleOnly));
+  if (filters.smokingAllowed !== undefined) params.set('smoking_allowed', String(filters.smokingAllowed));
+  if (filters.petsAllowed !== undefined) params.set('pets_allowed', String(filters.petsAllowed));
+  if (filters.musicAllowed !== undefined) params.set('music_allowed', String(filters.musicAllowed));
 
   const query = params.toString();
   return query ? `?${query}` : '';

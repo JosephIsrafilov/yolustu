@@ -46,6 +46,10 @@ export interface ApiTrip {
   destination_location?: { lat: number; lon: number };
   vehicle?: ApiVehicle | null;
   driver?: ApiUser | null;
+  smoking_allowed?: boolean;
+  pets_allowed?: boolean;
+  music_allowed?: boolean;
+  female_only?: boolean;
 }
 
 export interface ApiBooking {
@@ -81,6 +85,10 @@ export interface ApiRideCreateInput {
   destination: { lat: number; lon: number };
   car_model?: string;
   description?: string;
+  smoking_allowed?: boolean;
+  pets_allowed?: boolean;
+  music_allowed?: boolean;
+  female_only?: boolean;
 }
 
 export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
@@ -122,6 +130,10 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     destination: apiTrip.destination_location ? { lat: apiTrip.destination_location.lat, lng: apiTrip.destination_location.lon } : undefined,
     driver: apiTrip.driver ? mapApiUserToUser(apiTrip.driver) : undefined,
     vehicle,
+    smokingAllowed: apiTrip.smoking_allowed ?? false,
+    petsAllowed: apiTrip.pets_allowed ?? false,
+    musicAllowed: apiTrip.music_allowed ?? true,
+    femaleOnly: apiTrip.female_only ?? false,
   };
 }
 
@@ -143,6 +155,10 @@ export function mapCreateTripToApiRideCreate(
     destination,
     car_model: input.carModel || undefined,
     description: input.comment || undefined,
+    smoking_allowed: input.smokingAllowed,
+    pets_allowed: input.petsAllowed,
+    music_allowed: input.musicAllowed,
+    female_only: input.femaleOnly,
   };
 }
 

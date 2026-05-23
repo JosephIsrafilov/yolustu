@@ -31,7 +31,15 @@ function TripsContent() {
     fetchTrips(filters);
   }, [fetchTrips, filters]);
 
-  const filteredTrips = trips; 
+  const filteredTrips = React.useMemo(() => {
+    return trips.filter((t) => {
+      if (filters.femaleOnly && !t.femaleOnly) return false;
+      if (filters.smokingAllowed && !t.smokingAllowed) return false;
+      if (filters.petsAllowed && !t.petsAllowed) return false;
+      if (filters.musicAllowed && !t.musicAllowed) return false;
+      return true;
+    });
+  }, [trips, filters.femaleOnly, filters.smokingAllowed, filters.petsAllowed, filters.musicAllowed]);
 
   const from = filters.departureCity || copy.common.all;
   const to = filters.arrivalCity || copy.common.all;
@@ -43,6 +51,10 @@ function TripsContent() {
     filters.arrivalCity && `${copy.tripsPage.filterTo}: ${filters.arrivalCity}`,
     filters.date && `${copy.tripsPage.filterDate}: ${filters.date}`,
     filters.minSeats && `${copy.common.passenger}: ${filters.minSeats}+`,
+    filters.femaleOnly && copy.createTrip.femaleOnlyLabel,
+    filters.smokingAllowed && copy.createTrip.smokingAllowedLabel,
+    filters.petsAllowed && copy.createTrip.petsAllowedLabel,
+    filters.musicAllowed && copy.createTrip.musicAllowedLabel,
   ].filter(Boolean);
 
   return (
@@ -107,6 +119,48 @@ function TripsContent() {
                 >
                   +
                 </button>
+              </div>
+            </div>
+
+            <div className="mb-5 border-t border-[#c0c8ca] pt-4">
+              <h3 className="text-[14px] font-bold text-[#40484a] mb-3">{copy.createTrip.preferencesTitle}</h3>
+              <div className="flex flex-col gap-2.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={filters.femaleOnly || false}
+                    onChange={(e) => setFilters((p) => ({ ...p, femaleOnly: e.target.checked || undefined }))}
+                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>{copy.createTrip.femaleOnlyLabel}</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={filters.smokingAllowed || false}
+                    onChange={(e) => setFilters((p) => ({ ...p, smokingAllowed: e.target.checked || undefined }))}
+                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>{copy.createTrip.smokingAllowedLabel}</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={filters.petsAllowed || false}
+                    onChange={(e) => setFilters((p) => ({ ...p, petsAllowed: e.target.checked || undefined }))}
+                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>{copy.createTrip.petsAllowedLabel}</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={filters.musicAllowed || false}
+                    onChange={(e) => setFilters((p) => ({ ...p, musicAllowed: e.target.checked || undefined }))}
+                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>{copy.createTrip.musicAllowedLabel}</span>
+                </label>
               </div>
             </div>
 
@@ -202,8 +256,7 @@ function TripsContent() {
                       isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] hover:shadow-card-hover cursor-pointer'
                     }`}>
 
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">                      <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
                         <div className="relative">
                           {driver?.avatarUrl ? (
                             <Image src={driver.avatarUrl} alt={driver.fullName} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
@@ -219,7 +272,12 @@ function TripsContent() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-[15px] font-bold text-[#002f37]">{driver?.fullName.split(' ')[0] || copy.common.unknown}</h4>
+                          <h4 className="text-[15px] font-bold text-[#002f37] flex items-center gap-1">
+                            <span>{driver?.fullName.split(' ')[0] || copy.common.unknown}</span>
+                            {driver?.verificationStatus === 'approved' && (
+                              <Icon name="shield-check" size={14} className="text-green-600 shrink-0" />
+                            )}
+                          </h4>
                           <div className="flex items-center gap-1 text-[13px] text-[#40484a]">
                             <Icon name="star" size={13} className="text-[#F5A623]" fill="currentColor" />
                             <span className="font-bold">{driver?.rating.toFixed(1)}</span>
@@ -228,37 +286,65 @@ function TripsContent() {
                         </div>
                       </div>
 
-                      {}
-                      <div className="order-1 flex items-center gap-3 flex-1">
-                        <div className="text-right shrink-0">
-                          <div className="text-[18px] font-semibold text-[#002f37]">{trip.time}</div>
-                          <div className="text-[13px] text-[#40484a]">{trip.departureCity}</div>
+                      {/* Timeline / Route Banner */}
+                      <div className="order-1 flex flex-col gap-2 flex-1 min-w-0">
+                        {/* Cities Route */}
+                        <div className="flex items-center gap-2 text-[18px] font-bold text-[#002f37]">
+                          <span>{trip.departureCity}</span>
+                          <Icon name="arrow-right" size={16} className="text-[#054752] shrink-0" />
+                          <span>{trip.arrivalCity}</span>
                         </div>
-
-                        {}
-                        <div className="flex flex-col items-center w-20 shrink-0">
-                          <div className="w-2.5 h-2.5 rounded-full border-2 border-[#c0c8ca] bg-white"></div>
-                          <div className="w-px h-6 bg-[#c0c8ca] relative">
-                            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-[#70787b] bg-white px-1 whitespace-nowrap">
-                              {trip.carModel.split(' ').slice(0, 2).join(' ')}
-                            </span>
+                        
+                        {/* Trip Info Meta Row */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-[#40484a]">
+                          {/* Departure Time */}
+                          <div className="flex items-center gap-1 bg-[#edfcff] px-2 py-0.5 rounded text-[#054752] font-semibold border border-[#054752]/10">
+                            <Icon name="clock" size={13} />
+                            <span>{trip.time}</span>
                           </div>
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#054752]"></div>
-                        </div>
-
-                        <div className="text-left shrink-0">
-                          <div className="text-[18px] font-semibold text-[#002f37]">—</div>
-                          <div className="text-[13px] text-[#40484a]">{trip.arrivalCity}</div>
+                          
+                          {/* Car Model */}
+                          {trip.carModel && (
+                            <div className="flex items-center gap-1.5 text-[#50585a]">
+                              <Icon name="car" size={13} />
+                              <span>{trip.carModel}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {}
+                      {/* Pricing, Seats, Preferences */}
                       <div className="order-3 flex flex-col items-end sm:w-[120px] shrink-0">
                         <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
                         <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span>{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
                         </div>
+                        
+                        {/* Comfort Preference Badges */}
+                        <div className="flex items-center gap-1 mt-2.5">
+                          {trip.femaleOnly && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-pink-50 text-pink-600 border border-pink-100 shadow-sm" title={copy.createTrip.femaleOnlyLabel}>
+                              <Icon name="sparkles" size={11} />
+                            </span>
+                          )}
+                          {trip.smokingAllowed && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.smokingAllowedLabel}>
+                              <Icon name="cigarette-off" size={11} className="rotate-180" />
+                            </span>
+                          )}
+                          {trip.petsAllowed && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.petsAllowedLabel}>
+                              <Icon name="dog" size={11} />
+                            </span>
+                          )}
+                          {trip.musicAllowed && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.musicAllowedLabel}>
+                              <Icon name="repeat" size={11} />
+                            </span>
+                          )}
+                        </div>
+
                         {!isFull && <span className="mt-2 text-[12px] font-bold text-[#054752]">{copy.common.details}</span>}
                       </div>
                     </div>

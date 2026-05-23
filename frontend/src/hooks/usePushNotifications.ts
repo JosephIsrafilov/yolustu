@@ -59,6 +59,14 @@ export function usePushNotifications() {
             toastTimeoutRef.current = setTimeout(() => {
               setActiveToast(null);
             }, 5000);
+
+            // Trigger live UI refresh if it's a booking event
+            if (data.data?.type?.startsWith('booking_')) {
+              const store = useAppStore.getState();
+              store.fetchBookings();
+              store.fetchBookingRequests();
+              store.fetchTrips();
+            }
           }
         } catch (error) {
           console.error('[WebSocket] Failed to parse message', error);
