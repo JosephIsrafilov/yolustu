@@ -72,7 +72,7 @@ class BookingsService:
     def confirm_booking(
         self, booking_id: UUID, current_user: CurrentUser
     ) -> BookingResponse:
-        booking = self._get_booking(booking_id)
+        booking = self._get_booking_for_update(booking_id)
         ride = self._get_booking_ride_for_update(booking)
         if ride.driver_id != current_user.id:
             raise HTTPException(
@@ -101,7 +101,7 @@ class BookingsService:
     def reject_booking(
         self, booking_id: UUID, current_user: CurrentUser
     ) -> BookingResponse:
-        booking = self._get_booking(booking_id)
+        booking = self._get_booking_for_update(booking_id)
         ride = self._get_booking_ride(booking)
         if ride.driver_id != current_user.id:
             raise HTTPException(
@@ -125,7 +125,7 @@ class BookingsService:
     def cancel_booking(
         self, booking_id: UUID, current_user: CurrentUser
     ) -> BookingResponse:
-        booking = self._get_booking(booking_id)
+        booking = self._get_booking_for_update(booking_id)
         if booking.passenger_id != current_user.id:
             raise HTTPException(
                 status_code=403, detail="Only the passenger can cancel this booking"
@@ -158,6 +158,12 @@ class BookingsService:
 
     def _get_booking(self, booking_id: UUID) -> Booking:
         booking = self.bookings.get(booking_id)
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        return booking
+
+    def _get_booking_for_update(self, booking_id: UUID) -> Booking:
+        booking = self.bookings.get_for_update(booking_id)
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
         return booking

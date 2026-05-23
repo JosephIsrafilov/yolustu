@@ -27,6 +27,9 @@ class BookingRepository:
     def get(self, booking_id: UUID) -> Booking | None:
         return self.db.query(Booking).filter(Booking.id == booking_id).first()
 
+    def get_for_update(self, booking_id: UUID) -> Booking | None:
+        return self.db.query(Booking).filter(Booking.id == booking_id).with_for_update().first()
+
     def get_active_for_ride_and_passenger(
         self, ride_id: UUID, passenger_id: UUID
     ) -> Booking | None:
