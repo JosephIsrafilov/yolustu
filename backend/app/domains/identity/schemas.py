@@ -50,6 +50,16 @@ class Token(BaseModel):
     token_type: str
 
 
+class AuthSessionResponse(BaseModel):
+    accessToken: str
+    refreshToken: str
+    user: UserResponse
+
+
+class RefreshTokenInput(BaseModel):
+    refreshToken: str
+
+
 class TokenData(BaseModel):
     phone: Optional[str] = None
 

@@ -141,8 +141,10 @@ const PROFILE_I18N = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { currentUser, reviews, users, logout, updateProfile, isAuthenticated, language } = useAppStore();
+  const { currentUser, reviews, users, logout, updateProfile, clearError, lastError, isAuthenticated, language } = useAppStore();
   const [editing, setEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [form, setForm] = useState({ fullName: '', phone: '', city: '', bio: '' });
 
   const copy = PROFILE_I18N[language] || PROFILE_I18N.en;
@@ -164,11 +166,28 @@ export default function ProfilePage() {
     setForm({ fullName: currentUser.fullName, phone: currentUser.phone, city: currentUser.city, bio: currentUser.bio || '' });
     setEditing(true);
   };
-  const saveEdit = () => { updateProfile(form); setEditing(false); };
+  const saveEdit = async () => {
+    setSavingProfile(true);
+    setProfileError('');
+    clearError();
+    try {
+      await updateProfile(form);
+      setEditing(false);
+    } catch {
+      setProfileError(useAppStore.getState().lastError || 'Failed to update profile.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   return (
     <WebLayout title={copy.title} narrow>
       <div className="stagger-children">
+        {(profileError || lastError) && (
+          <Card className="mb-4 border border-[#ffdad6] bg-[#fff4f2] text-sm font-medium text-[#93000a]">
+            {profileError || lastError}
+          </Card>
+        )}
         <div className="flex justify-end mb-4"><RoleSwitch /></div>
         <ProfileHeader user={currentUser} reviewsCount={userReviews.length} />
         {currentUser.bio && !editing && (<Card padding="md" className="mb-4 mt-4"><p className="text-sm text-text-secondary">{currentUser.bio}</p></Card>)}
@@ -185,7 +204,7 @@ export default function ProfilePage() {
                 </select>
               </div>
               <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={3} placeholder={copy.bioPlaceholder} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
-              <div className="flex gap-3"><Button fullWidth onClick={saveEdit}>{copy.saveBtn}</Button><Button fullWidth variant="ghost" onClick={() => setEditing(false)}>{copy.cancelBtn}</Button></div>
+              <div className="flex gap-3"><Button fullWidth onClick={saveEdit} loading={savingProfile}>{copy.saveBtn}</Button><Button fullWidth variant="ghost" onClick={() => setEditing(false)} disabled={savingProfile}>{copy.cancelBtn}</Button></div>
             </div>
           </Card>
         ) : (

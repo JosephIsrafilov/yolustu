@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.redis import get_redis
 from app.core.limiter import limiter
-from app.domains.identity.schemas import LoginInput, Token, UserCreate, UserResponse
+from app.domains.identity.schemas import (
+    AuthSessionResponse,
+    LoginInput,
+    RefreshTokenInput,
+    UserCreate,
+)
 from app.domains.identity.services import IdentityService
 
 router = APIRouter()
@@ -33,14 +38,14 @@ def verify_otp(
     return IdentityService(db).verify_otp(phone, otp, redis_client)
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=AuthSessionResponse)
 def register(
     user_in: UserCreate, db: Session = Depends(get_db), redis_client=Depends(get_redis)
 ):
     return IdentityService(db).register(user_in, redis_client)
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=AuthSessionResponse)
 def login(
     login_data: LoginInput,
     db: Session = Depends(get_db),
@@ -49,8 +54,10 @@ def login(
     return IdentityService(db).login(login_data, redis_client)
 
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh", response_model=AuthSessionResponse)
 def refresh_token(
-    refresh_token: str, db: Session = Depends(get_db), redis_client=Depends(get_redis)
+    refresh_input: RefreshTokenInput,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
 ):
-    return IdentityService(db).refresh_token(refresh_token, redis_client)
+    return IdentityService(db).refresh_token(refresh_input.refreshToken, redis_client)

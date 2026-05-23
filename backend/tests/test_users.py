@@ -19,7 +19,12 @@ def access_token():
         "/api/v1/auth/login", json={"phone": SEED_PHONE, "password": SEED_PASSWORD}
     )
     assert response.status_code == 200, f"Login failed: {response.text}"
-    return response.json()["access_token"]
+    return response.json()["accessToken"]
+
+
+def test_get_current_user_requires_auth():
+    response = client.get("/api/v1/users/me")
+    assert response.status_code == 401
 
 
 def test_get_current_user(access_token):

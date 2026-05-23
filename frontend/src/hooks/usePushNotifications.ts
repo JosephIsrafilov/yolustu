@@ -36,7 +36,7 @@ export function usePushNotifications() {
       if (!token) return;
       shouldReconnectRef.current = true;
 
-      const wsUrl = `${env.wsUrl}/notifications/ws?token=${encodeURIComponent(token)}`;
+      const wsUrl = `${env.wsUrl}/api/v1/notifications/ws?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {

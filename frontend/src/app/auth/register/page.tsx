@@ -49,7 +49,7 @@ export default function RegisterPage() {
       });
       setLoading(false);
       if (ok) {
-        router.push(`/auth/verify?phone=${encodeURIComponent(form.phone)}`);
+        router.push(ROUTES.profileSetup);
       } else {
         setSubmitError(useAppStore.getState().lastError || copy.common.error);
       }
