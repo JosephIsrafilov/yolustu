@@ -235,6 +235,11 @@ if ($runInfra) {
     }
 }
 
+if ($runBackend -and $runInfra) {
+    Write-Step "[infra] Stopping Docker backend container if it exists"
+    docker compose stop backend *> $null
+}
+
 if ($runBackend) {
     Write-Step "[backend] Running migrations"
     $migrationSucceeded = $false

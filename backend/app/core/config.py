@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     DATABASE_URL: str = (
-        "postgresql://yolustu_user:yolustu_password@127.0.0.1:5432/yolustu_db"
+        "postgresql://yolustu_user:yolustu_password@127.0.0.1:5433/yolustu_db"
     )
     SECRET_KEY: str = "yolustu-super-secret-key"
     ALGORITHM: str = "HS256"
