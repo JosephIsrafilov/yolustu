@@ -40,7 +40,9 @@ def test_pricing_suggestion_with_coords_and_ai(
 
     mock_client_instance = MagicMock()
     mock_client_instance.get = AsyncMock(return_value=mock_response)
-    mock_async_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_async_client.return_value.__aenter__ = AsyncMock(
+        return_value=mock_client_instance
+    )
     mock_async_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
     mock_completion = MagicMock()
@@ -72,16 +74,16 @@ def test_pricing_suggestion_with_coords_and_ai(
 
     assert response.status_code == 200
     res_data = response.json()
-    
+
     assert res_data["suggested_price"] == 19
     assert "AI optimized pricing" in res_data["reasoning"]
 
 
 @patch("app.domains.ai.router.OpenAI")
-def test_pricing_suggestion_fallback_on_ai_failure(
-    mock_openai, access_token
-):
-    mock_openai.return_value.chat.completions.create.side_effect = Exception("API Error")
+def test_pricing_suggestion_fallback_on_ai_failure(mock_openai, access_token):
+    mock_openai.return_value.chat.completions.create.side_effect = Exception(
+        "API Error"
+    )
 
     payload = {
         "origin": "Baku",
@@ -100,18 +102,20 @@ def test_pricing_suggestion_fallback_on_ai_failure(
 
     assert response.status_code == 200
     res_data = response.json()
-    
+
     assert res_data["suggested_price"] == 18
     assert "Price is calculated based on market averages" in res_data["reasoning"]
 
 
 @patch("app.domains.ai.router.OpenAI")
-def test_generate_description_success(
-    mock_openai, access_token
-):
+def test_generate_description_success(mock_openai, access_token):
     mock_completion = MagicMock()
     mock_completion.choices = [
-        MagicMock(message=MagicMock(content="Join me for a nice trip to Ganja. Space for bags."))
+        MagicMock(
+            message=MagicMock(
+                content="Join me for a nice trip to Ganja. Space for bags."
+            )
+        )
     ]
     mock_openai.return_value.chat.completions.create.return_value = mock_completion
 
@@ -123,7 +127,7 @@ def test_generate_description_success(
         "car_model": "Opel Astra",
         "seats_total": 3,
         "language": "en",
-        "preferences": ["Music", "Non-smoking"]
+        "preferences": ["Music", "Non-smoking"],
     }
 
     response = client.post(
@@ -133,14 +137,17 @@ def test_generate_description_success(
     )
 
     assert response.status_code == 200
-    assert response.json()["description"] == "Join me for a nice trip to Ganja. Space for bags."
+    assert (
+        response.json()["description"]
+        == "Join me for a nice trip to Ganja. Space for bags."
+    )
 
 
 @patch("app.domains.ai.router.OpenAI")
-def test_generate_description_fallback(
-    mock_openai, access_token
-):
-    mock_openai.return_value.chat.completions.create.side_effect = Exception("API Error")
+def test_generate_description_fallback(mock_openai, access_token):
+    mock_openai.return_value.chat.completions.create.side_effect = Exception(
+        "API Error"
+    )
 
     payload = {
         "origin": "Baku",
@@ -148,7 +155,7 @@ def test_generate_description_fallback(
         "departure_time": "12:00",
         "car_model": "Opel Astra",
         "seats_total": 3,
-        "language": "en"
+        "language": "en",
     }
 
     response = client.post(

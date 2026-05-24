@@ -92,6 +92,7 @@ async def get_smart_pricing_suggestion(
 
     try:
         import os
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
         with open(
             os.path.join(base_dir, "market_rates.json"), "r", encoding="utf-8"
@@ -107,18 +108,47 @@ async def get_smart_pricing_suggestion(
         for k, v in mapping.items():
             name = name.replace(k, v)
         aliases = {
-            "baki": "baku", "gence": "ganja", "lenkeran": "lankaran", "seki": "shaki",
-            "samaxi": "shamakhi", "qebele": "gabala", "xacmaz": "khachmaz", "qusar": "gusar",
-            "semkir": "shamkir", "berde": "barda", "agdam": "aghdam", "kurdemir": "kurdamir",
-            "agdas": "aghdash", "agcabedi": "aghjabadi", "xizi": "khizi", "siyezen": "siyazan",
-            "mingecevir": "mingachevir", "sirvan": "shirvan", "goycay": "goychay",
-            "fuzuli": "fuzuli", "celilabad": "jalilabad", "haciqabul": "hajigabul",
-            "neftcala": "neftchala", "masalli": "masalli", "yardimli": "yardimli",
-            "agsu": "agsu", "balaken": "balakan", "qax": "gakh", "oguz": "oguz",
-            "daskesen": "dashkasan", "gedebey": "gadabay", "goranboy": "goranboy",
-            "goygol": "goygol", "sabirabad": "sabirabad", "saatli": "saatli",
-            "salyan": "salyan", "astara": "astara", "tartar": "tartar",
-            "beylaqan": "beylagan", "bilasuvar": "bilasuvar", "abseron": "absheron",
+            "baki": "baku",
+            "gence": "ganja",
+            "lenkeran": "lankaran",
+            "seki": "shaki",
+            "samaxi": "shamakhi",
+            "qebele": "gabala",
+            "xacmaz": "khachmaz",
+            "qusar": "gusar",
+            "semkir": "shamkir",
+            "berde": "barda",
+            "agdam": "aghdam",
+            "kurdemir": "kurdamir",
+            "agdas": "aghdash",
+            "agcabedi": "aghjabadi",
+            "xizi": "khizi",
+            "siyezen": "siyazan",
+            "mingecevir": "mingachevir",
+            "sirvan": "shirvan",
+            "goycay": "goychay",
+            "fuzuli": "fuzuli",
+            "celilabad": "jalilabad",
+            "haciqabul": "hajigabul",
+            "neftcala": "neftchala",
+            "masalli": "masalli",
+            "yardimli": "yardimli",
+            "agsu": "agsu",
+            "balaken": "balakan",
+            "qax": "gakh",
+            "oguz": "oguz",
+            "daskesen": "dashkasan",
+            "gedebey": "gadabay",
+            "goranboy": "goranboy",
+            "goygol": "goygol",
+            "sabirabad": "sabirabad",
+            "saatli": "saatli",
+            "salyan": "salyan",
+            "astara": "astara",
+            "tartar": "tartar",
+            "beylaqan": "beylagan",
+            "bilasuvar": "bilasuvar",
+            "abseron": "absheron",
             "sabran": "shabran",
         }
         return aliases.get(name, name)
@@ -162,8 +192,9 @@ async def get_smart_pricing_suggestion(
     try:
         if request.departure_date:
             from datetime import datetime
+
             dt = datetime.strptime(request.departure_date, "%Y-%m-%d")
-            if dt.weekday() >= 5:  
+            if dt.weekday() >= 5:
                 day_multiplier = 1.1
     except Exception:
         pass
@@ -171,7 +202,13 @@ async def get_smart_pricing_suggestion(
     car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
     vehicle_multiplier = 1.0
     premium_brands = [
-        "mercedes", "bmw", "audi", "lexus", "land rover", "porsche", "tesla",
+        "mercedes",
+        "bmw",
+        "audi",
+        "lexus",
+        "land rover",
+        "porsche",
+        "tesla",
     ]
     car_model_lower = car_model.lower()
     for brand in premium_brands:
@@ -198,7 +235,9 @@ async def get_smart_pricing_suggestion(
         if reasoning_parts:
             reasoning += f" ({', '.join(reasoning_parts)} nəzərə alınıb)."
     elif lang == "ru":
-        base_msg = "Цена рассчитана на основе средних рыночных показателей и длины маршрута."
+        base_msg = (
+            "Цена рассчитана на основе средних рыночных показателей и длины маршрута."
+        )
         if vehicle_multiplier > 1.0:
             reasoning_parts.append("премиум-класс")
         if time_multiplier > 1.0:
@@ -228,7 +267,7 @@ async def get_smart_pricing_suggestion(
                 base_url="https://integrate.api.nvidia.com/v1",
                 api_key=settings.NVIDIA_API_KEY,
             )
-            
+
             min_price = int(round(suggested_price * 0.85))
             max_price = int(round(suggested_price * 1.15))
 
@@ -263,9 +302,12 @@ async def get_smart_pricing_suggestion(
             )
 
             response_content = (completion.choices[0].message.content or "").strip()
-            
+
             import re
-            clean_text = response_content.replace("```json", "").replace("```", "").strip()
+
+            clean_text = (
+                response_content.replace("```json", "").replace("```", "").strip()
+            )
             match = re.search(r"\{[^{}]*\}", clean_text)
             if match:
                 data = json.loads(match.group(0))
@@ -279,21 +321,22 @@ async def get_smart_pricing_suggestion(
 
             ai_price = data.get("suggested_price")
             ai_reasoning = data.get("reasoning")
-            
+
             if ai_price is not None and isinstance(ai_price, (int, float)):
                 ai_price_int = int(round(ai_price))
                 if min_price <= ai_price_int <= max_price:
                     suggested_price = ai_price_int
-                    
+
             if ai_reasoning and isinstance(ai_reasoning, str):
                 reasoning = ai_reasoning.strip()
 
         except Exception as e:
-            logger.warning(f"Nvidia NIM pricing calculation failed/timed out, falling back to deterministic: {e}")
+            logger.warning(
+                f"Nvidia NIM pricing calculation failed/timed out, falling back to deterministic: {e}"
+            )
 
     return PricingSuggestionResponse(
-        suggested_price=suggested_price, 
-        reasoning=reasoning
+        suggested_price=suggested_price, reasoning=reasoning
     )
 
 
@@ -303,8 +346,10 @@ async def generate_trip_description(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     lang = request.language.lower()
-    car = request.car_model or ("avtomobil" if lang == "az" else "автомобиль" if lang == "ru" else "car")
-    
+    car = request.car_model or (
+        "avtomobil" if lang == "az" else "автомобиль" if lang == "ru" else "car"
+    )
+
     if lang == "az":
         fallback_desc = f"Salam! {request.origin} - {request.destination} marşrutu üzrə gedirəm. Avtomobil: {car}. Rahat və təhlükəsiz səfər üçün qoşulun!"
     elif lang == "ru":
@@ -320,7 +365,7 @@ async def generate_trip_description(
                 base_url="https://integrate.api.nvidia.com/v1",
                 api_key=settings.NVIDIA_API_KEY,
             )
-            
+
             prompt = (
                 f"You are a friendly ride-sharing assistant for Yolustu platform.\n"
                 f"Write a short, engaging description for a driver posting a trip.\n\n"
@@ -338,7 +383,7 @@ async def generate_trip_description(
                 f"3. Make it short (2-3 sentences max) and welcoming.\n"
                 f"4. Do NOT include markdown styling or surrounding quotes. Just return the raw text."
             )
-            
+
             completion = client.chat.completions.create(
                 model="meta/llama-3.1-8b-instruct",
                 messages=[{"role": "user", "content": prompt}],
@@ -347,16 +392,18 @@ async def generate_trip_description(
                 timeout=4.0,
                 stream=False,
             )
-            
+
             ai_desc = (completion.choices[0].message.content or "").strip()
             if ai_desc.startswith('"') and ai_desc.endswith('"'):
                 ai_desc = ai_desc[1:-1].strip()
-            
+
             if ai_desc:
                 description = ai_desc
-                
+
         except Exception as e:
-            logger.warning(f"AI trip description generation failed/timed out, falling back: {e}")
+            logger.warning(
+                f"AI trip description generation failed/timed out, falling back: {e}"
+            )
 
     return DescriptionGenerationResponse(description=description)
 
