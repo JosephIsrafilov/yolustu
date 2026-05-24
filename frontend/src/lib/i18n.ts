@@ -25,6 +25,7 @@ export const I18N = {
       selectDate: 'Tarix seçin',
       routeSwap: 'Marşrutu dəyiş',
       close: 'Bağla',
+      back: 'Geri',
       error: 'Xəta baş verdi',
     },
     header: {
@@ -35,6 +36,8 @@ export const I18N = {
       bookings: 'Rezervlər',
       login: 'Daxil ol',
       register: 'Qeydiyyat',
+      logout: 'Çıxış',
+      toggleMenu: 'Menyunu aç/bağla',
     },
     footer: {
       about: 'Haqqımızda',
@@ -260,6 +263,7 @@ export const I18N = {
       reviewsTitle: 'Rəylər',
       emptyTitle: 'Rəy yoxdur',
       emptyDescription: 'Bu istifadəçi hələ rəy almayıb.',
+      starRating: 'Qiymət {star} ulduz',
     },
     tripDetails: {
       title: 'Gediş təfərrüatı',
@@ -310,6 +314,7 @@ export const I18N = {
       selectDate: 'Выберите дату',
       routeSwap: 'Поменять маршрут',
       close: 'Закрыть',
+      back: 'Назад',
       error: 'Произошла ошибка',
     },
     testMap: { title: 'Тестовая карта', },
@@ -321,6 +326,8 @@ export const I18N = {
       bookings: 'Брони',
       login: 'Войти',
       register: 'Регистрация',
+      logout: 'Выйти',
+      toggleMenu: 'Открыть/закрыть меню',
     },
     footer: {
       about: 'О нас',
@@ -545,6 +552,7 @@ export const I18N = {
       reviewsTitle: 'Отзывы',
       emptyTitle: 'Отзывов пока нет',
       emptyDescription: 'Этот пользователь еще не получил отзывов.',
+      starRating: 'Оценка {star} звезд(ы)',
     },
     tripDetails: {
       title: 'Детали поездки',
@@ -595,6 +603,7 @@ export const I18N = {
       selectDate: 'Select date',
       routeSwap: 'Swap route',
       close: 'Close',
+      back: 'Back',
       error: 'An error occurred',
     },
     testMap: { title: 'Test map', },
@@ -606,6 +615,8 @@ export const I18N = {
       bookings: 'Bookings',
       login: 'Log in',
       register: 'Sign up',
+      logout: 'Log out',
+      toggleMenu: 'Toggle menu',
     },
     footer: {
       about: 'About us',
@@ -830,6 +841,7 @@ export const I18N = {
       reviewsTitle: 'Reviews',
       emptyTitle: 'No reviews yet',
       emptyDescription: 'This user has not received any reviews.',
+      starRating: 'Rate {star} stars',
     },
     tripDetails: {
       title: 'Trip Details',
