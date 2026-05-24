@@ -8,6 +8,7 @@
 4. **High Code Coverage:** Aim for >80% code coverage for all modules
 5. **User Experience First:** Every decision should prioritize user experience
 6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+7. **Pipeline Green Is Required:** A task is not complete until the exact CI-equivalent checks for the affected area pass locally.
 
 ## Task Workflow
 
@@ -148,29 +149,102 @@ Before marking any task complete, verify:
 - [ ] Documentation updated if needed
 - [ ] No security vulnerabilities introduced
 
+### CI Pipeline Gate
+
+Before marking any task complete, run the same checks that GitHub Actions runs for the affected area. Do not rely on "should pass" reasoning.
+
+1. **Use the exact CI commands from `.github/workflows/ci.yml`:**
+   - Backend quality gate:
+     ```bash
+     cd backend
+     ruff check .
+     ruff format --check .
+     mypy . --ignore-missing-imports
+     pytest
+     ```
+   - Backend migration gate:
+     ```bash
+     docker compose up -d db redis
+     cd backend
+     python -m alembic upgrade head
+     ```
+   - Backend image gate:
+     ```bash
+     docker build ./backend
+     ```
+   - Frontend quality gate:
+     ```bash
+     cd frontend
+     npm run lint
+     npm run typecheck
+     npm run build
+     ```
+
+2. **Run the minimum required gate based on change scope:**
+   - Backend Python files: run the backend quality gate.
+   - Alembic, models, repositories, or schema-related backend changes: run backend quality gate and backend migration gate.
+   - Backend Dockerfile or dependency changes: run backend quality gate and backend image gate.
+   - Frontend files: run the frontend quality gate.
+   - Cross-cutting or uncertain scope: run all gates.
+
+3. **Treat every CI failure as blocking:**
+   - Do not stop at reporting the failure.
+   - Fix the issue, rerun the failing command, and continue until the relevant gate is green.
+   - Do not claim success while any formatter, linter, type checker, test, migration, or build step is red.
+
+4. **Respect Linux CI behavior:**
+   - CI runs on Ubuntu. Be careful with path assumptions, case sensitivity, and line endings.
+   - For backend Python files, prefer LF line endings to avoid formatter drift between Windows and Linux.
+
+5. **Report verification explicitly:**
+   - In the final handoff, list exactly which CI-equivalent commands were run.
+   - If any required gate could not be run locally, say so clearly and explain why.
+
 ## Development Commands
 
 **AI AGENT INSTRUCTION: This section should be adapted to the project's specific language, framework, and build tools.**
 
 ### Setup
 ```bash
-# Example: Commands to set up the development environment (e.g., install dependencies, configure database)
-# e.g., for a Node.js project: npm install
-# e.g., for a Go project: go mod tidy
+docker compose up -d
+
+cd backend
+python -m venv venv
+venv/Scripts/pip install -r requirements.txt
+python -m alembic upgrade head
+
+cd ../frontend
+npm ci
 ```
 
 ### Daily Development
 ```bash
-# Example: Commands for common daily tasks (e.g., start dev server, run tests, lint, format)
-# e.g., for a Node.js project: npm run dev, npm test, npm run lint
-# e.g., for a Go project: go run main.go, go test ./..., go fmt ./...
+./start-dev.ps1
+
+cd backend
+pytest
+ruff check .
+ruff format --check .
+mypy . --ignore-missing-imports
+
+cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 ### Before Committing
 ```bash
-# Example: Commands to run all pre-commit checks (e.g., format, lint, type check, run tests)
-# e.g., for a Node.js project: npm run check
-# e.g., for a Go project: make check (if a Makefile exists)
+cd backend
+ruff check .
+ruff format --check .
+mypy . --ignore-missing-imports
+pytest
+
+cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 ## Testing Requirements
