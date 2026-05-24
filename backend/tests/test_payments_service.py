@@ -7,6 +7,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.notifications import NotificationService
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.identity.dependencies import CurrentUser
@@ -14,6 +15,11 @@ from app.domains.payments.providers import BasePaymentProvider
 from app.domains.payments.repositories import PaymentRepository
 from app.domains.payments.services import PaymentService
 from app.domains.trips.ports import RideLookupPort
+
+
+@pytest.fixture(autouse=True)
+def use_mock_webhook_payloads(monkeypatch):
+    monkeypatch.setattr(settings, "STRIPE_WEBHOOK_SECRET", "")
 
 
 @dataclass

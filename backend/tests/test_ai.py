@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app.domains.ai import router as ai_router
 from main import app
 
 client = TestClient(app)
@@ -25,8 +26,10 @@ def access_token():
 @patch("app.domains.ai.router.OpenAI")
 @patch("app.domains.ai.router.httpx.AsyncClient")
 def test_pricing_suggestion_with_coords_and_ai(
-    mock_async_client, mock_openai, access_token
+    mock_async_client, mock_openai, access_token, monkeypatch
 ):
+    monkeypatch.setattr(ai_router.settings, "NVIDIA_API_KEY", "test-api-key")
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -108,7 +111,9 @@ def test_pricing_suggestion_fallback_on_ai_failure(mock_openai, access_token):
 
 
 @patch("app.domains.ai.router.OpenAI")
-def test_generate_description_success(mock_openai, access_token):
+def test_generate_description_success(mock_openai, access_token, monkeypatch):
+    monkeypatch.setattr(ai_router.settings, "NVIDIA_API_KEY", "test-api-key")
+
     mock_completion = MagicMock()
     mock_completion.choices = [
         MagicMock(
