@@ -49,7 +49,7 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
         {(title || showBack) && (
           <div className="flex items-center gap-3 mb-8 min-w-0">
             {showBack && (
-              <button onClick={() => window.history.back()}
+              <button onClick={() => window.history.back()} aria-label={copy.common?.back || 'Geri'}
                 className="w-10 h-10 rounded-full bg-white border border-[#c0c8ca] flex items-center justify-center hover:bg-[#d5f3f9] transition-colors shrink-0">
                 <Icon name="arrow-left" size={18} className="text-[#40484a]" />
               </button>
@@ -96,6 +96,7 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
             </div>
             <button 
               onClick={() => setActiveToast(null)}
+              aria-label={copy.common?.close || 'Bağla'}
               className="absolute top-3 right-3 text-[#70787b] hover:text-[#002f37] transition-colors"
             >
               <Icon name="x" size={16} />

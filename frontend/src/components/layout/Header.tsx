@@ -93,6 +93,7 @@ export default function Header() {
               </Link>
               <button
                 onClick={() => logout()}
+                aria-label={copy.header.logout}
                 className="rounded-full p-2 text-[#40484a] transition-all duration-200 ease-out hover:bg-[#ffdad6] hover:text-[#ba1a1a] active:scale-[0.96]"
               >
                 <Icon name="log-out" size={18} />
@@ -115,6 +116,7 @@ export default function Header() {
             </>
           )}
           <button
+            aria-label={copy.header.toggleMenu}
             className="rounded-full p-2 text-[#40484a] transition-all duration-200 ease-out hover:bg-[#edfcff] active:scale-[0.96] md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
           >

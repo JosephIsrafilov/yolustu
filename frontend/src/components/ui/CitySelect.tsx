@@ -25,6 +25,7 @@ export default function CitySelect({
   const { language } = useAppStore();
   const searchPlaceholder = language === 'az' ? 'Axtar...' : language === 'ru' ? 'Поиск...' : 'Search...';
   const notFoundText = language === 'az' ? 'Nəticə tapılmadı' : language === 'ru' ? 'Ничего не найдено' : 'No results found';
+  const selectCityText = language === 'az' ? 'Şəhər seçin' : language === 'ru' ? 'Выберите город' : 'Select city';
   
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -52,6 +53,7 @@ export default function CitySelect({
 
       <button
         type="button"
+        aria-label={`${selectCityText}: ${label || ''}`}
         onClick={() => {
           setIsOpen(!isOpen);
           if (!isOpen) setSearch('');

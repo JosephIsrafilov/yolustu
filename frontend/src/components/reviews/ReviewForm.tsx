@@ -43,6 +43,7 @@ export default function ReviewForm({ onSubmit, loading = false }: ReviewFormProp
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
+              aria-label={copy.starRating.replace('{star}', star.toString())}
               className="p-1 transition-transform duration-100 hover:scale-110 active:scale-95"
             >
               <Icon
