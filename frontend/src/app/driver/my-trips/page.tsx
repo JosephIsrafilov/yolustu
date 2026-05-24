@@ -50,9 +50,9 @@ export default function MyTripsPage() {
                   <div key={trip.id}>
                     <TripCard trip={trip} driver={trip.driver ?? users.find((user) => user.id === trip.driverId)} compact />
                     <div className="mt-2 flex gap-2">
-                      <Button size="sm" variant="outline" fullWidth onClick={() => cancelTrip(trip.id)}>{copy.cancelAction}</Button>
-                      <Button size="sm" variant="secondary" fullWidth onClick={() => completeTrip(trip.id)}>{copy.completeAction}</Button>
-                      <Button size="sm" variant="primary" fullWidth onClick={() => router.push(ROUTES.bookingRequests)}>{copy.requestsAction}</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => cancelTrip(trip.id)}>{copy.cancelAction}</Button>
+                      <Button size="sm" variant="secondary" className="flex-1" onClick={() => completeTrip(trip.id)}>{copy.completeAction}</Button>
+                      <Button size="sm" variant="primary" className="flex-1" onClick={() => router.push(ROUTES.bookingRequests)}>{copy.requestsAction}</Button>
                     </div>
                   </div>
                 ))}

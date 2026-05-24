@@ -890,11 +890,11 @@ export default function CreateTripPage() {
             )}
           </div>
           <div className="mt-8 flex gap-3">
-            {step > 0 && <Button variant="outline" fullWidth onClick={back}><Icon name="arrow-left" size={16} /> {copy.backBtn}</Button>}
+            {step > 0 && <Button variant="outline" className="flex-1" onClick={back}><Icon name="arrow-left" size={16} /> {copy.backBtn}</Button>}
             {step < 3 ? (
-              <Button fullWidth onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
+              <Button className="flex-1" onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
             ) : (
-              <Button fullWidth size="lg" onClick={publish} disabled={createTripMutation.isPending}>
+              <Button className="flex-1" size="lg" onClick={publish} disabled={createTripMutation.isPending}>
                 {createTripMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

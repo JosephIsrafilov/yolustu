@@ -9,6 +9,7 @@ import RoleSwitch from '@/components/layout/RoleSwitch';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import Select from '@/components/ui/Select';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
@@ -202,15 +203,16 @@ export default function ProfilePage() {
             <div className="flex flex-col gap-4">
               <Input label={copy.nameLabel} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} />
               <Input label={copy.phoneLabel} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text">{copy.cityLabel}</label>
-                <select value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-                  <option value="">{copy.selectCity}</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <Select
+                label={copy.cityLabel}
+                value={form.city}
+                onChange={(val) => setForm((p) => ({ ...p, city: val }))}
+                options={AZ_CITIES}
+                placeholder={copy.selectCity}
+                searchable
+              />
               <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={3} placeholder={copy.bioPlaceholder} className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
-              <div className="flex gap-3"><Button fullWidth onClick={saveEdit} loading={savingProfile}>{copy.saveBtn}</Button><Button fullWidth variant="ghost" onClick={() => setEditing(false)} disabled={savingProfile}>{copy.cancelBtn}</Button></div>
+              <div className="flex gap-3"><Button className="flex-1" onClick={saveEdit} loading={savingProfile}>{copy.saveBtn}</Button><Button className="flex-1" variant="ghost" onClick={() => setEditing(false)} disabled={savingProfile}>{copy.cancelBtn}</Button></div>
             </div>
           </Card>
         ) : (
@@ -600,6 +602,7 @@ function AnimatedAlertModal({ isOpen, message, onClose }: { isOpen: boolean, mes
 }
 
 function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver: boolean }) {
+  const { language } = useAppStore();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), color: '' });
@@ -692,81 +695,40 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
 
       {adding ? (
         <div className="grid gap-4 sm:grid-cols-2 mb-4 bg-surface-muted p-5 rounded-2xl border border-border/50">
-          <div>
-            <label className="block text-sm font-semibold text-text mb-2">{copy.brandLabel || 'Марка'}</label>
-            <div className="relative">
-              <select 
-                value={form.brand} 
-                onChange={e => setForm({...form, brand: e.target.value, model: ''})}
-                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none shadow-sm cursor-pointer"
-              >
-                <option value="" disabled>Выберите марку</option>
-                {Object.keys(CAR_BRANDS_MODELS).sort().map(brand => (
-                  <option key={brand} value={brand}>{brand}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                <Icon name="chevron-down" size={16} />
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-semibold text-text mb-2">{copy.modelLabel || 'Модель'}</label>
-            <div className="relative">
-              <select 
-                value={form.model} 
-                onChange={e => setForm({...form, model: e.target.value})}
-                disabled={!form.brand}
-                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none shadow-sm cursor-pointer disabled:opacity-50 disabled:bg-gray-50"
-              >
-                <option value="" disabled>Выберите модель</option>
-                {form.brand && CAR_BRANDS_MODELS[form.brand]?.map((model: string) => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                <Icon name="chevron-down" size={16} />
-              </div>
-            </div>
-          </div>
+          <Select
+            label={copy.brandLabel || 'Марка'}
+            value={form.brand}
+            onChange={(val) => setForm({ ...form, brand: val, model: '' })}
+            options={Object.keys(CAR_BRANDS_MODELS).sort()}
+            placeholder={language === 'az' ? 'Marka seçin' : language === 'ru' ? 'Выберите марку' : 'Select brand'}
+            searchable
+          />
 
-          <div>
-            <label className="block text-sm font-semibold text-text mb-2">{copy.yearLabel || 'Год'}</label>
-            <div className="relative">
-              <select 
-                value={form.year} 
-                onChange={e => setForm({...form, year: Number(e.target.value)})}
-                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none shadow-sm cursor-pointer"
-              >
-                {CAR_YEARS.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                <Icon name="chevron-down" size={16} />
-              </div>
-            </div>
-          </div>
+          <Select
+            label={copy.modelLabel || 'Модель'}
+            value={form.model}
+            onChange={(val) => setForm({ ...form, model: val })}
+            options={form.brand ? CAR_BRANDS_MODELS[form.brand] || [] : []}
+            placeholder={language === 'az' ? 'Model seçin' : language === 'ru' ? 'Выберите модель' : 'Select model'}
+            disabled={!form.brand}
+            searchable
+          />
 
-          <div>
-            <label className="block text-sm font-semibold text-text mb-2">{copy.colorLabel || 'Цвет'}</label>
-            <div className="relative">
-              <select 
-                value={form.color} 
-                onChange={e => setForm({...form, color: e.target.value})}
-                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none shadow-sm cursor-pointer"
-              >
-                <option value="" disabled>Выберите цвет</option>
-                {CAR_COLORS.map(color => (
-                  <option key={color} value={color}>{color}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                <Icon name="chevron-down" size={16} />
-              </div>
-            </div>
-          </div>
+          <Select
+            label={copy.yearLabel || 'Год'}
+            value={form.year}
+            onChange={(val) => setForm({ ...form, year: Number(val) })}
+            options={CAR_YEARS}
+            placeholder={language === 'az' ? 'İl seçin' : language === 'ru' ? 'Выберите год' : 'Select year'}
+          />
+
+          <Select
+            label={copy.colorLabel || 'Цвет'}
+            value={form.color}
+            onChange={(val) => setForm({ ...form, color: val })}
+            options={CAR_COLORS}
+            placeholder={language === 'az' ? 'Rəng seçin' : language === 'ru' ? 'Выберите цвет' : 'Select color'}
+          />
           <div className="sm:col-span-2">
             <label className="block text-sm font-semibold text-text mb-2">{copy.plateLabel}</label>
             <div className="flex justify-center py-4 bg-white rounded-xl border border-border">

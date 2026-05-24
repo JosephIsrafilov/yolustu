@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Select from '@/components/ui/Select';
 import { ROUTES } from '@/lib/routes';
 import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES } from '@/lib/utils';
@@ -91,13 +92,14 @@ export default function ProfileSetupPage() {
             <div className="flex flex-col gap-4">
               <Input label={copy.fullNameLabel} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} icon={<Icon name="user" size={16} />} />
               <Input label={copy.phoneLabel} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text">{copy.cityLabel}</label>
-                <select value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-                  <option value="">{copy.citySelect}</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <Select
+                label={copy.cityLabel}
+                value={form.city}
+                onChange={(val) => setForm((p) => ({ ...p, city: val }))}
+                options={AZ_CITIES}
+                placeholder={copy.citySelect}
+                searchable
+              />
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text">{copy.bioLabel}</label>
                 <textarea value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))} rows={3} placeholder={copy.bioPlaceholder} className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" />

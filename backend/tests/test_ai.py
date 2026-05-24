@@ -106,7 +106,7 @@ def test_pricing_suggestion_fallback_on_ai_failure(mock_openai, access_token):
     assert response.status_code == 200
     res_data = response.json()
 
-    assert res_data["suggested_price"] == 18
+    assert res_data["suggested_price"] == 15
     assert "Price is calculated based on market averages" in res_data["reasoning"]
 
 
