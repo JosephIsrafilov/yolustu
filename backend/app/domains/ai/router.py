@@ -49,12 +49,13 @@ class DescriptionGenerationResponse(BaseModel):
     description: str
 
 
-
-
 async def get_driving_route(origin: LocationCoords, destination: LocationCoords):
     """Fetch exact driving distance and duration from OSRM"""
     try:
-        url = f"https://router.project-osrm.org/route/v1/driving/{origin.lng},{origin.lat};{destination.lng},{destination.lat}?overview=false"
+        url = (
+            "https://router.project-osrm.org/route/v1/driving/"
+            f"{origin.lng},{origin.lat};{destination.lng},{destination.lat}?overview=false"
+        )
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=5.0)
             if response.status_code == 200:
@@ -93,7 +94,15 @@ async def get_smart_pricing_suggestion(
         market_rates = {}
 
     def normalize_city(name: str) -> str:
-        mapping = {"ə": "e", "ö": "o", "ğ": "g", "ü": "u", "ş": "s", "ç": "c", "ı": "i"}
+        mapping = {
+            "ə": "e",
+            "ö": "o",
+            "ğ": "g",
+            "ü": "u",
+            "ş": "s",
+            "ç": "c",
+            "ı": "i",
+        }
         name = name.strip().lower()
         for k, v in mapping.items():
             name = name.replace(k, v)
@@ -374,6 +383,3 @@ async def generate_trip_description(
             )
 
     return DescriptionGenerationResponse(description=description)
-
-
-

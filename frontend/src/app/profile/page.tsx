@@ -206,7 +206,7 @@ export default function ProfilePage() {
               <Select
                 label={copy.cityLabel}
                 value={form.city}
-                onChange={(val) => setForm((p) => ({ ...p, city: val }))}
+                onChange={(val) => setForm((p) => ({ ...p, city: String(val) }))}
                 options={AZ_CITIES}
                 placeholder={copy.selectCity}
                 searchable
@@ -698,7 +698,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
           <Select
             label={copy.brandLabel || 'Марка'}
             value={form.brand}
-            onChange={(val) => setForm({ ...form, brand: val, model: '' })}
+            onChange={(val) => setForm({ ...form, brand: String(val), model: '' })}
             options={Object.keys(CAR_BRANDS_MODELS).sort()}
             placeholder={language === 'az' ? 'Marka seçin' : language === 'ru' ? 'Выберите марку' : 'Select brand'}
             searchable
@@ -707,7 +707,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
           <Select
             label={copy.modelLabel || 'Модель'}
             value={form.model}
-            onChange={(val) => setForm({ ...form, model: val })}
+            onChange={(val) => setForm({ ...form, model: String(val) })}
             options={form.brand ? CAR_BRANDS_MODELS[form.brand] || [] : []}
             placeholder={language === 'az' ? 'Model seçin' : language === 'ru' ? 'Выберите модель' : 'Select model'}
             disabled={!form.brand}
@@ -725,7 +725,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
           <Select
             label={copy.colorLabel || 'Цвет'}
             value={form.color}
-            onChange={(val) => setForm({ ...form, color: val })}
+            onChange={(val) => setForm({ ...form, color: String(val) })}
             options={CAR_COLORS}
             placeholder={language === 'az' ? 'Rəng seçin' : language === 'ru' ? 'Выберите цвет' : 'Select color'}
           />

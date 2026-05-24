@@ -95,7 +95,7 @@ export default function ProfileSetupPage() {
               <Select
                 label={copy.cityLabel}
                 value={form.city}
-                onChange={(val) => setForm((p) => ({ ...p, city: val }))}
+                onChange={(val) => setForm((p) => ({ ...p, city: String(val) }))}
                 options={AZ_CITIES}
                 placeholder={copy.citySelect}
                 searchable
