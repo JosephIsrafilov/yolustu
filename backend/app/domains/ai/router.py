@@ -158,20 +158,21 @@ async def get_smart_pricing_suggestion(
     reverse_route_key = f"{dest_norm}-{origin_norm}"
 
     baseline_price = None
-    for k, v in market_rates.items():
-        k_norm = normalize_city(k)
-        if k_norm == route_key or k_norm == reverse_route_key:
-            baseline_price = v
-            break
-
-    if not baseline_price:
-        if distance_km:
-            if distance_km < 30:
-                baseline_price = max(distance_km * 0.10, 1.0)
-            else:
-                baseline_price = max(distance_km * 0.06, 1.0)
+    if distance_km:
+        if distance_km < 30:
+            baseline_price = max(distance_km * 0.10, 1.0)
         else:
-            baseline_price = 10.0
+            baseline_price = max(distance_km * 0.06, 1.0)
+
+    if baseline_price is None:
+        for k, v in market_rates.items():
+            k_norm = normalize_city(k)
+            if k_norm == route_key or k_norm == reverse_route_key:
+                baseline_price = v
+                break
+
+    if baseline_price is None:
+        baseline_price = 10.0
 
     time_multiplier = 1.0
     try:
