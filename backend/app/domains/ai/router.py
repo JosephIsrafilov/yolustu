@@ -184,7 +184,7 @@ async def get_smart_pricing_suggestion(
 
     lang = request.language.lower()
     reasoning_parts = []
-    
+
     if lang == "az":
         base_msg = "Qiymət bazar ortalamasına və marşrut məsafəsinə əsasən hesablanıb."
         if vehicle_multiplier > 1.0:
@@ -193,7 +193,7 @@ async def get_smart_pricing_suggestion(
             reasoning_parts.append("pik saatlar")
         if day_multiplier > 1.0:
             reasoning_parts.append("həftəsonu")
-        
+
         reasoning = base_msg
         if reasoning_parts:
             reasoning += f" ({', '.join(reasoning_parts)} nəzərə alınıb)."
@@ -205,7 +205,7 @@ async def get_smart_pricing_suggestion(
             reasoning_parts.append("час пик/ночь")
         if day_multiplier > 1.0:
             reasoning_parts.append("выходные")
-        
+
         reasoning = base_msg
         if reasoning_parts:
             reasoning += f" (Учтены: {', '.join(reasoning_parts)})."
@@ -217,7 +217,7 @@ async def get_smart_pricing_suggestion(
             reasoning_parts.append("rush hour/night")
         if day_multiplier > 1.0:
             reasoning_parts.append("weekend")
-        
+
         reasoning = base_msg
         if reasoning_parts:
             reasoning += f" (Adjusted for: {', '.join(reasoning_parts)})."

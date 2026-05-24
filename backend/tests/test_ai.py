@@ -61,7 +61,7 @@ def test_pricing_suggestion_with_coords_and_ai(
         "destination_coords": {"lat": 40.6828, "lng": 46.3606},
         "car_model": "Mercedes E-Class",
         "seats_total": 3,
-        "language": "az"
+        "language": "az",
     }
 
     response = client.post(
@@ -89,7 +89,7 @@ def test_pricing_suggestion_fallback_on_ai_failure(
         "departure_time": "12:00",
         "car_model": "Mercedes E-Class",
         "seats_total": 3,
-        "language": "en"
+        "language": "en",
     }
 
     response = client.post(
