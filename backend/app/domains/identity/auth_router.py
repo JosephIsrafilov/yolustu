@@ -41,7 +41,10 @@ def verify_otp(
 @router.post("/register", response_model=AuthSessionResponse)
 @limiter.limit("10/minute")
 def register(
-    request: Request, user_in: UserCreate, db: Session = Depends(get_db), redis_client=Depends(get_redis)
+    request: Request,
+    user_in: UserCreate,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
 ):
     return IdentityService(db).register(user_in, redis_client)
 
