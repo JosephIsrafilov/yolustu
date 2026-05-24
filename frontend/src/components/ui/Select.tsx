@@ -12,7 +12,7 @@ export interface SelectOption {
 
 interface SelectProps {
   value: string | number;
-  onChange: (value: any) => void;
+  onChange: (value: string | number) => void;
   options: SelectOption[] | readonly string[] | string[] | number[];
   label?: string;
   placeholder?: string;
@@ -42,10 +42,10 @@ export default function Select({
   const normalizedOptions = React.useMemo((): SelectOption[] => {
     return options.map(opt => {
       if (typeof opt === 'object' && opt !== null) {
-        const o = opt as any;
+        const o = opt as SelectOption;
         return { value: o.value, label: o.label };
       }
-      return { value: opt as any, label: String(opt) };
+      return { value: opt as string | number, label: String(opt) };
     });
   }, [options]);
 
