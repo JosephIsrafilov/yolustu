@@ -187,27 +187,36 @@ async def get_smart_pricing_suggestion(
     
     if lang == "az":
         base_msg = "Qiymət bazar ortalamasına və marşrut məsafəsinə əsasən hesablanıb."
-        if vehicle_multiplier > 1.0: reasoning_parts.append("premium avtomobil")
-        if time_multiplier > 1.0: reasoning_parts.append("pik saatlar")
-        if day_multiplier > 1.0: reasoning_parts.append("həftəsonu")
+        if vehicle_multiplier > 1.0:
+            reasoning_parts.append("premium avtomobil")
+        if time_multiplier > 1.0:
+            reasoning_parts.append("pik saatlar")
+        if day_multiplier > 1.0:
+            reasoning_parts.append("həftəsonu")
         
         reasoning = base_msg
         if reasoning_parts:
             reasoning += f" ({', '.join(reasoning_parts)} nəzərə alınıb)."
     elif lang == "ru":
         base_msg = "Цена рассчитана на основе средних рыночных показателей и длины маршрута."
-        if vehicle_multiplier > 1.0: reasoning_parts.append("премиум-класс")
-        if time_multiplier > 1.0: reasoning_parts.append("час пик/ночь")
-        if day_multiplier > 1.0: reasoning_parts.append("выходные")
+        if vehicle_multiplier > 1.0:
+            reasoning_parts.append("премиум-класс")
+        if time_multiplier > 1.0:
+            reasoning_parts.append("час пик/ночь")
+        if day_multiplier > 1.0:
+            reasoning_parts.append("выходные")
         
         reasoning = base_msg
         if reasoning_parts:
             reasoning += f" (Учтены: {', '.join(reasoning_parts)})."
     else:
         base_msg = "Price is calculated based on market averages and route distance."
-        if vehicle_multiplier > 1.0: reasoning_parts.append("premium vehicle")
-        if time_multiplier > 1.0: reasoning_parts.append("rush hour/night")
-        if day_multiplier > 1.0: reasoning_parts.append("weekend")
+        if vehicle_multiplier > 1.0:
+            reasoning_parts.append("premium vehicle")
+        if time_multiplier > 1.0:
+            reasoning_parts.append("rush hour/night")
+        if day_multiplier > 1.0:
+            reasoning_parts.append("weekend")
         
         reasoning = base_msg
         if reasoning_parts:
