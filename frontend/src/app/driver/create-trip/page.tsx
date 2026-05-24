@@ -165,6 +165,8 @@ export default function CreateTripPage() {
         origin: values.departureCity,
         destination: values.arrivalCity,
         departure_time: values.time,
+        departure_date: values.date,
+        language: language,
         car_model: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : 'Standard Vehicle',
         seats_total: values.seatsTotal,
         origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,

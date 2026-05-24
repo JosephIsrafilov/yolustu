@@ -9,6 +9,8 @@ export interface PricingSuggestionRequest {
   origin: string;
   destination: string;
   departure_time: string;
+  departure_date?: string;
+  language?: string;
   origin_coords?: LocationCoords;
   destination_coords?: LocationCoords;
   car_model?: string;

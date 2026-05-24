@@ -21,6 +21,8 @@ class PricingSuggestionRequest(BaseModel):
     origin: str
     destination: str
     departure_time: str
+    departure_date: str | None = None
+    language: str = "az"
     origin_coords: LocationCoords | None = None
     destination_coords: LocationCoords | None = None
     car_model: str | None = None
@@ -117,12 +119,52 @@ async def get_smart_pricing_suggestion(
             break
 
     if not baseline_price and distance_km:
-        # Fallback to 0.05 AZN per km for a standard trip if no market rate found
-        baseline_price = int(max(distance_km * 0.05, 1))
+        # Fallback based on tiered logic instead of flat 0.05
+        if distance_km < 30:
+            # Short trips inside city or nearby suburbs
+            baseline_price = int(max(distance_km * 0.10, 1))
+        else:
+            # Longer intercity trips
+            baseline_price = int(max(distance_km * 0.06, 1))
+
+    # Time Context
+    time_context = "Standard Time"
+    try:
+        if request.departure_time:
+            h, m = map(int, request.departure_time.split(":"))
+            total_minutes = h * 60 + m
+            if (7 * 60 + 30 <= total_minutes <= 9 * 60 + 30) or (17 * 60 + 30 <= total_minutes <= 20 * 60):
+                time_context = "Rush Hour"
+            elif (total_minutes >= 23 * 60) or (total_minutes <= 5 * 60):
+                time_context = "Night Trip"
+    except Exception:
+        pass
+
+    # Day Context
+    day_context = "Weekday"
+    try:
+        if request.departure_date:
+            from datetime import datetime
+            dt = datetime.strptime(request.departure_date, "%Y-%m-%d")
+            if dt.weekday() >= 5: # 5 is Saturday, 6 is Sunday
+                day_context = "Weekend"
+    except Exception:
+        pass
+
+    # Vehicle Categorization
+    car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
+    vehicle_category = "Standard"
+    premium_brands = ["mercedes", "bmw", "audi", "lexus", "land rover", "porsche", "tesla"]
+    car_model_lower = car_model.lower()
+    for brand in premium_brands:
+        if brand in car_model_lower:
+            vehicle_category = "Premium"
+            break
 
     details = (
         f"Route: {request.origin} to {request.destination}\n"
-        f"Departure Time: {request.departure_time}\n"
+        f"Departure Date: {request.departure_date or 'Unknown'} ({day_context})\n"
+        f"Departure Time: {request.departure_time} ({time_context})\n"
     )
 
     if baseline_price:
@@ -134,11 +176,17 @@ async def get_smart_pricing_suggestion(
         details += f"Driving Distance: {distance_km:.1f} km\n"
         details += f"Estimated Driving Time: {int(duration_min // 60)}h {int(duration_min % 60)}m\n"
 
-    car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
-    details += f"Vehicle: {car_model}\n"
+    details += f"Vehicle: {car_model} (Category: {vehicle_category})\n"
 
     seats = request.seats_total or 3
     details += f"Passenger Seats Available: {seats}\n"
+
+    lang_map = {
+        "az": "Azerbaijani",
+        "ru": "Russian",
+        "en": "English"
+    }
+    requested_language = lang_map.get(request.language.lower(), "Azerbaijani")
 
     prompt = (
         "You are an expert pricing AI for the Yolüstü carpooling app in Azerbaijan. "
@@ -146,13 +194,13 @@ async def get_smart_pricing_suggestion(
         "Guidelines:\n"
         "1. DO NOT CALCULATE FUEL COSTS OR DISTANCES YOURSELF. Use the provided BASELINE MARKET PRICE as your strict anchor.\n"
         "2. If a BASELINE MARKET PRICE is provided, your final suggested price must be very close to it (within ±10-20%).\n"
-        "3. Adjust the baseline slightly based on vehicle quality: premium cars (e.g. Mercedes S-Class, BMW 5-series) can charge slightly more. Older/budget cars should charge slightly less.\n"
-        "4. Adjust slightly for departure time (e.g., night trips or rush hours might carry a slight premium).\n\n"
+        "3. Adjust the baseline slightly based on vehicle category: 'Premium' cars can charge slightly more. 'Standard' cars should stick closer to the baseline.\n"
+        "4. Adjust slightly for time context (e.g., 'Night Trip' or 'Rush Hour' and 'Weekend' might carry a slight premium).\n\n"
         "Trip Details:\n"
         f"{details}\n"
         "Return the output STRICTLY as a JSON object with two fields:\n"
         "1. 'suggested_price': an integer representing the price for ONE seat in AZN.\n"
-        "2. 'reasoning': A highly specific 1-2 sentence explanation citing the baseline market rate, car model impact, and time of travel.\n"
+        f"2. 'reasoning': A highly specific 1-2 sentence explanation in {requested_language} citing the baseline market rate, car model impact, and time of travel.\n"
         "Do not include markdown blocks like ```json, just the raw JSON."
     )
 
@@ -168,13 +216,24 @@ async def get_smart_pricing_suggestion(
 
         response_content = (completion.choices[0].message.content or "").strip()
 
-        # In case the model wrapped it in markdown
-        if response_content.startswith("```json"):
-            response_content = response_content[7:]
-        if response_content.endswith("```"):
-            response_content = response_content[:-3]
+        # Robust regex extraction of JSON
+        import re
 
-        data = json.loads(response_content.strip())
+        clean_text = response_content.replace("```json", "").replace("```", "").strip()
+
+        # Try to find the first flat JSON object
+        match = re.search(r"\{[^{}]*\}", clean_text)
+        if match:
+            json_str = match.group(0)
+            data = json.loads(json_str)
+        else:
+            start_idx = clean_text.find("{")
+            end_idx = clean_text.rfind("}")
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                data = json.loads(clean_text[start_idx : end_idx + 1])
+            else:
+                raise ValueError("No JSON object found in response")
+
         return PricingSuggestionResponse(
             suggested_price=int(data["suggested_price"]), reasoning=data["reasoning"]
         )
