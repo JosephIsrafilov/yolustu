@@ -37,6 +37,11 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
     setActiveToast(null);
   };
 
+  const notificationBookingId =
+    activeToast?.data.type === 'booking_request' && typeof activeToast.data.booking_id === 'string'
+      ? activeToast.data.booking_id
+      : null;
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Header />
@@ -70,18 +75,18 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
               <h4 className="text-[14px] font-semibold text-[#002f37] mb-0.5">{activeToast.title}</h4>
               <p className="text-[13px] text-[#40484a] leading-tight">{activeToast.body}</p>
               
-              {activeToast.data && activeToast.data.type === 'booking_request' && activeToast.data.booking_id && (
+              {notificationBookingId && (
                 <div className="flex gap-2 mt-3">
                   <button
                     disabled={!!actionLoading}
-                    onClick={() => handleAccept(activeToast.data.booking_id as string)}
+                    onClick={() => handleAccept(notificationBookingId)}
                     className="px-2.5 py-1 text-xs font-bold bg-[#054752] text-white rounded-lg hover:bg-[#002f37] transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'accept' ? '...' : copy.bookings.acceptBtn}
                   </button>
                   <button
                     disabled={!!actionLoading}
-                    onClick={() => handleReject(activeToast.data.booking_id as string)}
+                    onClick={() => handleReject(notificationBookingId)}
                     className="px-2.5 py-1 text-xs font-bold border border-[#c0c8ca] text-[#40484a] rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'reject' ? '...' : copy.bookings.rejectBtn}

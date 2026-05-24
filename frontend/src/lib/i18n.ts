@@ -257,6 +257,9 @@ export const I18N = {
       submitBtn: 'Rəyi göndər',
       submitting: 'Göndərilir...',
       reviewSuccess: 'Rəy uğurla əlavə edildi',
+      reviewsTitle: 'Rəylər',
+      emptyTitle: 'Rəy yoxdur',
+      emptyDescription: 'Bu istifadəçi hələ rəy almayıb.',
     },
     tripDetails: {
       title: 'Gediş təfərrüatı',
@@ -539,6 +542,9 @@ export const I18N = {
       submitBtn: 'Отправить отзыв',
       submitting: 'Отправка...',
       reviewSuccess: 'Отзыв успешно добавлен',
+      reviewsTitle: 'Отзывы',
+      emptyTitle: 'Отзывов пока нет',
+      emptyDescription: 'Этот пользователь еще не получил отзывов.',
     },
     tripDetails: {
       title: 'Детали поездки',
@@ -821,6 +827,9 @@ export const I18N = {
       submitBtn: 'Submit Review',
       submitting: 'Submitting...',
       reviewSuccess: 'Review successfully added',
+      reviewsTitle: 'Reviews',
+      emptyTitle: 'No reviews yet',
+      emptyDescription: 'This user has not received any reviews.',
     },
     tripDetails: {
       title: 'Trip Details',

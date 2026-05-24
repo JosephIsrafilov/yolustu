@@ -6,7 +6,7 @@ export interface PushNotification {
   type: string;
   title: string;
   body: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export function usePushNotifications() {
@@ -61,7 +61,8 @@ export function usePushNotifications() {
             }, 8000); // Give users slightly more time to click action buttons
 
             // Trigger live UI refresh if it's a booking event
-            if (data.data?.type?.startsWith('booking_')) {
+            const notificationType = data.data?.type;
+            if (typeof notificationType === 'string' && notificationType.startsWith('booking_')) {
               const store = useAppStore.getState();
               store.fetchBookings();
               store.fetchBookingRequests();
