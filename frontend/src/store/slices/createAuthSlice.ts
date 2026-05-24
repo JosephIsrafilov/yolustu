@@ -224,8 +224,8 @@ export const createAuthSlice: StateCreator<
   fetchUsers: async () => {
     try {
       if (isMockDataMode) return;
-      const users = await adminService.getUsers();
-      set({ users });
+      const response = await adminService.getUsers();
+      set({ users: response.items });
     } catch (error) {
       console.error('Fetch users error:', error);
     }
@@ -234,8 +234,8 @@ export const createAuthSlice: StateCreator<
   fetchPendingVerifications: async () => {
     try {
       if (isMockDataMode) return;
-      const users = await adminService.getPendingVerifications();
-      set({ pendingVerifications: users });
+      const response = await adminService.getPendingVerifications();
+      set({ pendingVerifications: response.items });
     } catch (error) {
       console.error('Fetch pending verifications error:', error);
     }

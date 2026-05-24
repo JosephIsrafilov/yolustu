@@ -90,8 +90,17 @@ class UserRepository:
         if user:
             user.total_rides += 1
 
-    def list_all(self) -> list[User]:
-        return self.db.query(User).order_by(User.created_at.desc()).all()
+    def count_all(self) -> int:
+        return self.db.query(User).count()
+
+    def list_all(self, skip: int = 0, limit: int = 100) -> list[User]:
+        return (
+            self.db.query(User)
+            .order_by(User.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def add_device_token(self, user_id: UUID, token: str):
         existing_token = (

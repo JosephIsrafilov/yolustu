@@ -90,8 +90,17 @@ class RideRepository:
     def list_for_driver(self, driver_id: UUID) -> list[Ride]:
         return self.db.query(Ride).filter(Ride.driver_id == driver_id).all()
 
-    def list_all(self) -> list[Ride]:
-        return self.db.query(Ride).order_by(Ride.created_at.desc()).all()
+    def count_all(self) -> int:
+        return self.db.query(Ride).count()
+
+    def list_all(self, skip: int = 0, limit: int = 100) -> list[Ride]:
+        return (
+            self.db.query(Ride)
+            .order_by(Ride.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def search(self, criteria: RideSearch) -> list[Ride]:
         query = self.db.query(Ride).filter(

@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.pagination import PaginatedResponse
 from app.core.database import get_db
 from app.domains.admin.services import AdminService
 from app.domains.bookings.schemas import BookingResponse
@@ -21,11 +22,14 @@ def get_admin_stats(
     return AdminService(db).get_stats(current_user)
 
 
-@router.get("/users", response_model=list[UserResponse])
+@router.get("/users", response_model=PaginatedResponse[UserResponse])
 def get_users(
-    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
 ):
-    return AdminService(db).get_users(current_user)
+    return AdminService(db).get_users(current_user, page=page, limit=limit)
 
 
 @router.patch("/users/{user_id}/block", response_model=UserResponse)
@@ -46,11 +50,14 @@ def unblock_user(
     return AdminService(db).set_user_blocked(user_id, False, current_user)
 
 
-@router.get("/rides", response_model=list[RideResponse])
+@router.get("/rides", response_model=PaginatedResponse[RideResponse])
 def get_rides(
-    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
 ):
-    return AdminService(db).get_rides(current_user)
+    return AdminService(db).get_rides(current_user, page=page, limit=limit)
 
 
 @router.delete("/rides/{ride_id}")
@@ -62,18 +69,26 @@ def delete_ride(
     return AdminService(db).delete_ride(ride_id, current_user)
 
 
-@router.get("/bookings", response_model=list[BookingResponse])
+@router.get("/bookings", response_model=PaginatedResponse[BookingResponse])
 def get_bookings(
-    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
 ):
-    return AdminService(db).get_bookings(current_user)
+    return AdminService(db).get_bookings(current_user, page=page, limit=limit)
 
 
-@router.get("/verifications", response_model=list[UserResponse])
+@router.get("/verifications", response_model=PaginatedResponse[UserResponse])
 def get_pending_verifications(
-    db: Session = Depends(get_db), current_user: CurrentUser = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
 ):
-    return AdminService(db).get_pending_verifications(current_user)
+    return AdminService(db).get_pending_verifications(
+        current_user, page=page, limit=limit
+    )
 
 
 @router.patch("/verifications/{user_id}/approve", response_model=UserResponse)

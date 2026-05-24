@@ -31,15 +31,21 @@ describe('apiAdminService', () => {
   });
 
   it('loads pending verifications and maps users', async () => {
-    mockedApiClient.get.mockResolvedValueOnce([apiUser]);
+    mockedApiClient.get.mockResolvedValueOnce({
+      items: [apiUser],
+      total: 1,
+      page: 1,
+      size: 10,
+      pages: 1,
+    });
 
     const users = await apiAdminService.getPendingVerifications();
 
-    expect(mockedApiClient.get).toHaveBeenCalledWith('/admin/verifications');
-    expect(users).toHaveLength(1);
-    expect(users[0].id).toBe('u-1');
-    expect(users[0].verificationStatus).toBe('pending');
-    expect(users[0].documentUrl).toBe('/uploads/doc.pdf');
+    expect(mockedApiClient.get).toHaveBeenCalledWith('/admin/verifications?page=1&limit=10');
+    expect(users.items).toHaveLength(1);
+    expect(users.items[0].id).toBe('u-1');
+    expect(users.items[0].verificationStatus).toBe('pending');
+    expect(users.items[0].documentUrl).toBe('/uploads/doc.pdf');
   });
 
   it('approves verification via admin endpoint', async () => {

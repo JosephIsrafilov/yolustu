@@ -1,5 +1,14 @@
 import type { Booking, Trip, User } from '@/types';
 
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+
 export interface AdminStats {
   totalUsers: number;
   blockedUsers: number;
@@ -12,13 +21,13 @@ export interface AdminStats {
 
 export interface AdminService {
   getAdminStats(): Promise<AdminStats>;
-  getUsers(): Promise<User[]>;
+  getUsers(page?: number, limit?: number): Promise<Paginated<User>>;
   blockUser(userId: string): Promise<User>;
   unblockUser(userId: string): Promise<User>;
-  getTrips(): Promise<Trip[]>;
+  getTrips(page?: number, limit?: number): Promise<Paginated<Trip>>;
   deleteTrip(tripId: string): Promise<void>;
-  getBookings(): Promise<Booking[]>;
-  getPendingVerifications(): Promise<User[]>;
+  getBookings(page?: number, limit?: number): Promise<Paginated<Booking>>;
+  getPendingVerifications(page?: number, limit?: number): Promise<Paginated<User>>;
   approveVerification(userId: string): Promise<User>;
   rejectVerification(userId: string): Promise<User>;
 }

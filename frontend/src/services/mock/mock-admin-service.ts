@@ -19,9 +19,18 @@ export const mockAdminService: AdminService = {
     };
   },
 
-  async getUsers() {
+  async getUsers(page = 1, limit = 10) {
     requireAdminUser();
-    return useAppStore.getState().users;
+    const items = useAppStore.getState().users;
+    const skip = (page - 1) * limit;
+    const paginatedItems = items.slice(skip, skip + limit);
+    return {
+      items: paginatedItems,
+      total: items.length,
+      page,
+      size: limit,
+      pages: Math.ceil(items.length / limit),
+    };
   },
 
   async blockUser(userId) {
@@ -50,9 +59,18 @@ export const mockAdminService: AdminService = {
     return user;
   },
 
-  async getTrips() {
+  async getTrips(page = 1, limit = 10) {
     requireAdminUser();
-    return useAppStore.getState().trips;
+    const items = useAppStore.getState().trips;
+    const skip = (page - 1) * limit;
+    const paginatedItems = items.slice(skip, skip + limit);
+    return {
+      items: paginatedItems,
+      total: items.length,
+      page,
+      size: limit,
+      pages: Math.ceil(items.length / limit),
+    };
   },
 
   async deleteTrip(tripId) {
@@ -63,14 +81,32 @@ export const mockAdminService: AdminService = {
     }
   },
 
-  async getBookings() {
+  async getBookings(page = 1, limit = 10) {
     requireAdminUser();
-    return useAppStore.getState().bookings;
+    const items = useAppStore.getState().bookings;
+    const skip = (page - 1) * limit;
+    const paginatedItems = items.slice(skip, skip + limit);
+    return {
+      items: paginatedItems,
+      total: items.length,
+      page,
+      size: limit,
+      pages: Math.ceil(items.length / limit),
+    };
   },
 
-  async getPendingVerifications() {
+  async getPendingVerifications(page = 1, limit = 10) {
     requireAdminUser();
-    return useAppStore.getState().users.filter((user) => user.verificationStatus === 'pending');
+    const items = useAppStore.getState().users.filter((user) => user.verificationStatus === 'pending');
+    const skip = (page - 1) * limit;
+    const paginatedItems = items.slice(skip, skip + limit);
+    return {
+      items: paginatedItems,
+      total: items.length,
+      page,
+      size: limit,
+      pages: Math.ceil(items.length / limit),
+    };
   },
 
   async approveVerification(userId) {

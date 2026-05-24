@@ -33,5 +33,15 @@ class AdminRepository:
             or 0,
         }
 
-    def list_pending_verifications(self) -> list[User]:
-        return self.db.query(User).filter(User.verification_status == "pending").all()
+    def count_pending_verifications(self) -> int:
+        return self.db.query(User).filter(User.verification_status == "pending").count()
+
+    def list_pending_verifications(self, skip: int = 0, limit: int = 100) -> list[User]:
+        return (
+            self.db.query(User)
+            .filter(User.verification_status == "pending")
+            .order_by(User.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )

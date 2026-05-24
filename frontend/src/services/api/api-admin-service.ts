@@ -1,5 +1,13 @@
 import { apiClient } from '@/services/api-client';
 import type { AdminService, AdminStats } from '@/services/contracts/admin-service';
+
+interface ApiPaginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
 import {
   mapApiBookingToBooking,
   mapApiTripToTrip,
@@ -14,9 +22,12 @@ export const apiAdminService: AdminService = {
     return apiClient.get<AdminStats>('/admin/stats');
   },
 
-  async getUsers() {
-    const users = await apiClient.get<ApiUser[]>('/admin/users');
-    return users.map(mapApiUserToUser);
+  async getUsers(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/users?page=${page}&limit=${limit}`);
+    return {
+      ...res,
+      items: res.items.map(mapApiUserToUser)
+    };
   },
 
   async blockUser(userId) {
@@ -29,23 +40,32 @@ export const apiAdminService: AdminService = {
     return mapApiUserToUser(user);
   },
 
-  async getTrips() {
-    const trips = await apiClient.get<ApiTrip[]>('/admin/rides');
-    return trips.map(mapApiTripToTrip);
+  async getTrips(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<ApiTrip>>(`/admin/rides?page=${page}&limit=${limit}`);
+    return {
+      ...res,
+      items: res.items.map(mapApiTripToTrip)
+    };
   },
 
   async deleteTrip(tripId) {
     await apiClient.delete<unknown>(`/admin/rides/${tripId}`);
   },
 
-  async getBookings() {
-    const bookings = await apiClient.get<ApiBooking[]>('/admin/bookings');
-    return bookings.map(mapApiBookingToBooking);
+  async getBookings(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<ApiBooking>>(`/admin/bookings?page=${page}&limit=${limit}`);
+    return {
+      ...res,
+      items: res.items.map(mapApiBookingToBooking)
+    };
   },
   
-  async getPendingVerifications() {
-    const users = await apiClient.get<ApiUser[]>('/admin/verifications');
-    return users.map(mapApiUserToUser);
+  async getPendingVerifications(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/verifications?page=${page}&limit=${limit}`);
+    return {
+      ...res,
+      items: res.items.map(mapApiUserToUser)
+    };
   },
 
   async approveVerification(userId) {

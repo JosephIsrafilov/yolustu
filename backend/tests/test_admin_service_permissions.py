@@ -52,8 +52,16 @@ class FakeAdminRepository:
             ),
         }
 
-    def list_pending_verifications(self) -> list[FakeUser]:
-        return [user for user in self.users if user.verification_status == "pending"]
+    def count_pending_verifications(self) -> int:
+        return len(
+            [user for user in self.users if user.verification_status == "pending"]
+        )
+
+    def list_pending_verifications(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[FakeUser]:
+        pending = [user for user in self.users if user.verification_status == "pending"]
+        return pending[skip : skip + limit]
 
 
 class FakeUserRepository:
@@ -171,8 +179,8 @@ def test_admin_can_list_and_update_verification_status():
     target = users[1]
 
     pending = service.get_pending_verifications(admin)
-    assert len(pending) == 1
-    assert pending[0].id == target.id
+    assert len(pending.items) == 1
+    assert pending.items[0].id == target.id
 
     approved = service.approve_verification(target.id, admin)
     assert approved.verification_status == "approved"

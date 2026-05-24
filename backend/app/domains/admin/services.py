@@ -10,6 +10,7 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.trips.repositories import RideRepository
 from app.domains.trips.schemas import ride_to_response
+from app.core.pagination import create_paginated_response
 
 
 class AdminService:
@@ -28,9 +29,12 @@ class AdminService:
         self.require_admin(current_user)
         return self.admin.stats()
 
-    def get_users(self, current_user: CurrentUser):
+    def get_users(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
         self.require_admin(current_user)
-        return self.users.list_all()
+        skip = (page - 1) * limit
+        items = self.users.list_all(skip=skip, limit=limit)
+        total = self.users.count_all()
+        return create_paginated_response(items, total, page, limit)
 
     def set_user_blocked(
         self, user_id: UUID, is_blocked: bool, current_user: CurrentUser
@@ -41,9 +45,15 @@ class AdminService:
             raise HTTPException(status_code=404, detail="User not found")
         return self.users.set_blocked(user, is_blocked)
 
-    def get_rides(self, current_user: CurrentUser):
+    def get_rides(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
         self.require_admin(current_user)
-        return [ride_to_response(ride) for ride in self.rides.list_all()]
+        skip = (page - 1) * limit
+        items = [
+            ride_to_response(ride)
+            for ride in self.rides.list_all(skip=skip, limit=limit)
+        ]
+        total = self.rides.count_all()
+        return create_paginated_response(items, total, page, limit)
 
     def delete_ride(self, ride_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)
@@ -53,13 +63,24 @@ class AdminService:
         self.rides.delete(ride)
         return {"message": "Ride deleted"}
 
-    def get_bookings(self, current_user: CurrentUser):
+    def get_bookings(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
         self.require_admin(current_user)
-        return [booking_to_response(booking) for booking in self.bookings.list_all()]
+        skip = (page - 1) * limit
+        items = [
+            booking_to_response(booking)
+            for booking in self.bookings.list_all(skip=skip, limit=limit)
+        ]
+        total = self.bookings.count_all()
+        return create_paginated_response(items, total, page, limit)
 
-    def get_pending_verifications(self, current_user: CurrentUser):
+    def get_pending_verifications(
+        self, current_user: CurrentUser, page: int = 1, limit: int = 100
+    ):
         self.require_admin(current_user)
-        return self.admin.list_pending_verifications()
+        skip = (page - 1) * limit
+        items = self.admin.list_pending_verifications(skip=skip, limit=limit)
+        total = self.admin.count_pending_verifications()
+        return create_paginated_response(items, total, page, limit)
 
     def approve_verification(self, user_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)

@@ -81,8 +81,17 @@ class BookingRepository:
             self.db.query(Booking).join(Ride).filter(Ride.driver_id == driver_id).all()
         )
 
-    def list_all(self) -> list[Booking]:
-        return self.db.query(Booking).order_by(Booking.created_at.desc()).all()
+    def count_all(self) -> int:
+        return self.db.query(Booking).count()
+
+    def list_all(self, skip: int = 0, limit: int = 100) -> list[Booking]:
+        return (
+            self.db.query(Booking)
+            .order_by(Booking.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def save(self, booking: Booking) -> Booking:
         self.db.commit()
