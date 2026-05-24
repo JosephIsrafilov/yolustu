@@ -133,7 +133,9 @@ async def get_smart_pricing_suggestion(
         if request.departure_time:
             h, m = map(int, request.departure_time.split(":"))
             total_minutes = h * 60 + m
-            if (7 * 60 + 30 <= total_minutes <= 9 * 60 + 30) or (17 * 60 + 30 <= total_minutes <= 20 * 60):
+            if (7 * 60 + 30 <= total_minutes <= 9 * 60 + 30) or (
+                17 * 60 + 30 <= total_minutes <= 20 * 60
+            ):
                 time_context = "Rush Hour"
             elif (total_minutes >= 23 * 60) or (total_minutes <= 5 * 60):
                 time_context = "Night Trip"
@@ -145,8 +147,9 @@ async def get_smart_pricing_suggestion(
     try:
         if request.departure_date:
             from datetime import datetime
+
             dt = datetime.strptime(request.departure_date, "%Y-%m-%d")
-            if dt.weekday() >= 5: # 5 is Saturday, 6 is Sunday
+            if dt.weekday() >= 5:  # 5 is Saturday, 6 is Sunday
                 day_context = "Weekend"
     except Exception:
         pass
@@ -154,7 +157,15 @@ async def get_smart_pricing_suggestion(
     # Vehicle Categorization
     car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
     vehicle_category = "Standard"
-    premium_brands = ["mercedes", "bmw", "audi", "lexus", "land rover", "porsche", "tesla"]
+    premium_brands = [
+        "mercedes",
+        "bmw",
+        "audi",
+        "lexus",
+        "land rover",
+        "porsche",
+        "tesla",
+    ]
     car_model_lower = car_model.lower()
     for brand in premium_brands:
         if brand in car_model_lower:
@@ -181,11 +192,7 @@ async def get_smart_pricing_suggestion(
     seats = request.seats_total or 3
     details += f"Passenger Seats Available: {seats}\n"
 
-    lang_map = {
-        "az": "Azerbaijani",
-        "ru": "Russian",
-        "en": "English"
-    }
+    lang_map = {"az": "Azerbaijani", "ru": "Russian", "en": "English"}
     requested_language = lang_map.get(request.language.lower(), "Azerbaijani")
 
     prompt = (
