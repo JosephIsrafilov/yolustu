@@ -90,9 +90,7 @@ export function usePushNotifications() {
         reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
       };
 
-      ws.onerror = () => {
-        // Let onclose decide whether this was a real disconnect worth reconnecting.
-      };
+      ws.onerror = () => {};
 
       wsRef.current = ws;
     };

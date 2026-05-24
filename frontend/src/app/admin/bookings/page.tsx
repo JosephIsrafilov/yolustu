@@ -89,10 +89,7 @@ export default function AdminBookingsPage() {
 
   const fetchBookings = useCallback(async (currentPage: number) => {
     try {
-      // NOTE: Our API currently doesn't accept status filter natively in the endpoint.
-      // In a real prod scenario, we should pass status to the API to paginate correctly.
-      // For now, we'll fetch paginated and then filter on the client, or if we want true filtering,
-      // we would need API support. Since the task asks for basic pagination, we apply it.
+      // TODO: Implement backend filtering by status for paginated bookings
       const res = await adminService.getBookings(currentPage, limit);
       setAllBookings(res.items);
       setTotalPages(res.pages);
@@ -116,7 +113,6 @@ export default function AdminBookingsPage() {
     setPage(nextPage);
   };
 
-  // Client-side filter for the CURRENT page
   const filtered = filter === 'all' ? allBookings : allBookings.filter((booking) => booking.status === filter);
 
   return (

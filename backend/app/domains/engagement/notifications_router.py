@@ -13,8 +13,6 @@ async def notifications_websocket(
     websocket: WebSocket, token: str, db: Session = Depends(get_db)
 ):
     try:
-        # Extract the user from the token passed via query parameter
-        # Since get_current_user is usually a dependency expecting a bearer token, we pass it manually.
         user = get_current_user(db=db, token=token)
     except Exception:
         await websocket.close(code=1008)
@@ -23,7 +21,6 @@ async def notifications_websocket(
     await manager.connect_user(websocket, user.id)
     try:
         while True:
-            # We don't expect the client to send anything, but we keep the connection open
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect_user(websocket, user.id)

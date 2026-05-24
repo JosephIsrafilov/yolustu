@@ -21,10 +21,8 @@ class NotificationService:
         Mock implementation of push notification delivery.
         In production, this would use Firebase Admin SDK to push to the tokens.
         """
-        # 1. Get all device tokens for the user
         tokens = self.db.query(DeviceToken).filter(DeviceToken.user_id == user_id).all()
 
-        # 2. Push to active WebSocket if connected (Real-time update)
         notification_payload = {
             "type": "notification",
             "title": title,
@@ -41,7 +39,6 @@ class NotificationService:
 
         token_strings = [t.token for t in tokens]
 
-        # 3. Simulate sending FCM push
         print("\n" + "=" * 50)
         print(f"🔔 [PUSH NOTIFICATION to {user_id}]")
         print(f"Tokens: {token_strings}")

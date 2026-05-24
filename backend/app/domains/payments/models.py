@@ -15,5 +15,3 @@ class Payment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Depending on relationship mapping in booking, you can uncomment if needed
-    # booking = relationship("Booking", backref="payment")

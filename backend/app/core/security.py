@@ -32,7 +32,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def create_refresh_token():
-    # We use a random string for refresh tokens and store them in Redis
     return secrets.token_urlsafe(32)
 
 

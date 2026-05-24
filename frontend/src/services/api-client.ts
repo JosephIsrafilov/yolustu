@@ -64,7 +64,6 @@ async function parseResponseBody(response: Response): Promise<unknown> {
 
 function extractErrorMessage(responseBody: unknown, status: number): string {
   if (typeof responseBody === 'object' && responseBody !== null) {
-    // Justification: responseBody is type unknown. Casting is necessary to access potentially present message/detail properties on the error response payload.
     const body = responseBody as {
       message?: unknown;
       detail?: unknown;
@@ -161,7 +160,6 @@ class ApiClient {
         });
       }
 
-      // Justification: Fetch responses are dynamically typed. The return type T is provided by the caller, requiring a type assertion to return the casted response body.
       return responseBody as T;
     } catch (error) {
       throw toApiError(error);

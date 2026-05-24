@@ -67,7 +67,6 @@ class IdentityService:
                 detail="Invalid or expired refresh token",
             )
 
-        # Invalidate old refresh token (Rotation)
         redis_client.delete(f"refresh_token:{refresh_token}")
 
         normalized_phone = (
@@ -97,7 +96,6 @@ class IdentityService:
         )
 
         refresh_token = create_refresh_token()
-        # Store refresh token in Redis for 30 days
         redis_client.setex(f"refresh_token:{refresh_token}", 30 * 24 * 60 * 60, phone)
 
         return {
@@ -138,7 +136,6 @@ class IdentityService:
 
     @staticmethod
     def _send_otp_simulation(phone: str, redis_client):
-        # Use cryptographically secure random number generator for OTP
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
         print("--- [SMS SIMULATION] ---")

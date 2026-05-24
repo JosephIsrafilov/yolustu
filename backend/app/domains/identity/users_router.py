@@ -39,17 +39,13 @@ async def submit_verification(
 ):
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Generate unique filename
     file_ext = Path(file.filename or "").suffix
     filename = f"{uuid.uuid4()}{file_ext}"
     file_path = UPLOADS_DIR / filename
 
-    # Save file
     with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # URL to be stored (relative to server root or full URL)
-    # Assuming the app is served at the root
     document_url = f"/uploads/{filename}"
 
     return IdentityService(db).submit_verification(current_user, document_url)

@@ -25,7 +25,6 @@ class StripePaymentProvider(BasePaymentProvider):
         self, amount: float, booking_id: uuid.UUID
     ) -> Dict[str, Any]:
         if not settings.STRIPE_SECRET_KEY:
-            # Fallback if key is empty
             transaction_id = f"mock_tx_{uuid.uuid4().hex[:8]}"
             return {
                 "transaction_id": transaction_id,
@@ -42,7 +41,7 @@ class StripePaymentProvider(BasePaymentProvider):
                             "name": "YolUstu Gediş Ödənişi",
                             "description": f"Rezerv ID: {booking_id}",
                         },
-                        "unit_amount": int(amount * 100),  # Stripe uses cents/qepiks
+                        "unit_amount": int(amount * 100),
                     },
                     "quantity": 1,
                 }

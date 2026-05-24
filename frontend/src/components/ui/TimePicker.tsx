@@ -47,7 +47,6 @@ export default function TimePicker({
   const scrollTimeoutHRef = useRef<NodeJS.Timeout | null>(null);
   const scrollTimeoutMRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -57,7 +56,6 @@ export default function TimePicker({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open]);
 
-  // Open handler
   const openPicker = () => {
     let h = 12, m = 0;
     if (value && value.includes(':')) {
@@ -80,7 +78,6 @@ export default function TimePicker({
     setOpen(true);
   };
 
-  // Scroll to initial positions when modal opens
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -97,7 +94,6 @@ export default function TimePicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Scroll Event Handlers to sync state (debounced)
   const handleScroll = (ref: React.RefObject<HTMLDivElement | null>, setter: (v: number) => void) => {
     if (!ref.current) return;
     const container = ref.current;
@@ -158,7 +154,6 @@ export default function TimePicker({
     setDraftHour(h);
     setDraftMinute(m);
     
-    // Animate scroll
     if (hoursContainerRef.current) {
       const el = hoursContainerRef.current.querySelector(`[data-val="${h}"]`);
       if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -187,7 +182,6 @@ export default function TimePicker({
       />
 
       <div className="animate-in slide-in-from-bottom-full duration-300 relative flex w-full max-w-sm flex-col rounded-t-[28px] bg-white p-6 shadow-[0_18px_50px_rgba(0,31,36,0.20)] md:rounded-[28px]">
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">{t.selectTime}</p>
@@ -204,23 +198,20 @@ export default function TimePicker({
           </button>
         </div>
 
-        {/* Scroll Picker */}
         <div className="relative mb-6 flex h-48 justify-center overflow-hidden rounded-2xl bg-[#f8fafb] p-2 border border-border/80 shadow-inner z-0">
           {/* Gradient overlay to fade top/bottom items (3D cylinder effect) */}
           <div className="absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-[#f8fafb] via-[#f8fafb]/80 to-transparent pointer-events-none z-10" />
           <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-[#f8fafb] via-[#f8fafb]/80 to-transparent pointer-events-none z-10" />
           
-          {/* Highlight Selection Box */}
           <div className="absolute top-1/2 left-3 right-3 h-12 -translate-y-1/2 bg-brand-50/50 border border-brand-100/70 rounded-xl pointer-events-none z-0 shadow-sm" />
           
           <div className="relative flex w-full max-w-[200px] justify-between px-6 z-0">
-            {/* Hours Column */}
             <div 
               ref={hoursContainerRef}
               onScroll={onHoursScroll}
               className="no-scrollbar h-full w-16 overflow-y-scroll snap-y snap-mandatory scroll-smooth z-0"
             >
-              <div className="h-[72px]" /> {/* Top padding */}
+              <div className="h-[72px]" />
               {hoursList.map((h) => (
                 <div 
                   key={h} 
@@ -240,12 +231,11 @@ export default function TimePicker({
                   {String(h).padStart(2, '0')}
                 </div>
               ))}
-              <div className="h-[72px]" /> {/* Bottom padding */}
+              <div className="h-[72px]" />
             </div>
 
             <div className="flex h-full items-center justify-center text-2xl font-black text-brand-600/30 pb-1 z-10">:</div>
 
-            {/* Minutes Column */}
             <div 
               ref={minutesContainerRef}
               onScroll={onMinutesScroll}
@@ -276,7 +266,6 @@ export default function TimePicker({
           </div>
         </div>
 
-        {/* Quick Presets */}
         <div className="mb-6">
           <div className="flex flex-wrap justify-center gap-2">
             <button type="button" onClick={() => setPreset('now')} className="rounded-xl border border-border bg-white px-3.5 py-1.5 text-xs font-bold text-text hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95 flex items-center gap-1.5 shadow-sm">
@@ -333,7 +322,6 @@ export default function TimePicker({
           </div>
         </div>
 
-        {/* Action */}
         <button
           type="button"
           onClick={confirm}

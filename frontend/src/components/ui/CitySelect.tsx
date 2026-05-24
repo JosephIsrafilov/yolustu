@@ -30,7 +30,6 @@ export default function CitySelect({
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -43,7 +42,6 @@ export default function CitySelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Filter options
   const filteredOptions = options.filter(option => 
     option.toLowerCase().includes(search.toLowerCase())
   );
@@ -56,7 +54,7 @@ export default function CitySelect({
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) setSearch(''); // Reset search when opening
+          if (!isOpen) setSearch('');
         }}
         className={cn(
           'relative flex h-[46px] w-full items-center justify-between rounded-xl border bg-white px-3 text-left text-sm text-text shadow-sm transition-all focus:outline-none focus:ring-2',

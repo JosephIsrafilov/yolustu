@@ -36,12 +36,10 @@ class PaymentService:
                 status_code=400, detail="Booking must be accepted before payment"
             )
 
-        # 1. Create a session with the payment provider
         session_data = self.provider.create_payment_session(
             amount=booking.total_price, booking_id=booking.id
         )
 
-        # 2. Save pending payment to DB
         self.payments.create(
             booking_id=booking.id,
             amount=booking.total_price,
@@ -55,7 +53,6 @@ class PaymentService:
         from app.core.config import settings
 
         if not settings.STRIPE_WEBHOOK_SECRET:
-            # Fallback for mock environment
             import json
 
             data = json.loads(payload)
@@ -67,7 +64,6 @@ class PaymentService:
                     payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
                 )
             except Exception:
-                # Do not leak internal exception details to the user
                 raise HTTPException(status_code=400, detail="Error confirming payment.")
 
             if event["type"] == "checkout.session.completed":
@@ -92,7 +88,6 @@ class PaymentService:
                 booking.status = "paid"
                 self.bookings.save(booking)
 
-                # Notify driver
                 ride = self.rides.get_ride(booking.ride_id)
                 if ride:
                     self.notifications.send_push_notification(

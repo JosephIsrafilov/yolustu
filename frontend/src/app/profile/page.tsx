@@ -508,7 +508,6 @@ function CustomPlateDropdown({
 }
 
 function AzerbaijanPlateBadge({ plateNumber }: { plateNumber: string }) {
-  // Normalize plate number (e.g. "99-XX-001" or "99 XX 001")
   const clean = plateNumber.replace(/[\s-]/g, '').toUpperCase();
   const match = clean.match(/^(\d{2})([A-Z]{2})(\d{3})$/);
   
@@ -523,7 +522,6 @@ function AzerbaijanPlateBadge({ plateNumber }: { plateNumber: string }) {
     num = match[3];
     isValid = true;
   } else {
-    // Check if it's a 1-letter plate
     const match1 = clean.match(/^(\d{2})([A-Z]{1})(\d{3})$/);
     if (match1) {
       reg = match1[1];
@@ -535,9 +533,7 @@ function AzerbaijanPlateBadge({ plateNumber }: { plateNumber: string }) {
 
   return (
     <div className="inline-flex items-center bg-white border border-slate-900 rounded px-1.5 py-0.5 shadow-sm select-none h-6 gap-1 font-mono text-[11px] font-black text-slate-900 shrink-0">
-      {/* Flag Section */}
       <div className="flex flex-col items-center justify-center border-[0.5px] border-slate-900 rounded-[1px] bg-white w-4.5 h-[16px] shrink-0 leading-none py-0.5" style={{ width: '18px', height: '16px' }}>
-        {/* Flag: Blue, Red, Green stripes */}
         <div className="w-[11px] h-[6px] flex flex-col overflow-hidden">
           <div className="h-1/3 bg-[#00B5E2]"></div>
           <div className="h-1/3 bg-[#EF3340]"></div>
@@ -546,10 +542,8 @@ function AzerbaijanPlateBadge({ plateNumber }: { plateNumber: string }) {
         <span className="text-[5px] font-black text-slate-900 mt-[0.5px]" style={{ fontSize: '4.5px', transform: 'scale(0.8)' }}>AZ</span>
       </div>
 
-      {/* Separator line */}
       <div className="w-[1px] h-3.5 bg-slate-300 mx-0.5 shrink-0" />
 
-      {/* Plate Numbers */}
       {isValid ? (
         <div className="flex items-center gap-1 font-mono tracking-wider font-extrabold text-[11px]">
           <span>{reg}</span>
@@ -770,14 +764,11 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
           <div className="sm:col-span-2">
             <label className="block text-sm font-semibold text-text mb-2">{copy.plateLabel}</label>
             <div className="flex justify-center py-4 bg-white rounded-xl border border-border">
-              {/* Azerbaijani Style License Plate Container */}
               <div 
                 className="relative flex items-center bg-white border-[1.5px] border-slate-900 rounded-xl px-2 shadow-sm select-none gap-1.5"
                 style={{ width: '370px', height: '60px' }}
               >
-                {/* Flag of Azerbaijan and AZ text */}
                 <div className="flex flex-col items-center justify-center border border-black rounded bg-white w-[42px] h-[44px] shrink-0">
-                  {/* Flag: Blue, Red, Green stripes */}
                   <div className="w-[26px] h-[16px] flex flex-col rounded-sm overflow-hidden border border-gray-100">
                     <div className="h-1/3 bg-[#00B5E2]"></div>
                     <div className="h-1/3 bg-[#EF3340] flex items-center justify-center relative">
@@ -788,7 +779,6 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
                   <span className="text-[10px] font-black text-black tracking-wider mt-0.5 leading-none">AZ</span>
                 </div>
 
-                {/* Region Select */}
                 <CustomPlateDropdown
                   value={plateReg}
                   onChange={setPlateReg}
@@ -799,7 +789,6 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
                   nextRef={letter1Ref}
                 />
 
-                {/* Letter 1 Select */}
                 <CustomPlateDropdown
                   value={plateLet1}
                   onChange={setPlateLet1}
@@ -811,7 +800,6 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
                   buttonRef={letter1Ref}
                 />
 
-                {/* Letter 2 Select */}
                 <CustomPlateDropdown
                   value={plateLet2}
                   onChange={setPlateLet2}
@@ -823,7 +811,6 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
                   buttonRef={letter2Ref}
                 />
 
-                {/* Digits Input */}
                 <div className="w-20">
                   <input
                     ref={plateNumRef}

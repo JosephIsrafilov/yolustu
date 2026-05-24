@@ -25,7 +25,6 @@ function ResizeMap() {
   const map = useMap();
 
   useEffect(() => {
-    // Run immediately
     map.invalidateSize();
     
     // Run at 100ms and 500ms to ensure it catches parent layout transitions or animation delays
