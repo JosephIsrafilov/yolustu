@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -163,7 +164,7 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
                           {u.avatarUrl ? (
-                            <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" />
+                            <Image src={u.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
                           ) : (
                             <Icon name="user" size={16} className="text-text-muted" />
                           )}

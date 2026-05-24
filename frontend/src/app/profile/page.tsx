@@ -141,13 +141,19 @@ const PROFILE_I18N = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { currentUser, reviews, users, logout, updateProfile, clearError, lastError, isAuthenticated, language } = useAppStore();
+  const { currentUser, reviews, users, logout, updateProfile, fetchReviews, clearError, lastError, isAuthenticated, language } = useAppStore();
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [form, setForm] = useState({ fullName: '', phone: '', city: '', bio: '' });
 
   const copy = PROFILE_I18N[language] || PROFILE_I18N.en;
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      void fetchReviews(currentUser.id);
+    }
+  }, [isAuthenticated, currentUser, fetchReviews]);
 
   if (!isAuthenticated || !currentUser) {
     return (

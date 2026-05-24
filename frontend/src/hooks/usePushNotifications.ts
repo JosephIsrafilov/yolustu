@@ -6,11 +6,11 @@ export interface PushNotification {
   type: string;
   title: string;
   body: string;
-  data: Record<string, unknown>;
+  data: Record<string, any>;
 }
 
 export function usePushNotifications() {
-  const [activeToast, setActiveToast] = useState<{ title: string; body: string } | null>(null);
+  const [activeToast, setActiveToast] = useState<PushNotification | null>(null);
   const { isAuthenticated } = useAppStore();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,7 +35,7 @@ export function usePushNotifications() {
       const token = localStorage.getItem('token');
       if (!token) return;
       shouldReconnectRef.current = true;
-
+      
       const wsUrl = `${env.wsUrl}/api/v1/notifications/ws?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
 
@@ -51,14 +51,14 @@ export function usePushNotifications() {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'notification') {
-            setActiveToast({ title: data.title, body: data.body });
+            setActiveToast(data);
             
             if (toastTimeoutRef.current) {
               clearTimeout(toastTimeoutRef.current);
             }
             toastTimeoutRef.current = setTimeout(() => {
               setActiveToast(null);
-            }, 5000);
+            }, 8000); // Give users slightly more time to click action buttons
 
             // Trigger live UI refresh if it's a booking event
             if (data.data?.type?.startsWith('booking_')) {

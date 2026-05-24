@@ -39,14 +39,17 @@ def verify_otp(
 
 
 @router.post("/register", response_model=AuthSessionResponse)
+@limiter.limit("10/minute")
 def register(
-    user_in: UserCreate, db: Session = Depends(get_db), redis_client=Depends(get_redis)
+    request: Request, user_in: UserCreate, db: Session = Depends(get_db), redis_client=Depends(get_redis)
 ):
     return IdentityService(db).register(user_in, redis_client)
 
 
 @router.post("/login", response_model=AuthSessionResponse)
+@limiter.limit("10/minute")
 def login(
+    request: Request,
     login_data: LoginInput,
     db: Session = Depends(get_db),
     redis_client=Depends(get_redis),
@@ -55,7 +58,9 @@ def login(
 
 
 @router.post("/refresh", response_model=AuthSessionResponse)
+@limiter.limit("20/minute")
 def refresh_token(
+    request: Request,
     refresh_input: RefreshTokenInput,
     db: Session = Depends(get_db),
     redis_client=Depends(get_redis),

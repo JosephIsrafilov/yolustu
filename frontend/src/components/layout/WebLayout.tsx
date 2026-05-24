@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Icon from '@/components/ui/Icon';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAppStore } from '@/store/useAppStore';
+import { I18N } from '@/lib/i18n';
 
 interface WebLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,24 @@ interface WebLayoutProps {
 
 export default function WebLayout({ children, title, narrow, showBack, hideFooter }: WebLayoutProps) {
   const { activeToast, setActiveToast } = usePushNotifications();
+  const { acceptBooking, rejectBooking, language } = useAppStore();
+  const [actionLoading, setActionLoading] = useState<'accept' | 'reject' | null>(null);
+
+  const copy = I18N[language];
+
+  const handleAccept = async (bookingId: string) => {
+    setActionLoading('accept');
+    await acceptBooking(bookingId);
+    setActionLoading(null);
+    setActiveToast(null);
+  };
+
+  const handleReject = async (bookingId: string) => {
+    setActionLoading('reject');
+    await rejectBooking(bookingId);
+    setActionLoading(null);
+    setActiveToast(null);
+  };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -49,6 +69,25 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
             <div className="flex-1 pr-6">
               <h4 className="text-[14px] font-semibold text-[#002f37] mb-0.5">{activeToast.title}</h4>
               <p className="text-[13px] text-[#40484a] leading-tight">{activeToast.body}</p>
+              
+              {activeToast.data && activeToast.data.type === 'booking_request' && activeToast.data.booking_id && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={() => handleAccept(activeToast.data.booking_id as string)}
+                    className="px-2.5 py-1 text-xs font-bold bg-[#054752] text-white rounded-lg hover:bg-[#002f37] transition-colors disabled:opacity-50"
+                  >
+                    {actionLoading === 'accept' ? '...' : copy.bookings.acceptBtn}
+                  </button>
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={() => handleReject(activeToast.data.booking_id as string)}
+                    className="px-2.5 py-1 text-xs font-bold border border-[#c0c8ca] text-[#40484a] rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    {actionLoading === 'reject' ? '...' : copy.bookings.rejectBtn}
+                  </button>
+                </div>
+              )}
             </div>
             <button 
               onClick={() => setActiveToast(null)}

@@ -2,8 +2,10 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
+
+from app.core.limiter import limiter
 
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
@@ -14,7 +16,9 @@ router = APIRouter()
 
 
 @router.post("/", response_model=RideResponse)
+@limiter.limit("5/minute")
 def create_ride(
+    request: Request,
     ride_in: RideCreate,
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),

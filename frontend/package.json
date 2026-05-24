@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "install:playwright": "npm install --save-dev @playwright/test && npx playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

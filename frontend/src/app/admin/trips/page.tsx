@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -158,7 +159,7 @@ export default function AdminTripsPage() {
                         <div className="flex items-center gap-2">
                           <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden">
                             {driver?.avatarUrl ? (
-                              <img src={driver.avatarUrl} alt="" className="h-full w-full object-cover" />
+                              <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center bg-brand-50 text-brand-600">
                                 <Icon name="user" size={12} />

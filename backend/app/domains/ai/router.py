@@ -103,8 +103,8 @@ async def get_smart_pricing_suggestion(
         market_rates = {}
 
     def normalize_city(name: str) -> str:
-        mapping = {"ə": "a", "ö": "o", "ğ": "g", "ü": "u", "ş": "s", "ç": "c", "ı": "i"}
-        name = name.lower()
+        mapping = {"ə": "e", "ö": "o", "ğ": "g", "ü": "u", "ş": "s", "ç": "c", "ı": "i"}
+        name = name.strip().lower()
         for k, v in mapping.items():
             name = name.replace(k, v)
         aliases = {

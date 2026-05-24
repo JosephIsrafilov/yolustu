@@ -10,6 +10,7 @@ import { adminService } from '@/services';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
 import Icon from '@/components/ui/Icon';
+import Image from 'next/image';
 
 const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'paid', 'completed'];
 
@@ -173,7 +174,7 @@ export default function AdminBookingsPage() {
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                             {passenger?.avatarUrl ? (
-                              <img src={passenger.avatarUrl} alt="" className="h-full w-full object-cover" />
+                              <Image src={passenger.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
                             ) : (
                               <Icon name="user" size={16} className="text-text-muted" />
                             )}

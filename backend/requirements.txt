@@ -16,3 +16,4 @@ stripe
 openai
 httpx
 slowapi
+firebase-admin

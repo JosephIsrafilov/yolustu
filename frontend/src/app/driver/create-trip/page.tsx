@@ -603,79 +603,73 @@ export default function CreateTripPage() {
                 </div>
                 
                 <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-text">{copy.pricePerSeat}</label>
+                    <button
+                      type="button"
+                      onClick={getAiSuggestion}
+                      disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-95"
+                    >
+                      {isAiLoading ? (
+                        <>
+                          <Icon name="loader-2" size={12} className="animate-spin" />
+                          <span>{copy.aiLoading}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="sparkles" size={12} className="text-brand-500 animate-pulse" />
+                          <span>{copy.aiSuggestBtn}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
                   <Input 
-                    label={copy.pricePerSeat} 
                     type="number" 
                     value={formValues.pricePerSeat} 
                     onChange={(e) => setValue('pricePerSeat', Number(e.target.value))} 
                     error={errors.pricePerSeat?.message} 
                   />
-                  
-                  <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-surface-muted/50 p-3.5 border-l-4 border-l-brand-500 border border-border shadow-sm">
-                    <div className="flex items-start gap-2">
-                      <div className="mt-0.5 text-brand-600">
-                        <Icon name="sparkles" size={16} fill="currentColor" className="text-brand-500 animate-pulse" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text flex items-center gap-1">
-                          {language === 'az' ? 'Süni İntellekt Qiyməti' : language === 'ru' ? 'Цена ИИ' : 'AI Smart Price'}
-                        </span>
-                        {isAiLoading ? (
-                          <div className="flex flex-col gap-1.5 mt-2 animate-pulse w-full">
-                            <div className="h-4 bg-brand-100 rounded w-12"></div>
-                            <div className="h-3 bg-slate-200 rounded w-52"></div>
-                          </div>
-                        ) : aiSuggestedPrice ? (
-                          <div className="flex flex-col gap-1 mt-1">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-xl font-bold text-brand-700">{aiSuggestedPrice}</span>
-                              <span className="text-sm font-semibold text-brand-600">₼</span>
-                            </div>
-                            {aiReasoning && (
-                              <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-[280px]">
-                                {aiReasoning}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-text-muted mt-0.5 leading-relaxed max-w-[250px]">
-                            {aiReasoning || copy.aiPlaceholder}
-                          </p>
-                        )}
+
+                  {/* AI Suggestion Result Area */}
+                  {isAiLoading && (
+                    <div className="mt-2 rounded-xl border border-border bg-white p-4 animate-fade-in shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <Icon name="loader-2" size={16} className="animate-spin text-brand-500" />
+                        <span className="text-xs font-medium text-text-muted">{copy.aiLoading}</span>
                       </div>
                     </div>
-                    
-                    <div className="flex shrink-0">
-                      {aiSuggestedPrice ? (
+                  )}
+
+                  {!isAiLoading && aiSuggestedPrice && (
+                    <div className="mt-2 rounded-xl border border-brand-100 bg-brand-50/20 p-4 animate-fade-in shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-brand-700">
+                            <Icon name="sparkles" size={14} className="text-brand-500" />
+                            <span>{language === 'az' ? 'Süni İntellekt Tövsiyəsi' : language === 'ru' ? 'Рекомендация ИИ' : 'AI Price Suggestion'}</span>
+                          </div>
+                          <div className="flex items-baseline gap-1 mt-1">
+                            <span className="text-lg font-black text-brand-800">{aiSuggestedPrice}</span>
+                            <span className="text-sm font-semibold text-brand-700">₼</span>
+                          </div>
+                          {aiReasoning && (
+                            <p className="text-xs text-text-muted leading-relaxed mt-1 max-w-[320px] sm:max-w-[420px]">
+                              {aiReasoning}
+                            </p>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
-                          className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all active:scale-95"
+                          className="shrink-0 rounded-lg bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white px-3.5 py-2 text-xs font-bold transition-colors shadow-sm active:scale-95"
                         >
-                          <Icon name="check" size={16} /> Apply
+                          Apply
                         </button>
-                      ) : (
-                        <button 
-                          type="button" 
-                          onClick={getAiSuggestion}
-                          disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-brand-600 shadow-sm border border-border transition-all hover:bg-surface active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none"
-                        >
-                          {isAiLoading ? (
-                            <>
-                              <Icon name="loader-2" size={12} className="animate-spin" />
-                              <span>{copy.aiLoading}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Icon name="sparkles" size={12} className="text-brand-500" />
-                              <span>{copy.aiSuggestBtn}</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mt-4 border-t border-border pt-4">
