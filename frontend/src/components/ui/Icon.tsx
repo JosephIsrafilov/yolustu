@@ -15,7 +15,8 @@ export type IconName =
   | 'shield-x' | 'banknote' | 'leaf' | 'check' | 'check-circle' | 'plus' | 'map' | 'list' | 'inbox'
   | 'message-square' | 'alert-triangle' | 'settings' | 'loader-2' | 'mail' | 'lock'
   | 'phone' | 'trash-2' | 'layout-dashboard' | 'ban' | 'armchair' | 'cigarette-off'
-  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell' | 'sparkles';
+  | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell' | 'sparkles'
+  | 'venus' | 'cigarette' | 'paw-print' | 'music' | 'info';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -69,7 +70,12 @@ const PATHS: Record<IconName, string> = {
   'upload': 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
   'credit-card': 'M2 7h20M2 11h20M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2zM6 15h4',
   'bell': 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
-  'sparkles': 'M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z M20 3v4 M22 5h-4 M4 17v2 M5 18H3'
+  'sparkles': 'M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z M20 3v4 M22 5h-4 M4 17v2 M5 18H3',
+  'venus': 'M12 15a6 6 0 100-12 6 6 0 000 12z M12 15v7 M9 19h6',
+  'cigarette': 'M18 12H2v4h16 M22 12v4 M7 12v4 M18 8c0-2.5-2-2.5-2-5 M22 8c0-2.5-2-2.5-2-5',
+  'paw-print': 'M9 5a2 2 0 104 0 2 2 0 00-4 0 M13 5a2 2 0 104 0 2 2 0 00-4 0 M5 9a2 2 0 104 0 2 2 0 00-4 0 M17 9a2 2 0 104 0 2 2 0 00-4 0 M9.1 14a2.9 2.9 0 015.8 0 2 2 0 002 2 2.9 2.9 0 002.8-2.2 2.9 2.9 0 00-2.8-3.8 2 2 0 00-2 2H9.1a2 2 0 00-2-2 2.9 2.9 0 00-2.8 3.8 2.9 2.9 0 002.8 2.2 2 2 0 002-2z',
+  'music': 'M9 18V5l12-2v13 M3 18a3 3 0 106 0 3 3 0 00-6 0 M15 16a3 3 0 106 0 3 3 0 00-6 0',
+  'info': 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 16v-4 M12 8h.01',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {
@@ -85,7 +91,7 @@ export default function Icon({ name, size = 24, className = '', strokeWidth = 2,
       strokeLinejoin="round"
       className={className}
     >
-      {PATHS[name].split(' M').map((segment, i) => (
+      {(PATHS[name] || PATHS['alert-triangle']).split(' M').map((segment, i) => (
         <path key={i} d={i === 0 ? segment : `M${segment}`} />
       ))}
     </svg>

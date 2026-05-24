@@ -325,22 +325,22 @@ function TripsContent() {
                         <div className="flex items-center gap-1 mt-2.5">
                           {trip.femaleOnly && (
                             <span className="flex h-5 w-5 items-center justify-center rounded bg-pink-50 text-pink-600 border border-pink-100 shadow-sm" title={copy.createTrip.femaleOnlyLabel}>
-                              <Icon name="sparkles" size={11} />
+                              <Icon name="venus" size={11} />
                             </span>
                           )}
                           {trip.smokingAllowed && (
                             <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.smokingAllowedLabel}>
-                              <Icon name="cigarette-off" size={11} className="rotate-180" />
+                              <Icon name="cigarette" size={11} />
                             </span>
                           )}
                           {trip.petsAllowed && (
                             <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.petsAllowedLabel}>
-                              <Icon name="dog" size={11} />
+                              <Icon name="paw-print" size={11} />
                             </span>
                           )}
                           {trip.musicAllowed && (
                             <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.musicAllowedLabel}>
-                              <Icon name="repeat" size={11} />
+                              <Icon name="music" size={11} />
                             </span>
                           )}
                         </div>

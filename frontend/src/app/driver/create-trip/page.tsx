@@ -27,7 +27,6 @@ import { apiAiService } from '@/services/api/api-ai-service';
 import { isMockDataMode } from '@/lib/env';
 import { I18N } from '@/lib/i18n';
 
-// Dynamic Zod Validation Schema
 const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string) => {
   return z.object({
     departureCity: z.string().min(1, requiredErrorMsg),
@@ -70,7 +69,6 @@ export default function CreateTripPage() {
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [isRecurring, setIsRecurring] = useState(false);
 
-  // Fetch vehicles with React Query
   const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
     queryFn: async () => {
@@ -95,7 +93,6 @@ export default function CreateTripPage() {
     );
   }, [copy]);
 
-  // React Hook Form Configuration
   const { control, handleSubmit, trigger, setValue, getValues, setError, clearErrors, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
@@ -117,7 +114,6 @@ export default function CreateTripPage() {
     }
   });
 
-  // Watch values reactively for the UI
   const formValues = useWatch({ control }) as FormValues;
 
   const mapCenter = useMemo((): [number, number] => {
@@ -138,7 +134,7 @@ export default function CreateTripPage() {
         if (coords) return [coords.lat, coords.lng];
       }
     }
-    return [40.4093, 49.8671]; // Default to Baku
+    return [40.4093, 49.8671];
   }, [pickerMode, formValues.origin, formValues.destination, formValues.departureCity, formValues.arrivalCity]);
 
   const mapZoom = useMemo(() => {
@@ -153,6 +149,7 @@ export default function CreateTripPage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState('');
   const [aiSuggestedPrice, setAiSuggestedPrice] = useState<number | null>(null);
+  const [isDrafting, setIsDrafting] = useState(false);
 
   const getAiSuggestion = async () => {
     const values = getValues();
@@ -184,6 +181,37 @@ export default function CreateTripPage() {
     }
   };
 
+  const handleGenerateDescription = async () => {
+    const values = getValues();
+    if (!values.departureCity || !values.arrivalCity || !values.time) return;
+    setIsDrafting(true);
+    try {
+      const prefs: string[] = [];
+      if (values.femaleOnly) prefs.push(language === 'az' ? 'Yalnız xanımlar' : language === 'ru' ? 'Только для женщин' : 'Ladies only');
+      if (values.smokingAllowed) prefs.push(language === 'az' ? 'Siqaret çəkmək olar' : language === 'ru' ? 'Можно курить' : 'Smoking allowed');
+      if (values.petsAllowed) prefs.push(language === 'az' ? 'Heyvanlara icazə var' : language === 'ru' ? 'Можно с питомцами' : 'Pets allowed');
+      if (values.musicAllowed !== false) prefs.push(language === 'az' ? 'Musiqi dinləmək olar' : language === 'ru' ? 'Можно музыку' : 'Music allowed');
+
+      const response = await apiAiService.generateTripDescription({
+        origin: values.departureCity,
+        destination: values.arrivalCity,
+        departure_time: values.time,
+        departure_date: values.date,
+        car_model: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : 'Standard Vehicle',
+        seats_total: values.seatsTotal,
+        language: language,
+        preferences: prefs,
+      });
+      if (response?.description) {
+        setValue('comment', response.description);
+      }
+    } catch (error) {
+      console.error('AI Draft Description Error:', error);
+    } finally {
+      setIsDrafting(false);
+    }
+  };
+
   const validateStep = async () => {
     if (step === 0) {
       return await trigger(['departureCity', 'arrivalCity']);
@@ -204,7 +232,6 @@ export default function CreateTripPage() {
   
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  // Mutation for creating trip
   const createTripMutation = useMutation({
     mutationFn: async (values: FormValues) => {
       const baseTripData = {
@@ -305,7 +332,6 @@ export default function CreateTripPage() {
           </div>
         )}
         <>
-            {/* Clickable Stepper */}
         <div className="mb-6 flex items-center gap-2">
           {steps.map((s, i) => {
             const isCompleted = i < step;
@@ -333,7 +359,6 @@ export default function CreateTripPage() {
           })}
         </div>
 
-        {/* Persistent Route Summary */}
         {step > 0 && formValues.departureCity && formValues.arrivalCity && (
           <div className="mb-6 flex items-center justify-between rounded-2xl bg-gradient-to-r from-brand-50 to-white p-3.5 shadow-sm border border-brand-100 dark:from-[#00282d] dark:to-[#001f24] dark:border-[#00383f] animate-fade-in">
             <div className="flex items-center gap-3">
@@ -453,7 +478,6 @@ export default function CreateTripPage() {
                       : (language === 'az' ? 'Xəritədə eniş nöqtəsini seçin' : language === 'ru' ? 'Выберите место высадки на карте' : 'Select dropoff point on the map')}
                   </p>
                   
-                  {/* Transit Presets Selector */}
                   {(() => {
                     const activeCity = pickerMode === 'origin' ? formValues.departureCity : formValues.arrivalCity;
                     const presets = activeCity ? PRESET_LOCATIONS[activeCity] : null;
@@ -587,140 +611,251 @@ export default function CreateTripPage() {
                     error={errors.pricePerSeat?.message} 
                   />
                   
-                  <div className="mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50/60 to-white p-4.5 shadow-[0_2px_12px_rgba(5,71,82,0.03)] border border-brand-100 transition-all duration-300">
-                    {isAiLoading && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent animate-[shimmer_1.5s_infinite] -skew-x-12" />
-                    )}
-                    <div className="relative z-10 flex w-full flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-accent-500 to-accent-600 shadow-sm">
-                            <Icon name="sparkles" size={14} className="text-white" />
+                  <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-surface-muted/50 p-3.5 border-l-4 border-l-brand-500 border border-border shadow-sm">
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 text-brand-600">
+                        <Icon name="sparkles" size={16} fill="currentColor" className="text-brand-500 animate-pulse" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-text flex items-center gap-1">
+                          {language === 'az' ? 'Süni İntellekt Qiyməti' : language === 'ru' ? 'Цена ИИ' : 'AI Smart Price'}
+                        </span>
+                        {isAiLoading ? (
+                          <div className="flex flex-col gap-1.5 mt-2 animate-pulse w-full">
+                            <div className="h-4 bg-brand-100 rounded w-12"></div>
+                            <div className="h-3 bg-slate-200 rounded w-52"></div>
                           </div>
-                          <span className="text-sm font-extrabold text-brand-700 tracking-wide">
-                            {copy.aiTitle}
-                          </span>
-                        </div>
+                        ) : aiSuggestedPrice ? (
+                          <div className="flex flex-col gap-1 mt-1">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xl font-bold text-brand-700">{aiSuggestedPrice}</span>
+                              <span className="text-sm font-semibold text-brand-600">₼</span>
+                            </div>
+                            {aiReasoning && (
+                              <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-[280px]">
+                                {aiReasoning}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-text-muted mt-0.5 leading-relaxed max-w-[250px]">
+                            {aiReasoning || copy.aiPlaceholder}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex shrink-0">
+                      {aiSuggestedPrice ? (
+                        <button
+                          type="button"
+                          onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
+                          className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all active:scale-95"
+                        >
+                          <Icon name="check" size={16} /> Apply
+                        </button>
+                      ) : (
                         <button 
                           type="button" 
                           onClick={getAiSuggestion}
                           disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-brand-600 shadow-sm border border-brand-200 transition-all hover:bg-brand-50 hover:border-brand-300 active:scale-95 disabled:opacity-50"
+                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-brand-600 shadow-sm border border-border transition-all hover:bg-surface active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none"
                         >
-                          {isAiLoading ? copy.aiLoading : copy.aiSuggestBtn}
+                          {isAiLoading ? (
+                            <>
+                              <Icon name="loader-2" size={12} className="animate-spin" />
+                              <span>{copy.aiLoading}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="sparkles" size={12} className="text-brand-500" />
+                              <span>{copy.aiSuggestBtn}</span>
+                            </>
+                          )}
                         </button>
-                      </div>
-                      
-                      {aiSuggestedPrice ? (
-                        <div className="flex flex-col gap-3 mt-1 animate-fade-in">
-                          <div className="flex items-end justify-between bg-brand-50/30 p-3.5 rounded-xl border border-brand-100">
-                            <div>
-                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-brand-600/80 mb-0.5">Suggested Price</p>
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-black text-brand-800">{aiSuggestedPrice}</span>
-                                <span className="text-sm font-bold text-brand-500">₼</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
-                              className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-md transition-all active:scale-95"
-                            >
-                              <Icon name="check" size={16} /> Apply
-                            </button>
-                          </div>
-                          <p className="text-xs font-medium text-text-secondary leading-relaxed">{aiReasoning}</p>
-                        </div>
-                      ) : (
-                        <p className="text-xs font-medium text-text-muted leading-relaxed mt-1">
-                          {aiReasoning || copy.aiPlaceholder}
-                        </p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Comfort Preferences */}
                 <div className="mt-4 border-t border-border pt-4">
                   <h4 className="text-sm font-bold text-text mb-3">{copy.preferencesTitle}</h4>
                   
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Female Only */}
                     <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.femaleOnly ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
                          onClick={() => setValue('femaleOnly', !formValues.femaleOnly)}>
                       <input
                         type="checkbox"
                         checked={formValues.femaleOnly || false}
-                        onChange={() => {}} // handled by div click
+                        onChange={() => {}}
                         className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                       />
                       <div className="flex items-center gap-2">
-                        <Icon name="sparkles" size={16} className={formValues.femaleOnly ? 'text-brand-600' : 'text-text-muted'} />
+                        <Icon name="venus" size={16} className={formValues.femaleOnly ? 'text-brand-600' : 'text-text-muted'} />
                         <span className="text-xs font-semibold text-text">{copy.femaleOnlyLabel}</span>
                       </div>
                     </div>
 
-                    {/* Smoking Allowed */}
                     <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.smokingAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
                          onClick={() => setValue('smokingAllowed', !formValues.smokingAllowed)}>
                       <input
                         type="checkbox"
                         checked={formValues.smokingAllowed || false}
-                        onChange={() => {}} // handled by div click
+                        onChange={() => {}}
                         className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                       />
                       <div className="flex items-center gap-2">
-                        <Icon name="cigarette-off" size={16} className={formValues.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                        <Icon name={formValues.smokingAllowed ? 'cigarette' : 'cigarette-off'} size={16} className={formValues.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
                         <span className="text-xs font-semibold text-text">{copy.smokingAllowedLabel}</span>
                       </div>
                     </div>
 
-                    {/* Pets Allowed */}
                     <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.petsAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
                          onClick={() => setValue('petsAllowed', !formValues.petsAllowed)}>
                       <input
                         type="checkbox"
                         checked={formValues.petsAllowed || false}
-                        onChange={() => {}} // handled by div click
+                        onChange={() => {}}
                         className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                       />
                       <div className="flex items-center gap-2">
-                        <Icon name="dog" size={16} className={formValues.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                        <Icon name="paw-print" size={16} className={formValues.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
                         <span className="text-xs font-semibold text-text">{copy.petsAllowedLabel}</span>
                       </div>
                     </div>
 
-                    {/* Music Allowed */}
                     <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.musicAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
                          onClick={() => setValue('musicAllowed', !formValues.musicAllowed)}>
                       <input
                         type="checkbox"
                         checked={formValues.musicAllowed !== false}
-                        onChange={() => {}} // handled by div click
+                        onChange={() => {}}
                         className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                       />
                       <div className="flex items-center gap-2">
-                        <Icon name="repeat" size={16} className={formValues.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
+                        <Icon name="music" size={16} className={formValues.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
                         <span className="text-xs font-semibold text-text">{copy.musicAllowedLabel}</span>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-5 border-t border-border pt-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-text">{copy.commentLabel}</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateDescription}
+                      disabled={isDrafting || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
+                      className="flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-95"
+                    >
+                      {isDrafting ? (
+                        <>
+                          <Icon name="loader-2" size={14} className="animate-spin" />
+                          <span>{copy.aiDraftLoading}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="sparkles" size={14} className="text-brand-500 animate-pulse" />
+                          <span>{copy.aiDraftBtn}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={formValues.comment || ''}
+                    onChange={(e) => setValue('comment', e.target.value)}
+                    placeholder={copy.commentPlaceholder}
+                    className="w-full rounded-xl border border-[#c0c8ca] p-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-none transition-all"
+                  />
+                </div>
               </div>
             )}
 
             {step === 3 && (
-              <div>
-                <h3 className="mb-4 text-lg font-bold">{copy.summaryTitle}</h3>
-                <div className="flex flex-col gap-3 text-sm">
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryRoute}</span><span className="font-medium">{formValues.departureCity} → {formValues.arrivalCity}</span></div>
-                  {formValues.meetingPoint && <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryMeeting}</span><span className="font-medium">{formValues.meetingPoint}</span></div>}
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryDate}</span><span className="font-medium">{formValues.date} • {formValues.time}</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summarySeats}</span><span className="font-medium">{formValues.seatsTotal}</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryPrice}</span><span className="font-bold text-brand-600">{formValues.pricePerSeat} ₼</span></div>
-                  <div className="flex justify-between border-b border-border py-2"><span className="text-text-muted">{copy.summaryVehicle}</span><span className="font-medium">{vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : ''}</span></div>
-                  {formValues.comment && <div className="flex justify-between py-2"><span className="text-text-muted">{copy.summaryComment}</span><span className="font-medium">{formValues.comment}</span></div>}
+              <div className="flex flex-col gap-5 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100">
+                    <Icon name="check-circle" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-text tracking-tight">{copy.summaryTitle}</h3>
+                    <p className="text-sm text-text-muted">{language === 'az' ? 'Gediş məlumatlarını son dəfə yoxlayın' : language === 'ru' ? 'Проверьте данные поездки в последний раз' : 'Double check your trip details'}</p>
+                  </div>
                 </div>
+
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-surface-muted border border-border shadow-sm p-5">
+                  <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] pointer-events-none transform rotate-12">
+                    <Icon name="map" size={140} />
+                  </div>
+                  
+                  <div className="relative flex gap-4">
+                    <div className="flex flex-col items-center mt-1.5">
+                      <div className="h-3.5 w-3.5 rounded-full border-[3px] border-brand-500 bg-white shadow-sm"></div>
+                      <div className="w-0.5 bg-gradient-to-b from-brand-300 to-border flex-1 my-1.5"></div>
+                      <div className="h-3.5 w-3.5 rounded-full bg-brand-600 shadow-sm"></div>
+                    </div>
+                    <div className="flex flex-col gap-5 flex-1">
+                      <div>
+                        <p className="text-[11px] font-bold text-brand-600/70 uppercase tracking-widest mb-0.5">{language === 'az' ? 'Gediş' : language === 'ru' ? 'Отправление' : 'Departure'}</p>
+                        <p className="text-lg font-bold text-text leading-tight">{formValues.departureCity}</p>
+                        {formValues.meetingPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.meetingPoint}</p>}
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-0.5">{language === 'az' ? 'Təyinat' : language === 'ru' ? 'Назначение' : 'Destination'}</p>
+                        <p className="text-lg font-bold text-text leading-tight">{formValues.arrivalCity}</p>
+                        {formValues.dropoffPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.dropoffPoint}</p>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5 rounded-xl bg-white p-4 border border-border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon name="calendar" size={16} className="text-brand-500" />
+                      <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryDate}</span>
+                    </div>
+                    <span className="text-[15px] font-bold text-text truncate">{formValues.date}</span>
+                    <span className="text-sm font-medium text-text-muted">{formValues.time}</span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5 rounded-xl bg-white p-4 border border-border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon name="car" size={16} className="text-brand-500" />
+                      <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryVehicle}</span>
+                    </div>
+                    <span className="text-[15px] font-bold text-text truncate">
+                      {vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : (language === 'az' ? 'Standart avtomobil' : 'Standard')}
+                    </span>
+                    <span className="text-sm font-medium text-text-muted">{formValues.seatsTotal} {language === 'az' ? 'yer' : 'seats'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl bg-brand-50/50 p-4 border border-brand-100">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100/50 text-brand-600">
+                      <Icon name="banknote" size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-text-secondary">{copy.summaryPrice}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-brand-700">{formValues.pricePerSeat}</span>
+                    <span className="text-sm font-bold text-brand-600">₼</span>
+                  </div>
+                </div>
+
+                {formValues.comment && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <span className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1 flex items-center gap-1.5">
+                      <Icon name="message-square" size={14} /> {copy.summaryComment}
+                    </span>
+                    <div className="relative rounded-2xl rounded-tl-sm bg-surface-muted/60 p-4 text-sm text-text leading-relaxed border border-border">
+                      {formValues.comment}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

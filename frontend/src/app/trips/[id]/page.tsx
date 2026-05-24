@@ -198,25 +198,25 @@ export default function TripDetailsPage() {
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.femaleOnly ? 'bg-pink-50/20 border-pink-200 text-pink-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
-                <Icon name="sparkles" size={20} className={trip.femaleOnly ? 'text-pink-600' : 'text-text-muted'} />
+                <Icon name="venus" size={20} className={trip.femaleOnly ? 'text-pink-600' : 'text-text-muted'} />
                 <span className="text-xs font-bold">{language === 'az' ? 'Yalnız xanımlar' : language === 'ru' ? 'Только женщины' : 'Female only'}</span>
                 <span className="text-[10px] text-text-muted font-medium">{trip.femaleOnly ? (language === 'az' ? 'Bəli' : 'Да') : (language === 'az' ? 'Xeyr' : 'Нет')}</span>
               </div>
               
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.smokingAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
-                <Icon name="cigarette-off" size={20} className={`rotate-180 ${trip.smokingAllowed ? 'text-brand-600' : 'text-text-muted'}`} />
+                <Icon name={trip.smokingAllowed ? "cigarette" : "cigarette-off"} size={20} className={trip.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
                 <span className="text-xs font-bold">{language === 'az' ? 'Siqaret çəkmək' : language === 'ru' ? 'Курение' : 'Smoking'}</span>
                 <span className="text-[10px] text-text-muted font-medium">{trip.smokingAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
               </div>
 
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.petsAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
-                <Icon name="dog" size={20} className={trip.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
+                <Icon name="paw-print" size={20} className={trip.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
                 <span className="text-xs font-bold">{language === 'az' ? 'Ev heyvanı' : language === 'ru' ? 'Животные' : 'Pets'}</span>
                 <span className="text-[10px] text-text-muted font-medium">{trip.petsAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
               </div>
 
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.musicAllowed !== false ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
-                <Icon name="repeat" size={20} className={trip.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
+                <Icon name="music" size={20} className={trip.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
                 <span className="text-xs font-bold">{language === 'az' ? 'Musiqi dinləmək' : language === 'ru' ? 'Музыка' : 'Music'}</span>
                 <span className="text-[10px] text-text-muted font-medium">{trip.musicAllowed !== false ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
               </div>

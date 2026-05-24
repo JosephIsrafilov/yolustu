@@ -34,6 +34,21 @@ class PricingSuggestionResponse(BaseModel):
     reasoning: str
 
 
+class DescriptionGenerationRequest(BaseModel):
+    origin: str
+    destination: str
+    departure_time: str
+    departure_date: str | None = None
+    car_model: str | None = None
+    seats_total: int | None = None
+    language: str = "az"
+    preferences: list[str] | None = None
+
+
+class DescriptionGenerationResponse(BaseModel):
+    description: str
+
+
 class VehicleValidationRequest(BaseModel):
     brand: str
     model: str
@@ -49,7 +64,6 @@ class VehicleValidationResponse(BaseModel):
 async def get_driving_route(origin: LocationCoords, destination: LocationCoords):
     """Fetch exact driving distance and duration from OSRM"""
     try:
-        # OSRM expects lon,lat
         url = f"https://router.project-osrm.org/route/v1/driving/{origin.lng},{origin.lat};{destination.lng},{destination.lat}?overview=false"
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=5.0)
@@ -70,24 +84,14 @@ async def get_smart_pricing_suggestion(
     request: PricingSuggestionRequest,
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    if not settings.NVIDIA_API_KEY:
-        raise HTTPException(status_code=500, detail="NVIDIA API key is missing.")
-
     distance_km, duration_min = None, None
     if request.origin_coords and request.destination_coords:
         distance_km, duration_min = await get_driving_route(
             request.origin_coords, request.destination_coords
         )
 
-    client = OpenAI(
-        base_url="https://integrate.api.nvidia.com/v1",
-        api_key=settings.NVIDIA_API_KEY,
-    )
-
-    # Load market rates
     try:
         import os
-
         base_dir = os.path.dirname(os.path.abspath(__file__))
         with open(
             os.path.join(base_dir, "market_rates.json"), "r", encoding="utf-8"
@@ -98,12 +102,26 @@ async def get_smart_pricing_suggestion(
         market_rates = {}
 
     def normalize_city(name: str) -> str:
-        # Simple normalization for matching
         mapping = {"ə": "a", "ö": "o", "ğ": "g", "ü": "u", "ş": "s", "ç": "c", "ı": "i"}
         name = name.lower()
         for k, v in mapping.items():
             name = name.replace(k, v)
-        return name
+        aliases = {
+            "baki": "baku", "gence": "ganja", "lenkeran": "lankaran", "seki": "shaki",
+            "samaxi": "shamakhi", "qebele": "gabala", "xacmaz": "khachmaz", "qusar": "gusar",
+            "semkir": "shamkir", "berde": "barda", "agdam": "aghdam", "kurdemir": "kurdamir",
+            "agdas": "aghdash", "agcabedi": "aghjabadi", "xizi": "khizi", "siyezen": "siyazan",
+            "mingecevir": "mingachevir", "sirvan": "shirvan", "goycay": "goychay",
+            "fuzuli": "fuzuli", "celilabad": "jalilabad", "haciqabul": "hajigabul",
+            "neftcala": "neftchala", "masalli": "masalli", "yardimli": "yardimli",
+            "agsu": "agsu", "balaken": "balakan", "qax": "gakh", "oguz": "oguz",
+            "daskesen": "dashkasan", "gedebey": "gadabay", "goranboy": "goranboy",
+            "goygol": "goygol", "sabirabad": "sabirabad", "saatli": "saatli",
+            "salyan": "salyan", "astara": "astara", "tartar": "tartar",
+            "beylaqan": "beylagan", "bilasuvar": "bilasuvar", "abseron": "absheron",
+            "sabran": "shabran",
+        }
+        return aliases.get(name, name)
 
     origin_norm = normalize_city(request.origin)
     dest_norm = normalize_city(request.destination)
@@ -111,24 +129,22 @@ async def get_smart_pricing_suggestion(
     reverse_route_key = f"{dest_norm}-{origin_norm}"
 
     baseline_price = None
-    # Check normalized keys
     for k, v in market_rates.items():
         k_norm = normalize_city(k)
         if k_norm == route_key or k_norm == reverse_route_key:
             baseline_price = v
             break
 
-    if not baseline_price and distance_km:
-        # Fallback based on tiered logic instead of flat 0.05
-        if distance_km < 30:
-            # Short trips inside city or nearby suburbs
-            baseline_price = int(max(distance_km * 0.10, 1))
+    if not baseline_price:
+        if distance_km:
+            if distance_km < 30:
+                baseline_price = max(distance_km * 0.10, 1.0)
+            else:
+                baseline_price = max(distance_km * 0.06, 1.0)
         else:
-            # Longer intercity trips
-            baseline_price = int(max(distance_km * 0.06, 1))
+            baseline_price = 10.0
 
-    # Time Context
-    time_context = "Standard Time"
+    time_multiplier = 1.0
     try:
         if request.departure_time:
             h, m = map(int, request.departure_time.split(":"))
@@ -136,119 +152,204 @@ async def get_smart_pricing_suggestion(
             if (7 * 60 + 30 <= total_minutes <= 9 * 60 + 30) or (
                 17 * 60 + 30 <= total_minutes <= 20 * 60
             ):
-                time_context = "Rush Hour"
+                time_multiplier = 1.1
             elif (total_minutes >= 23 * 60) or (total_minutes <= 5 * 60):
-                time_context = "Night Trip"
+                time_multiplier = 1.05
     except Exception:
         pass
 
-    # Day Context
-    day_context = "Weekday"
+    day_multiplier = 1.0
     try:
         if request.departure_date:
             from datetime import datetime
-
             dt = datetime.strptime(request.departure_date, "%Y-%m-%d")
-            if dt.weekday() >= 5:  # 5 is Saturday, 6 is Sunday
-                day_context = "Weekend"
+            if dt.weekday() >= 5:  
+                day_multiplier = 1.1
     except Exception:
         pass
 
-    # Vehicle Categorization
     car_model = request.car_model.strip() if request.car_model else "Standard Vehicle"
-    vehicle_category = "Standard"
+    vehicle_multiplier = 1.0
     premium_brands = [
-        "mercedes",
-        "bmw",
-        "audi",
-        "lexus",
-        "land rover",
-        "porsche",
-        "tesla",
+        "mercedes", "bmw", "audi", "lexus", "land rover", "porsche", "tesla",
     ]
     car_model_lower = car_model.lower()
     for brand in premium_brands:
         if brand in car_model_lower:
-            vehicle_category = "Premium"
+            vehicle_multiplier = 1.2
             break
 
-    details = (
-        f"Route: {request.origin} to {request.destination}\n"
-        f"Departure Date: {request.departure_date or 'Unknown'} ({day_context})\n"
-        f"Departure Time: {request.departure_time} ({time_context})\n"
-    )
+    final_price = baseline_price * time_multiplier * day_multiplier * vehicle_multiplier
+    suggested_price = int(round(final_price))
 
-    if baseline_price:
-        details += (
-            f"BASELINE MARKET PRICE FOR THIS ROUTE: {baseline_price} AZN per seat.\n"
-        )
+    lang = request.language.lower()
+    reasoning_parts = []
+    
+    if lang == "az":
+        base_msg = "Qiymət bazar ortalamasına və marşrut məsafəsinə əsasən hesablanıb."
+        if vehicle_multiplier > 1.0: reasoning_parts.append("premium avtomobil")
+        if time_multiplier > 1.0: reasoning_parts.append("pik saatlar")
+        if day_multiplier > 1.0: reasoning_parts.append("həftəsonu")
+        
+        reasoning = base_msg
+        if reasoning_parts:
+            reasoning += f" ({', '.join(reasoning_parts)} nəzərə alınıb)."
+    elif lang == "ru":
+        base_msg = "Цена рассчитана на основе средних рыночных показателей и длины маршрута."
+        if vehicle_multiplier > 1.0: reasoning_parts.append("премиум-класс")
+        if time_multiplier > 1.0: reasoning_parts.append("час пик/ночь")
+        if day_multiplier > 1.0: reasoning_parts.append("выходные")
+        
+        reasoning = base_msg
+        if reasoning_parts:
+            reasoning += f" (Учтены: {', '.join(reasoning_parts)})."
+    else:
+        base_msg = "Price is calculated based on market averages and route distance."
+        if vehicle_multiplier > 1.0: reasoning_parts.append("premium vehicle")
+        if time_multiplier > 1.0: reasoning_parts.append("rush hour/night")
+        if day_multiplier > 1.0: reasoning_parts.append("weekend")
+        
+        reasoning = base_msg
+        if reasoning_parts:
+            reasoning += f" (Adjusted for: {', '.join(reasoning_parts)})."
 
-    if distance_km and duration_min:
-        details += f"Driving Distance: {distance_km:.1f} km\n"
-        details += f"Estimated Driving Time: {int(duration_min // 60)}h {int(duration_min % 60)}m\n"
+    if settings.NVIDIA_API_KEY:
+        try:
+            client = OpenAI(
+                base_url="https://integrate.api.nvidia.com/v1",
+                api_key=settings.NVIDIA_API_KEY,
+            )
+            
+            min_price = int(round(suggested_price * 0.85))
+            max_price = int(round(suggested_price * 1.15))
 
-    details += f"Vehicle: {car_model} (Category: {vehicle_category})\n"
+            prompt = (
+                f"You are a transportation pricing assistant for the Yolustu carpooling platform in Azerbaijan.\n"
+                f"Analyze the following trip and price details to calculate a final recommended price and provide a short explanation.\n\n"
+                f"Trip Details:\n"
+                f"- Route: {request.origin} -> {request.destination}\n"
+                f"- Departure Time: {request.departure_time}\n"
+                f"- Departure Date: {request.departure_date or 'Not specified'}\n"
+                f"- Car model: {car_model}\n"
+                f"- Seats: {request.seats_total or 4}\n"
+                f"- Calculated baseline price: {suggested_price} AZN\n"
+                f"- Requested language: {lang}\n\n"
+                f"Instructions:\n"
+                f"1. Generate a recommended price (integer) by adjusting the baseline price up or down by at most 15% (must be between {min_price} and {max_price} AZN inclusive). Choose a round, passenger-friendly number.\n"
+                f"2. Write a brief, high-quality, professional, and natural explanation (1-2 sentences) in the requested language ({lang}) explaining this price recommendation (referencing comfort, day of week, or route length if relevant).\n"
+                f"3. Return ONLY a valid JSON object. No markdown wrappers. Format:\n"
+                f"{{\n"
+                f'  "suggested_price": <integer_price>,\n'
+                f'  "reasoning": "<explanation_string>"\n'
+                f"}}"
+            )
 
-    seats = request.seats_total or 3
-    details += f"Passenger Seats Available: {seats}\n"
+            completion = client.chat.completions.create(
+                model="meta/llama-3.1-8b-instruct",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+                max_tokens=256,
+                timeout=3.0,
+                stream=False,
+            )
 
-    lang_map = {"az": "Azerbaijani", "ru": "Russian", "en": "English"}
-    requested_language = lang_map.get(request.language.lower(), "Azerbaijani")
-
-    prompt = (
-        "You are an expert pricing AI for the Yolüstü carpooling app in Azerbaijan. "
-        "Your task is to recommend a fair, competitive price for ONE SEAT on the requested trip in AZN (Azerbaijani Manat). "
-        "Guidelines:\n"
-        "1. DO NOT CALCULATE FUEL COSTS OR DISTANCES YOURSELF. Use the provided BASELINE MARKET PRICE as your strict anchor.\n"
-        "2. If a BASELINE MARKET PRICE is provided, your final suggested price must be very close to it (within ±10-20%).\n"
-        "3. Adjust the baseline slightly based on vehicle category: 'Premium' cars can charge slightly more. 'Standard' cars should stick closer to the baseline.\n"
-        "4. Adjust slightly for time context (e.g., 'Night Trip' or 'Rush Hour' and 'Weekend' might carry a slight premium).\n\n"
-        "Trip Details:\n"
-        f"{details}\n"
-        "Return the output STRICTLY as a JSON object with two fields:\n"
-        "1. 'suggested_price': an integer representing the price for ONE seat in AZN.\n"
-        f"2. 'reasoning': A highly specific 1-2 sentence explanation in {requested_language} citing the baseline market rate, car model impact, and time of travel.\n"
-        "Do not include markdown blocks like ```json, just the raw JSON."
-    )
-
-    try:
-        completion = client.chat.completions.create(
-            model="meta/llama-3.1-8b-instruct",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            top_p=0.7,
-            max_tokens=1024,
-            stream=False,
-        )
-
-        response_content = (completion.choices[0].message.content or "").strip()
-
-        # Robust regex extraction of JSON
-        import re
-
-        clean_text = response_content.replace("```json", "").replace("```", "").strip()
-
-        # Try to find the first flat JSON object
-        match = re.search(r"\{[^{}]*\}", clean_text)
-        if match:
-            json_str = match.group(0)
-            data = json.loads(json_str)
-        else:
-            start_idx = clean_text.find("{")
-            end_idx = clean_text.rfind("}")
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                data = json.loads(clean_text[start_idx : end_idx + 1])
+            response_content = (completion.choices[0].message.content or "").strip()
+            
+            import re
+            clean_text = response_content.replace("```json", "").replace("```", "").strip()
+            match = re.search(r"\{[^{}]*\}", clean_text)
+            if match:
+                data = json.loads(match.group(0))
             else:
-                raise ValueError("No JSON object found in response")
+                start_idx = clean_text.find("{")
+                end_idx = clean_text.rfind("}")
+                if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                    data = json.loads(clean_text[start_idx : end_idx + 1])
+                else:
+                    raise ValueError("No JSON object found")
 
-        return PricingSuggestionResponse(
-            suggested_price=int(data["suggested_price"]), reasoning=data["reasoning"]
-        )
-    except Exception as e:
-        logger.error(f"AI pricing failed: {e}")
-        raise HTTPException(
-            status_code=500, detail="AI pricing recommendation failed to process."
-        )
+            ai_price = data.get("suggested_price")
+            ai_reasoning = data.get("reasoning")
+            
+            if ai_price is not None and isinstance(ai_price, (int, float)):
+                ai_price_int = int(round(ai_price))
+                if min_price <= ai_price_int <= max_price:
+                    suggested_price = ai_price_int
+                    
+            if ai_reasoning and isinstance(ai_reasoning, str):
+                reasoning = ai_reasoning.strip()
+
+        except Exception as e:
+            logger.warning(f"Nvidia NIM pricing calculation failed/timed out, falling back to deterministic: {e}")
+
+    return PricingSuggestionResponse(
+        suggested_price=suggested_price, 
+        reasoning=reasoning
+    )
+
+
+@router.post("/generate-description", response_model=DescriptionGenerationResponse)
+async def generate_trip_description(
+    request: DescriptionGenerationRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    lang = request.language.lower()
+    car = request.car_model or ("avtomobil" if lang == "az" else "автомобиль" if lang == "ru" else "car")
+    
+    if lang == "az":
+        fallback_desc = f"Salam! {request.origin} - {request.destination} marşrutu üzrə gedirəm. Avtomobil: {car}. Rahat və təhlükəsiz səfər üçün qoşulun!"
+    elif lang == "ru":
+        fallback_desc = f"Привет! Еду по маршруту {request.origin} - {request.destination} на {car}. Присоединяйтесь для комфортной поездки!"
+    else:
+        fallback_desc = f"Hello! Driving from {request.origin} to {request.destination} in my {car}. Join me for a comfortable trip!"
+
+    description = fallback_desc
+
+    if settings.NVIDIA_API_KEY:
+        try:
+            client = OpenAI(
+                base_url="https://integrate.api.nvidia.com/v1",
+                api_key=settings.NVIDIA_API_KEY,
+            )
+            
+            prompt = (
+                f"You are a friendly ride-sharing assistant for Yolustu platform.\n"
+                f"Write a short, engaging description for a driver posting a trip.\n\n"
+                f"Trip parameters:\n"
+                f"- From: {request.origin}\n"
+                f"- To: {request.destination}\n"
+                f"- Departure time: {request.departure_time}\n"
+                f"- Departure date: {request.departure_date or 'not specified'}\n"
+                f"- Car: {request.car_model or 'Standard Car'}\n"
+                f"- Available seats: {request.seats_total or 4}\n"
+                f"- Preferences/Amenities: {', '.join(request.preferences) if request.preferences else 'none'}\n\n"
+                f"Instructions:\n"
+                f"1. Write the description from the driver's perspective (first-person singular/plural).\n"
+                f"2. Language: Write entirely in the requested language: '{lang}'.\n"
+                f"3. Make it short (2-3 sentences max) and welcoming.\n"
+                f"4. Do NOT include markdown styling or surrounding quotes. Just return the raw text."
+            )
+            
+            completion = client.chat.completions.create(
+                model="meta/llama-3.1-8b-instruct",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=200,
+                timeout=4.0,
+                stream=False,
+            )
+            
+            ai_desc = (completion.choices[0].message.content or "").strip()
+            if ai_desc.startswith('"') and ai_desc.endswith('"'):
+                ai_desc = ai_desc[1:-1].strip()
+            
+            if ai_desc:
+                description = ai_desc
+                
+        except Exception as e:
+            logger.warning(f"AI trip description generation failed/timed out, falling back: {e}")
+
+    return DescriptionGenerationResponse(description=description)
 
 
 @router.post("/validate-vehicle", response_model=VehicleValidationResponse)
@@ -292,19 +393,15 @@ async def validate_vehicle(
 
         response_content = (completion.choices[0].message.content or "").strip()
 
-        # Robust regex extraction of JSON
         import re
 
-        # Remove any markdown code blocks
         clean_text = response_content.replace("```json", "").replace("```", "").strip()
 
-        # Try to find the first flat JSON object
         match = re.search(r"\{[^{}]*\}", clean_text)
         if match:
             json_str = match.group(0)
             data = json.loads(json_str)
         else:
-            # Fallback to finding first { and last }
             start_idx = clean_text.find("{")
             end_idx = clean_text.rfind("}")
             if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
@@ -320,7 +417,6 @@ async def validate_vehicle(
         )
     except Exception as e:
         logger.error(f"AI vehicle validation failed: {e}")
-        # Return fallback professional error message instead of crashing to 500
         return VehicleValidationResponse(
             is_valid=False,
             brand=request.brand,

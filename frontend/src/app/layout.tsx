@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="az" data-scroll-behavior="smooth">
-      <body className="antialiased" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <body className="antialiased" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
         <QueryProvider>
           <AuthProvider>
             <LanguageSync />

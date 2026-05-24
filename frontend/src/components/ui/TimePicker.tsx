@@ -169,6 +169,11 @@ export default function TimePicker({
     }
   };
 
+  const isTimePresetActive = (presetTime: string) => {
+    const formattedDraft = `${String(draftHour).padStart(2, '0')}:${String(draftMinute).padStart(2, '0')}`;
+    return formattedDraft === presetTime;
+  };
+
   const hoursList = Array.from({ length: 24 }, (_, i) => i);
   const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
@@ -193,23 +198,27 @@ export default function TimePicker({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-text-muted transition-all hover:bg-surface-muted-strong active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-text-secondary/70 transition-all hover:text-text active:scale-90"
           >
-            <Icon name="x" size={20} />
+            <Icon name="x" size={16} />
           </button>
         </div>
 
         {/* Scroll Picker */}
-        <div className="relative mb-6 flex h-48 justify-center overflow-hidden rounded-2xl bg-surface-muted/30 p-2 border border-border">
-          {/* Highlight Selection Box */}
-          <div className="absolute top-1/2 left-0 right-0 h-12 -translate-y-1/2 bg-white/60 shadow-sm border-y border-border pointer-events-none" />
+        <div className="relative mb-6 flex h-48 justify-center overflow-hidden rounded-2xl bg-[#f8fafb] p-2 border border-border/80 shadow-inner z-0">
+          {/* Gradient overlay to fade top/bottom items (3D cylinder effect) */}
+          <div className="absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-[#f8fafb] via-[#f8fafb]/80 to-transparent pointer-events-none z-10" />
+          <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-[#f8fafb] via-[#f8fafb]/80 to-transparent pointer-events-none z-10" />
           
-          <div className="flex w-full max-w-[200px] justify-between px-6">
+          {/* Highlight Selection Box */}
+          <div className="absolute top-1/2 left-3 right-3 h-12 -translate-y-1/2 bg-brand-50/50 border border-brand-100/70 rounded-xl pointer-events-none z-0 shadow-sm" />
+          
+          <div className="relative flex w-full max-w-[200px] justify-between px-6 z-0">
             {/* Hours Column */}
             <div 
               ref={hoursContainerRef}
               onScroll={onHoursScroll}
-              className="no-scrollbar h-full w-16 overflow-y-scroll snap-y snap-mandatory scroll-smooth"
+              className="no-scrollbar h-full w-16 overflow-y-scroll snap-y snap-mandatory scroll-smooth z-0"
             >
               <div className="h-[72px]" /> {/* Top padding */}
               {hoursList.map((h) => (
@@ -217,8 +226,8 @@ export default function TimePicker({
                   key={h} 
                   data-val={h}
                   className={cn(
-                    "flex h-12 items-center justify-center snap-center text-2xl transition-all duration-200 cursor-pointer select-none",
-                    draftHour === h ? "font-bold text-brand-600 scale-110" : "font-medium text-text-muted/60 hover:text-text"
+                    "flex h-12 items-center justify-center snap-center text-xl transition-all duration-200 cursor-pointer select-none",
+                    draftHour === h ? "font-black text-brand-700 text-2xl scale-110 z-20" : "font-medium text-text-muted/40 text-lg scale-90 z-0"
                   )}
                   onClick={() => {
                     setDraftHour(h);
@@ -234,13 +243,13 @@ export default function TimePicker({
               <div className="h-[72px]" /> {/* Bottom padding */}
             </div>
 
-            <div className="flex h-full items-center justify-center text-2xl font-black text-text/30 pb-1">:</div>
+            <div className="flex h-full items-center justify-center text-2xl font-black text-brand-600/30 pb-1 z-10">:</div>
 
             {/* Minutes Column */}
             <div 
               ref={minutesContainerRef}
               onScroll={onMinutesScroll}
-              className="no-scrollbar h-full w-16 overflow-y-scroll snap-y snap-mandatory scroll-smooth"
+              className="no-scrollbar h-full w-16 overflow-y-scroll snap-y snap-mandatory scroll-smooth z-0"
             >
               <div className="h-[72px]" /> {/* Top padding */}
               {minutesList.map((m) => (
@@ -248,8 +257,8 @@ export default function TimePicker({
                   key={m} 
                   data-val={m}
                   className={cn(
-                    "flex h-12 items-center justify-center snap-center text-2xl transition-all duration-200 cursor-pointer select-none",
-                    draftMinute === m ? "font-bold text-brand-600 scale-110" : "font-medium text-text-muted/60 hover:text-text"
+                    "flex h-12 items-center justify-center snap-center text-xl transition-all duration-200 cursor-pointer select-none",
+                    draftMinute === m ? "font-black text-brand-700 text-2xl scale-110 z-20" : "font-medium text-text-muted/40 text-lg scale-90 z-0"
                   )}
                   onClick={() => {
                     setDraftMinute(m);
@@ -270,19 +279,55 @@ export default function TimePicker({
         {/* Quick Presets */}
         <div className="mb-6">
           <div className="flex flex-wrap justify-center gap-2">
-            <button type="button" onClick={() => setPreset('now')} className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-muted transition-colors active:scale-95 flex items-center gap-1.5 shadow-sm">
+            <button type="button" onClick={() => setPreset('now')} className="rounded-xl border border-border bg-white px-3.5 py-1.5 text-xs font-bold text-text hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95 flex items-center gap-1.5 shadow-sm">
               <Icon name="clock" size={14} className="text-brand-600" /> {t.now}
             </button>
-            <button type="button" onClick={() => setPreset('08:00')} className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-muted transition-colors active:scale-95 shadow-sm">
+            <button 
+              type="button" 
+              onClick={() => setPreset('08:00')} 
+              className={cn(
+                "rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border",
+                isTimePresetActive('08:00')
+                  ? "bg-brand-600 border-brand-600 text-white shadow-brand-600/10"
+                  : "bg-white border-border text-text hover:bg-slate-50 hover:border-slate-300"
+              )}
+            >
               {t.morning}
             </button>
-            <button type="button" onClick={() => setPreset('13:00')} className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-muted transition-colors active:scale-95 shadow-sm">
+            <button 
+              type="button" 
+              onClick={() => setPreset('13:00')} 
+              className={cn(
+                "rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border",
+                isTimePresetActive('13:00')
+                  ? "bg-brand-600 border-brand-600 text-white shadow-brand-600/10"
+                  : "bg-white border-border text-text hover:bg-slate-50 hover:border-slate-300"
+              )}
+            >
               {t.afternoon}
             </button>
-            <button type="button" onClick={() => setPreset('18:00')} className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-muted transition-colors active:scale-95 shadow-sm">
+            <button 
+              type="button" 
+              onClick={() => setPreset('18:00')} 
+              className={cn(
+                "rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border",
+                isTimePresetActive('18:00')
+                  ? "bg-brand-600 border-brand-600 text-white shadow-brand-600/10"
+                  : "bg-white border-border text-text hover:bg-slate-50 hover:border-slate-300"
+              )}
+            >
               {t.evening}
             </button>
-            <button type="button" onClick={() => setPreset('21:00')} className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-text hover:bg-surface-muted transition-colors active:scale-95 shadow-sm">
+            <button 
+              type="button" 
+              onClick={() => setPreset('21:00')} 
+              className={cn(
+                "rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border",
+                isTimePresetActive('21:00')
+                  ? "bg-brand-600 border-brand-600 text-white shadow-brand-600/10"
+                  : "bg-white border-border text-text hover:bg-slate-50 hover:border-slate-300"
+              )}
+            >
               {t.night}
             </button>
           </div>
@@ -292,7 +337,7 @@ export default function TimePicker({
         <button
           type="button"
           onClick={confirm}
-          className="h-12 w-full rounded-2xl bg-brand-600 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(40,167,69,0.3)] transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-[0_6px_20px_rgba(40,167,69,0.4)] active:translate-y-0 active:scale-[0.98]"
+          className="h-12 w-full rounded-2xl bg-brand-600 text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(5,71,82,0.15)] transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-[0_6px_16px_rgba(5,71,82,0.25)] active:translate-y-0 active:scale-[0.98]"
         >
           {t.confirm}
         </button>
