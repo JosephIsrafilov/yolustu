@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import AuthProvider from "@/components/auth/AuthProvider";
 import LanguageSync from "@/components/layout/LanguageSync";
 import QueryProvider from "@/providers/QueryProvider";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext", "cyrillic"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-ui",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Yolüstü — Azərbaycan üçün carpooling platforması",
@@ -15,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="az" data-scroll-behavior="smooth">
-      <body className="antialiased" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
+    <html lang="az" className={inter.variable} data-scroll-behavior="smooth">
+      <body className="antialiased">
         <QueryProvider>
           <AuthProvider>
             <LanguageSync />
@@ -27,3 +35,4 @@ export default function RootLayout({
     </html>
   );
 }
+

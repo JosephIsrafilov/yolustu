@@ -19,31 +19,31 @@ export default function Footer() {
 
   return (
     <footer className="mt-auto w-full border-t border-[#c0c8ca] bg-[#edfcff]">
-      <div className="mx-auto flex w-full max-w-[1140px] flex-col items-center justify-between gap-6 px-4 py-10 md:flex-row">
-        <div className="flex flex-col items-center gap-2 md:items-start">
-          <Link href="/" className="flex items-center gap-2 text-[18px] font-black text-[#002f37]">
+      <div className="mx-auto grid w-full max-w-[1140px] grid-cols-1 items-center gap-6 px-4 py-8 text-center md:grid-cols-[minmax(220px,1fr)_minmax(0,auto)_minmax(180px,1fr)] md:text-left">
+        <div className="flex min-w-0 flex-col items-center gap-2 md:items-start">
+          <Link href="/" className="ui-panel-title flex items-center gap-2 whitespace-nowrap text-[#002f37]">
             <Icon name="map" size={20} strokeWidth={1.8} />
             Yolüstü
           </Link>
-          <span className="text-[14px] text-[#40484a]">© {currentYear} Yolüstü. {copy.footer.rights}</span>
+          <span className="ui-meta-text text-[#40484a]">© {currentYear} Yolüstü. {copy.footer.rights}</span>
         </div>
-        <nav className="flex flex-wrap justify-center gap-5">
+        <nav className="flex min-w-0 flex-wrap justify-center gap-x-5 gap-y-2 md:flex-nowrap">
           {links.map((l) => (
             <Link key={l.label} href={l.href}
-              className="text-[12px] font-bold text-[#40484a] hover:text-[#054752] underline underline-offset-2 transition-colors">
+              className="ui-action-text whitespace-nowrap text-[#40484a] underline underline-offset-2 transition-colors hover:text-[#054752]">
               {l.label}
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-4 text-[12px] font-bold text-[#40484a]">
-          <div className="flex items-center gap-1" aria-label={copy.footer.languageLabel}>
+        <div className="ui-action-text grid grid-cols-[120px_auto_70px] items-center gap-3 justify-self-center text-[#40484a] md:justify-self-end shrink-0 flex-none h-6">
+          <div className="flex w-[120px] items-center justify-between shrink-0 flex-none" aria-label={copy.footer.languageLabel}>
             {LANGUAGES.map((item, index) => (
               <React.Fragment key={item.code}>
-                {index > 0 && <span className="text-[#c0c8ca]">|</span>}
+                {index > 0 && <span className="text-[#c0c8ca] flex-none">|</span>}
                 <button
                   type="button"
                   onClick={() => setLanguage(item.code)}
-                  className={`transition-colors hover:text-[#054752] ${
+                  className={`transition-colors hover:text-[#054752] flex-none text-center min-w-[24px] ${
                     language === item.code ? 'text-[#002f37]' : 'text-[#40484a]'
                   }`}
                   aria-pressed={language === item.code}
@@ -53,10 +53,10 @@ export default function Footer() {
               </React.Fragment>
             ))}
           </div>
-          <span className="text-[#c0c8ca]">|</span>
-          <button className="flex items-center gap-1 transition-colors hover:text-[#054752]" aria-label={copy.footer.currencyLabel}>
-            AZN ₼
-            <Icon name="chevron-right" size={12} className="rotate-90" />
+          <span className="text-[#c0c8ca] shrink-0 flex-none">|</span>
+          <button className="ui-action-text flex items-center justify-between w-[70px] shrink-0 flex-none transition-colors hover:text-[#054752]" aria-label={copy.footer.currencyLabel}>
+            <span className="truncate">AZN ₼</span>
+            <Icon name="chevron-right" size={12} className="rotate-90 shrink-0" />
           </button>
         </div>
       </div>

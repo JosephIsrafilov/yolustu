@@ -31,20 +31,20 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#c0c8ca]/70 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-[1140px] items-center justify-between px-4 md:h-[72px]">
-        <div className="flex items-center gap-6 md:gap-8">
+        <div className="flex items-center gap-6 md:gap-8 min-w-0">
           <Link
             href="/"
-            className="flex items-center gap-2 text-[18px] font-black leading-6 tracking-tight text-[#002f37] transition-all duration-200 ease-out hover:text-[#054752] active:scale-[0.98]"
+            className="ui-panel-title flex items-center gap-2 text-[#002f37] transition-all duration-200 ease-out hover:text-[#054752] active:scale-[0.98]"
           >
             <Icon name="map" size={22} strokeWidth={1.8} />
             Yolüstü
           </Link>
-          <nav className="hidden h-[72px] items-center gap-6 md:flex">
+          <nav className="hidden h-[72px] items-center gap-6 md:flex min-w-0">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex h-full items-center border-b-2 px-2 text-[14px] font-semibold transition-all duration-200 ease-out hover:-translate-y-0.5 ${
+                className={`ui-nav-text flex h-full items-center border-b-2 px-2 transition-all duration-200 ease-out hover:-translate-y-0.5 whitespace-nowrap ${
                   isActive(link.match)
                     ? 'border-[#002f37] text-[#002f37]'
                     : 'border-transparent text-[#40484a] hover:text-[#054752]'
@@ -56,19 +56,19 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {isAuthenticated && currentUser ? (
             <>
               <Link
                 href={ROUTES.bookings}
-                className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
+                className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
               >
                 {copy.header.bookings}
               </Link>
               {currentUser.role === 'admin' && (
                 <Link
                   href={ROUTES.admin}
-                  className="hidden text-[12px] font-bold text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
+                  className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
                 >
                   Admin
                 </Link>
@@ -83,11 +83,11 @@ export default function Header() {
                     className="h-8 w-8 rounded-full border border-[#c0c8ca] object-cover shadow-sm"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#054752] text-[13px] font-bold text-white shadow-sm">
+                  <div className="ui-action-text flex h-8 w-8 items-center justify-center rounded-full bg-[#054752] text-white shadow-sm">
                     {currentUser.fullName.charAt(0)}
                   </div>
                 )}
-                <span className="hidden text-[14px] font-bold text-[#002f37] lg:block">
+                <span className="ui-label-text hidden text-[#002f37] lg:block">
                   {currentUser.fullName.split(' ')[0]}
                 </span>
               </Link>
@@ -102,13 +102,13 @@ export default function Header() {
             <>
               <Link
                 href={ROUTES.login}
-                className="hidden rounded-lg px-4 py-2 text-[12px] font-bold text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] md:block"
+                className="ui-action-text hidden rounded-lg px-4 py-2 text-[#002f37] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] md:block"
               >
                 {copy.header.login}
               </Link>
               <Link
                 href={ROUTES.register}
-                className="rounded-xl bg-[#002f37] px-4 py-2.5 text-[12px] font-bold text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#054752] hover:shadow-md active:scale-[0.98]"
+                className="ui-action-text rounded-xl bg-[#002f37] px-4 py-2.5 text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#054752] hover:shadow-md active:scale-[0.98]"
               >
                 {copy.header.register}
               </Link>
@@ -131,7 +131,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`rounded-lg px-2 py-2 text-[14px] font-semibold transition-all duration-200 ease-out active:scale-[0.98] ${
+                className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
                   isActive(link.match) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
                 }`}
               >

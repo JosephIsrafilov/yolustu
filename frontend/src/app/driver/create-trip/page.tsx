@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -327,8 +328,43 @@ export default function CreateTripPage() {
         )}
         
         {!isLoadingVehicles && !isMockDataMode && vehicles.length === 0 && (
-          <div className="mb-6 rounded-2xl border border-warn-500/20 bg-warn-500/10 p-4 text-sm text-text-secondary shadow-sm">
-            Vehicle list is empty. Trip creation will use backend default vehicle fallback.
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                <Icon name="car" size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-amber-900 leading-tight">
+                  {language === 'az' 
+                    ? 'Nəqliyyat vasitəsi əlavə edilməyib' 
+                    : language === 'ru' 
+                    ? 'Транспорт не добавлен' 
+                    : 'No Vehicle Registered'}
+                </h4>
+                <p className="text-xs text-amber-800/90 leading-relaxed mt-1">
+                  {language === 'az' 
+                    ? 'Gediş yaratmaq üçün profilinizə avtomobil əlavə etməyiniz tövsiyə olunur. Əks halda sistem standart avtomobildən istifadə edəcək.' 
+                    : language === 'ru' 
+                    ? 'Для создания поездки рекомендуется добавить автомобиль в ваш профиль. Иначе система использует транспорт по умолчанию.' 
+                    : 'To publish a trip, we recommend registering your vehicle in your profile. Otherwise, a standard default fallback vehicle will be used.'}
+                </p>
+                <div className="mt-3">
+                  <Link 
+                    href={ROUTES.profile}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  >
+                    <span>
+                      {language === 'az' 
+                        ? 'Profilə nəqliyyat əlavə et' 
+                        : language === 'ru' 
+                        ? 'Добавить транспорт в профиль' 
+                        : 'Add Vehicle to Profile'}
+                    </span>
+                    <Icon name="arrow-right" size={12} />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <>

@@ -168,8 +168,8 @@ export default function TripDetailsPage() {
 
   return (
     <WebLayout title={copy.tripDetailsTitle} showBack>
-      <div className="grid lg:grid-cols-3 gap-6 stagger-children">
-        <div className="lg:col-span-2 flex flex-col gap-4">
+      <div className="grid lg:grid-cols-3 gap-6 stagger-children min-w-0">
+        <div className="lg:col-span-2 flex flex-col gap-4 min-w-0">
           <Card><RouteTimeline departure={trip.departureCity} arrival={trip.arrivalCity} meetingPoint={trip.meetingPoint} dropoffPoint={trip.dropoffPoint} /></Card>
           {trip.origin && trip.destination && (
             <Card className="overflow-hidden p-0">
@@ -226,8 +226,8 @@ export default function TripDetailsPage() {
           <StatusBadge status={trip.status} type="trip" />
           {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.driverReviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         </div>
-        <div className="lg:col-span-1">
-          <div className="sticky top-24 flex flex-col gap-4">
+        <div className="lg:col-span-1 min-w-0">
+          <div className="sticky top-24 flex flex-col gap-4 min-w-0">
             <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">{copy.pricePerSeatLabel}</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
             {lastError && (
               <Card padding="sm" className="bg-[#fff4f2] border-[#ffdad6]">

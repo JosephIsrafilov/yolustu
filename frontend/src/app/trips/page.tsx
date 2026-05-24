@@ -59,22 +59,22 @@ function TripsContent() {
 
   return (
     <WebLayout>
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col items-start gap-6 md:flex-row">
         {}
-        <aside className="order-2 w-full md:order-1 md:w-[280px] shrink-0">
-          <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-[80px]" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
+        <aside className="order-2 w-full md:order-1 md:w-70 shrink-0">
+          <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-20" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
             <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
-              <h2 className="text-[18px] font-semibold text-[#002f37]">{copy.tripsPage.filters}</h2>
-              <button onClick={() => setFilters({})} className="text-[#054752] text-[12px] font-bold hover:underline">{copy.tripsPage.reset}</button>
+              <h2 className="ui-panel-title text-[18px] text-[#002f37]">{copy.tripsPage.filters}</h2>
+              <button onClick={() => setFilters({})} className="ui-action-text text-[#054752] hover:underline">{copy.tripsPage.reset}</button>
             </div>
 
             {}
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.from}</h3>
+              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.from}</h3>
               <div className="relative">
                 <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
                 <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
-                  className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
+                  className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
                   <option value="">{copy.common.allCities}</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -82,11 +82,11 @@ function TripsContent() {
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.to}</h3>
+              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.to}</h3>
               <div className="relative">
                 <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
                 <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
-                  className="w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
+                  className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
                   <option value="">{copy.common.allCities}</option>
                   {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -94,27 +94,27 @@ function TripsContent() {
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.common.date}</h3>
+              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.date}</h3>
               <input type="date" value={filters.date || ''} onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
-                className="w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[14px] text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
+                className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
             </div>
 
             <div className="mb-5">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-2">{copy.tripsPage.passengerCount}</h3>
+              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.tripsPage.passengerCount}</h3>
               <div className="flex items-center justify-between rounded-xl border border-[#c0c8ca] bg-white px-2 py-1.5">
                 <button
                   type="button"
                   onClick={() => updateMinSeats(Math.max(1, (filters.minSeats || 1) - 1))}
-                  className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
                   aria-label={`${copy.common.passenger} -`}
                 >
                   −
                 </button>
-                <span className="min-w-10 text-center text-[14px] font-bold text-[#011f23]">{filters.minSeats || 1}</span>
+                <span className="ui-label-text min-w-10 text-center text-[#011f23]">{filters.minSeats || 1}</span>
                 <button
                   type="button"
                   onClick={() => updateMinSeats(Math.min(4, (filters.minSeats || 1) + 1))}
-                  className="h-8 w-8 rounded-lg bg-[#eef3f4] text-[14px] font-bold text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
                   aria-label={`${copy.common.passenger} +`}
                 >
                   +
@@ -123,64 +123,64 @@ function TripsContent() {
             </div>
 
             <div className="mb-5 border-t border-[#c0c8ca] pt-4">
-              <h3 className="text-[14px] font-bold text-[#40484a] mb-3">{copy.createTrip.preferencesTitle}</h3>
+              <h3 className="ui-label-text text-[#40484a] mb-3">{copy.createTrip.preferencesTitle}</h3>
               <div className="flex flex-col gap-2.5">
-                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={filters.femaleOnly || false}
                     onChange={(e) => setFilters((p) => ({ ...p, femaleOnly: e.target.checked || undefined }))}
-                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                   />
-                  <span>{copy.createTrip.femaleOnlyLabel}</span>
+                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.femaleOnlyLabel}</span>
                 </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={filters.smokingAllowed || false}
                     onChange={(e) => setFilters((p) => ({ ...p, smokingAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                   />
-                  <span>{copy.createTrip.smokingAllowedLabel}</span>
+                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.smokingAllowedLabel}</span>
                 </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={filters.petsAllowed || false}
                     onChange={(e) => setFilters((p) => ({ ...p, petsAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                   />
-                  <span>{copy.createTrip.petsAllowedLabel}</span>
+                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.petsAllowedLabel}</span>
                 </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
+                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={filters.musicAllowed || false}
                     onChange={(e) => setFilters((p) => ({ ...p, musicAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                   />
-                  <span>{copy.createTrip.musicAllowedLabel}</span>
+                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.musicAllowedLabel}</span>
                 </label>
               </div>
             </div>
 
-            <div className="rounded-xl bg-[#edfcff] p-3 text-[13px] leading-5 text-[#40484a]">
+            <div className="ui-note-text wrap-break-word rounded-xl bg-[#edfcff] p-3 leading-4.5 text-[#40484a] hyphens-auto">
               {copy.tripsPage.helper}
             </div>
           </div>
         </aside>
 
         {}
-        <section className="order-1 flex-1 flex flex-col gap-4 md:order-2">
+        <section className="order-1 flex min-w-0 flex-1 flex-col gap-4 md:order-2">
           {}
-          <div className="bg-[#dbf9fe] p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
-              <div className="flex items-center gap-2 text-[24px] font-semibold text-[#002f37] mb-1">
+              <div className="ui-stat-text flex items-center gap-2 text-[#002f37] mb-1">
                 <span>{from}</span>
                 <Icon name="arrow-right" size={20} className="text-[#70787b]" />
                 <span>{to}</span>
               </div>
-              <div className="text-[14px] text-[#40484a] flex items-center gap-2">
+              <div className="ui-meta-text text-[#40484a] flex items-center gap-2">
                 <Icon name="calendar" size={14} />
                 <span>{filters.date || copy.common.allDates}</span>
               </div>
@@ -189,7 +189,7 @@ function TripsContent() {
               <div className="flex bg-white rounded-lg p-1 border border-[#c0c8ca] shadow-sm">
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                  className={`ui-action-text px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                     viewMode === 'list' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
                   }`}
                 >
@@ -198,7 +198,7 @@ function TripsContent() {
                 </button>
                 <button 
                   onClick={() => setViewMode('map')}
-                  className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all flex items-center gap-1.5 ${
+                  className={`ui-action-text px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                     viewMode === 'map' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
                   }`}
                 >
@@ -206,7 +206,7 @@ function TripsContent() {
                   {copy.tripsPage.map}
                 </button>
               </div>
-              <span className="text-[14px] text-[#40484a] font-medium">
+              <span className="ui-meta-text text-[#40484a]">
                 {filteredTrips.length} {copy.tripsPage.resultsFound}
               </span>
             </div>
@@ -214,7 +214,7 @@ function TripsContent() {
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {activeFilters.map((filter) => (
-                <span key={filter} className="rounded-full border border-[#c0c8ca] bg-white px-3 py-1 text-[12px] font-semibold text-[#054752]">
+                <span key={filter} className="ui-chip-text rounded-full border border-[#c0c8ca] bg-white px-3 py-1 text-[#054752]">
                   {filter}
                 </span>
               ))}
@@ -223,7 +223,7 @@ function TripsContent() {
 
           {}
           {viewMode === 'map' ? (
-            <div className="h-[400px] md:h-[600px] w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
+            <div className="h-100 md:h-150 w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
               <MapContainer className="h-full">
                 <RideMarkers trips={filteredTrips} users={users} />
               </MapContainer>
@@ -252,11 +252,12 @@ function TripsContent() {
                 return (
                   <article key={trip.id}
                     onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
-                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 shadow-card transition-all ${
+                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 shadow-card transition-all sm:min-h-36.75 ${
                       isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] hover:shadow-card-hover cursor-pointer'
                     }`}>
 
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">                      <div className="order-2 flex items-center gap-3 sm:w-[180px] shrink-0">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                      <div className="order-2 flex shrink-0 items-center gap-3 sm:w-45">
                         <div className="relative">
                           {driver?.avatarUrl ? (
                             <Image src={driver.avatarUrl} alt={driver.fullName} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
@@ -272,13 +273,13 @@ function TripsContent() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-[15px] font-bold text-[#002f37] flex items-center gap-1">
+                          <h4 className="ui-card-title text-[#002f37] flex items-center gap-1">
                             <span>{driver?.fullName.split(' ')[0] || copy.common.unknown}</span>
                             {driver?.verificationStatus === 'approved' && (
                               <Icon name="shield-check" size={14} className="text-green-600 shrink-0" />
                             )}
                           </h4>
-                          <div className="flex items-center gap-1 text-[13px] text-[#40484a]">
+                          <div className="ui-meta-text flex items-center gap-1 text-[#40484a]">
                             <Icon name="star" size={13} className="text-[#F5A623]" fill="currentColor" />
                             <span className="font-bold">{driver?.rating.toFixed(1)}</span>
                             <span>({driver?.totalTrips})</span>
@@ -287,25 +288,25 @@ function TripsContent() {
                       </div>
 
                       {/* Timeline / Route Banner */}
-                      <div className="order-1 flex flex-col gap-2 flex-1 min-w-0">
+                      <div className="order-1 flex min-w-0 flex-1 flex-col gap-2">
                         {/* Cities Route */}
-                        <div className="flex items-center gap-2 text-[18px] font-bold text-[#002f37]">
-                          <span>{trip.departureCity}</span>
+                        <div className="ui-card-route flex min-w-0 items-center gap-2 text-[#002f37]">
+                          <span className="min-w-0 wrap-break-word hyphens-auto">{trip.departureCity}</span>
                           <Icon name="arrow-right" size={16} className="text-[#054752] shrink-0" />
-                          <span>{trip.arrivalCity}</span>
+                          <span className="min-w-0 wrap-break-word hyphens-auto">{trip.arrivalCity}</span>
                         </div>
                         
                         {/* Trip Info Meta Row */}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-[#40484a]">
+                        <div className="ui-meta-text flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[#40484a]">
                           {/* Departure Time */}
-                          <div className="flex items-center gap-1 bg-[#edfcff] px-2 py-0.5 rounded text-[#054752] font-semibold border border-[#054752]/10">
+                          <div className="ui-chip-text flex items-center gap-1 bg-[#edfcff] px-2 py-0.5 rounded text-[#054752] border border-[#054752]/10">
                             <Icon name="clock" size={13} />
                             <span>{trip.time}</span>
                           </div>
                           
                           {/* Car Model */}
                           {trip.carModel && (
-                            <div className="flex items-center gap-1.5 text-[#50585a]">
+                            <div className="ui-meta-text flex items-center gap-1.5 text-[#50585a]">
                               <Icon name="car" size={13} />
                               <span>{trip.carModel}</span>
                             </div>
@@ -314,11 +315,11 @@ function TripsContent() {
                       </div>
 
                       {/* Pricing, Seats, Preferences */}
-                      <div className="order-3 flex flex-col items-end sm:w-[120px] shrink-0">
-                        <div className="text-[20px] font-bold text-[#002f37]">{trip.pricePerSeat} ₼</div>
-                        <div className={`flex items-center gap-1 mt-1 text-[12px] font-bold ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
+                      <div className="order-3 flex shrink-0 flex-col items-end text-right sm:w-35">
+                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} ₼</div>
+                        <div className={`ui-chip-text flex items-center gap-1 mt-1 ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
-                          <span>{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
+                          <span className="leading-tight">{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
                         </div>
                         
                         {/* Comfort Preference Badges */}
@@ -345,7 +346,7 @@ function TripsContent() {
                           )}
                         </div>
 
-                        {!isFull && <span className="mt-2 text-[12px] font-bold text-[#054752]">{copy.common.details}</span>}
+                        {!isFull && <span className="ui-action-text mt-2 whitespace-nowrap text-[#054752]">{copy.common.details}</span>}
                       </div>
                     </div>
                   </article>

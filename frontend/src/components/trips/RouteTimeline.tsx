@@ -26,22 +26,22 @@ export default function RouteTimeline({
       </div>
 
       {}
-      <div className="flex flex-col justify-between flex-1 py-0.5">
-        <div>
-          <p className="text-base font-semibold text-text">{departure}</p>
+      <div className="flex flex-col justify-between flex-1 py-0.5 min-w-0">
+        <div className="min-w-0">
+          <p className="ui-card-title text-text truncate">{departure}</p>
           {meetingPoint && (
-            <p className="flex items-center gap-1 text-xs text-text-muted mt-0.5">
-              <Icon name="map-pin" size={11} className="shrink-0" />
-              {meetingPoint}
+            <p className="ui-meta-text flex items-center gap-1 text-text-muted mt-0.5 min-w-0 break-words">
+              <Icon name="map-pin" size={11} className="shrink-0 flex-none" />
+              <span className="break-words">{meetingPoint}</span>
             </p>
           )}
         </div>
-        <div>
-          <p className="text-base font-semibold text-text">{arrival}</p>
+        <div className="min-w-0">
+          <p className="ui-card-title text-text truncate">{arrival}</p>
           {dropoffPoint && (
-            <p className="flex items-center gap-1 text-xs text-text-muted mt-0.5">
-              <Icon name="map-pin" size={11} className="shrink-0" />
-              {dropoffPoint}
+            <p className="ui-meta-text flex items-center gap-1 text-text-muted mt-0.5 min-w-0 break-words">
+              <Icon name="map-pin" size={11} className="shrink-0 flex-none" />
+              <span className="break-words">{dropoffPoint}</span>
             </p>
           )}
         </div>

@@ -24,12 +24,12 @@ export default function Badge({ children, variant = 'default', className }: Badg
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center justify-center gap-1 rounded-full px-2.5 h-6 text-xs font-medium shrink-0 flex-none',
         variantClasses[variant],
         className,
       )}
     >
-      {children}
+      <span className="truncate block max-w-[120px]">{children}</span>
     </span>
   );
 }
