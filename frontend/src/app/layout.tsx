@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="az" className={inter.variable} data-scroll-behavior="smooth">
-      <body className="antialiased">
+      <body className={`${inter.variable} antialiased`}>
         <QueryProvider>
           <AuthProvider>
             <LanguageSync />
