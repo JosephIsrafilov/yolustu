@@ -44,6 +44,7 @@ export default function Select({
   const [shouldRender, setShouldRender] = useState(false);
   const [isPositioned, setIsPositioned] = useState(false);
   const [placement, setPlacement] = useState<'down' | 'up'>('down');
+  const [animationState, setAnimationState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed');
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -55,13 +56,31 @@ export default function Select({
   });
   const listboxId = useId();
 
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const openRafRef1 = useRef<number | null>(null);
+  const openRafRef2 = useRef<number | null>(null);
+
   const openDropdown = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setShouldRender(true);
+    setAnimationState('closed');
     setIsOpen(true);
     setSearch('');
   };
 
   const closeDropdown = () => {
+    if (openRafRef1.current) {
+      cancelAnimationFrame(openRafRef1.current);
+      openRafRef1.current = null;
+    }
+    if (openRafRef2.current) {
+      cancelAnimationFrame(openRafRef2.current);
+      openRafRef2.current = null;
+    }
+    setAnimationState('closing');
     setIsOpen(false);
   };
 
@@ -75,15 +94,42 @@ export default function Select({
     });
   }, [options]);
 
+  // Cleanup refs on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      if (openRafRef1.current) cancelAnimationFrame(openRafRef1.current);
+      if (openRafRef2.current) cancelAnimationFrame(openRafRef2.current);
+    };
+  }, []);
+
   // Manage shouldRender for transition-out
   useEffect(() => {
     if (isOpen || !shouldRender) return;
-    const timeoutId = setTimeout(() => {
+    closeTimerRef.current = setTimeout(() => {
       setShouldRender(false);
       setIsPositioned(false);
-    }, 180);
-    return () => clearTimeout(timeoutId);
+      setAnimationState('closed');
+    }, 200);
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
   }, [isOpen, shouldRender]);
+
+  // Transition from closed to open once positioned
+  useEffect(() => {
+    if (isPositioned && isOpen && animationState === 'closed') {
+      openRafRef1.current = requestAnimationFrame(() => {
+        setAnimationState('opening');
+        openRafRef2.current = requestAnimationFrame(() => {
+          setAnimationState('open');
+        });
+      });
+    }
+  }, [isPositioned, isOpen, animationState]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -229,13 +275,13 @@ export default function Select({
           style={dropdownStyle}
           className={cn(
             "flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg",
-            "transition-[opacity,transform] duration-175 ease-out will-change-transform motion-reduce:transition-none motion-reduce:transform-none",
+            "transition-all duration-200 ease-out transform-gpu will-change-transform motion-reduce:transition-none motion-reduce:transform-none",
             placement === 'down' ? 'origin-top' : 'origin-bottom',
-            isPositioned && isOpen
+            animationState === 'open'
               ? "opacity-100 scale-100 translate-y-0"
               : cn(
-                  "opacity-0 pointer-events-none scale-[0.98]",
-                  placement === 'down' ? "-translate-y-1" : "translate-y-1"
+                  "opacity-0 scale-95 pointer-events-none",
+                  placement === 'down' ? "-translate-y-2" : "translate-y-2"
                 )
           )}
         >
