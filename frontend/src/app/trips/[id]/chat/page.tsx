@@ -43,12 +43,19 @@ export default function ChatPage() {
   const currentUser = useAppStore((s) => s.currentUser);
   const language = useAppStore((s) => s.language);
   const { messages, setMessages, isConnected } = useChat(rideId);
+  const markRideAsRead = useAppStore((s) => s.markRideAsRead);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const copy = I18N[language].chat;
   const localCopy = CHAT_PAGE_I18N[language] || CHAT_PAGE_I18N.en;
+
+  useEffect(() => {
+    if (rideId && markRideAsRead) {
+      markRideAsRead(rideId);
+    }
+  }, [rideId, messages, markRideAsRead]);
 
   useEffect(() => {
     const fetchHistory = async () => {

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.domains.engagement.models import Message, Review
 from app.domains.engagement.schemas import MessageCreate, ReviewCreate
@@ -60,6 +60,7 @@ class MessageRepository:
     def list_for_ride(self, ride_id: UUID) -> list[Message]:
         return (
             self.db.query(Message)
+            .options(joinedload(Message.sender))
             .filter(Message.ride_id == ride_id)
             .order_by(Message.created_at.asc())
             .all()

@@ -65,6 +65,9 @@ export interface ReviewSlice {
 export interface UiSlice {
   language: Language;
   setLanguage: (language: Language) => void;
+  unreadRides: Record<string, boolean>;
+  markRideAsRead: (rideId: string) => void;
+  markRideAsUnread: (rideId: string) => void;
 }
 
 export type AppState = AuthSlice & TripSlice & BookingSlice & ReviewSlice & UiSlice;

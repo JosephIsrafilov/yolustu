@@ -110,6 +110,7 @@ export default function TripDetailsPage() {
     lastError,
     clearError,
     language,
+    unreadRides,
   } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
@@ -276,10 +277,16 @@ export default function TripDetailsPage() {
                   fullWidth 
                   variant="outline" 
                   onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
-                  className="flex items-center justify-center gap-2"
+                  className="flex items-center justify-center gap-2 relative"
                 >
                   <Icon name="message-square" size={18} />
                   {copy.goToChatBtn}
+                  {(unreadRides || {})[trip.id] && (
+                    <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </span>
+                  )}
                 </Button>
                 
                 {existingBooking && (existingBooking.status === 'accepted' || existingBooking.status === 'paid') && (

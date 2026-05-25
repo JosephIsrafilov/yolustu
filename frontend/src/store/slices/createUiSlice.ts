@@ -9,4 +9,18 @@ export const createUiSlice: StateCreator<
 > = (set) => ({
   language: 'az',
   setLanguage: (language) => set({ language }),
+  unreadRides: {},
+  markRideAsRead: (rideId) =>
+    set((state) => {
+      const updated = { ...(state.unreadRides || {}) };
+      delete updated[rideId];
+      return { unreadRides: updated };
+    }),
+  markRideAsUnread: (rideId) =>
+    set((state) => ({
+      unreadRides: {
+        ...(state.unreadRides || {}),
+        [rideId]: true,
+      },
+    })),
 });

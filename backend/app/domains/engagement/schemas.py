@@ -40,3 +40,4 @@ class MessageResponse(MessageBase):
     ride_id: UUID
     sender_id: UUID
     created_at: datetime
+    sender_name: str

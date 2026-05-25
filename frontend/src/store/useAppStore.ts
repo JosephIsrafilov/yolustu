@@ -26,6 +26,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         activeRole: state.activeRole,
         language: state.language,
+        unreadRides: state.unreadRides,
       }),
     }
   )

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Button from '@/components/ui/Button';
@@ -9,6 +10,7 @@ import { formatPrice } from '@/lib/utils';
 import type { Booking, Trip, User } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
+import { ROUTES } from '@/lib/routes';
 
 interface BookingCardProps {
   booking: Booking;
@@ -27,7 +29,9 @@ export default function BookingCard({
   onReview,
   onPay,
 }: BookingCardProps) {
+  const router = useRouter();
   const language = useAppStore((state) => state.language);
+  const unreadRides = useAppStore((state) => state.unreadRides) || {};
   const copy = I18N[language].bookings;
 
   if (!trip) return null;
@@ -76,12 +80,29 @@ export default function BookingCard({
       )}
 
       {/* Actions */}
-      {(canCancel || canReview || (booking.status === 'accepted' && onPay)) && (
+      {(canCancel || canReview || (booking.status === 'accepted' && onPay) || ['accepted', 'paid'].includes(booking.status)) && (
         <div className="flex gap-2 mt-3 pt-3 border-t border-border flex-nowrap items-center h-12 w-full">
           {booking.status === 'accepted' && onPay && (
             <Button variant="primary" size="sm" onClick={onPay} className="flex-1 w-full">
               <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
               <span className="truncate">{copy.payBtn}</span>
+            </Button>
+          )}
+          {['accepted', 'paid'].includes(booking.status) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
+              className="flex-1 w-full flex items-center justify-center gap-1.5 relative animate-fade-in"
+            >
+              <Icon name="message-square" size={14} className="shrink-0 flex-none" />
+              <span className="truncate">Chat</span>
+              {unreadRides[trip.id] && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
             </Button>
           )}
           {canCancel && onCancel && (

@@ -38,3 +38,9 @@ class Message(Base):
 
     ride = relationship("Ride", back_populates="messages")
     sender = relationship("User", back_populates="messages_sent")
+
+    @property
+    def sender_name(self) -> str:
+        if self.sender:
+            return f"{self.sender.first_name} {self.sender.last_name}"
+        return "User"

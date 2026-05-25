@@ -62,11 +62,25 @@ export function usePushNotifications() {
 
             // Trigger live UI refresh if it's a booking event
             const notificationType = data.data?.type;
-            if (typeof notificationType === 'string' && notificationType.startsWith('booking_')) {
-              const store = useAppStore.getState();
-              store.fetchBookings();
-              store.fetchBookingRequests();
-              store.fetchTrips();
+            if (typeof notificationType === 'string') {
+              if (notificationType.startsWith('booking_')) {
+                const store = useAppStore.getState();
+                store.fetchBookings();
+                store.fetchBookingRequests();
+                store.fetchTrips();
+              } else if (notificationType === 'new_message') {
+                const rideId = data.data?.ride_id;
+                if (typeof rideId === 'string') {
+                  const store = useAppStore.getState();
+                  const isCurrentChat = typeof window !== 'undefined' && 
+                    (window.location.pathname === `/trips/${rideId}/chat` || 
+                     window.location.pathname === `/trips/${rideId}/chat/`);
+                  
+                  if (!isCurrentChat) {
+                    store.markRideAsUnread(rideId);
+                  }
+                }
+              }
             }
           }
         } catch (error) {
