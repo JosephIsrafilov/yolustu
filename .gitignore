@@ -17,6 +17,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 .superpowers/
+check-ci.ps1
 
 # Python
 __pycache__/
