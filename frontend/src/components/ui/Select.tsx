@@ -45,7 +45,11 @@ export default function Select({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    left: -9999,
+    top: -9999,
+  });
   const listboxId = useId();
 
   const normalizedOptions = React.useMemo((): SelectOption[] => {
@@ -80,8 +84,13 @@ export default function Select({
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
+      if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        setIsOpen(false);
+        return;
+      }
+
       const viewportPadding = 8;
-      const preferredHeight = 240;
+      const dropdownHeight = dropdownRef.current?.offsetHeight || 240;
       const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
       const spaceAbove = rect.top - viewportPadding;
       const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
@@ -89,8 +98,8 @@ export default function Select({
       const width = Math.max(rect.width, 180);
       const maxLeft = window.innerWidth - width - viewportPadding;
       const left = Math.min(Math.max(viewportPadding, rect.left), Math.max(viewportPadding, maxLeft));
-      const top = openUpward ? Math.max(viewportPadding, rect.top - preferredHeight - 4) : rect.bottom + 4;
-      const maxHeight = Math.max(140, Math.min(preferredHeight, openUpward ? spaceAbove - 4 : spaceBelow - 4));
+      const top = openUpward ? Math.max(viewportPadding, rect.top - dropdownHeight - 4) : rect.bottom + 4;
+      const maxHeight = Math.max(140, Math.min(240, openUpward ? spaceAbove - 4 : spaceBelow - 4));
 
       setDropdownStyle({
         position: 'fixed',
@@ -103,11 +112,29 @@ export default function Select({
     };
 
     updatePosition();
+    const rafId = requestAnimationFrame(() => {
+      updatePosition();
+    });
+
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, true);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updatePosition();
+      });
+      if (triggerRef.current) resizeObserver.observe(triggerRef.current);
+      if (dropdownRef.current) resizeObserver.observe(dropdownRef.current);
+    }
+
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, [isOpen]);
 

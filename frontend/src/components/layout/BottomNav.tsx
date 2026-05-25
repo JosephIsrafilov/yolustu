@@ -25,7 +25,7 @@ export default function BottomNav() {
   const navItems: NavItem[] = [
     { href: ROUTES.search, label: t.header.findRide, icon: 'search' },
     ...(capabilities.canBookRide ? [{ href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' as const }] : []),
-    ...(capabilities.canAccessDriverDashboard ? [{ href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' as const }] : []),
+    ...(capabilities.canAccessDriverDashboard && activeMode === 'driver' ? [{ href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' as const }] : []),
     { href: ROUTES.profile, label: t.profile.title, icon: 'user-circle' },
   ];
 

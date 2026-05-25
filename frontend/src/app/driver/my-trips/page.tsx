@@ -14,14 +14,13 @@ import { I18N } from '@/lib/i18n';
 
 export default function MyTripsPage() {
   const router = useRouter();
-  const { trips, users, currentUser, cancelTrip, completeTrip, fetchTrips, lastError, clearError, language, unreadRides } = useAppStore();
+  const { trips, users, currentUser, cancelTrip, completeTrip, fetchTrips, lastError, clearError, language } = useAppStore();
   const myTrips = trips.filter((t) => t.driverId === currentUser?.id);
   const active = myTrips.filter((t) => t.status === 'active');
   const past = myTrips.filter((t) => t.status !== 'active');
 
   const copy = I18N[language].myTrips;
   const common = I18N[language].common;
-  const tripDetailsCopy = I18N[language].tripDetails;
 
   React.useEffect(() => {
     fetchTrips();
@@ -56,22 +55,7 @@ export default function MyTripsPage() {
                         <Button size="sm" variant="secondary" className="flex-1" onClick={() => completeTrip(trip.id)}>{copy.completeAction}</Button>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="primary" className="flex-1" onClick={() => router.push(ROUTES.driverRequests)}>{copy.requestsAction}</Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 relative flex items-center justify-center gap-1.5"
-                          onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
-                        >
-                          <Icon name="message-square" size={14} className="shrink-0" />
-                          <span>{tripDetailsCopy.chatAction}</span>
-                          {(unreadRides || {})[trip.id] && (
-                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                            </span>
-                          )}
-                        </Button>
+                        <Button size="sm" variant="primary" className="w-full" onClick={() => router.push(ROUTES.driverRequests)}>{copy.requestsAction}</Button>
                       </div>
                     </div>
                   </div>

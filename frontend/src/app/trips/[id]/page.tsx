@@ -333,7 +333,7 @@ export default function TripDetailsPage() {
             )}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />{copy.ownTripWarning}</div></Card>)}
             
-            {(isOwnTrip || existingBooking?.status === 'accepted' || existingBooking?.status === 'paid') && (
+            {(!isOwnTrip && (existingBooking?.status === 'accepted' || existingBooking?.status === 'paid')) && (
               <div className="flex flex-col gap-2">
                 <Button 
                   fullWidth 

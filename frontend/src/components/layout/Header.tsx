@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
@@ -30,6 +30,7 @@ const HEADER_MODE_I18N = {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, currentUser, logout, language, activeMode, switchRole } = useAppStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const copy = I18N[language];
@@ -41,13 +42,20 @@ export default function Header() {
   const showDriverDashboardLink = capabilities.canAccessDriverDashboard && activeMode === 'passenger';
   const showPassengerSwitch = capabilities.canAccessDriverDashboard && activeMode === 'driver';
 
+  const handleSwitchToPassenger = () => {
+    switchRole('passenger');
+    router.push(ROUTES.search);
+  };
+
+  const handleSwitchToDriver = () => {
+    switchRole('driver');
+    router.push(ROUTES.driverDashboard);
+  };
+
   const navLinks = !isAdmin
     ? [
         { label: copy.header.findRide, href: ROUTES.trips, match: '/trips' },
         { label: copy.header.offerRide, href: offerRoute, match: '/driver' },
-        ...(showDriverDashboardLink
-          ? [{ label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' }]
-          : []),
       ]
     : [];
 
@@ -98,7 +106,7 @@ export default function Header() {
               {showPassengerSwitch && (
                 <button
                   type="button"
-                  onClick={() => switchRole('passenger')}
+                  onClick={handleSwitchToPassenger}
                   className="ui-action-text hidden rounded-lg px-3 py-2 text-[#002f37] transition-all duration-200 ease-out hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] lg:block"
                 >
                   {modeCopy.toPassenger}
@@ -107,7 +115,7 @@ export default function Header() {
               {!showPassengerSwitch && showDriverDashboardLink && (
                 <button
                   type="button"
-                  onClick={() => switchRole('driver')}
+                  onClick={handleSwitchToDriver}
                   className="ui-action-text hidden rounded-lg px-3 py-2 text-[#002f37] transition-all duration-200 ease-out hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] lg:block"
                 >
                   {modeCopy.toDriver}
@@ -189,6 +197,30 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            {showPassengerSwitch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleSwitchToPassenger();
+                }}
+                className="ui-nav-text text-left rounded-lg px-2 py-2 text-[#002f37] hover:bg-[#edfcff] transition-all"
+              >
+                {modeCopy.toPassenger}
+              </button>
+            )}
+            {!showPassengerSwitch && showDriverDashboardLink && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleSwitchToDriver();
+                }}
+                className="ui-nav-text text-left rounded-lg px-2 py-2 text-[#002f37] hover:bg-[#edfcff] transition-all"
+              >
+                {modeCopy.toDriver}
+              </button>
+            )}
           </nav>
         </div>
       )}
