@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/useAppStore';
 const ADMIN_LAYOUT_I18N = {
   az: {
     adminTitle: 'Yolüstü Admin',
+    roleLabel: 'Admin',
     signOut: 'Çıxış',
     tabs: {
       panel: 'Panel',
@@ -23,6 +24,7 @@ const ADMIN_LAYOUT_I18N = {
   },
   ru: {
     adminTitle: 'Админ Yolüstü',
+    roleLabel: 'Администратор',
     signOut: 'Выйти',
     tabs: {
       panel: 'Панель',
@@ -34,6 +36,7 @@ const ADMIN_LAYOUT_I18N = {
   },
   en: {
     adminTitle: 'Yolüstü Admin',
+    roleLabel: 'Administrator',
     signOut: 'Sign out',
     tabs: {
       panel: 'Dashboard',
@@ -48,8 +51,10 @@ const ADMIN_LAYOUT_I18N = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { language, logout } = useAppStore();
+  const { language, logout, currentUser } = useAppStore();
   const t = ADMIN_LAYOUT_I18N[language];
+  const adminName = currentUser?.fullName || t.adminTitle;
+  const adminInitial = adminName.charAt(0).toUpperCase();
 
   const adminLinks: { href: string; label: string; icon: IconName }[] = [
     { href: ROUTES.admin, label: t.tabs.panel, icon: 'layout-dashboard' },
@@ -72,14 +77,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Icon name="shield" size={20} />
             <span className="text-lg font-bold">{t.adminTitle}</span>
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-          >
-            <Icon name="log-out" size={14} />
-            {t.signOut}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-3 sm:flex">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
+                {adminInitial}
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-semibold text-white">{adminName}</span>
+                <span className="text-[11px] text-white/70">{t.roleLabel}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              <Icon name="log-out" size={14} />
+              {t.signOut}
+            </button>
+          </div>
         </div>
       </header>
       <nav className="border-b border-border bg-white">

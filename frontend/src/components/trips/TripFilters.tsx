@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
-import { AZ_CITIES } from '@/lib/utils';
+import { AZ_CITIES, CURRENCY_SYMBOL } from '@/lib/utils';
 import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import type { TripSearchFilters } from '@/types';
@@ -25,8 +25,8 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
     onChange({ ...filters, [key]: value !== undefined ? value : undefined });
   };
 
-  const maxPriceLabel = language === 'az' ? 'Maks. qiymət (€)' : language === 'ru' ? 'Макс. цена (€)' : 'Max price (€)';
-  const maxPricePlaceholder = language === 'az' ? 'Məs: 20' : language === 'ru' ? 'Напр.: 20' : 'e.g. 20';
+  const maxPriceLabel = `${copy.tripsPage.maxPrice} (${CURRENCY_SYMBOL})`;
+  const maxPricePlaceholder = copy.tripsPage.maxPricePlaceholder;
 
   return (
     <div className="flex flex-col gap-3 p-4 bg-white rounded-2xl border border-border">

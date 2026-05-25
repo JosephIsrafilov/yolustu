@@ -17,7 +17,7 @@ import TimePicker from '@/components/ui/TimePicker';
 import CitySelect from '@/components/ui/CitySelect';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, PRESET_LOCATIONS } from '@/lib/utils';
+import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, PRESET_LOCATIONS, formatPriceParts } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -203,6 +203,8 @@ export default function CreateTripPage() {
   const [aiReasoning, setAiReasoning] = useState('');
   const [aiSuggestedPrice, setAiSuggestedPrice] = useState<number | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
+  const aiSuggestedPriceParts = aiSuggestedPrice ? formatPriceParts(aiSuggestedPrice) : null;
+  const summaryPriceParts = formatPriceParts(formValues.pricePerSeat);
 
   const getAiSuggestion = async () => {
     const values = getValues();
@@ -739,8 +741,8 @@ export default function CreateTripPage() {
                             <span>{pageCopy.aiPriceSuggestion}</span>
                           </div>
                           <div className="flex items-baseline gap-1 mt-1">
-                            <span className="text-lg font-black text-brand-800">{aiSuggestedPrice}</span>
-                            <span className="text-sm font-semibold text-brand-700">₼</span>
+                            <span className="text-lg font-black text-brand-800">{aiSuggestedPriceParts?.amount}</span>
+                            <span className="text-sm font-semibold text-brand-700">{aiSuggestedPriceParts?.symbol}</span>
                           </div>
                           {aiReasoning && (
                             <p className="text-xs text-text-muted leading-relaxed mt-1 max-w-[320px] sm:max-w-[420px]">
@@ -923,8 +925,8 @@ export default function CreateTripPage() {
                     <span className="text-sm font-bold text-text-secondary">{copy.summaryPrice}</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-brand-700">{formValues.pricePerSeat}</span>
-                    <span className="text-sm font-bold text-brand-600">₼</span>
+                    <span className="text-2xl font-black text-brand-700">{summaryPriceParts.amount}</span>
+                    <span className="text-sm font-bold text-brand-600">{summaryPriceParts.symbol}</span>
                   </div>
                 </div>
 

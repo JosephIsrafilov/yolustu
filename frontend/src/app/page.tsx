@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES } from '@/lib/utils';
+import { AZ_CITIES, formatPrice } from '@/lib/utils';
 import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import Header from '@/components/layout/Header';
@@ -74,9 +74,10 @@ export default function HomePage() {
     router.push(`${ROUTES.trips}?${params.toString()}`);
   };
   const formatRoutePrice = (price: number) => {
-    if (language === 'az') return `${price} ₼-dən`;
-    if (language === 'ru') return `от ${price} ₼`;
-    return `from ${price} ₼`;
+    const formatted = formatPrice(price);
+    if (language === 'az') return `${formatted}-dən`;
+    if (language === 'ru') return `от ${formatted}`;
+    return `from ${formatted}`;
   };
   const features: { icon: IconName; title: string; desc: string }[] = [
     {

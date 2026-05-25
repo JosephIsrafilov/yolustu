@@ -3,6 +3,7 @@ import { Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Link from 'next/link';
 import { Trip, User } from '@/types';
+import { formatPrice } from '@/lib/utils';
 
 const originIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -70,7 +71,7 @@ const RideMarkers = ({ trips, users }: RideMarkersProps) => {
                     {driver?.fullName || 'Sürücü'} · {trip.time}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#054752]">{trip.pricePerSeat} ₼</span>
+                    <span className="font-bold text-[#054752]">{formatPrice(trip.pricePerSeat)}</span>
                     <Link
                       href={`/trips/${trip.id}`}
                       className="rounded bg-[#054752] px-2 py-1 text-[10px] font-bold text-white transition-colors hover:bg-[#043a43]"

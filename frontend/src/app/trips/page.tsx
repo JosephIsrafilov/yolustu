@@ -7,7 +7,7 @@ import WebLayout from '@/components/layout/WebLayout';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
-import { AZ_CITIES } from '@/lib/utils';
+import { AZ_CITIES, formatPrice } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer, RideMarkers } from '@/components/ui/Map';
@@ -326,7 +326,7 @@ function TripsContent() {
 
                       {/* Pricing, Seats, Preferences */}
                       <div className="order-3 flex shrink-0 flex-col items-end text-right sm:w-35">
-                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} €</div>
+                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{formatPrice(trip.pricePerSeat)}</div>
                         <div className={`ui-chip-text flex items-center gap-1 mt-1 ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span className="leading-tight">{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>

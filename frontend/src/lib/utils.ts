@@ -1,5 +1,8 @@
 import { type ClassValue, clsx } from 'clsx';
 
+export const CURRENCY_CODE = 'AZN';
+export const CURRENCY_SYMBOL = '₼';
+
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
@@ -9,8 +12,25 @@ export function generateId(): string {
 }
 
 export function formatPrice(price: number): string {
-  return `${price} ₼`;
+  return `${formatPriceValue(price)} ${CURRENCY_SYMBOL}`;
 }
+
+export function formatPriceParts(price: number): { amount: string; symbol: string; code: string } {
+  return {
+    amount: formatPriceValue(price),
+    symbol: CURRENCY_SYMBOL,
+    code: CURRENCY_CODE,
+  };
+}
+
+const formatPriceValue = (price: number): string => {
+  if (!Number.isFinite(price)) return '0';
+  const rounded = Math.round(price * 100) / 100;
+  return rounded
+    .toFixed(2)
+    .replace(/\.00$/, '')
+    .replace(/(\.\d)0$/, '$1');
+};
 
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr);

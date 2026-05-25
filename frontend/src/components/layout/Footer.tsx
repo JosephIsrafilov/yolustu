@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { I18N, LANGUAGES } from '@/lib/i18n';
+import { CURRENCY_CODE, CURRENCY_SYMBOL } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Footer() {
@@ -55,7 +56,7 @@ export default function Footer() {
           </div>
           <span className="text-[#c0c8ca] shrink-0 flex-none">|</span>
           <button className="ui-action-text flex items-center justify-between w-[70px] shrink-0 flex-none transition-colors hover:text-[#054752]" aria-label={copy.footer.currencyLabel}>
-            <span className="truncate">AZN ₼</span>
+            <span className="truncate">{CURRENCY_CODE} {CURRENCY_SYMBOL}</span>
             <Icon name="chevron-right" size={12} className="rotate-90 shrink-0" />
           </button>
         </div>
