@@ -176,10 +176,10 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
             is_blocked=False,
             verification_status="pending",
         )
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(HTTPException) as exc_info:
             service.create_ride(ride_in, pending_driver)
-        assert exc.value.status_code == 403
-        assert "Only approved drivers" in str(exc.value.detail)
+        assert exc_info.value.status_code == 403
+        assert "Only approved drivers" in str(exc_info.value.detail)
 
         # 3. Rejected driver -> 403
         rejected_driver = CurrentUser(
@@ -192,10 +192,10 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
             is_blocked=False,
             verification_status="rejected",
         )
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(HTTPException) as exc_info:
             service.create_ride(ride_in, rejected_driver)
-        assert exc.value.status_code == 403
-        assert "Only approved drivers" in str(exc.value.detail)
+        assert exc_info.value.status_code == 403
+        assert "Only approved drivers" in str(exc_info.value.detail)
 
         # 4. Admin trying to create via public create endpoint -> 403
         admin_user = CurrentUser(
@@ -208,9 +208,9 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
             is_blocked=False,
             verification_status="approved",
         )
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(HTTPException) as exc_info:
             service.create_ride(ride_in, admin_user)
-        assert exc.value.status_code == 403
-        assert "Only approved drivers" in str(exc.value.detail)
+        assert exc_info.value.status_code == 403
+        assert "Only approved drivers" in str(exc_info.value.detail)
     finally:
         services.ride_to_response = original_ride_to_response
