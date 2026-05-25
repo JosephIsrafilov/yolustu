@@ -24,6 +24,7 @@ class CurrentUser:
     role: str
     is_verified: bool
     is_blocked: bool
+    verification_status: str = "approved"
 
     @classmethod
     def from_model(cls, user: User) -> "CurrentUser":
@@ -35,6 +36,7 @@ class CurrentUser:
             role=user.role,
             is_verified=user.is_verified,
             is_blocked=user.is_blocked,
+            verification_status=user.verification_status,
         )
 
 
@@ -64,4 +66,9 @@ def get_current_user_from_token(token: str, db: Session) -> CurrentUser:
     user = UserRepository(db).get_by_phone(token_data.phone)
     if user is None:
         raise credentials_exception
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is blocked",
+        )
     return CurrentUser.from_model(user)

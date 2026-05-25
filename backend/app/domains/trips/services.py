@@ -27,8 +27,13 @@ class TripsService:
     def create_ride(
         self, ride_in: RideCreate, current_user: CurrentUser
     ) -> RideResponse:
-        if current_user.role not in ["driver", "admin"]:
-            raise HTTPException(status_code=403, detail="Only drivers can create rides")
+        if not (
+            current_user.role == "driver"
+            and current_user.verification_status == "approved"
+        ):
+            raise HTTPException(
+                status_code=403, detail="Only approved drivers can create rides"
+            )
 
         if ride_in.total_seats < 1 or ride_in.total_seats > 4:
             raise HTTPException(
@@ -109,17 +114,17 @@ class TripsService:
 
     def cancel_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
         ride = self.get_ride_model(ride_id)
-        if ride.driver_id != current_user.id:
+        if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
         ride.status = "cancelled"
         return ride_to_response(self.rides.save(ride))
 
     def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
         ride = self.get_ride_model(ride_id)
-        if ride.driver_id != current_user.id:
+        if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
         ride.status = "completed"
-        self.users.increment_total_rides(current_user.id)
+        self.users.increment_total_rides(ride.driver_id)
         return ride_to_response(self.rides.save(ride))
 
     def create_vehicle(

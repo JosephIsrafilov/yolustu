@@ -87,6 +87,8 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        user.role = "driver"
+        user.is_verified = True
         return self.users.update_verification_status(user, "approved")
 
     def reject_verification(self, user_id: UUID, current_user: CurrentUser):
@@ -94,4 +96,6 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        user.role = "passenger"
+        user.is_verified = False
         return self.users.update_verification_status(user, "rejected")

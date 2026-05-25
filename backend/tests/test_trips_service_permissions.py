@@ -249,7 +249,7 @@ def test_passenger_cannot_create_ride():
         service.create_ride(make_ride_create(own_vehicle.id), passenger)
 
     assert exc.value.status_code == 403
-    assert "Only drivers can create rides" in str(exc.value.detail)
+    assert "Only approved drivers can create rides" in str(exc.value.detail)
 
 
 def test_deleted_vehicle_cannot_be_used_for_new_ride():

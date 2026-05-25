@@ -146,7 +146,7 @@ def test_passenger_cannot_book_own_ride():
     with pytest.raises(HTTPException) as exc:
         service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), driver)
 
-    assert exc.value.status_code == 400
+    assert exc.value.status_code == 403
     assert "own ride" in str(exc.value.detail)
 
 

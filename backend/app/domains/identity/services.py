@@ -117,8 +117,16 @@ class IdentityService:
         self, current_user: CurrentUser, user_in: UserUpdate
     ) -> User:
         user = self.get_current_user_model(current_user)
-        if user_in.role is not None and user_in.role not in {"passenger", "driver"}:
-            raise HTTPException(status_code=400, detail="Invalid role")
+        if user_in.role is not None:
+            if user_in.role in {"driver", "admin"} and user_in.role != user.role:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid role",
+                )
+            if user_in.role not in {"passenger", "driver", "admin"}:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role"
+                )
         if (
             user_in.phone
             and user_in.phone != user.phone

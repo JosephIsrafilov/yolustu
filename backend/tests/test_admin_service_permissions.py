@@ -184,9 +184,13 @@ def test_admin_can_list_and_update_verification_status():
 
     approved = service.approve_verification(target.id, admin)
     assert approved.verification_status == "approved"
+    assert approved.role == "driver"
+    assert approved.is_verified is True
 
     rejected = service.reject_verification(target.id, admin)
     assert rejected.verification_status == "rejected"
+    assert rejected.role == "passenger"
+    assert rejected.is_verified is False
 
 
 def test_admin_stats_available_only_for_admin():
