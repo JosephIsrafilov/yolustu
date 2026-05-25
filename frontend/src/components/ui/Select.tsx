@@ -41,6 +41,9 @@ export default function Select({
   const notFoundText = language === 'az' ? 'Nəticə tapılmadı' : language === 'ru' ? 'Ничего не найдено' : 'No results found';
   
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+  const [isPositioned, setIsPositioned] = useState(false);
+  const [placement, setPlacement] = useState<'down' | 'up'>('down');
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -62,6 +65,22 @@ export default function Select({
     });
   }, [options]);
 
+  // Manage shouldRender for transition-out
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isOpen) {
+      timeoutId = setTimeout(() => {
+        setShouldRender(true);
+      }, 0);
+    } else {
+      timeoutId = setTimeout(() => {
+        setShouldRender(false);
+        setIsPositioned(false);
+      }, 150);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [isOpen]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -78,10 +97,11 @@ export default function Select({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!shouldRender) return;
 
     const updatePosition = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
+      const dropdownEl = dropdownRef.current;
       if (!rect) return;
 
       if (rect.bottom < 0 || rect.top > window.innerHeight) {
@@ -90,10 +110,11 @@ export default function Select({
       }
 
       const viewportPadding = 8;
-      const dropdownHeight = dropdownRef.current?.offsetHeight || 240;
+      const dropdownHeight = dropdownEl?.offsetHeight || 240;
       const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
       const spaceAbove = rect.top - viewportPadding;
       const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
+      setPlacement(openUpward ? 'up' : 'down');
 
       const width = Math.max(rect.width, 180);
       const maxLeft = window.innerWidth - width - viewportPadding;
@@ -109,6 +130,7 @@ export default function Select({
         maxHeight,
         zIndex: 9999,
       });
+      setIsPositioned(true);
     };
 
     updatePosition();
@@ -136,7 +158,7 @@ export default function Select({
         resizeObserver.disconnect();
       }
     };
-  }, [isOpen]);
+  }, [shouldRender]);
 
   const filteredOptions = normalizedOptions.filter(option => 
     option.label.toLowerCase().includes(search.toLowerCase())
@@ -192,13 +214,23 @@ export default function Select({
 
       {error && <p className="text-xs text-danger-500">{error}</p>}
 
-      {isOpen && createPortal(
+      {shouldRender && createPortal(
         <div
           ref={dropdownRef}
           id={listboxId}
           role="listbox"
           style={dropdownStyle}
-          className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+          className={cn(
+            "flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg",
+            "transition-[opacity,transform] duration-150 ease-out will-change-transform",
+            placement === 'down' ? 'origin-top' : 'origin-bottom',
+            isPositioned && isOpen
+              ? "opacity-100 scale-100 translate-y-0"
+              : cn(
+                  "opacity-0 pointer-events-none scale-[0.97]",
+                  placement === 'down' ? "-translate-y-1.5" : "translate-y-1.5"
+                )
+          )}
         >
           {searchable && (
             <div className="border-b border-border p-2">
