@@ -11,7 +11,9 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { adminService } from '@/services';
 import type { AdminStats } from '@/services/contracts/admin-service';
+import type { User, Trip, Booking } from '@/types';
 import { formatCurrency } from '@/lib/utils';
+import LoadingState from '@/components/ui/LoadingState';
 
 const DASHBOARD_I18N = {
   az: {
@@ -158,38 +160,64 @@ const DASHBOARD_I18N = {
 } as const;
 
 export default function AdminDashboardPage() {
-  const { users, trips, bookings } = useAppStore();
   const language = useAppStore((s) => s.language);
   const t = DASHBOARD_I18N[language];
+  
+  const [usersList, setUsersList] = React.useState<User[]>([]);
+  const [tripsList, setTripsList] = React.useState<Trip[]>([]);
+  const [bookingsList, setBookingsList] = React.useState<Booking[]>([]);
   const [apiStats, setApiStats] = React.useState<AdminStats | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    adminService.getAdminStats()
-      .then(setApiStats)
-      .catch((error) => {
-        console.error('Fetch admin stats error:', error);
-      });
+    Promise.all([
+      adminService.getUsers(1, 100).catch((err) => {
+        console.error('Fetch users error:', err);
+        return { items: [] };
+      }),
+      adminService.getTrips(1, 100).catch((err) => {
+        console.error('Fetch trips error:', err);
+        return { items: [] };
+      }),
+      adminService.getBookings(1, 100).catch((err) => {
+        console.error('Fetch bookings error:', err);
+        return { items: [] };
+      }),
+      adminService.getAdminStats().catch((err) => {
+        console.error('Fetch stats error:', err);
+        return null;
+      }),
+    ]).then(([usersRes, tripsRes, bookingsRes, statsRes]) => {
+      setUsersList(usersRes.items);
+      setTripsList(tripsRes.items);
+      setBookingsList(bookingsRes.items);
+      setApiStats(statsRes);
+      setIsLoading(false);
+    }).catch((error) => {
+      console.error('Fetch admin stats error:', error);
+      setIsLoading(false);
+    });
   }, []);
 
-  const tripsById = React.useMemo(() => new Map(trips.map((trip) => [trip.id, trip])), [trips]);
-  const usersById = React.useMemo(() => new Map(users.map((user) => [user.id, user])), [users]);
+  const tripsById = React.useMemo(() => new Map(tripsList.map((trip) => [trip.id, trip])), [tripsList]);
+  const usersById = React.useMemo(() => new Map(usersList.map((user) => [user.id, user])), [usersList]);
 
   const enrichedBookings = React.useMemo(() => {
-    return bookings.map((booking) => {
+    return bookingsList.map((booking) => {
       const trip = booking.trip ?? tripsById.get(booking.tripId);
       const passenger = booking.passenger ?? usersById.get(booking.passengerId);
       const driver = trip?.driver ?? (trip?.driverId ? usersById.get(trip.driverId) : undefined);
       return { booking, trip, passenger, driver };
     });
-  }, [bookings, tripsById, usersById]);
+  }, [bookingsList, tripsById, usersById]);
 
-  const totalUsers = apiStats?.totalUsers ?? users.length;
-  const drivers = users.filter((user) => user.role === 'driver').length;
-  const passengers = users.filter((user) => user.role === 'passenger').length;
-  const activeTrips = apiStats?.activeTrips ?? trips.filter((trip) => trip.status === 'active').length;
-  const pendingBookings = apiStats?.pendingBookings ?? bookings.filter((booking) => booking.status === 'pending').length;
-  const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
-  const pendingVerifications = apiStats?.pendingVerifications ?? users.filter((user) => user.verificationStatus === 'pending').length;
+  const totalUsers = apiStats?.totalUsers ?? usersList.length;
+  const drivers = usersList.filter((user) => user.role === 'driver').length;
+  const passengers = usersList.filter((user) => user.role === 'passenger').length;
+  const activeTrips = apiStats?.activeTrips ?? tripsList.filter((trip) => trip.status === 'active').length;
+  const pendingBookings = apiStats?.pendingBookings ?? bookingsList.filter((booking) => booking.status === 'pending').length;
+  const completedBookings = bookingsList.filter((booking) => booking.status === 'completed').length;
+  const pendingVerifications = apiStats?.pendingVerifications ?? usersList.filter((user) => user.verificationStatus === 'pending').length;
 
   const revenueTotal = enrichedBookings.reduce((sum, { booking, trip }) => {
     if (!trip) return sum;
@@ -198,16 +226,16 @@ export default function AdminDashboardPage() {
   }, 0);
 
   const tripStatusCounts = {
-    active: trips.filter((trip) => trip.status === 'active').length,
-    completed: trips.filter((trip) => trip.status === 'completed').length,
-    cancelled: trips.filter((trip) => trip.status === 'cancelled').length,
+    active: tripsList.filter((trip) => trip.status === 'active').length,
+    completed: tripsList.filter((trip) => trip.status === 'completed').length,
+    cancelled: tripsList.filter((trip) => trip.status === 'cancelled').length,
   };
 
   const bookingStatusCounts = {
-    pending: bookings.filter((booking) => booking.status === 'pending').length,
-    accepted: bookings.filter((booking) => booking.status === 'accepted').length,
-    cancelled: bookings.filter((booking) => booking.status === 'cancelled').length,
-    completed: bookings.filter((booking) => booking.status === 'completed').length,
+    pending: bookingsList.filter((booking) => booking.status === 'pending').length,
+    accepted: bookingsList.filter((booking) => booking.status === 'accepted').length,
+    cancelled: bookingsList.filter((booking) => booking.status === 'cancelled').length,
+    completed: bookingsList.filter((booking) => booking.status === 'completed').length,
   };
 
   const stats: { label: string; value: string | number; icon: IconName; tone: string; bg: string }[] = [
@@ -234,17 +262,27 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  const recentUsers = [...users]
+  const recentUsers = [...usersList]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
-  const recentTrips = [...trips]
+  const recentTrips = [...tripsList]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   const recentBookings = [...enrichedBookings]
     .sort((a, b) => new Date(b.booking.createdAt).getTime() - new Date(a.booking.createdAt).getTime())
     .slice(0, 3);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center py-24">
+          <LoadingState />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -301,44 +339,46 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="hover:shadow-sm transition-all duration-200">
-          <p className="text-sm font-bold text-text">{t.overview.title}</p>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="text-xs text-text-muted">{t.overview.trips}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="active" type="trip" />
-                  <span className="text-sm font-semibold text-text">{tripStatusCounts.active}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="completed" type="trip" />
-                  <span className="text-sm font-semibold text-text">{tripStatusCounts.completed}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="cancelled" type="trip" />
-                  <span className="text-sm font-semibold text-text">{tripStatusCounts.cancelled}</span>
+        <Card className="hover:shadow-sm transition-all duration-200 flex flex-col justify-between">
+          <div>
+            <p className="text-sm font-bold text-text mb-4">{t.overview.title}</p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{t.overview.trips}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-2 border border-border">
+                    <StatusBadge status="active" type="trip" />
+                    <span className="text-base font-bold text-text mt-1">{tripStatusCounts.active}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-2 border border-border">
+                    <StatusBadge status="completed" type="trip" />
+                    <span className="text-base font-bold text-text mt-1">{tripStatusCounts.completed}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-2 border border-border">
+                    <StatusBadge status="cancelled" type="trip" />
+                    <span className="text-base font-bold text-text mt-1">{tripStatusCounts.cancelled}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">{t.overview.bookings}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="pending" />
-                  <span className="text-sm font-semibold text-text">{bookingStatusCounts.pending}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="accepted" />
-                  <span className="text-sm font-semibold text-text">{bookingStatusCounts.accepted}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="cancelled" />
-                  <span className="text-sm font-semibold text-text">{bookingStatusCounts.cancelled}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status="completed" />
-                  <span className="text-sm font-semibold text-text">{bookingStatusCounts.completed}</span>
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{t.overview.bookings}</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-1.5 border border-border">
+                    <StatusBadge status="pending" />
+                    <span className="text-sm font-bold text-text mt-1">{bookingStatusCounts.pending}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-1.5 border border-border">
+                    <StatusBadge status="accepted" />
+                    <span className="text-sm font-bold text-text mt-1">{bookingStatusCounts.accepted}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-1.5 border border-border">
+                    <StatusBadge status="cancelled" />
+                    <span className="text-sm font-bold text-text mt-1">{bookingStatusCounts.cancelled}</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-surface-muted/50 p-1.5 border border-border">
+                    <StatusBadge status="completed" />
+                    <span className="text-sm font-bold text-text mt-1">{bookingStatusCounts.completed}</span>
+                  </div>
                 </div>
               </div>
             </div>

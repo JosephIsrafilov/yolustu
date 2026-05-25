@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -140,6 +140,8 @@ export default function AdminTripsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
 
   const fetchTrips = useCallback(async (currentPage: number) => {
@@ -186,6 +188,15 @@ export default function AdminTripsPage() {
     }));
   };
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
   const normalizedQuery = query.trim().toLowerCase();
   const filteredTrips = trips.filter((trip) => {
     const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
@@ -200,6 +211,42 @@ export default function AdminTripsPage() {
     const matchesDate = !dateFilter || trip.date === dateFilter;
     return matchesQuery && matchesStatus && matchesFrom && matchesTo && matchesDate;
   });
+
+  const sortedTrips = useMemo(() => {
+    if (!sortKey) return filteredTrips;
+
+    return [...filteredTrips].sort((a, b) => {
+      let valA: string | number | boolean = '';
+      let valB: string | number | boolean = '';
+
+      const driverA = a.driver ?? users.find((u) => u.id === a.driverId);
+      const driverB = b.driver ?? users.find((u) => u.id === b.driverId);
+
+      if (sortKey === 'route') {
+        valA = `${a.departureCity} ${a.arrivalCity}`.toLowerCase();
+        valB = `${b.departureCity} ${b.arrivalCity}`.toLowerCase();
+      } else if (sortKey === 'driver') {
+        valA = (driverA?.fullName || '').toLowerCase();
+        valB = (driverB?.fullName || '').toLowerCase();
+      } else if (sortKey === 'date') {
+        valA = new Date(`${a.date}T${a.time}`).getTime();
+        valB = new Date(`${b.date}T${b.time}`).getTime();
+      } else if (sortKey === 'pricePerSeat') {
+        valA = a.pricePerSeat;
+        valB = b.pricePerSeat;
+      } else if (sortKey === 'seats') {
+        valA = a.seatsAvailable;
+        valB = b.seatsAvailable;
+      } else if (sortKey === 'status') {
+        valA = a.status.toLowerCase();
+        valB = b.status.toLowerCase();
+      }
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredTrips, sortKey, sortDirection, users]);
 
   const isFiltering = Boolean(normalizedQuery) || statusFilter !== 'all' || fromFilter !== '' || toFilter !== '' || dateFilter !== '';
   const statusOptions = [
@@ -256,114 +303,187 @@ export default function AdminTripsPage() {
             setFromFilter('');
             setToFilter('');
             setDateFilter('');
+            setSortKey(null);
           }}
         >
           {t.filters.reset}
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm whitespace-nowrap">
-            <thead className="bg-surface-muted border-b border-border">
+      <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap table-fixed">
+          <thead className="bg-surface-muted border-b border-border select-none">
+            <tr>
+              <th 
+                onClick={() => handleSort('route')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[180px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.route}</span>
+                  {sortKey === 'route' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('driver')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[160px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.driver}</span>
+                  {sortKey === 'driver' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('date')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[140px] min-w-[140px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.date}</span>
+                  {sortKey === 'date' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('pricePerSeat')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.price}</span>
+                  {sortKey === 'pricePerSeat' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('seats')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[90px] min-w-[90px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.seats}</span>
+                  {sortKey === 'seats' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('status')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.status}</span>
+                  {sortKey === 'status' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th className="px-6 py-4 text-right font-semibold text-text-secondary w-[320px] min-w-[320px]">{t.table.actions}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {isLoading ? (
               <tr>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.route}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.driver}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.date}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.price}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.seats}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.status}</th>
-                <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <LoadingState />
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
-                    <LoadingState />
-                  </td>
-                </tr>
-              ) : filteredTrips.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
-                    {t.emptyState}
-                  </td>
-                </tr>
-              ) : (
-                filteredTrips.map((trip) => {
-                  const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
-                  const showActivate = trip.status === 'cancelled';
-                  const showDeactivate = trip.status === 'active';
-                  return (
-                    <tr key={trip.id} className="transition-colors duration-150 hover:bg-surface-dim">
-                      <td className="px-6 py-4 font-medium text-text">
-                        <div className="flex items-center gap-2">
-                          <span>{trip.departureCity}</span>
-                          <Icon name="arrow-right" size={14} className="text-text-muted" />
-                          <span>{trip.arrivalCity}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-text-muted">
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden">
-                            {driver?.avatarUrl ? (
-                              <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-brand-50 text-brand-600">
-                                <Icon name="user" size={12} />
-                              </div>
-                            )}
-                          </div>
-                          <span>{driver?.fullName || t.placeholder}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-text">
-                        <div className="flex flex-col">
-                          <span>{new Date(trip.date).toLocaleDateString(t.locale)}</span>
-                          <span className="text-xs text-text-muted">{trip.time}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-text">{formatPrice(trip.pricePerSeat)}</td>
-                      <td className="px-6 py-4 text-text">
-                        <span className="font-medium">{trip.seatsAvailable}</span>
-                        <span className="text-text-muted">/{trip.seatsTotal}</span>
-                      </td>
-                      <td className="px-6 py-4"><StatusBadge status={trip.status} type="trip" /></td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => router.push(`/trips/${trip.id}`)}>
-                            <Icon name="file-text" size={14} /> {t.actions.view}
-                          </Button>
-                          {showDeactivate && (
-                            <Button size="sm" variant="outline" onClick={() => updateTripStatus(trip.id, 'cancelled')}>
-                              <Icon name="ban" size={14} /> {t.actions.deactivate}
-                            </Button>
+            ) : sortedTrips.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  {t.emptyState}
+                </td>
+              </tr>
+            ) : (
+              sortedTrips.map((trip) => {
+                const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
+                const showActivate = trip.status === 'cancelled';
+                const showDeactivate = trip.status === 'active';
+                return (
+                  <tr key={trip.id} className="transition-colors duration-150 hover:bg-surface-dim">
+                    <td className="px-6 py-4 font-medium text-text min-w-[180px]">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{trip.departureCity}</span>
+                        <Icon name="arrow-right" size={14} className="text-text-muted shrink-0" />
+                        <span className="truncate">{trip.arrivalCity}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-text-muted min-w-[160px]">
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                          {driver?.avatarUrl ? (
+                            <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-brand-50 text-brand-600">
+                              <Icon name="user" size={12} />
+                            </div>
                           )}
-                          {showActivate && (
-                            <Button size="sm" variant="secondary" onClick={() => updateTripStatus(trip.id, 'active')}>
-                              <Icon name="check-circle" size={14} /> {t.actions.activate}
-                            </Button>
-                          )}
-                          <Button size="sm" variant="danger" onClick={() => deleteTrip(trip.id)}>
-                            <Icon name="trash-2" size={14} /> {t.actions.delete}
-                          </Button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        {!isLoading && trips.length > 0 && !isFiltering && (
+                        <span className="truncate">{driver?.fullName || t.placeholder}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-text w-[140px] min-w-[140px]">
+                      <div className="flex flex-col">
+                        <span>{new Date(trip.date).toLocaleDateString(t.locale)}</span>
+                        <span className="text-xs text-text-muted">{trip.time}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-text w-[110px] min-w-[110px]">{formatPrice(trip.pricePerSeat)}</td>
+                    <td className="px-6 py-4 text-text w-[90px] min-w-[90px]">
+                      <span className="font-medium">{trip.seatsAvailable}</span>
+                      <span className="text-text-muted">/{trip.seatsTotal}</span>
+                    </td>
+                    <td className="px-6 py-4 w-[110px] min-w-[110px]"><StatusBadge status={trip.status} type="trip" /></td>
+                    <td className="px-6 py-4 text-right w-[320px] min-w-[320px]">
+                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                        <Button size="sm" variant="outline" onClick={() => router.push(`/trips/${trip.id}`)}>
+                          <Icon name="file-text" size={14} /> {t.actions.view}
+                        </Button>
+                        {showDeactivate && (
+                          <Button size="sm" variant="outline" onClick={() => updateTripStatus(trip.id, 'cancelled')}>
+                            <Icon name="ban" size={14} /> {t.actions.deactivate}
+                          </Button>
+                        )}
+                        {showActivate && (
+                          <Button size="sm" variant="secondary" onClick={() => updateTripStatus(trip.id, 'active')}>
+                            <Icon name="check-circle" size={14} /> {t.actions.activate}
+                          </Button>
+                        )}
+                        <Button size="sm" variant="danger" onClick={() => deleteTrip(trip.id)}>
+                          <Icon name="trash-2" size={14} /> {t.actions.delete}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      {!isLoading && trips.length > 0 && !isFiltering && (
+        <div className="mt-4 flex justify-end">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-        )}
-      </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

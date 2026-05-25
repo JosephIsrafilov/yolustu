@@ -55,7 +55,7 @@ const USERS_I18N = {
     },
     actions: {
       view: 'Bax',
-      unblock: 'Bloku aç',
+      unblock: 'Blokdan çıxar',
       block: 'Blokla',
       verify: 'Təsdiqlə',
       reject: 'Rədd et',
@@ -187,6 +187,8 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
 
   const bookingsByPassengerId = useMemo(() => {
@@ -258,6 +260,15 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
   const normalizedQuery = query.trim().toLowerCase();
   const filteredUsers = users.filter((user) => {
     const matchesQuery = !normalizedQuery || [user.fullName, user.email, user.phone]
@@ -268,6 +279,45 @@ export default function AdminUsersPage() {
     const matchesVerification = verificationFilter === 'all' || user.verificationStatus === verificationFilter;
     return matchesQuery && matchesRole && matchesStatus && matchesVerification;
   });
+
+  const sortedUsers = useMemo(() => {
+    if (!sortKey) return filteredUsers;
+
+    return [...filteredUsers].sort((a, b) => {
+      let valA: string | number | boolean = '';
+      let valB: string | number | boolean = '';
+
+      if (sortKey === 'fullName') {
+        valA = a.fullName.toLowerCase();
+        valB = b.fullName.toLowerCase();
+      } else if (sortKey === 'role') {
+        valA = a.role.toLowerCase();
+        valB = b.role.toLowerCase();
+      } else if (sortKey === 'rating') {
+        valA = a.rating;
+        valB = b.rating;
+      } else if (sortKey === 'totalTrips') {
+        valA = a.totalTrips;
+        valB = b.totalTrips;
+      } else if (sortKey === 'bookings') {
+        valA = bookingsByPassengerId.get(a.id) ?? 0;
+        valB = bookingsByPassengerId.get(b.id) ?? 0;
+      } else if (sortKey === 'verificationStatus') {
+        valA = a.verificationStatus.toLowerCase();
+        valB = b.verificationStatus.toLowerCase();
+      } else if (sortKey === 'status') {
+        valA = a.isBlocked ? 1 : 0;
+        valB = b.isBlocked ? 1 : 0;
+      } else if (sortKey === 'createdAt') {
+        valA = new Date(a.createdAt).getTime();
+        valB = new Date(b.createdAt).getTime();
+      }
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredUsers, sortKey, sortDirection, bookingsByPassengerId]);
 
   const isFiltering = Boolean(normalizedQuery) || roleFilter !== 'all' || statusFilter !== 'all' || verificationFilter !== 'all';
   const roleOptions = [
@@ -329,170 +379,267 @@ export default function AdminUsersPage() {
             setStatusFilter('all');
             setVerificationFilter('all');
             setExpandedUserId(null);
+            setSortKey(null);
           }}
         >
           {t.filters.reset}
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm whitespace-nowrap">
-            <thead className="bg-surface-muted border-b border-border">
+      <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap table-fixed">
+          <thead className="bg-surface-muted border-b border-border select-none">
+            <tr>
+              <th 
+                onClick={() => handleSort('fullName')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[200px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.user}</span>
+                  {sortKey === 'fullName' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('role')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.role}</span>
+                  {sortKey === 'role' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('rating')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[90px] min-w-[90px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.rating}</span>
+                  {sortKey === 'rating' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('totalTrips')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[80px] min-w-[80px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.rides}</span>
+                  {sortKey === 'totalTrips' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('bookings')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[80px] min-w-[80px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.bookings}</span>
+                  {sortKey === 'bookings' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('verificationStatus')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[130px] min-w-[130px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.verification}</span>
+                  {sortKey === 'verificationStatus' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('status')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.status}</span>
+                  {sortKey === 'status' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('createdAt')}
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.created}</span>
+                  {sortKey === 'createdAt' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[360px] min-w-[360px]">{t.table.actions}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {isLoading ? (
               <tr>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.user}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.role}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.rating}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.rides}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.bookings}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.verification}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.status}</th>
-                <th className="text-left px-6 py-4 font-semibold text-text-secondary">{t.table.created}</th>
-                <th className="text-right px-6 py-4 font-semibold text-text-secondary">{t.table.actions}</th>
+                <td colSpan={9} className="px-6 py-12 text-center">
+                  <LoadingState />
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
-                    <LoadingState />
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-text-muted">
-                    {t.emptyState}
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((u) => {
-                  const roleLabel = u.role === 'driver' ? t.filters.driver : u.role === 'admin' ? t.filters.admin : t.filters.passenger;
-                  const roleVariant = u.role === 'admin' ? 'warning' : u.role === 'driver' ? 'brand' : 'muted';
-                  const verificationLabel =
-                    u.verificationStatus === 'approved'
-                      ? t.filters.approved
-                      : u.verificationStatus === 'pending'
-                        ? t.filters.pending
-                        : u.verificationStatus === 'rejected'
-                          ? t.filters.rejected
-                          : t.filters.none;
-                  const verificationVariant =
-                    u.verificationStatus === 'approved'
-                      ? 'success'
-                      : u.verificationStatus === 'pending'
-                        ? 'warning'
-                        : u.verificationStatus === 'rejected'
-                          ? 'danger'
-                          : 'muted';
-                  const bookingCount = bookingsByPassengerId.get(u.id) ?? 0;
-                  const isExpanded = expandedUserId === u.id;
+            ) : sortedUsers.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-6 py-12 text-center text-text-muted">
+                  {t.emptyState}
+                </td>
+              </tr>
+            ) : (
+              sortedUsers.map((u) => {
+                const roleLabel = u.role === 'driver' ? t.filters.driver : u.role === 'admin' ? t.filters.admin : t.filters.passenger;
+                const roleVariant = u.role === 'admin' ? 'warning' : u.role === 'driver' ? 'brand' : 'muted';
+                const verificationLabel =
+                  u.verificationStatus === 'approved'
+                    ? t.filters.approved
+                    : u.verificationStatus === 'pending'
+                      ? t.filters.pending
+                      : u.verificationStatus === 'rejected'
+                        ? t.filters.rejected
+                        : t.filters.none;
+                const verificationVariant =
+                  u.verificationStatus === 'approved'
+                    ? 'success'
+                    : u.verificationStatus === 'pending'
+                      ? 'warning'
+                      : u.verificationStatus === 'rejected'
+                        ? 'danger'
+                        : 'muted';
+                const bookingCount = bookingsByPassengerId.get(u.id) ?? 0;
+                const isExpanded = expandedUserId === u.id;
 
-                  return (
-                    <React.Fragment key={u.id}>
-                      <tr className="hover:bg-surface-dim transition-colors duration-150">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
-                              {u.avatarUrl ? (
-                                <Image src={u.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
-                              ) : (
-                                <Icon name="user" size={16} className="text-text-muted" />
-                              )}
+                return (
+                  <React.Fragment key={u.id}>
+                    <tr className="hover:bg-surface-dim transition-colors duration-150">
+                      <td className="px-6 py-4 min-w-[200px]">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
+                            {u.avatarUrl ? (
+                              <Image src={u.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                            ) : (
+                              <Icon name="user" size={16} className="text-text-muted" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-medium text-text block truncate">{u.fullName}</span>
+                            <span className="text-xs text-text-muted truncate block">{u.email || u.phone || t.placeholder}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 w-[110px] min-w-[110px]">
+                        <Badge variant={roleVariant}>{roleLabel}</Badge>
+                      </td>
+                      <td className="px-6 py-4 w-[90px] min-w-[90px]">
+                        <div className="flex items-center gap-1 font-medium">
+                          <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
+                          {u.rating.toFixed(1)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 w-[80px] min-w-[80px] text-text">{u.totalTrips}</td>
+                      <td className="px-6 py-4 w-[80px] min-w-[80px] text-text">{bookingCount}</td>
+                      <td className="px-6 py-4 w-[130px] min-w-[130px]">
+                        <Badge variant={verificationVariant}>{verificationLabel}</Badge>
+                      </td>
+                      <td className="px-6 py-4 w-[100px] min-w-[100px]">
+                        {u.isBlocked ? (
+                          <Badge variant="danger">{t.status.blocked}</Badge>
+                        ) : (
+                          <Badge variant="success">{t.status.active}</Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 w-[120px] min-w-[120px] text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
+                      <td className="px-6 py-4 text-right w-[360px] min-w-[360px]">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                          <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
+                            <Icon name="file-text" size={14} /> {t.actions.view}
+                          </Button>
+                          {u.verificationStatus === 'pending' && (
+                            <>
+                              <Button size="sm" variant="secondary" onClick={() => handleVerify(u.id)}>
+                                <Icon name="check" size={14} /> {t.actions.verify}
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleReject(u.id)}>
+                                <Icon name="x" size={14} /> {t.actions.reject}
+                              </Button>
+                            </>
+                          )}
+                          {u.isBlocked ? (
+                            <Button size="sm" variant="secondary" onClick={() => handleUnblock(u.id)}>
+                              <Icon name="shield-check" size={14} /> {t.actions.unblock}
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="danger" onClick={() => handleBlock(u.id)}>
+                              <Icon name="shield-off" size={14} /> {t.actions.block}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={9} className="bg-surface-muted/50 px-6 py-4">
+                          <div className="grid gap-4 sm:grid-cols-4 text-sm">
+                            <div>
+                              <p className="text-xs text-text-muted">{t.details.email}</p>
+                              <p className="font-semibold text-text">{u.email || t.placeholder}</p>
                             </div>
                             <div>
-                              <span className="font-medium text-text block">{u.fullName}</span>
-                              <span className="text-xs text-text-muted">{u.email || u.phone || t.placeholder}</span>
+                              <p className="text-xs text-text-muted">{t.details.phone}</p>
+                              <p className="font-semibold text-text">{u.phone || t.placeholder}</p>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={roleVariant}>{roleLabel}</Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1 font-medium">
-                            <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
-                            {u.rating.toFixed(1)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-text">{u.totalTrips}</td>
-                        <td className="px-6 py-4 text-text">{bookingCount}</td>
-                        <td className="px-6 py-4">
-                          <Badge variant={verificationVariant}>{verificationLabel}</Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          {u.isBlocked ? (
-                            <Badge variant="danger">{t.status.blocked}</Badge>
-                          ) : (
-                            <Badge variant="success">{t.status.active}</Badge>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
-                              <Icon name="file-text" size={14} /> {t.actions.view}
-                            </Button>
-                            {u.verificationStatus === 'pending' && (
-                              <>
-                                <Button size="sm" variant="secondary" onClick={() => handleVerify(u.id)}>
-                                  <Icon name="check" size={14} /> {t.actions.verify}
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={() => handleReject(u.id)}>
-                                  <Icon name="x" size={14} /> {t.actions.reject}
-                                </Button>
-                              </>
-                            )}
-                            {u.isBlocked ? (
-                              <Button size="sm" variant="secondary" onClick={() => handleUnblock(u.id)}>
-                                <Icon name="shield-check" size={14} /> {t.actions.unblock}
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="danger" onClick={() => handleBlock(u.id)}>
-                                <Icon name="shield-off" size={14} /> {t.actions.block}
-                              </Button>
-                            )}
+                            <div>
+                              <p className="text-xs text-text-muted">{t.details.city}</p>
+                              <p className="font-semibold text-text">{u.city || t.placeholder}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-text-muted">{t.details.created}</p>
+                              <p className="font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
+                            </div>
                           </div>
                         </td>
                       </tr>
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan={9} className="bg-surface-muted/50 px-6 py-4">
-                            <div className="grid gap-4 sm:grid-cols-4 text-sm">
-                              <div>
-                                <p className="text-xs text-text-muted">{t.details.email}</p>
-                                <p className="font-semibold text-text">{u.email || t.placeholder}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-text-muted">{t.details.phone}</p>
-                                <p className="font-semibold text-text">{u.phone || t.placeholder}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-text-muted">{t.details.city}</p>
-                                <p className="font-semibold text-text">{u.city || t.placeholder}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-text-muted">{t.details.created}</p>
-                                <p className="font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        {!isLoading && users.length > 0 && !isFiltering && (
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      {!isLoading && users.length > 0 && !isFiltering && (
+        <div className="mt-4 flex justify-end">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-        )}
-      </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

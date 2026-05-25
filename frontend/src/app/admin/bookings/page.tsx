@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Input from '@/components/ui/Input';
@@ -135,11 +135,12 @@ export default function AdminBookingsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
 
   const fetchBookings = useCallback(async (currentPage: number) => {
     try {
-      // TODO: Implement backend filtering by status for paginated bookings
       const res = await adminService.getBookings(currentPage, limit);
       setAllBookings(res.items);
       setTotalPages(res.pages);
@@ -175,6 +176,15 @@ export default function AdminBookingsPage() {
     });
   }, [allBookings, tripsById, usersById]);
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = enrichedBookings.filter(({ booking, trip, passenger, driver }) => {
     const matchesStatus = filter === 'all' || booking.status === filter;
@@ -186,6 +196,42 @@ export default function AdminBookingsPage() {
     ].filter(Boolean).some((value) => String(value).toLowerCase().includes(normalizedQuery));
     return matchesStatus && matchesQuery;
   });
+
+  const sortedBookings = useMemo(() => {
+    if (!sortKey) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let valA: string | number | boolean = '';
+      let valB: string | number | boolean = '';
+
+      if (sortKey === 'passenger') {
+        valA = (a.passenger?.fullName || '').toLowerCase();
+        valB = (b.passenger?.fullName || '').toLowerCase();
+      } else if (sortKey === 'driver') {
+        valA = (a.driver?.fullName || '').toLowerCase();
+        valB = (b.driver?.fullName || '').toLowerCase();
+      } else if (sortKey === 'route') {
+        valA = a.trip ? `${a.trip.departureCity} ${a.trip.arrivalCity}`.toLowerCase() : '';
+        valB = b.trip ? `${b.trip.departureCity} ${b.trip.arrivalCity}`.toLowerCase() : '';
+      } else if (sortKey === 'seats') {
+        valA = a.booking.seatsRequested;
+        valB = b.booking.seatsRequested;
+      } else if (sortKey === 'price') {
+        valA = a.trip ? a.trip.pricePerSeat * a.booking.seatsRequested : 0;
+        valB = b.trip ? b.trip.pricePerSeat * b.booking.seatsRequested : 0;
+      } else if (sortKey === 'status') {
+        valA = a.booking.status.toLowerCase();
+        valB = b.booking.status.toLowerCase();
+      } else if (sortKey === 'date') {
+        valA = new Date(a.booking.createdAt).getTime();
+        valB = new Date(b.booking.createdAt).getTime();
+      }
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortKey, sortDirection]);
 
   const isFiltering = Boolean(normalizedQuery) || filter !== 'all';
 
@@ -222,128 +268,212 @@ export default function AdminBookingsPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm whitespace-nowrap">
-            <thead className="bg-surface-muted border-b border-border">
+      <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap table-fixed">
+          <thead className="bg-surface-muted border-b border-border select-none">
+            <tr>
+              <th 
+                onClick={() => handleSort('passenger')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[160px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.passenger}</span>
+                  {sortKey === 'passenger' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('driver')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[160px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.driver}</span>
+                  {sortKey === 'driver' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('route')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[180px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.route}</span>
+                  {sortKey === 'route' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('seats')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[80px] min-w-[80px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.seats}</span>
+                  {sortKey === 'seats' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('price')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.price}</span>
+                  {sortKey === 'price' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('status')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.status}</span>
+                  {sortKey === 'status' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('date')}
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span>{t.table.date}</span>
+                  {sortKey === 'date' ? (
+                    <Icon name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'} size={14} className="text-brand-600" />
+                  ) : (
+                    <Icon name="chevron-down" size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th className="px-6 py-4 text-right font-semibold text-text-secondary w-[260px] min-w-[260px]">{t.table.actions}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {isLoading ? (
               <tr>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.passenger}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.driver}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.route}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.seats}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.price}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.status}</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary">{t.table.date}</th>
-                <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+                <td colSpan={8} className="px-6 py-12 text-center">
+                  <LoadingState />
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <LoadingState />
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
-                    {t.emptyState}
-                  </td>
-                </tr>
-              ) : (
-                filtered.map(({ booking, trip, passenger, driver }) => {
-                  const totalPrice = trip ? formatPrice(trip.pricePerSeat * booking.seatsRequested) : t.placeholder;
-                  return (
-                    <tr key={booking.id} className="transition-colors duration-150 hover:bg-surface-dim">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
-                            {passenger?.avatarUrl ? (
-                              <Image src={passenger.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
-                            ) : (
-                              <Icon name="user" size={16} className="text-text-muted" />
-                            )}
-                          </div>
-                          <span className="font-medium text-text">{passenger?.fullName || t.placeholder}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
-                            {driver?.avatarUrl ? (
-                              <Image src={driver.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
-                            ) : (
-                              <Icon name="user" size={16} className="text-text-muted" />
-                            )}
-                          </div>
-                          <span className="font-medium text-text">{driver?.fullName || t.placeholder}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-text">
-                        {trip ? (
-                          <div className="flex items-center gap-2">
-                            <span>{trip.departureCity}</span>
-                            <Icon name="arrow-right" size={14} className="text-text-muted" />
-                            <span>{trip.arrivalCity}</span>
-                          </div>
-                        ) : t.placeholder}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-text">{booking.seatsRequested}</td>
-                      <td className="px-6 py-4 font-medium text-text">
-                        <div className="flex flex-col">
-                          <span>{totalPrice}</span>
-                          {trip && (
-                            <span className="text-xs text-text-muted">
-                              {t.table.perSeat} {formatPrice(trip.pricePerSeat)}
-                            </span>
+            ) : sortedBookings.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
+                  {t.emptyState}
+                </td>
+              </tr>
+            ) : (
+              sortedBookings.map(({ booking, trip, passenger, driver }) => {
+                const totalPrice = trip ? formatPrice(trip.pricePerSeat * booking.seatsRequested) : t.placeholder;
+                return (
+                  <tr key={booking.id} className="transition-colors duration-150 hover:bg-surface-dim">
+                    <td className="px-6 py-4 min-w-[160px]">
+                      <div className="flex items-center gap-3 truncate">
+                        <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                          {passenger?.avatarUrl ? (
+                            <Image src={passenger.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                          ) : (
+                            <Icon name="user" size={16} className="text-text-muted" />
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4"><StatusBadge status={booking.status} /></td>
-                      <td className="px-6 py-4 text-text-muted">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {trip && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => router.push(ROUTES.tripDetails(trip.id))}
-                            >
-                              <Icon name="file-text" size={14} /> {t.actions.view}
+                        <span className="font-medium text-text truncate">{passenger?.fullName || t.placeholder}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 min-w-[160px]">
+                      <div className="flex items-center gap-3 truncate">
+                        <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                          {driver?.avatarUrl ? (
+                            <Image src={driver.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                          ) : (
+                            <Icon name="user" size={16} className="text-text-muted" />
+                          )}
+                        </div>
+                        <span className="font-medium text-text truncate">{driver?.fullName || t.placeholder}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-text min-w-[180px]">
+                      {trip ? (
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="truncate">{trip.departureCity}</span>
+                          <Icon name="arrow-right" size={14} className="text-text-muted shrink-0" />
+                          <span className="truncate">{trip.arrivalCity}</span>
+                        </div>
+                      ) : t.placeholder}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-text w-[80px] min-w-[80px]">{booking.seatsRequested}</td>
+                    <td className="px-6 py-4 font-medium text-text w-[120px] min-w-[120px]">
+                      <div className="flex flex-col">
+                        <span>{totalPrice}</span>
+                        {trip && (
+                          <span className="text-xs text-text-muted">
+                            {t.table.perSeat} {formatPrice(trip.pricePerSeat)}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 w-[100px] min-w-[100px]"><StatusBadge status={booking.status} /></td>
+                    <td className="px-6 py-4 text-text-muted w-[120px] min-w-[120px]">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
+                    <td className="px-6 py-4 text-right w-[260px] min-w-[260px]">
+                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                        {trip && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.push(ROUTES.tripDetails(trip.id))}
+                          >
+                            <Icon name="file-text" size={14} /> {t.actions.view}
+                          </Button>
+                        )}
+                        {booking.status === 'pending' && (
+                          <>
+                            <Button size="sm" variant="secondary" onClick={() => acceptBooking(booking.id)}>
+                              <Icon name="check" size={14} /> {t.actions.confirm}
                             </Button>
-                          )}
-                          {booking.status === 'pending' && (
-                            <>
-                              <Button size="sm" variant="secondary" onClick={() => acceptBooking(booking.id)}>
-                                <Icon name="check" size={14} /> {t.actions.confirm}
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => rejectBooking(booking.id)}>
-                                <Icon name="x" size={14} /> {t.actions.reject}
-                              </Button>
-                            </>
-                          )}
-                          {(booking.status === 'accepted' || booking.status === 'paid') && (
-                            <Button size="sm" variant="danger" onClick={() => cancelBooking(booking.id)}>
-                              <Icon name="ban" size={14} /> {t.actions.cancel}
+                            <Button size="sm" variant="outline" onClick={() => rejectBooking(booking.id)}>
+                              <Icon name="x" size={14} /> {t.actions.reject}
                             </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        {!isLoading && allBookings.length > 0 && !isFiltering && (
+                          </>
+                        )}
+                        {(booking.status === 'accepted' || booking.status === 'paid') && (
+                          <Button size="sm" variant="danger" onClick={() => cancelBooking(booking.id)}>
+                            <Icon name="ban" size={14} /> {t.actions.cancel}
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      {!isLoading && allBookings.length > 0 && !isFiltering && (
+        <div className="mt-4 flex justify-end">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-        )}
-      </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
