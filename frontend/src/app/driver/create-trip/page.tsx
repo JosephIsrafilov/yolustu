@@ -450,22 +450,24 @@ export default function CreateTripPage() {
         </div>
 
         {step > 0 && formValues.departureCity && formValues.arrivalCity && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl bg-gradient-to-r from-brand-50 to-white p-3.5 shadow-sm border border-brand-100 dark:from-[#00282d] dark:to-[#001f24] dark:border-[#00383f] animate-fade-in">
+          <div className="mb-6 flex items-center justify-between rounded-2xl bg-white dark:bg-slate-900 p-3 shadow-sm border border-border dark:border-slate-800 animate-fade-in">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 border border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
                 <Icon name="map" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-0.5">{copy.summaryRoute}</p>
-                <p className="text-[15px] font-bold text-text truncate">
-                  {formValues.departureCity} <Icon name="arrow-right" size={14} className="inline mx-1 text-text-muted" /> {formValues.arrivalCity}
+                <p className="text-[15px] font-bold text-text truncate flex items-center gap-1.5">
+                  <span>{formValues.departureCity}</span>
+                  <Icon name="arrow-right" size={13} className="text-text-muted shrink-0" />
+                  <span>{formValues.arrivalCity}</span>
                 </p>
               </div>
             </div>
             <button 
               type="button"
               onClick={() => setStep(0)}
-              className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-brand-600 shadow-sm border border-border hover:bg-surface-muted transition-colors"
+              className="shrink-0 rounded-xl bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-text-muted hover:text-text shadow-xs border border-border hover:border-text-muted/30 transition-all"
             >
               {pageCopy.editRoute}
             </button>

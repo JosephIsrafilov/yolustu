@@ -90,18 +90,33 @@ export default function DriverDashboardPage() {
     <DriverLayout>
       <ProtectedRoute mode="driver">
         <div className="stagger-children">
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <Card padding="lg" className="text-center">
-              <p className="text-3xl font-bold text-brand-600">{activeTrips.length}</p>
-              <p className="text-sm text-text-muted mt-1">{copy.activeRide}</p>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+            <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100/50 dark:bg-brand-950/30 dark:text-brand-400 dark:border-brand-900/30">
+                <Icon name="map" size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.activeRide}</p>
+                <p className="text-lg sm:text-2xl font-black text-brand-600 mt-0.5 leading-none">{activeTrips.length}</p>
+              </div>
             </Card>
-            <Card padding="lg" className="text-center">
-              <p className="text-3xl font-bold text-accent-500">{pendingBookings.length}</p>
-              <p className="text-sm text-text-muted mt-1">{copy.pendingRequest}</p>
+            <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 border border-accent-100/50 dark:bg-accent-950/30 dark:text-accent-400 dark:border-accent-900/30">
+                <Icon name="inbox" size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.pendingRequest}</p>
+                <p className="text-lg sm:text-2xl font-black text-accent-500 mt-0.5 leading-none">{pendingBookings.length}</p>
+              </div>
             </Card>
-            <Card padding="lg" className="text-center">
-              <p className="text-3xl font-bold text-text">{myTrips.length}</p>
-              <p className="text-sm text-text-muted mt-1">{copy.totalRides}</p>
+            <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 border border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                <Icon name="car" size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.totalRides}</p>
+                <p className="text-lg sm:text-2xl font-black text-text mt-0.5 leading-none">{myTrips.length}</p>
+              </div>
             </Card>
           </div>
           <div className="grid sm:grid-cols-3 gap-3">
