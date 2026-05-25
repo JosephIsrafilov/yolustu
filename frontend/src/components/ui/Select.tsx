@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
@@ -42,6 +43,9 @@ export default function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const listboxId = useId();
 
   const normalizedOptions = React.useMemo((): SelectOption[] => {
@@ -56,7 +60,10 @@ export default function Select({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideTrigger = containerRef.current?.contains(target);
+      const clickedInsideDropdown = dropdownRef.current?.contains(target);
+      if (!clickedInsideTrigger && !clickedInsideDropdown) {
         setIsOpen(false);
       }
     };
@@ -64,6 +71,44 @@ export default function Select({
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const viewportPadding = 8;
+      const preferredHeight = 240;
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const spaceAbove = rect.top - viewportPadding;
+      const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
+
+      const width = Math.max(rect.width, 180);
+      const maxLeft = window.innerWidth - width - viewportPadding;
+      const left = Math.min(Math.max(viewportPadding, rect.left), Math.max(viewportPadding, maxLeft));
+      const top = openUpward ? Math.max(viewportPadding, rect.top - preferredHeight - 4) : rect.bottom + 4;
+      const maxHeight = Math.max(140, Math.min(preferredHeight, openUpward ? spaceAbove - 4 : spaceBelow - 4));
+
+      setDropdownStyle({
+        position: 'fixed',
+        left,
+        top,
+        width,
+        maxHeight,
+        zIndex: 9999,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
   }, [isOpen]);
 
   const filteredOptions = normalizedOptions.filter(option => 
@@ -77,6 +122,7 @@ export default function Select({
       {label && <label className="text-sm font-semibold text-text-secondary">{label}</label>}
 
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={() => {
@@ -119,11 +165,13 @@ export default function Select({
 
       {error && <p className="text-xs text-danger-500">{error}</p>}
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
+          ref={dropdownRef}
           id={listboxId}
           role="listbox"
-          className="absolute top-[calc(100%+4px)] z-50 flex max-h-60 w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+          style={dropdownStyle}
+          className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
         >
           {searchable && (
             <div className="border-b border-border p-2">
@@ -158,8 +206,8 @@ export default function Select({
                   aria-selected={value === option.value}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200 cursor-pointer",
-                    value === option.value 
-                      ? "font-semibold text-brand-700 bg-brand-50/70 shadow-sm ring-1 ring-brand-100/50" 
+                    value === option.value
+                      ? "font-semibold text-brand-700 bg-brand-50/70 shadow-sm ring-1 ring-brand-100/50"
                       : "text-text hover:bg-surface-muted hover:text-brand-800 hover:pl-4"
                   )}
                 >
@@ -169,7 +217,8 @@ export default function Select({
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
