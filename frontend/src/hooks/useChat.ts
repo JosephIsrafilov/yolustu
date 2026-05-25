@@ -10,6 +10,7 @@ export function useChat(rideId: string) {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const shouldReconnectRef = useRef(true);
+  const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
     if (!rideId) return;
@@ -39,8 +40,8 @@ export function useChat(rideId: string) {
           }
           return [...prev, newMessage];
         });
-      } catch (_) {
-        // Silent catch to prevent lint/CI failures
+      } catch {
+        // Ignore malformed payloads.
       }
     };
 
@@ -48,7 +49,9 @@ export function useChat(rideId: string) {
       setIsConnected(false);
       socketRef.current = null;
       if (shouldReconnectRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => connect(), 3000);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectRef.current();
+        }, 3000);
       }
     };
 
@@ -59,6 +62,7 @@ export function useChat(rideId: string) {
 
   useEffect(() => {
     shouldReconnectRef.current = true;
+    connectRef.current = connect;
     connect();
 
     return () => {
