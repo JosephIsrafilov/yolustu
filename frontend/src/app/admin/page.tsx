@@ -11,40 +11,43 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { adminService } from '@/services';
 import type { AdminStats } from '@/services/contracts/admin-service';
-import { formatPrice } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 const DASHBOARD_I18N = {
   az: {
-    title: 'Admin Panel',
+    title: 'İdarə paneli',
     subtitle: 'Əsas göstəricilər və son fəaliyyət',
     locale: 'az-AZ',
     kpis: {
-      totalUsers: 'İstifadəçilər',
+      totalUsers: 'Ümumi istifadəçilər',
       drivers: 'Sürücülər',
       passengers: 'Sərnişinlər',
       activeTrips: 'Aktiv gedişlər',
       pendingBookings: 'Gözləyən rezervlər',
-      completedBookings: 'Tamamlanan rezervlər',
-      revenue: 'Gəlir (GMV)',
+      completedBookings: 'Tamamlanmış rezervlər',
+      pendingVerifications: 'Gözləyən təsdiqləmələr',
+      revenue: 'Gəlir',
     },
     quickActions: {
-      title: 'Tez əməliyyatlar',
+      title: 'Sürətli əməliyyatlar',
       manageUsers: 'İstifadəçiləri idarə et',
-      manageUsersDesc: 'Rol, status və təsdiqləmələri yoxlayın.',
+      manageUsersDesc: 'İstifadəçi rollarını, statuslarını və təsdiqləmələrini idarə edin.',
       manageTrips: 'Gedişləri idarə et',
       manageTripsDesc: 'Aktiv marşrutlara və qiymətlərə nəzarət edin.',
       manageBookings: 'Rezervləri idarə et',
-      manageBookingsDesc: 'Sorğuları təsdiqləyin və statusları izləyin.',
+      manageBookingsDesc: 'Rezerv sorğularını təsdiqləyin və izləyin.',
+      reviewDrivers: 'Sürücüləri yoxla',
+      reviewDriversDesc: 'Gözləyən sürücü təsdiqləmə sorğularını yoxlayın.',
     },
     recent: {
-      title: 'Son fəaliyyət',
-      users: 'Son qeydiyyatlar',
+      title: 'Son aktivlik',
+      users: 'Yeni istifadəçilər',
       trips: 'Son gedişlər',
       bookings: 'Son rezervlər',
-      empty: 'Məlumat yoxdur',
+      empty: 'Son aktivlik yoxdur',
     },
     overview: {
-      title: 'Status xülasəsi',
+      title: 'Status icmalı',
       trips: 'Gedişlər',
       bookings: 'Rezervlər',
     },
@@ -59,36 +62,39 @@ const DASHBOARD_I18N = {
     },
   },
   ru: {
-    title: 'Панель администратора',
+    title: 'Панель управления',
     subtitle: 'Ключевые показатели и последняя активность',
     locale: 'ru-RU',
     kpis: {
-      totalUsers: 'Пользователи',
+      totalUsers: 'Всего пользователей',
       drivers: 'Водители',
       passengers: 'Пассажиры',
       activeTrips: 'Активные поездки',
-      pendingBookings: 'Бронирования в ожидании',
-      completedBookings: 'Завершенные бронирования',
-      revenue: 'Доход (GMV)',
+      pendingBookings: 'Ожидающие бронирования',
+      completedBookings: 'Завершённые бронирования',
+      pendingVerifications: 'Ожидающие верификации',
+      revenue: 'Выручка',
     },
     quickActions: {
       title: 'Быстрые действия',
-      manageUsers: 'Управлять пользователями',
-      manageUsersDesc: 'Проверьте роли, статусы и верификацию.',
-      manageTrips: 'Управлять поездками',
+      manageUsers: 'Управление пользователями',
+      manageUsersDesc: 'Управление ролями пользователей, статусами и верификацией.',
+      manageTrips: 'Управление поездками',
       manageTripsDesc: 'Контролируйте активные маршруты и цены.',
-      manageBookings: 'Управлять бронированиями',
+      manageBookings: 'Управление бронированиями',
       manageBookingsDesc: 'Подтверждайте заявки и следите за статусом.',
+      reviewDrivers: 'Проверка водителей',
+      reviewDriversDesc: 'Проверьте ожидающие запросы на верификацию водителей.',
     },
     recent: {
       title: 'Последняя активность',
-      users: 'Последние регистрации',
+      users: 'Новые пользователи',
       trips: 'Последние поездки',
       bookings: 'Последние бронирования',
-      empty: 'Нет данных',
+      empty: 'Нет последней активности',
     },
     overview: {
-      title: 'Сводка статусов',
+      title: 'Обзор статусов',
       trips: 'Поездки',
       bookings: 'Бронирования',
     },
@@ -103,7 +109,7 @@ const DASHBOARD_I18N = {
     },
   },
   en: {
-    title: 'Admin Dashboard',
+    title: 'Dashboard',
     subtitle: 'Key metrics and recent activity',
     locale: 'en-US',
     kpis: {
@@ -113,7 +119,8 @@ const DASHBOARD_I18N = {
       activeTrips: 'Active trips',
       pendingBookings: 'Pending bookings',
       completedBookings: 'Completed bookings',
-      revenue: 'Revenue (GMV)',
+      pendingVerifications: 'Pending verifications',
+      revenue: 'Revenue',
     },
     quickActions: {
       title: 'Quick actions',
@@ -123,6 +130,8 @@ const DASHBOARD_I18N = {
       manageTripsDesc: 'Monitor active routes and pricing.',
       manageBookings: 'Manage bookings',
       manageBookingsDesc: 'Confirm requests and track status.',
+      reviewDrivers: 'Review pending drivers',
+      reviewDriversDesc: 'Review pending driver verification requests.',
     },
     recent: {
       title: 'Recent activity',
@@ -180,10 +189,11 @@ export default function AdminDashboardPage() {
   const activeTrips = apiStats?.activeTrips ?? trips.filter((trip) => trip.status === 'active').length;
   const pendingBookings = apiStats?.pendingBookings ?? bookings.filter((booking) => booking.status === 'pending').length;
   const completedBookings = bookings.filter((booking) => booking.status === 'completed').length;
+  const pendingVerifications = apiStats?.pendingVerifications ?? users.filter((user) => user.verificationStatus === 'pending').length;
 
   const revenueTotal = enrichedBookings.reduce((sum, { booking, trip }) => {
     if (!trip) return sum;
-    if (booking.status !== 'paid' && booking.status !== 'completed') return sum;
+    if (booking.status !== 'paid' && booking.status !== 'completed' && booking.status !== 'accepted') return sum;
     return sum + trip.pricePerSeat * booking.seatsRequested;
   }, 0);
 
@@ -207,13 +217,21 @@ export default function AdminDashboardPage() {
     { label: t.kpis.activeTrips, value: activeTrips, icon: 'map', tone: 'text-success-600', bg: 'bg-green-50' },
     { label: t.kpis.pendingBookings, value: pendingBookings, icon: 'clock', tone: 'text-amber-600', bg: 'bg-amber-50' },
     { label: t.kpis.completedBookings, value: completedBookings, icon: 'calendar-check', tone: 'text-accent-600', bg: 'bg-brand-50' },
-    { label: t.kpis.revenue, value: formatPrice(revenueTotal), icon: 'banknote', tone: 'text-brand-700', bg: 'bg-brand-50' },
+    { label: t.kpis.pendingVerifications, value: pendingVerifications, icon: 'shield-check', tone: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: t.kpis.revenue, value: formatCurrency(revenueTotal), icon: 'banknote', tone: 'text-brand-700', bg: 'bg-brand-50' },
   ];
 
   const quickActions = [
     { href: ROUTES.adminUsers, label: t.quickActions.manageUsers, desc: t.quickActions.manageUsersDesc, icon: 'users' as IconName },
     { href: ROUTES.adminTrips, label: t.quickActions.manageTrips, desc: t.quickActions.manageTripsDesc, icon: 'map' as IconName },
     { href: ROUTES.adminBookings, label: t.quickActions.manageBookings, desc: t.quickActions.manageBookingsDesc, icon: 'calendar-check' as IconName },
+    { 
+      href: ROUTES.adminVerifications, 
+      label: t.quickActions.reviewDrivers, 
+      desc: t.quickActions.reviewDriversDesc, 
+      icon: 'shield-check' as IconName,
+      badge: pendingVerifications > 0 ? pendingVerifications : undefined
+    },
   ];
 
   const recentUsers = [...users]
@@ -237,7 +255,10 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="animate-fade-in">
+          <Card 
+            key={stat.label} 
+            className="animate-fade-in hover:shadow-md hover:border-brand-200 transition-all duration-200"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-text-muted">{stat.label}</p>
@@ -251,29 +272,36 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
+      <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+        <Card className="hover:shadow-sm transition-all duration-200">
           <p className="text-sm font-bold text-text">{t.quickActions.title}</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
-                className="group rounded-2xl border border-border bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover"
+                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover"
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-                    <Icon name={action.icon} size={18} />
+                {action.badge !== undefined && (
+                  <span className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white animate-pulse">
+                    {action.badge}
+                  </span>
+                )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                      <Icon name={action.icon} size={18} />
+                    </div>
+                    <span className="text-sm font-semibold text-text group-hover:text-brand-700">{action.label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-text group-hover:text-brand-700">{action.label}</span>
+                  <p className="mt-2 text-xs text-text-muted leading-4">{action.desc}</p>
                 </div>
-                <p className="mt-2 text-xs text-text-muted leading-4">{action.desc}</p>
               </Link>
             ))}
           </div>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-all duration-200">
           <p className="text-sm font-bold text-text">{t.overview.title}</p>
           <div className="mt-4 space-y-4">
             <div>
@@ -319,7 +347,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
-        <Card>
+        <Card className="hover:shadow-sm transition-all duration-200">
           <p className="text-sm font-bold text-text">{t.recent.users}</p>
           <div className="mt-4 space-y-3">
             {recentUsers.length === 0 ? (
@@ -342,7 +370,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-all duration-200">
           <p className="text-sm font-bold text-text">{t.recent.trips}</p>
           <div className="mt-4 space-y-3">
             {recentTrips.length === 0 ? (
@@ -355,7 +383,7 @@ export default function AdminDashboardPage() {
                     <p className="text-xs text-text-muted">{trip.date} · {trip.time}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</p>
+                    <p className="text-sm font-bold text-brand-600">{formatCurrency(trip.pricePerSeat)}</p>
                     <StatusBadge status={trip.status} type="trip" />
                   </div>
                 </div>
@@ -364,14 +392,14 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-all duration-200">
           <p className="text-sm font-bold text-text">{t.recent.bookings}</p>
           <div className="mt-4 space-y-3">
             {recentBookings.length === 0 ? (
               <p className="text-sm text-text-muted">{t.recent.empty}</p>
             ) : (
               recentBookings.map(({ booking, trip, passenger }) => {
-                const total = trip ? formatPrice(trip.pricePerSeat * booking.seatsRequested) : t.recent.empty;
+                const total = trip ? formatCurrency(trip.pricePerSeat * booking.seatsRequested) : t.recent.empty;
                 return (
                   <div key={booking.id} className="flex items-center justify-between gap-3">
                     <div>

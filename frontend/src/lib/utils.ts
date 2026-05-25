@@ -11,8 +11,14 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 }
 
+export function formatCurrency(amount: number | string): string {
+  const numeric = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(numeric) || !Number.isFinite(numeric)) return `0 ${CURRENCY_SYMBOL}`;
+  return `${formatPriceValue(numeric)} ${CURRENCY_SYMBOL}`;
+}
+
 export function formatPrice(price: number): string {
-  return `${formatPriceValue(price)} ${CURRENCY_SYMBOL}`;
+  return formatCurrency(price);
 }
 
 export function formatPriceParts(price: number): { amount: string; symbol: string; code: string } {
