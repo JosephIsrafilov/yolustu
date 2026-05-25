@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import AuthProvider from "@/components/auth/AuthProvider";
+import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
 import LanguageSync from "@/components/layout/LanguageSync";
 import QueryProvider from "@/providers/QueryProvider";
 import "./globals.css";
@@ -28,6 +29,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <LanguageSync />
+            <RouteAccessGuard />
             {children}
           </AuthProvider>
         </QueryProvider>

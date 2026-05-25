@@ -12,6 +12,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import DatePicker from '@/components/ui/DatePicker';
+import Select from '@/components/ui/Select';
+import { getUserCapabilities } from '@/lib/access-control';
 
 const TOP_ROUTES: Array<{
   from: string;
@@ -45,8 +47,10 @@ const TOP_ROUTES: Array<{
 
 export default function HomePage() {
   const router = useRouter();
-  const { language } = useAppStore();
+  const { language, currentUser, isAuthenticated, activeMode } = useAppStore();
   const copy = I18N[language];
+  const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
+  const offerRoute = capabilities.canOfferRide ? ROUTES.createTrip : ROUTES.driverApply;
   const [dep, setDep] = useState('');
   const [arr, setArr] = useState('');
   const [date, setDate] = useState('');
@@ -128,17 +132,14 @@ export default function HomePage() {
               <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] md:items-end">
                 <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">{copy.common.from}</label>
-                  <div className="relative">
-                    <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                    <select
-                      value={dep}
-                      onChange={(e) => setDep(e.target.value)}
-                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                    >
-                      <option value="">{copy.common.from}</option>
-                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
+                  <Select
+                    value={dep}
+                    onChange={(value) => setDep(String(value))}
+                    options={AZ_CITIES.map((city) => ({ value: city, label: city }))}
+                    placeholder={copy.common.from}
+                    icon="map-pin"
+                    ariaLabel={copy.common.from}
+                  />
                 </div>
 
                 <div className="z-10 hidden items-end justify-center pb-1 md:flex">
@@ -154,17 +155,14 @@ export default function HomePage() {
 
                 <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">{copy.common.to}</label>
-                  <div className="relative">
-                    <Icon name="map-pin" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                    <select
-                      value={arr}
-                      onChange={(e) => setArr(e.target.value)}
-                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                    >
-                      <option value="">{copy.common.to}</option>
-                      {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
+                  <Select
+                    value={arr}
+                    onChange={(value) => setArr(String(value))}
+                    options={AZ_CITIES.map((city) => ({ value: city, label: city }))}
+                    placeholder={copy.common.to}
+                    icon="map-pin"
+                    ariaLabel={copy.common.to}
+                  />
                 </div>
 
                 <DatePicker
@@ -177,19 +175,18 @@ export default function HomePage() {
 
                 <div className="flex flex-col">
                   <label className="mb-1 block text-[12px] font-bold text-[#40484a]">{copy.common.passenger}</label>
-                  <div className="relative">
-                    <Icon name="user" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                    <select
-                      value={passengers}
-                      onChange={(e) => setPassengers(Number(e.target.value))}
-                      className="h-12 w-full appearance-none rounded-2xl border border-[#c0c8ca] bg-[#edfcff] pl-10 pr-4 text-[15px] text-[#011f23] outline-none transition-all duration-200 ease-out focus:border-[#054752] focus:bg-white focus:ring-2 focus:ring-[#b5ebf9]"
-                    >
-                      <option value={1}>1 {copy.common.passenger.toLowerCase()}</option>
-                      <option value={2}>2 {copy.common.passengers.toLowerCase()}</option>
-                      <option value={3}>3 {copy.common.passengers.toLowerCase()}</option>
-                      <option value={4}>4+ {copy.common.passengers.toLowerCase()}</option>
-                    </select>
-                  </div>
+                  <Select
+                    value={passengers}
+                    onChange={(value) => setPassengers(Number(value))}
+                    options={[
+                      { value: 1, label: `1 ${copy.common.passenger}` },
+                      { value: 2, label: `2 ${copy.common.passengers}` },
+                      { value: 3, label: `3 ${copy.common.passengers}` },
+                      { value: 4, label: `4+ ${copy.common.passengers}` },
+                    ]}
+                    icon="user"
+                    ariaLabel={copy.common.passenger}
+                  />
                 </div>
 
                 <button
@@ -290,7 +287,7 @@ export default function HomePage() {
                   {copy.home.driverCtaDesc}
                 </p>
                 <Link
-                  href={ROUTES.createTrip}
+                  href={offerRoute}
                   className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-[#054752] px-8 py-3.5 text-[16px] font-semibold text-white shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#306671] hover:shadow-xl active:translate-y-0 active:scale-[0.98] md:px-10 md:py-4 md:text-[18px]"
                 >
                   {copy.home.driverCtaButton}

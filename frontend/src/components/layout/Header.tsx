@@ -8,20 +8,34 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
 import { I18N } from '@/lib/i18n';
+import { getUserCapabilities } from '@/lib/access-control';
+
+const HEADER_MODE_I18N = {
+  az: { toDriver: 'Surucu rejimi', toPassenger: 'Sernisin rejimi' },
+  ru: { toDriver: 'Rezhim voditelya', toPassenger: 'Rezhim passazhira' },
+  en: { toDriver: 'Driver mode', toPassenger: 'Passenger mode' },
+} as const;
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuthenticated, currentUser, logout, language } = useAppStore();
+  const { isAuthenticated, currentUser, logout, language, activeMode, switchRole } = useAppStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const copy = I18N[language];
+  const modeCopy = HEADER_MODE_I18N[language];
+  const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
+  const isAdmin = capabilities.canAccessAdmin;
 
-  const navLinks = [
+  const offerRoute = capabilities.canOfferRide ? ROUTES.createTrip : ROUTES.driverApply;
+  const showDriverDashboardLink = capabilities.canAccessDriverDashboard && activeMode === 'passenger';
+  const showPassengerSwitch = capabilities.canAccessDriverDashboard && activeMode === 'driver';
+
+  const navLinks = !isAdmin ? [
     { label: copy.header.findRide, href: ROUTES.trips, match: '/trips' },
-    { label: copy.header.offerRide, href: ROUTES.createTrip, match: '/driver/create-trip' },
-    ...(isAuthenticated ? [
+    { label: copy.header.offerRide, href: offerRoute, match: '/driver' },
+    ...(showDriverDashboardLink ? [
       { label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' },
     ] : []),
-  ];
+  ] : [];
 
   const isActive = (match: string) => {
     if (match === '/driver' && pathname === '/driver/create-trip') return false;
@@ -59,13 +73,33 @@ export default function Header() {
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {isAuthenticated && currentUser ? (
             <>
-              <Link
-                href={ROUTES.bookings}
-                className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
-              >
-                {copy.header.bookings}
-              </Link>
-              {currentUser.role === 'admin' && (
+              {!isAdmin && capabilities.canBookRide && (
+                <Link
+                  href={ROUTES.bookings}
+                  className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
+                >
+                  {copy.header.bookings}
+                </Link>
+              )}
+              {showPassengerSwitch && (
+                <button
+                  type="button"
+                  onClick={() => switchRole('passenger')}
+                  className="ui-action-text hidden rounded-lg px-3 py-2 text-[#002f37] transition-all duration-200 ease-out hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] lg:block"
+                >
+                  {modeCopy.toPassenger}
+                </button>
+              )}
+              {!showPassengerSwitch && showDriverDashboardLink && (
+                <button
+                  type="button"
+                  onClick={() => switchRole('driver')}
+                  className="ui-action-text hidden rounded-lg px-3 py-2 text-[#002f37] transition-all duration-200 ease-out hover:bg-[#edfcff] hover:text-[#054752] active:scale-[0.98] lg:block"
+                >
+                  {modeCopy.toDriver}
+                </button>
+              )}
+              {isAdmin && (
                 <Link
                   href={ROUTES.admin}
                   className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
@@ -73,7 +107,7 @@ export default function Header() {
                   Admin
                 </Link>
               )}
-              <Link href={ROUTES.profile} className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]">
+              <Link href={isAdmin ? ROUTES.admin : ROUTES.profile} className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]">
                 {currentUser.avatarUrl ? (
                   <Image
                     src={currentUser.avatarUrl}

@@ -12,6 +12,8 @@ import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer, RideMarkers } from '@/components/ui/Map';
 import { I18N } from '@/lib/i18n';
+import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 
 function TripsContent() {
   const searchParams = useSearchParams();
@@ -71,32 +73,40 @@ function TripsContent() {
             {}
             <div className="mb-5">
               <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.from}</h3>
-              <div className="relative">
-                <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
-                <select value={filters.departureCity || ''} onChange={(e) => setFilters((p) => ({ ...p, departureCity: e.target.value || undefined }))}
-                  className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                  <option value="">{copy.common.allCities}</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <Select
+                value={filters.departureCity || ''}
+                onChange={(value) => setFilters((p) => ({ ...p, departureCity: value ? String(value) : undefined }))}
+                options={[
+                  { value: '', label: copy.common.allCities },
+                  ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+                ]}
+                icon="map-pin"
+                ariaLabel={copy.common.from}
+              />
             </div>
 
             <div className="mb-5">
               <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.to}</h3>
-              <div className="relative">
-                <Icon name="map-pin" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#70787b] pointer-events-none" />
-                <select value={filters.arrivalCity || ''} onChange={(e) => setFilters((p) => ({ ...p, arrivalCity: e.target.value || undefined }))}
-                  className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white pl-9 pr-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all appearance-none">
-                  <option value="">{copy.common.allCities}</option>
-                  {AZ_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <Select
+                value={filters.arrivalCity || ''}
+                onChange={(value) => setFilters((p) => ({ ...p, arrivalCity: value ? String(value) : undefined }))}
+                options={[
+                  { value: '', label: copy.common.allCities },
+                  ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+                ]}
+                icon="map-pin"
+                ariaLabel={copy.common.to}
+              />
             </div>
 
             <div className="mb-5">
-              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.date}</h3>
-              <input type="date" value={filters.date || ''} onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value || undefined }))}
-                className="ui-label-text w-full rounded-xl border border-[#c0c8ca] bg-white px-3 py-2.5 text-[#011f23] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 outline-none transition-all" />
+              <DatePicker
+                value={filters.date || ''}
+                onChange={(value) => setFilters((p) => ({ ...p, date: value || undefined }))}
+                label={copy.common.date}
+                placeholder={copy.common.selectDate}
+                className="[&_label]:ui-label-text [&_label]:text-[#40484a]"
+              />
             </div>
 
             <div className="mb-5">
@@ -108,7 +118,7 @@ function TripsContent() {
                   className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
                   aria-label={`${copy.common.passenger} -`}
                 >
-                  −
+                  в€’
                 </button>
                 <span className="ui-label-text min-w-10 text-center text-[#011f23]">{filters.minSeats || 1}</span>
                 <button
@@ -316,7 +326,7 @@ function TripsContent() {
 
                       {/* Pricing, Seats, Preferences */}
                       <div className="order-3 flex shrink-0 flex-col items-end text-right sm:w-35">
-                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} ₼</div>
+                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} в‚ј</div>
                         <div className={`ui-chip-text flex items-center gap-1 mt-1 ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span className="leading-tight">{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
@@ -363,9 +373,13 @@ function TripsContent() {
 }
 
 export default function TripsPage() {
+  const { language } = useAppStore();
+  const copy = I18N[language];
+
   return (
-    <Suspense fallback={<WebLayout title="Gedişlər"><LoadingState /></WebLayout>}>
+    <Suspense fallback={<WebLayout title={copy.tripsPage.title}><LoadingState /></WebLayout>}>
       <TripsContent />
     </Suspense>
   );
 }
+

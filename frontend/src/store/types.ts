@@ -1,11 +1,13 @@
 import type { User, Trip, Booking, Review, TripSearchFilters, CreateTripData } from '@/types';
 import type { UpdateProfileInput } from '@/services/contracts/auth-service';
 import type { Language } from '@/lib/i18n';
+import type { ActiveMode } from '@/lib/access-control';
 
 export interface AuthSlice {
   currentUser: User | null;
   isAuthenticated: boolean;
   activeRole: 'passenger' | 'driver';
+  activeMode: ActiveMode;
   lastError: string | null;
   users: User[];
   pendingVerifications: User[];

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import Icon from '@/components/ui/Icon';
+import React, { useState, useRef, useEffect, useId } from 'react';
+import Icon, { type IconName } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -19,6 +19,8 @@ interface SelectProps {
   error?: string;
   disabled?: boolean;
   searchable?: boolean;
+  icon?: IconName;
+  ariaLabel?: string;
 }
 
 export default function Select({
@@ -30,6 +32,8 @@ export default function Select({
   error,
   disabled = false,
   searchable = false,
+  icon,
+  ariaLabel,
 }: SelectProps) {
   const { language } = useAppStore();
   const searchPlaceholder = language === 'az' ? 'Axtar...' : language === 'ru' ? 'Поиск...' : 'Search...';
@@ -38,6 +42,7 @@ export default function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const normalizedOptions = React.useMemo((): SelectOption[] => {
     return options.map(opt => {
@@ -78,8 +83,16 @@ export default function Select({
           setIsOpen(!isOpen);
           if (!isOpen) setSearch('');
         }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setIsOpen(false);
+        }}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
         className={cn(
-          'relative flex h-[46px] w-full items-center justify-between rounded-xl border bg-white px-4 text-left text-sm text-text shadow-sm transition-all focus:outline-none focus:ring-2',
+          'relative flex h-[46px] w-full items-center justify-between rounded-xl border bg-white pr-4 text-left text-sm text-text shadow-sm transition-all focus:outline-none focus:ring-2',
+          icon ? 'pl-10' : 'pl-4',
           disabled
             ? 'opacity-50 bg-gray-50 cursor-not-allowed border-border'
             : error
@@ -87,6 +100,13 @@ export default function Select({
               : 'border-border hover:border-border-strong focus:ring-brand-500 cursor-pointer'
         )}
       >
+        {icon && (
+          <Icon
+            name={icon}
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+          />
+        )}
         <span className={cn('truncate', !selectedOption && 'text-text-muted')}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
@@ -100,7 +120,11 @@ export default function Select({
       {error && <p className="text-xs text-danger-500">{error}</p>}
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+4px)] z-50 flex max-h-60 w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute top-[calc(100%+4px)] z-50 flex max-h-60 w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+        >
           {searchable && (
             <div className="border-b border-border p-2">
               <div className="relative flex items-center">
@@ -130,6 +154,8 @@ export default function Select({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
+                  role="option"
+                  aria-selected={value === option.value}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200 cursor-pointer",
                     value === option.value 

@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import WebLayout from '@/components/layout/WebLayout';
+import DriverLayout from '@/components/driver/DriverLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -316,7 +316,7 @@ export default function CreateTripPage() {
   };
 
   return (
-    <WebLayout title={copy.title} showBack narrow hideFooter>
+    <DriverLayout>
       <ProtectedRoute mode="driver">
         {lastError && (
           <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
@@ -911,7 +911,7 @@ export default function CreateTripPage() {
         </Card>
           </>
       </ProtectedRoute>
-    </WebLayout>
+    </DriverLayout>
   );
 }
 

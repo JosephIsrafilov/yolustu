@@ -41,7 +41,8 @@ export default function LoginPage() {
       const ok = await login(phone, password);
       setLoading(false);
       if (ok) {
-        router.push(ROUTES.search);
+        const loggedInUser = useAppStore.getState().currentUser;
+        router.push(loggedInUser?.role === 'admin' ? ROUTES.admin : ROUTES.search);
         return;
       }
       

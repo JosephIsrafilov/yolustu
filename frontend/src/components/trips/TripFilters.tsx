@@ -4,7 +4,11 @@ import React from 'react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
+import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import { AZ_CITIES } from '@/lib/utils';
+import { I18N } from '@/lib/i18n';
+import { useAppStore } from '@/store/useAppStore';
 import type { TripSearchFilters } from '@/types';
 
 interface TripFiltersProps {
@@ -14,53 +18,58 @@ interface TripFiltersProps {
 }
 
 export default function TripFilters({ filters, onChange, onSearch }: TripFiltersProps) {
+  const { language } = useAppStore();
+  const copy = I18N[language];
+
   const update = (key: keyof TripSearchFilters, value: string | number | boolean | undefined) => {
     onChange({ ...filters, [key]: value !== undefined ? value : undefined });
   };
+
+  const maxPriceLabel = language === 'az' ? 'Maks. qiymət (€)' : language === 'ru' ? 'Макс. цена (€)' : 'Max price (€)';
+  const maxPricePlaceholder = language === 'az' ? 'Məs: 20' : language === 'ru' ? 'Напр.: 20' : 'e.g. 20';
 
   return (
     <div className="flex flex-col gap-3 p-4 bg-white rounded-2xl border border-border">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-text-secondary">Haradan</label>
-          <select
+          <label className="text-xs font-medium text-text-secondary">{copy.common.from}</label>
+          <Select
             value={filters.departureCity || ''}
-            onChange={(e) => update('departureCity', e.target.value)}
-            className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">Bütün şəhərlər</option>
-            {AZ_CITIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            onChange={(value) => update('departureCity', value ? String(value) : undefined)}
+            options={[
+              { value: '', label: copy.common.allCities },
+              ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+            ]}
+            icon="map-pin"
+            ariaLabel={copy.common.from}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-text-secondary">Haraya</label>
-          <select
+          <label className="text-xs font-medium text-text-secondary">{copy.common.to}</label>
+          <Select
             value={filters.arrivalCity || ''}
-            onChange={(e) => update('arrivalCity', e.target.value)}
-            className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">Bütün şəhərlər</option>
-            {AZ_CITIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            onChange={(value) => update('arrivalCity', value ? String(value) : undefined)}
+            options={[
+              { value: '', label: copy.common.allCities },
+              ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+            ]}
+            icon="map-pin"
+            ariaLabel={copy.common.to}
+          />
         </div>
       </div>
 
-      <Input
-        label="Tarix"
-        type="date"
+      <DatePicker
         value={filters.date || ''}
-        onChange={(e) => update('date', e.target.value)}
-        icon={<Icon name="calendar" size={16} />}
+        onChange={(value) => update('date', value || undefined)}
+        label={copy.common.date}
+        placeholder={copy.common.selectDate}
       />
 
       <Input
-        label="Maks. qiymət (₼)"
+        label={maxPriceLabel}
         type="number"
-        placeholder="Məs: 20"
+        placeholder={maxPricePlaceholder}
         value={filters.maxPrice || ''}
         onChange={(e) => update('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
         icon={<Icon name="banknote" size={16} />}
@@ -74,7 +83,7 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
             onChange={(e) => update('femaleOnly', e.target.checked)}
             className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
           />
-          <span>Yalnız xanımlar üçün</span>
+          <span>{copy.createTrip.femaleOnlyLabel}</span>
         </label>
         <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
           <input
@@ -83,7 +92,7 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
             onChange={(e) => update('smokingAllowed', e.target.checked)}
             className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
           />
-          <span>Siqaret çəkmək olar</span>
+          <span>{copy.createTrip.smokingAllowedLabel}</span>
         </label>
         <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
           <input
@@ -92,7 +101,7 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
             onChange={(e) => update('petsAllowed', e.target.checked)}
             className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
           />
-          <span>Heyvan aparmaq olar</span>
+          <span>{copy.createTrip.petsAllowedLabel}</span>
         </label>
         <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer select-none">
           <input
@@ -101,13 +110,13 @@ export default function TripFilters({ filters, onChange, onSearch }: TripFilters
             onChange={(e) => update('musicAllowed', e.target.checked)}
             className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
           />
-          <span>Musiqi dinləmək olar</span>
+          <span>{copy.createTrip.musicAllowedLabel}</span>
         </label>
       </div>
 
       <Button fullWidth onClick={onSearch}>
         <Icon name="search" size={16} />
-        Axtar
+        {copy.common.search}
       </Button>
     </div>
   );

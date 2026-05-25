@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import WebLayout from '@/components/layout/WebLayout';
+import DriverLayout from '@/components/driver/DriverLayout';
 import TripCard from '@/components/trips/TripCard';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
@@ -27,7 +27,7 @@ export default function MyTripsPage() {
   }, [fetchTrips]);
 
   return (
-    <WebLayout title={copy.title} showBack>
+    <DriverLayout>
       <ProtectedRoute mode="driver">
         {lastError && (
           <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
@@ -55,7 +55,7 @@ export default function MyTripsPage() {
                         <Button size="sm" variant="secondary" className="flex-1" onClick={() => completeTrip(trip.id)}>{copy.completeAction}</Button>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="primary" className="flex-1" onClick={() => router.push(ROUTES.bookingRequests)}>{copy.requestsAction}</Button>
+                        <Button size="sm" variant="primary" className="flex-1" onClick={() => router.push(ROUTES.driverRequests)}>{copy.requestsAction}</Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -97,6 +97,6 @@ export default function MyTripsPage() {
           )}
         </div>
       </ProtectedRoute>
-    </WebLayout>
+    </DriverLayout>
   );
 }

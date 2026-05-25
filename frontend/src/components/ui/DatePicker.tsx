@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/store/useAppStore';
+import { I18N, type Language } from '@/lib/i18n';
 
 type DatePickerProps = {
   value?: string;
@@ -14,21 +16,53 @@ type DatePickerProps = {
   className?: string;
 };
 
-const WEEKDAYS = ['B.e', 'Ç.a', 'Ç', 'C.a', 'C', 'Ş', 'B'];
-const MONTHS = [
-  'Yanvar',
-  'Fevral',
-  'Mart',
-  'Aprel',
-  'May',
-  'İyun',
-  'İyul',
-  'Avqust',
-  'Sentyabr',
-  'Oktyabr',
-  'Noyabr',
-  'Dekabr',
-];
+type DatePickerLocale = {
+  weekdays: string[];
+  months: string[];
+  todayLabel: string;
+  tomorrowLabel: string;
+  panelTitle: string;
+  close: string;
+  confirm: string;
+  previousMonth: string;
+  nextMonth: string;
+};
+
+const CALENDAR_LOCALE: Record<Language, DatePickerLocale> = {
+  az: {
+    weekdays: ['B.e', 'Ç.a', 'Ç', 'C.a', 'C', 'Ş', 'B'],
+    months: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun', 'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'],
+    todayLabel: 'Bu gün',
+    tomorrowLabel: 'Sabah',
+    panelTitle: 'Tarix',
+    close: 'Bağla',
+    confirm: 'Təsdiqlə',
+    previousMonth: 'Əvvəlki ay',
+    nextMonth: 'Növbəti ay',
+  },
+  ru: {
+    weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+    months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+    todayLabel: 'Сегодня',
+    tomorrowLabel: 'Завтра',
+    panelTitle: 'Дата',
+    close: 'Закрыть',
+    confirm: 'Подтвердить',
+    previousMonth: 'Предыдущий месяц',
+    nextMonth: 'Следующий месяц',
+  },
+  en: {
+    weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    todayLabel: 'Today',
+    tomorrowLabel: 'Tomorrow',
+    panelTitle: 'Date',
+    close: 'Close',
+    confirm: 'Confirm',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+  },
+};
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -48,7 +82,7 @@ function parseISODate(value?: string) {
   return new Date(year, month - 1, day);
 }
 
-function formatDateLabel(value?: string) {
+function formatDateLabel(value: string | undefined, locale: DatePickerLocale) {
   const selected = parseISODate(value);
   if (!selected) return '';
 
@@ -57,10 +91,10 @@ function formatDateLabel(value?: string) {
   tomorrow.setDate(today.getDate() + 1);
 
   const selectedISO = toISODate(selected);
-  if (selectedISO === toISODate(today)) return 'Bu gün';
-  if (selectedISO === toISODate(tomorrow)) return 'Sabah';
+  if (selectedISO === toISODate(today)) return locale.todayLabel;
+  if (selectedISO === toISODate(tomorrow)) return locale.tomorrowLabel;
 
-  return `${selected.getDate()} ${MONTHS[selected.getMonth()]} ${selected.getFullYear()}`;
+  return `${selected.getDate()} ${locale.months[selected.getMonth()]} ${selected.getFullYear()}`;
 }
 
 function getCalendarDays(viewDate: Date) {
@@ -77,11 +111,17 @@ function getCalendarDays(viewDate: Date) {
 export default function DatePicker({
   value,
   onChange,
-  label = 'Tarix',
-  placeholder = 'Tarix seçin',
+  label,
+  placeholder,
   minDate,
   className,
 }: DatePickerProps) {
+  const { language } = useAppStore();
+  const copy = I18N[language];
+  const locale = CALENDAR_LOCALE[language];
+  const resolvedLabel = label ?? copy.common.date;
+  const resolvedPlaceholder = placeholder ?? copy.common.selectDate;
+
   const minimumDate = useMemo(() => startOfDay(minDate ?? new Date()), [minDate]);
   const selectedDate = parseISODate(value);
   const [open, setOpen] = useState(false);
@@ -89,7 +129,7 @@ export default function DatePicker({
   const [viewDate, setViewDate] = useState(selectedDate ?? minimumDate);
 
   const calendarDays = useMemo(() => getCalendarDays(viewDate), [viewDate]);
-  const selectedLabel = formatDateLabel(value);
+  const selectedLabel = formatDateLabel(value, locale);
 
   useEffect(() => {
     if (!open) return;
@@ -121,7 +161,7 @@ export default function DatePicker({
     <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-[#001f24]/20 px-3 pb-3 pt-14 backdrop-blur-[1px] animate-fade-in md:items-center md:bg-[#001f24]/15 md:p-6">
       <button
         type="button"
-        aria-label="Bağla"
+        aria-label={locale.close}
         className="absolute inset-0 cursor-default"
         onClick={() => setOpen(false)}
       />
@@ -129,16 +169,16 @@ export default function DatePicker({
       <div className="animate-slide-up relative flex max-h-[85dvh] w-full max-w-md flex-col overflow-y-auto rounded-t-[28px] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_18px_50px_rgba(0,31,36,0.20)] transition-all duration-200 ease-out md:max-h-[80vh] md:max-w-[440px] md:rounded-[24px] md:p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">Tarix</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">{locale.panelTitle}</p>
             <h2 className="text-lg font-bold text-text">
-              {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
+              {locale.months[viewDate.getMonth()]} {viewDate.getFullYear()}
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="rounded-full p-2 text-text-muted transition-all duration-200 ease-out hover:bg-surface-muted active:scale-[0.96]"
-            aria-label="Bağla"
+            aria-label={locale.close}
           >
             <Icon name="x" size={20} />
           </button>
@@ -149,25 +189,25 @@ export default function DatePicker({
             type="button"
             onClick={() => changeMonth(-1)}
             className="rounded-full border border-border bg-white p-2 text-text transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-surface-muted active:translate-y-0 active:scale-[0.96]"
-            aria-label="Əvvəlki ay"
+            aria-label={locale.previousMonth}
           >
             <Icon name="arrow-left" size={18} />
           </button>
           <div className="min-w-0 truncate rounded-full bg-surface-muted px-3 py-1.5 text-xs font-semibold text-text-secondary">
-            {formatDateLabel(draftValue) || placeholder}
+            {formatDateLabel(draftValue, locale) || resolvedPlaceholder}
           </div>
           <button
             type="button"
             onClick={() => changeMonth(1)}
             className="rounded-full border border-border bg-white p-2 text-text transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-surface-muted active:translate-y-0 active:scale-[0.96]"
-            aria-label="Növbəti ay"
+            aria-label={locale.nextMonth}
           >
             <Icon name="arrow-right" size={18} />
           </button>
         </div>
 
         <div className="grid grid-cols-7 gap-0.5 text-center md:gap-1">
-          {WEEKDAYS.map((day) => (
+          {locale.weekdays.map((day) => (
             <div key={day} className="py-1.5 text-[11px] font-bold uppercase text-text-muted md:py-1">
               {day}
             </div>
@@ -207,7 +247,7 @@ export default function DatePicker({
             onClick={() => setOpen(false)}
             className="h-11 rounded-2xl border border-border bg-white text-sm font-bold text-text transition-all duration-200 ease-out hover:bg-surface-muted active:scale-[0.98] md:h-10"
           >
-            Bağla
+            {locale.close}
           </button>
           <button
             type="button"
@@ -215,7 +255,7 @@ export default function DatePicker({
             disabled={!draftValue}
             className="h-11 rounded-2xl bg-brand-600 text-sm font-bold text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:h-10"
           >
-            Təsdiqlə
+            {locale.confirm}
           </button>
         </div>
       </div>
@@ -224,7 +264,7 @@ export default function DatePicker({
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      {label && <label className="text-sm font-medium text-text-secondary">{label}</label>}
+      {resolvedLabel && <label className="text-sm font-medium text-text-secondary">{resolvedLabel}</label>}
 
       <button
         type="button"
@@ -233,7 +273,7 @@ export default function DatePicker({
       >
         <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <span className={selectedLabel ? 'text-text' : 'text-text-muted'}>
-          {selectedLabel || placeholder}
+          {selectedLabel || resolvedPlaceholder}
         </span>
       </button>
 

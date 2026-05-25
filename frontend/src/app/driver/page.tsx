@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import WebLayout from '@/components/layout/WebLayout';
+import DriverLayout from '@/components/driver/DriverLayout';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
@@ -87,7 +87,7 @@ export default function DriverDashboardPage() {
   }, [fetchTrips, fetchBookingRequests]);
 
   return (
-    <WebLayout title={copy.title}>
+    <DriverLayout>
       <ProtectedRoute mode="driver">
         <div className="stagger-children">
           <div className="grid grid-cols-3 gap-4 mb-6">
@@ -111,7 +111,7 @@ export default function DriverDashboardPage() {
             <Button fullWidth size="lg" variant="outline" onClick={() => router.push(ROUTES.myTrips)}>
               <Icon name="map" size={18} /> {copy.myTripsBtn}
             </Button>
-            <Button fullWidth size="lg" variant="secondary" onClick={() => router.push(ROUTES.bookingRequests)}>
+            <Button fullWidth size="lg" variant="secondary" onClick={() => router.push(ROUTES.driverRequests)}>
               <Icon name="inbox" size={18} /> {copy.requestsBtn}
               {pendingBookings.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-accent-500 text-white text-[10px] font-bold rounded-full">
@@ -134,7 +134,7 @@ export default function DriverDashboardPage() {
                     <p className="mt-1 text-sm text-text-secondary">{copy.noRequests}</p>
                   )}
                 </div>
-                <Button size="sm" variant={pendingBookings.length > 0 ? 'primary' : 'outline'} onClick={() => router.push(ROUTES.bookingRequests)}>
+                <Button size="sm" variant={pendingBookings.length > 0 ? 'primary' : 'outline'} onClick={() => router.push(ROUTES.driverRequests)}>
                   {copy.viewBtn}
                 </Button>
               </div>
@@ -159,6 +159,6 @@ export default function DriverDashboardPage() {
           </div>
         </div>
       </ProtectedRoute>
-    </WebLayout>
+    </DriverLayout>
   );
 }

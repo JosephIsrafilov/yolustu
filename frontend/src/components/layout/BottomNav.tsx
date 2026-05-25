@@ -8,23 +8,30 @@ import { I18N } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import Icon, { type IconName } from '@/components/ui/Icon';
+import { getUserCapabilities } from '@/lib/access-control';
 
 type NavItem = { href: string; label: string; icon: IconName };
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { language } = useAppStore();
+  const { language, currentUser, isAuthenticated, activeMode } = useAppStore();
   const t = I18N[language];
+  const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
+
+  if (capabilities.canAccessAdmin) {
+    return null;
+  }
+
   const navItems: NavItem[] = [
     { href: ROUTES.search, label: t.header.findRide, icon: 'search' },
-    { href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' },
-    { href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' },
+    ...(capabilities.canBookRide ? [{ href: ROUTES.bookings, label: t.header.bookings, icon: 'calendar-check' as const }] : []),
+    ...(capabilities.canAccessDriverDashboard ? [{ href: ROUTES.driverDashboard, label: t.header.driverDashboard, icon: 'car' as const }] : []),
     { href: ROUTES.profile, label: t.profile.title, icon: 'user-circle' },
   ];
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl border-t border-border pb-safe">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid h-16" style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}>
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + '/');

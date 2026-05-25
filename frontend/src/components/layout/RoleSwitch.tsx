@@ -6,16 +6,21 @@ import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
+import { getUserCapabilities } from '@/lib/access-control';
 
 export default function RoleSwitch() {
-  const { activeRole, switchRole } = useAppStore();
-  const language = useAppStore((s) => s.language);
+  const { activeMode, switchRole, currentUser, isAuthenticated, language } = useAppStore();
   const t = I18N[language].auth;
+  const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
+
+  if (!isAuthenticated || !currentUser || capabilities.canAccessAdmin) {
+    return null;
+  }
 
   if (!isMockDataMode) {
     return (
       <div className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs text-text-muted">
-        Role is managed by backend in API mode.
+        Mode is managed by backend in API mode.
       </div>
     );
   }
@@ -26,7 +31,7 @@ export default function RoleSwitch() {
         onClick={() => switchRole('passenger')}
         className={cn(
           'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
-          activeRole === 'passenger'
+          activeMode === 'passenger'
             ? 'bg-white text-brand-600 shadow-sm'
             : 'text-text-muted hover:text-text-secondary',
         )}
@@ -35,12 +40,15 @@ export default function RoleSwitch() {
         {t.rolePassenger}
       </button>
       <button
+        type="button"
         onClick={() => switchRole('driver')}
+        disabled={!capabilities.canAccessDriverDashboard}
         className={cn(
           'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
-          activeRole === 'driver'
+          activeMode === 'driver'
             ? 'bg-white text-brand-600 shadow-sm'
             : 'text-text-muted hover:text-text-secondary',
+          !capabilities.canAccessDriverDashboard && 'cursor-not-allowed opacity-50 hover:text-text-muted',
         )}
       >
         <Icon name="car" size={14} />

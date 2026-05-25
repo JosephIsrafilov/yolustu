@@ -19,6 +19,7 @@ import { MapContainer, TripRoute } from '@/components/ui/Map';
 import { tripsService } from '@/services';
 import type { Trip } from '@/types';
 import { I18N } from '@/lib/i18n';
+import { getUserCapabilities } from '@/lib/access-control';
 
 const TRIP_DETAILS_I18N = {
   az: {
@@ -92,8 +93,50 @@ const TRIP_DETAILS_I18N = {
     submitRequestBtn: 'Send booking request',
     alreadyBooked: 'You have already sent a request for this trip.',
     bookedSuccess: 'Request sent! Redirecting...',
+    driverModeTitle: 'Passenger mode required',
+    driverModeDesc: 'Switch to passenger mode to book rides.',
+    switchToPassengerBtn: 'Switch mode',
   },
 };
+
+const PREFERENCE_I18N = {
+  az: {
+    title: 'Səyahət seçimləri və rahatlıq',
+    femaleOnly: 'Yalnız qadınlar',
+    smoking: 'Siqaret',
+    pets: 'Heyvanlar',
+    music: 'Musiqi',
+    yes: 'Bəli',
+    no: 'Xeyr',
+    allowed: 'İcazəlidir',
+    forbidden: 'Qadağandır',
+    verifiedDriver: 'Təsdiqlənmiş Sürücü',
+  },
+  ru: {
+    title: 'Параметры поездки и удобства',
+    femaleOnly: 'Только женщины',
+    smoking: 'Курение',
+    pets: 'Питомцы',
+    music: 'Музыка',
+    yes: 'Да',
+    no: 'Нет',
+    allowed: 'Разрешено',
+    forbidden: 'Запрещено',
+    verifiedDriver: 'Подтвержденный водитель',
+  },
+  en: {
+    title: 'Ride Preferences & Comfort',
+    femaleOnly: 'Female only',
+    smoking: 'Smoking',
+    pets: 'Pets',
+    music: 'Music',
+    yes: 'Yes',
+    no: 'No',
+    allowed: 'Allowed',
+    forbidden: 'Forbidden',
+    verifiedDriver: 'Verified driver',
+  },
+} as const;
 
 export default function TripDetailsPage() {
   const { id } = useParams();
@@ -111,6 +154,8 @@ export default function TripDetailsPage() {
     clearError,
     language,
     unreadRides,
+    activeMode,
+    switchRole,
   } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
@@ -120,6 +165,12 @@ export default function TripDetailsPage() {
 
   const copy = TRIP_DETAILS_I18N[language] || TRIP_DETAILS_I18N.en;
   const common = I18N[language].common;
+  const preferenceCopy = PREFERENCE_I18N[language] || PREFERENCE_I18N.en;
+  const driverModeCopy = {
+    title: 'Passenger mode required',
+    description: 'Switch to passenger mode to book rides.',
+    action: 'Switch mode',
+  };
 
   React.useEffect(() => {
     if (!tripId || trips.some((t) => t.id === tripId)) return;
@@ -152,10 +203,15 @@ export default function TripDetailsPage() {
   const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
   const tripReviews = reviews.filter((r) => r.targetUserId === trip.driverId);
   const isOwnTrip = currentUser?.id === trip.driverId;
+  const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
   const existingBooking = bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser?.id && b.status !== 'cancelled' && b.status !== 'rejected');
 
   const handleBook = async () => {
-    if (!isAuthenticated || isOwnTrip || existingBooking) return;
+    if (!isAuthenticated) {
+      router.push(ROUTES.login);
+      return;
+    }
+    if (isOwnTrip || existingBooking) return;
     let bookingId = '';
     try {
       bookingId = await createBooking(trip.id, seats);
@@ -195,31 +251,31 @@ export default function TripDetailsPage() {
           </Card>
           <Card>
             <h4 className="text-sm font-bold text-text mb-3">
-              {language === 'az' ? 'Səyahət seçimləri və rahatlıq' : language === 'ru' ? 'Параметры поездки и удобства' : 'Ride Preferences & Comfort'}
+              {preferenceCopy.title}
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.femaleOnly ? 'bg-pink-50/20 border-pink-200 text-pink-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
                 <Icon name="venus" size={20} className={trip.femaleOnly ? 'text-pink-600' : 'text-text-muted'} />
-                <span className="text-xs font-bold">{language === 'az' ? 'Yalnız xanımlar' : language === 'ru' ? 'Только женщины' : 'Female only'}</span>
-                <span className="text-[10px] text-text-muted font-medium">{trip.femaleOnly ? (language === 'az' ? 'Bəli' : 'Да') : (language === 'az' ? 'Xeyr' : 'Нет')}</span>
+                <span className="text-xs font-bold">{preferenceCopy.femaleOnly}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.femaleOnly ? preferenceCopy.yes : preferenceCopy.no}</span>
               </div>
               
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.smokingAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
                 <Icon name={trip.smokingAllowed ? "cigarette" : "cigarette-off"} size={20} className={trip.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
-                <span className="text-xs font-bold">{language === 'az' ? 'Siqaret çəkmək' : language === 'ru' ? 'Курение' : 'Smoking'}</span>
-                <span className="text-[10px] text-text-muted font-medium">{trip.smokingAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+                <span className="text-xs font-bold">{preferenceCopy.smoking}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.smokingAllowed ? preferenceCopy.allowed : preferenceCopy.forbidden}</span>
               </div>
 
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.petsAllowed ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
                 <Icon name="paw-print" size={20} className={trip.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
-                <span className="text-xs font-bold">{language === 'az' ? 'Ev heyvanı' : language === 'ru' ? 'Животные' : 'Pets'}</span>
-                <span className="text-[10px] text-text-muted font-medium">{trip.petsAllowed ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+                <span className="text-xs font-bold">{preferenceCopy.pets}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.petsAllowed ? preferenceCopy.allowed : preferenceCopy.forbidden}</span>
               </div>
 
               <div className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 ${trip.musicAllowed !== false ? 'bg-brand-50/20 border-brand-200 text-brand-700' : 'bg-surface-muted/20 border-border text-text-secondary/60'}`}>
                 <Icon name="music" size={20} className={trip.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
-                <span className="text-xs font-bold">{language === 'az' ? 'Musiqi dinləmək' : language === 'ru' ? 'Музыка' : 'Music'}</span>
-                <span className="text-[10px] text-text-muted font-medium">{trip.musicAllowed !== false ? (language === 'az' ? 'İcazəli' : 'Разрешено') : (language === 'az' ? 'Qadağan' : 'Запрещено')}</span>
+                <span className="text-xs font-bold">{preferenceCopy.music}</span>
+                <span className="text-[10px] text-text-muted font-medium">{trip.musicAllowed !== false ? preferenceCopy.allowed : preferenceCopy.forbidden}</span>
               </div>
             </div>
           </Card>
@@ -252,7 +308,7 @@ export default function TripDetailsPage() {
                     <p className="text-base font-semibold text-text flex items-center gap-1">
                       <span>{driver.fullName}</span>
                       {driver.verificationStatus === 'approved' && (
-                        <span title="Təsdiqlənmiş Sürücü">
+                        <span title={preferenceCopy.verifiedDriver}>
                           <Icon name="shield-check" size={16} className="text-green-600 shrink-0" />
                         </span>
                       )}
@@ -309,7 +365,18 @@ export default function TripDetailsPage() {
               </div>
             )}
             
-            {!isOwnTrip && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
+            {!isOwnTrip && isAuthenticated && capabilities.canAccessDriverDashboard && !capabilities.canBookRide && (
+              <Card padding="sm" className="bg-blue-50 border-blue-200">
+                <div className="space-y-2 text-sm text-blue-800">
+                  <p className="font-semibold">{driverModeCopy.title}</p>
+                  <p>{driverModeCopy.description}</p>
+                  <Button size="sm" variant="outline" onClick={() => switchRole('passenger')}>
+                    {driverModeCopy.action}
+                  </Button>
+                </div>
+              </Card>
+            )}
+            {!isOwnTrip && (!isAuthenticated || capabilities.canBookRide) && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
               <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
                 <div>
                   <p className="text-base font-bold text-text">{copy.bookingRequestTitle}</p>

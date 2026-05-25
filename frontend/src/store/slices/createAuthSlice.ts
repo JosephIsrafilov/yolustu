@@ -3,8 +3,8 @@ import { AppState, AuthSlice } from '../types';
 import { adminService, authService } from '@/services';
 import { MOCK_USERS } from '@/data/mock-data';
 import { toApiError } from '@/services/api-error';
-import type { UserRole } from '@/types';
 import { isMockDataMode } from '@/lib/env';
+import { getUserCapabilities } from '@/lib/access-control';
 
 export const createAuthSlice: StateCreator<
   AppState,
@@ -15,6 +15,7 @@ export const createAuthSlice: StateCreator<
   currentUser: null,
   isAuthenticated: false,
   activeRole: 'passenger',
+  activeMode: 'passenger',
   lastError: null,
   users: isMockDataMode ? [...MOCK_USERS] : [],
   pendingVerifications: [],
@@ -51,6 +52,7 @@ export const createAuthSlice: StateCreator<
         currentUser: user,
         isAuthenticated: true,
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+        activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
       });
       return true;
@@ -69,6 +71,7 @@ export const createAuthSlice: StateCreator<
         currentUser: user,
         isAuthenticated: true,
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+        activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
       });
       return true;
@@ -78,6 +81,7 @@ export const createAuthSlice: StateCreator<
         currentUser: null,
         isAuthenticated: false,
         activeRole: 'passenger',
+        activeMode: 'passenger',
         lastError: apiError.message || 'Invalid phone or password.',
       });
       return false;
@@ -94,6 +98,7 @@ export const createAuthSlice: StateCreator<
         currentUser: null,
         isAuthenticated: false,
         activeRole: 'passenger',
+        activeMode: 'passenger',
         lastError: null,
       });
     }
@@ -103,16 +108,17 @@ export const createAuthSlice: StateCreator<
     const { currentUser } = get();
     if (!currentUser) return;
 
-    if (!isMockDataMode) {
+    const capabilities = getUserCapabilities(currentUser, true, get().activeMode);
+    if (role === 'driver' && !capabilities.canAccessDriverDashboard) {
       set({
-        lastError: 'Role switching is disabled in API mode.',
+        lastError: 'Driver mode is unavailable until verification is approved.',
       });
       return;
     }
 
     set({
       activeRole: role,
-      currentUser: { ...currentUser, role: role as UserRole },
+      activeMode: role,
       lastError: null,
     });
   },
@@ -126,6 +132,7 @@ export const createAuthSlice: StateCreator<
           currentUser: admin,
           isAuthenticated: true,
           activeRole: 'passenger',
+          activeMode: 'passenger',
           lastError: null,
         });
       }
@@ -146,6 +153,7 @@ export const createAuthSlice: StateCreator<
           currentUser: null,
           isAuthenticated: false,
           activeRole: 'passenger',
+          activeMode: 'passenger',
         });
         return;
       }
@@ -156,6 +164,7 @@ export const createAuthSlice: StateCreator<
           currentUser: user,
           isAuthenticated: true,
           activeRole: user.role === 'driver' ? 'driver' : 'passenger',
+          activeMode: user.role === 'driver' ? 'driver' : 'passenger',
           lastError: null,
         });
       } else {
@@ -165,6 +174,7 @@ export const createAuthSlice: StateCreator<
           currentUser: null,
           isAuthenticated: false,
           activeRole: 'passenger',
+          activeMode: 'passenger',
         });
       }
     } catch (error) {
@@ -175,6 +185,7 @@ export const createAuthSlice: StateCreator<
         currentUser: null,
         isAuthenticated: false,
         activeRole: 'passenger',
+        activeMode: 'passenger',
       });
     }
   },

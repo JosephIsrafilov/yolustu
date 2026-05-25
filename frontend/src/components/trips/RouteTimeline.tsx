@@ -16,6 +16,17 @@ export default function RouteTimeline({
   meetingPoint,
   dropoffPoint,
 }: RouteTimelineProps) {
+  const normalizedDepartureCity = departure.trim();
+  const normalizedArrivalCity = arrival.trim();
+  const normalizedMeetingPoint = meetingPoint?.trim() || '';
+  const normalizedDropoffPoint = dropoffPoint?.trim() || '';
+
+  const departureMain = normalizedMeetingPoint || normalizedDepartureCity;
+  const arrivalMain = normalizedDropoffPoint || normalizedArrivalCity;
+
+  const showDepartureSub = normalizedDepartureCity.length > 0 && normalizedDepartureCity !== departureMain;
+  const showArrivalSub = normalizedArrivalCity.length > 0 && normalizedArrivalCity !== arrivalMain;
+
   return (
     <div className="flex gap-3">
       {}
@@ -28,20 +39,20 @@ export default function RouteTimeline({
       {}
       <div className="flex flex-col justify-between flex-1 py-0.5 min-w-0">
         <div className="min-w-0">
-          <p className="ui-card-title text-text truncate">{departure}</p>
-          {meetingPoint && (
+          <p className="ui-card-title text-text truncate">{departureMain}</p>
+          {showDepartureSub && (
             <p className="ui-meta-text flex items-center gap-1 text-text-muted mt-0.5 min-w-0 break-words">
               <Icon name="map-pin" size={11} className="shrink-0 flex-none" />
-              <span className="break-words">{meetingPoint}</span>
+              <span className="break-words">{normalizedDepartureCity}</span>
             </p>
           )}
         </div>
         <div className="min-w-0">
-          <p className="ui-card-title text-text truncate">{arrival}</p>
-          {dropoffPoint && (
+          <p className="ui-card-title text-text truncate">{arrivalMain}</p>
+          {showArrivalSub && (
             <p className="ui-meta-text flex items-center gap-1 text-text-muted mt-0.5 min-w-0 break-words">
               <Icon name="map-pin" size={11} className="shrink-0 flex-none" />
-              <span className="break-words">{dropoffPoint}</span>
+              <span className="break-words">{normalizedArrivalCity}</span>
             </p>
           )}
         </div>
