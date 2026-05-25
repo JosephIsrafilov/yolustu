@@ -14,8 +14,6 @@ from app.domains.identity.services import IdentityService
 from app.domains.identity.schemas import UserUpdate
 from app.domains.trips.schemas import Location, RideCreate
 from app.domains.trips.services import TripsService
-from app.domains.bookings.schemas import BookingCreate
-from app.domains.bookings.services import BookingsService
 
 
 @dataclass
