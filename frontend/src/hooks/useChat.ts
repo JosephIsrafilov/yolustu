@@ -39,8 +39,8 @@ export function useChat(rideId: string) {
           }
           return [...prev, newMessage];
         });
-      } catch (err) {
-        // Silent catch to prevent linter/CI failures
+      } catch (_) {
+        // Silent catch to prevent lint/CI failures
       }
     };
 
@@ -48,7 +48,7 @@ export function useChat(rideId: string) {
       setIsConnected(false);
       socketRef.current = null;
       if (shouldReconnectRef.current) {
-        reconnectTimeoutRef.current = setTimeout(connect, 3000);
+        reconnectTimeoutRef.current = setTimeout(() => connect(), 3000);
       }
     };
 
