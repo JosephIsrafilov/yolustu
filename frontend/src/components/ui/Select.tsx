@@ -55,6 +55,16 @@ export default function Select({
   });
   const listboxId = useId();
 
+  const openDropdown = () => {
+    setShouldRender(true);
+    setIsOpen(true);
+    setSearch('');
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+  };
+
   const normalizedOptions = React.useMemo((): SelectOption[] => {
     return options.map(opt => {
       if (typeof opt === 'object' && opt !== null) {
@@ -67,19 +77,13 @@ export default function Select({
 
   // Manage shouldRender for transition-out
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (isOpen) {
-      timeoutId = setTimeout(() => {
-        setShouldRender(true);
-      }, 0);
-    } else {
-      timeoutId = setTimeout(() => {
-        setShouldRender(false);
-        setIsPositioned(false);
-      }, 150);
-    }
+    if (isOpen || !shouldRender) return;
+    const timeoutId = setTimeout(() => {
+      setShouldRender(false);
+      setIsPositioned(false);
+    }, 180);
     return () => clearTimeout(timeoutId);
-  }, [isOpen]);
+  }, [isOpen, shouldRender]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -87,7 +91,7 @@ export default function Select({
       const clickedInsideTrigger = containerRef.current?.contains(target);
       const clickedInsideDropdown = dropdownRef.current?.contains(target);
       if (!clickedInsideTrigger && !clickedInsideDropdown) {
-        setIsOpen(false);
+        closeDropdown();
       }
     };
     if (isOpen) {
@@ -105,7 +109,7 @@ export default function Select({
       if (!rect) return;
 
       if (rect.bottom < 0 || rect.top > window.innerHeight) {
-        setIsOpen(false);
+        closeDropdown();
         return;
       }
 
@@ -175,11 +179,14 @@ export default function Select({
         type="button"
         disabled={disabled}
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) setSearch('');
+          if (isOpen) {
+            closeDropdown();
+          } else {
+            openDropdown();
+          }
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Escape') setIsOpen(false);
+          if (event.key === 'Escape') closeDropdown();
         }}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -222,13 +229,13 @@ export default function Select({
           style={dropdownStyle}
           className={cn(
             "flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg",
-            "transition-[opacity,transform] duration-150 ease-out will-change-transform",
+            "transition-[opacity,transform] duration-175 ease-out will-change-transform motion-reduce:transition-none motion-reduce:transform-none",
             placement === 'down' ? 'origin-top' : 'origin-bottom',
             isPositioned && isOpen
               ? "opacity-100 scale-100 translate-y-0"
               : cn(
-                  "opacity-0 pointer-events-none scale-[0.97]",
-                  placement === 'down' ? "-translate-y-1.5" : "translate-y-1.5"
+                  "opacity-0 pointer-events-none scale-[0.98]",
+                  placement === 'down' ? "-translate-y-1" : "translate-y-1"
                 )
           )}
         >
@@ -259,7 +266,7 @@ export default function Select({
                   type="button"
                   onClick={() => {
                     onChange(option.value);
-                    setIsOpen(false);
+                    closeDropdown();
                   }}
                   role="option"
                   aria-selected={value === option.value}
