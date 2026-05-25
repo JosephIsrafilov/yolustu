@@ -311,12 +311,12 @@ export default function AdminTripsPage() {
       </div>
 
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm whitespace-nowrap table-fixed">
+        <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1250px]">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('route')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[180px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[240px] min-w-[240px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.route}</span>
@@ -329,7 +329,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('driver')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[160px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[200px] min-w-[200px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.driver}</span>
@@ -342,7 +342,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('date')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[140px] min-w-[140px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[150px] min-w-[150px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.date}</span>
@@ -355,7 +355,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('pricePerSeat')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.price}</span>
@@ -368,7 +368,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('seats')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[90px] min-w-[90px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.seats}</span>
@@ -381,7 +381,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -415,14 +415,14 @@ export default function AdminTripsPage() {
                 const showDeactivate = trip.status === 'active';
                 return (
                   <tr key={trip.id} className="transition-colors duration-150 hover:bg-surface-dim">
-                    <td className="px-6 py-4 font-medium text-text min-w-[180px]">
+                    <td className="px-6 py-4 font-medium text-text w-[240px] min-w-[240px]">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{trip.departureCity}</span>
                         <Icon name="arrow-right" size={14} className="text-text-muted shrink-0" />
                         <span className="truncate">{trip.arrivalCity}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text-muted min-w-[160px]">
+                    <td className="px-6 py-4 text-text-muted w-[200px] min-w-[200px]">
                       <div className="flex items-center gap-2 truncate">
                         <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {driver?.avatarUrl ? (
@@ -436,18 +436,18 @@ export default function AdminTripsPage() {
                         <span className="truncate">{driver?.fullName || t.placeholder}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text w-[140px] min-w-[140px]">
+                    <td className="px-6 py-4 text-text w-[150px] min-w-[150px]">
                       <div className="flex flex-col">
                         <span>{new Date(trip.date).toLocaleDateString(t.locale)}</span>
                         <span className="text-xs text-text-muted">{trip.time}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-text w-[110px] min-w-[110px]">{formatPrice(trip.pricePerSeat)}</td>
-                    <td className="px-6 py-4 text-text w-[90px] min-w-[90px]">
+                    <td className="px-6 py-4 font-medium text-text w-[120px] min-w-[120px]">{formatPrice(trip.pricePerSeat)}</td>
+                    <td className="px-6 py-4 text-text w-[100px] min-w-[100px]">
                       <span className="font-medium">{trip.seatsAvailable}</span>
                       <span className="text-text-muted">/{trip.seatsTotal}</span>
                     </td>
-                    <td className="px-6 py-4 w-[110px] min-w-[110px]"><StatusBadge status={trip.status} type="trip" /></td>
+                    <td className="px-6 py-4 w-[120px] min-w-[120px]"><StatusBadge status={trip.status} type="trip" /></td>
                     <td className="px-6 py-4 text-right w-[320px] min-w-[320px]">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <Button size="sm" variant="outline" onClick={() => router.push(`/trips/${trip.id}`)}>

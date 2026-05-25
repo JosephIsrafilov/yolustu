@@ -387,12 +387,12 @@ export default function AdminUsersPage() {
       </div>
 
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm whitespace-nowrap table-fixed">
+        <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1420px]">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('fullName')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group min-w-[200px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[280px] min-w-[280px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.user}</span>
@@ -405,7 +405,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('role')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[110px] min-w-[110px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.role}</span>
@@ -418,7 +418,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('rating')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[90px] min-w-[90px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rating}</span>
@@ -431,7 +431,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[80px] min-w-[80px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -444,7 +444,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[80px] min-w-[80px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -457,7 +457,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('verificationStatus')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[130px] min-w-[130px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[150px] min-w-[150px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.verification}</span>
@@ -470,7 +470,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -483,7 +483,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[130px] min-w-[130px]"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -494,7 +494,7 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[360px] min-w-[360px]">{t.table.actions}</th>
+              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[320px] min-w-[320px]">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -536,7 +536,7 @@ export default function AdminUsersPage() {
                 return (
                   <React.Fragment key={u.id}>
                     <tr className="hover:bg-surface-dim transition-colors duration-150">
-                      <td className="px-6 py-4 min-w-[200px]">
+                      <td className="px-6 py-4 w-[280px] min-w-[280px]">
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
                             {u.avatarUrl ? (
@@ -551,29 +551,29 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 w-[110px] min-w-[110px]">
+                      <td className="px-6 py-4 w-[120px] min-w-[120px]">
                         <Badge variant={roleVariant}>{roleLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4 w-[90px] min-w-[90px]">
+                      <td className="px-6 py-4 w-[100px] min-w-[100px]">
                         <div className="flex items-center gap-1 font-medium">
                           <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
                           {u.rating.toFixed(1)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 w-[80px] min-w-[80px] text-text">{u.totalTrips}</td>
-                      <td className="px-6 py-4 w-[80px] min-w-[80px] text-text">{bookingCount}</td>
-                      <td className="px-6 py-4 w-[130px] min-w-[130px]">
+                      <td className="px-6 py-4 w-[100px] min-w-[100px] text-text">{u.totalTrips}</td>
+                      <td className="px-6 py-4 w-[100px] min-w-[100px] text-text">{bookingCount}</td>
+                      <td className="px-6 py-4 w-[150px] min-w-[150px]">
                         <Badge variant={verificationVariant}>{verificationLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4 w-[100px] min-w-[100px]">
+                      <td className="px-6 py-4 w-[120px] min-w-[120px]">
                         {u.isBlocked ? (
-                          <Badge variant="danger">{t.status.blocked}</Badge>
+                           <Badge variant="danger">{t.status.blocked}</Badge>
                         ) : (
                           <Badge variant="success">{t.status.active}</Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-[120px] min-w-[120px] text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
-                      <td className="px-6 py-4 text-right w-[360px] min-w-[360px]">
+                      <td className="px-6 py-4 w-[130px] min-w-[130px] text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
+                      <td className="px-6 py-4 text-right w-[320px] min-w-[320px]">
                         <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
                             <Icon name="file-text" size={14} /> {t.actions.view}
