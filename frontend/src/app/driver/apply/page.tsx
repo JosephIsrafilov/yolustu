@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -13,37 +13,37 @@ import { getUserCapabilities } from '@/lib/access-control';
 
 const APPLY_I18N = {
   az: {
-    title: 'Driver onboarding',
-    pendingTitle: 'Verification is pending',
-    pendingDesc: 'Your documents are under review. We will notify you after approval.',
-    rejectedTitle: 'Verification requires update',
-    rejectedDesc: 'Please re-submit your documents from profile to continue.',
-    noneTitle: 'Become a driver',
-    noneDesc: 'Complete verification and add vehicle info before creating trips.',
-    approvedTitle: 'Driver access is ready',
-    approvedDesc: 'You can now switch to driver mode and start creating trips.',
-    toProfile: 'Open profile verification',
-    toDashboard: 'Open driver dashboard',
-    switchMode: 'Switch to driver mode',
+    title: 'Sürücü onboarding',
+    pendingTitle: 'Təsdiqləmə gözləmədədir',
+    pendingDesc: 'Sənədləriniz yoxlanılır. Təsdiqdən sonra sizə bildiriş göndəriləcək.',
+    rejectedTitle: 'Təsdiqləmə yenilənməlidir',
+    rejectedDesc: 'Davam etmək üçün profildən sənədləri yenidən göndərin.',
+    noneTitle: 'Sürücü olun',
+    noneDesc: 'Gediş yaratmazdan əvvəl təsdiqləməni tamamlayın və avtomobil məlumatlarını əlavə edin.',
+    approvedTitle: 'Sürücü girişi hazırdır',
+    approvedDesc: 'İndi sürücü rejiminə keçib gediş yarada bilərsiniz.',
+    toProfile: 'Profil təsdiqləməsinə keç',
+    toDashboard: 'Sürücü panelini aç',
+    switchMode: 'Sürücü rejiminə keç',
   },
   ru: {
-    title: 'Driver onboarding',
-    pendingTitle: 'Verification is pending',
-    pendingDesc: 'Your documents are under review. We will notify you after approval.',
-    rejectedTitle: 'Verification requires update',
-    rejectedDesc: 'Please re-submit your documents from profile to continue.',
-    noneTitle: 'Become a driver',
-    noneDesc: 'Complete verification and add vehicle info before creating trips.',
-    approvedTitle: 'Driver access is ready',
-    approvedDesc: 'You can now switch to driver mode and start creating trips.',
-    toProfile: 'Open profile verification',
-    toDashboard: 'Open driver dashboard',
-    switchMode: 'Switch to driver mode',
+    title: 'Онбординг водителя',
+    pendingTitle: 'Верификация в ожидании',
+    pendingDesc: 'Ваши документы на проверке. После одобрения вы получите уведомление.',
+    rejectedTitle: 'Верификацию нужно обновить',
+    rejectedDesc: 'Чтобы продолжить, повторно отправьте документы из профиля.',
+    noneTitle: 'Станьте водителем',
+    noneDesc: 'Перед созданием поездок завершите верификацию и добавьте данные автомобиля.',
+    approvedTitle: 'Доступ водителя готов',
+    approvedDesc: 'Теперь можно переключиться в режим водителя и создавать поездки.',
+    toProfile: 'Открыть верификацию в профиле',
+    toDashboard: 'Открыть панель водителя',
+    switchMode: 'Перейти в режим водителя',
   },
   en: {
     title: 'Driver onboarding',
     pendingTitle: 'Verification is pending',
-    pendingDesc: 'Your documents are under review. We will notify you after approval.',
+    pendingDesc: 'Your documents are under review. You will be notified after approval.',
     rejectedTitle: 'Verification requires update',
     rejectedDesc: 'Please re-submit your documents from profile to continue.',
     noneTitle: 'Become a driver',
@@ -65,10 +65,10 @@ export default function DriverApplyPage() {
     capabilities.driverStatus === 'approved'
       ? { title: t.approvedTitle, desc: t.approvedDesc, icon: 'shield-check' as const }
       : capabilities.driverStatus === 'pending'
-        ? { title: t.pendingTitle, desc: t.pendingDesc, icon: 'clock' as const }
-        : capabilities.driverStatus === 'rejected'
-          ? { title: t.rejectedTitle, desc: t.rejectedDesc, icon: 'shield-x' as const }
-          : { title: t.noneTitle, desc: t.noneDesc, icon: 'file-text' as const };
+      ? { title: t.pendingTitle, desc: t.pendingDesc, icon: 'clock' as const }
+      : capabilities.driverStatus === 'rejected'
+      ? { title: t.rejectedTitle, desc: t.rejectedDesc, icon: 'shield-x' as const }
+      : { title: t.noneTitle, desc: t.noneDesc, icon: 'file-text' as const };
 
   return (
     <WebLayout title={t.title} narrow>
@@ -86,11 +86,7 @@ export default function DriverApplyPage() {
 
           {capabilities.canAccessDriverDashboard ? (
             <div className="flex flex-wrap gap-3">
-              {activeMode !== 'driver' && (
-                <Button onClick={() => switchRole('driver')}>
-                  {t.switchMode}
-                </Button>
-              )}
+              {activeMode !== 'driver' && <Button onClick={() => switchRole('driver')}>{t.switchMode}</Button>}
               <Link href={ROUTES.driverDashboard}>
                 <Button variant="outline">{t.toDashboard}</Button>
               </Link>
@@ -105,4 +101,3 @@ export default function DriverApplyPage() {
     </WebLayout>
   );
 }
-

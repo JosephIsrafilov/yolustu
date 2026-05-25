@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -12,14 +12,14 @@ import { ROUTES } from '@/lib/routes';
 
 const VEHICLE_I18N = {
   az: {
-    title: 'Vehicle settings',
-    desc: 'Manage vehicle data from your profile page. Backend vehicle management can be connected here later.',
-    action: 'Open profile',
+    title: 'Avtomobil ayarları',
+    desc: 'Avtomobil məlumatlarını profil səhifəsindən idarə edin. Backend vehicle management sonradan buraya qoşula bilər.',
+    action: 'Profili aç',
   },
   ru: {
-    title: 'Vehicle settings',
-    desc: 'Manage vehicle data from your profile page. Backend vehicle management can be connected here later.',
-    action: 'Open profile',
+    title: 'Настройки автомобиля',
+    desc: 'Управляйте данными автомобиля из страницы профиля. Backend-интеграцию можно подключить здесь позже.',
+    action: 'Открыть профиль',
   },
   en: {
     title: 'Vehicle settings',
@@ -53,4 +53,3 @@ export default function DriverVehiclePage() {
     </DriverLayout>
   );
 }
-

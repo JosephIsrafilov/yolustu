@@ -18,6 +18,8 @@ const BOOKINGS_I18N = {
   az: {
     title: 'Rezervlər',
     locale: 'az-AZ',
+    emptyState: 'Rezerv tapılmadı',
+    placeholder: '-',
     statuses: {
       all: 'Hamısı',
       pending: 'Gözləmədə',
@@ -38,6 +40,8 @@ const BOOKINGS_I18N = {
   ru: {
     title: 'Бронирования',
     locale: 'ru-RU',
+    emptyState: 'Бронирования не найдены',
+    placeholder: '-',
     statuses: {
       all: 'Все',
       pending: 'В ожидании',
@@ -58,6 +62,8 @@ const BOOKINGS_I18N = {
   en: {
     title: 'Bookings',
     locale: 'en-US',
+    emptyState: 'No bookings found',
+    placeholder: '-',
     statuses: {
       all: 'All',
       pending: 'Pending',
@@ -161,7 +167,7 @@ export default function AdminBookingsPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-text-muted">
-                    No bookings found
+                    {t.emptyState}
                   </td>
                 </tr>
               ) : (
@@ -179,7 +185,7 @@ export default function AdminBookingsPage() {
                               <Icon name="user" size={16} className="text-text-muted" />
                             )}
                           </div>
-                          <span className="font-medium text-text">{passenger?.fullName || '—'}</span>
+                          <span className="font-medium text-text">{passenger?.fullName || t.placeholder}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-text">
@@ -189,7 +195,7 @@ export default function AdminBookingsPage() {
                             <Icon name="arrow-right" size={14} className="text-text-muted" />
                             <span>{trip.arrivalCity}</span>
                           </div>
-                        ) : '—'}
+                        ) : t.placeholder}
                       </td>
                       <td className="px-6 py-4 font-medium text-text">{booking.seatsRequested}</td>
                       <td className="px-6 py-4"><StatusBadge status={booking.status} /></td>

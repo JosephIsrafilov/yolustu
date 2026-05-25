@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -12,14 +12,14 @@ import { ROUTES } from '@/lib/routes';
 
 const DOCS_I18N = {
   az: {
-    title: 'Driver documents',
-    desc: 'Verification status and document upload remain available in profile until backend onboarding endpoints are connected.',
-    action: 'Open verification in profile',
+    title: 'Sürücü sənədləri',
+    desc: 'Təsdiqləmə statusu və sənəd yükləmə backend onboarding endpoint-ləri qoşulana qədər profil səhifəsində qalır.',
+    action: 'Profildə təsdiqləməni aç',
   },
   ru: {
-    title: 'Driver documents',
-    desc: 'Verification status and document upload remain available in profile until backend onboarding endpoints are connected.',
-    action: 'Open verification in profile',
+    title: 'Документы водителя',
+    desc: 'Статус верификации и загрузка документов доступны в профиле, пока backend onboarding endpoints не подключены.',
+    action: 'Открыть верификацию в профиле',
   },
   en: {
     title: 'Driver documents',
@@ -53,4 +53,3 @@ export default function DriverDocumentsPage() {
     </DriverLayout>
   );
 }
-

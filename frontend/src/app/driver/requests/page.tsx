@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import DriverLayout from '@/components/driver/DriverLayout';
@@ -11,16 +11,16 @@ import { I18N } from '@/lib/i18n';
 
 const REQUESTS_I18N = {
   az: {
-    pendingHeading: (count: number) => `Pending requests (${count})`,
-    pastHeading: 'Past requests',
-    noRequestsTitle: 'No requests',
-    noRequestsDesc: 'Requests for your trips will appear here',
+    pendingHeading: (count: number) => `Gözləyən sorğular (${count})`,
+    pastHeading: 'Keçmiş sorğular',
+    noRequestsTitle: 'Sorğu yoxdur',
+    noRequestsDesc: 'Gedişlərinizə sorğu gəldikdə burada görünəcək',
   },
   ru: {
-    pendingHeading: (count: number) => `Pending requests (${count})`,
-    pastHeading: 'Past requests',
-    noRequestsTitle: 'No requests',
-    noRequestsDesc: 'Requests for your trips will appear here',
+    pendingHeading: (count: number) => `Ожидающие заявки (${count})`,
+    pastHeading: 'Прошедшие заявки',
+    noRequestsTitle: 'Заявок нет',
+    noRequestsDesc: 'Когда на ваши поездки поступят заявки, они появятся здесь',
   },
   en: {
     pendingHeading: (count: number) => `Pending requests (${count})`,
@@ -90,31 +90,22 @@ export default function DriverRequestsPage() {
           {pending.length > 0 && (
             <>
               <h3 className="mb-3 text-lg font-semibold text-text">{localCopy.pendingHeading(pending.length)}</h3>
-              <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pending.map((booking) => renderRequest(booking))}
-              </div>
+              <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{pending.map((booking) => renderRequest(booking))}</div>
             </>
           )}
 
           {others.length > 0 && (
             <>
               <h3 className="mb-3 text-lg font-semibold text-text">{localCopy.pastHeading}</h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {others.map((booking) => renderRequest(booking, true))}
-              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{others.map((booking) => renderRequest(booking, true))}</div>
             </>
           )}
 
           {requests.length === 0 && (
-            <EmptyState
-              icon={<Icon name="inbox" size={28} />}
-              title={localCopy.noRequestsTitle}
-              description={localCopy.noRequestsDesc}
-            />
+            <EmptyState icon={<Icon name="inbox" size={28} />} title={localCopy.noRequestsTitle} description={localCopy.noRequestsDesc} />
           )}
         </div>
       </ProtectedRoute>
     </DriverLayout>
   );
 }
-

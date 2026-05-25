@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Image from 'next/image';
@@ -11,9 +11,21 @@ import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
 
 const HEADER_MODE_I18N = {
-  az: { toDriver: 'Surucu rejimi', toPassenger: 'Sernisin rejimi' },
-  ru: { toDriver: 'Rezhim voditelya', toPassenger: 'Rezhim passazhira' },
-  en: { toDriver: 'Driver mode', toPassenger: 'Passenger mode' },
+  az: {
+    toDriver: 'Sürücü rejiminə keç',
+    toPassenger: 'Sərnişin rejiminə keç',
+    adminPanel: 'Admin paneli',
+  },
+  ru: {
+    toDriver: 'Перейти в режим водителя',
+    toPassenger: 'Перейти в режим пассажира',
+    adminPanel: 'Админ-панель',
+  },
+  en: {
+    toDriver: 'Switch to driver mode',
+    toPassenger: 'Switch to passenger mode',
+    adminPanel: 'Admin panel',
+  },
 } as const;
 
 export default function Header() {
@@ -29,23 +41,25 @@ export default function Header() {
   const showDriverDashboardLink = capabilities.canAccessDriverDashboard && activeMode === 'passenger';
   const showPassengerSwitch = capabilities.canAccessDriverDashboard && activeMode === 'driver';
 
-  const navLinks = !isAdmin ? [
-    { label: copy.header.findRide, href: ROUTES.trips, match: '/trips' },
-    { label: copy.header.offerRide, href: offerRoute, match: '/driver' },
-    ...(showDriverDashboardLink ? [
-      { label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' },
-    ] : []),
-  ] : [];
+  const navLinks = !isAdmin
+    ? [
+        { label: copy.header.findRide, href: ROUTES.trips, match: '/trips' },
+        { label: copy.header.offerRide, href: offerRoute, match: '/driver' },
+        ...(showDriverDashboardLink
+          ? [{ label: copy.header.driverDashboard, href: ROUTES.driverDashboard, match: '/driver' }]
+          : []),
+      ]
+    : [];
 
   const isActive = (match: string) => {
     if (match === '/driver' && pathname === '/driver/create-trip') return false;
-    return pathname === match || pathname.startsWith(match + '/');
+    return pathname === match || pathname.startsWith(`${match}/`);
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#c0c8ca]/70 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-[1140px] items-center justify-between px-4 md:h-[72px]">
-        <div className="flex items-center gap-6 md:gap-8 min-w-0">
+        <div className="min-w-0 flex items-center gap-6 md:gap-8">
           <Link
             href="/"
             className="ui-panel-title flex items-center gap-2 text-[#002f37] transition-all duration-200 ease-out hover:text-[#054752] active:scale-[0.98]"
@@ -53,7 +67,7 @@ export default function Header() {
             <Icon name="map" size={22} strokeWidth={1.8} />
             Yolüstü
           </Link>
-          <nav className="hidden h-[72px] items-center gap-6 md:flex min-w-0">
+          <nav className="hidden h-[72px] min-w-0 items-center gap-6 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -70,7 +84,7 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           {isAuthenticated && currentUser ? (
             <>
               {!isAdmin && capabilities.canBookRide && (
@@ -104,10 +118,13 @@ export default function Header() {
                   href={ROUTES.admin}
                   className="ui-action-text hidden text-[#40484a] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-[#054752] sm:block"
                 >
-                  Admin
+                  {modeCopy.adminPanel}
                 </Link>
               )}
-              <Link href={isAdmin ? ROUTES.admin : ROUTES.profile} className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]">
+              <Link
+                href={isAdmin ? ROUTES.admin : ROUTES.profile}
+                className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]"
+              >
                 {currentUser.avatarUrl ? (
                   <Image
                     src={currentUser.avatarUrl}
@@ -121,9 +138,7 @@ export default function Header() {
                     {currentUser.fullName.charAt(0)}
                   </div>
                 )}
-                <span className="ui-label-text hidden text-[#002f37] lg:block">
-                  {currentUser.fullName.split(' ')[0]}
-                </span>
+                <span className="ui-label-text hidden text-[#002f37] lg:block">{currentUser.fullName.split(' ')[0]}</span>
               </Link>
               <button
                 onClick={() => logout()}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -13,31 +13,31 @@ import { getUserCapabilities } from '@/lib/access-control';
 const DRIVER_LAYOUT_I18N = {
   az: {
     title: 'Sürücü paneli',
-    toPassenger: 'Sərnişin saytı',
+    toPassenger: 'Sərnişin rejiminə keç',
     tabs: {
       dashboard: 'Panel',
-      createTrip: 'Yeni gediş',
+      createTrip: 'Gediş yarat',
       myTrips: 'Gedişlərim',
       requests: 'Sorğular',
-      vehicle: 'Nəqliyyat',
+      vehicle: 'Avtomobil',
       documents: 'Sənədlər',
     },
   },
   ru: {
     title: 'Панель водителя',
-    toPassenger: 'Сайт пассажира',
+    toPassenger: 'Перейти в режим пассажира',
     tabs: {
       dashboard: 'Панель',
-      createTrip: 'Новая поездка',
+      createTrip: 'Создать поездку',
       myTrips: 'Мои поездки',
-      requests: 'Запросы',
-      vehicle: 'Транспорт',
+      requests: 'Заявки',
+      vehicle: 'Автомобиль',
       documents: 'Документы',
     },
   },
   en: {
-    title: 'Driver Dashboard',
-    toPassenger: 'Passenger site',
+    title: 'Driver dashboard',
+    toPassenger: 'Switch to passenger mode',
     tabs: {
       dashboard: 'Dashboard',
       createTrip: 'Create trip',
@@ -51,7 +51,7 @@ const DRIVER_LAYOUT_I18N = {
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { language, currentUser, isAuthenticated, activeMode } = useAppStore();
+  const { language, currentUser, isAuthenticated, activeMode, switchRole } = useAppStore();
   const t = DRIVER_LAYOUT_I18N[language];
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
 
@@ -76,9 +76,19 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="flex items-center gap-3">
             {capabilities.canAccessDriverDashboard && <RoleSwitch />}
-            <Link href={ROUTES.search} className="text-sm font-semibold text-brand-700 hover:underline">
-              {t.toPassenger}
-            </Link>
+            {capabilities.canAccessDriverDashboard && activeMode === 'driver' ? (
+              <button
+                type="button"
+                onClick={() => switchRole('passenger')}
+                className="text-sm font-semibold text-brand-700 hover:underline"
+              >
+                {t.toPassenger}
+              </button>
+            ) : (
+              <Link href={ROUTES.search} className="text-sm font-semibold text-brand-700 hover:underline">
+                {t.toPassenger}
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -104,10 +114,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
         </div>
       </nav>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
     </div>
   );
 }
-

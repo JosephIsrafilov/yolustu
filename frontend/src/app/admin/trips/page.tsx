@@ -16,6 +16,8 @@ const TRIPS_I18N = {
   az: {
     title: 'Gedişlər',
     confirmDelete: 'Bu gedişi silmək istədiyinizə əminsiniz?',
+    emptyState: 'Gediş tapılmadı',
+    placeholder: '-',
     table: {
       route: 'Marşrut',
       driver: 'Sürücü',
@@ -32,6 +34,8 @@ const TRIPS_I18N = {
   ru: {
     title: 'Поездки',
     confirmDelete: 'Вы уверены, что хотите удалить эту поездку?',
+    emptyState: 'Поездки не найдены',
+    placeholder: '-',
     table: {
       route: 'Маршрут',
       driver: 'Водитель',
@@ -48,6 +52,8 @@ const TRIPS_I18N = {
   en: {
     title: 'Trips',
     confirmDelete: 'Are you sure you want to delete this trip?',
+    emptyState: 'No trips found',
+    placeholder: '-',
     table: {
       route: 'Route',
       driver: 'Driver',
@@ -140,7 +146,7 @@ export default function AdminTripsPage() {
               ) : trips.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
-                    No trips found
+                    {t.emptyState}
                   </td>
                 </tr>
               ) : (
@@ -166,7 +172,7 @@ export default function AdminTripsPage() {
                               </div>
                             )}
                           </div>
-                          <span>{driver?.fullName || '—'}</span>
+                          <span>{driver?.fullName || t.placeholder}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-text">{new Date(trip.date).toLocaleDateString()}</td>

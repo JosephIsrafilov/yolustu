@@ -21,6 +21,21 @@ interface BookingCardProps {
   onPay?: () => void;
 }
 
+const BOOKING_CARD_I18N = {
+  az: {
+    chat: 'Söhbət',
+    seatsUnit: 'yer',
+  },
+  ru: {
+    chat: 'Чат',
+    seatsUnit: 'мест',
+  },
+  en: {
+    chat: 'Chat',
+    seatsUnit: 'seats',
+  },
+} as const;
+
 export default function BookingCard({
   booking,
   trip,
@@ -33,6 +48,7 @@ export default function BookingCard({
   const language = useAppStore((state) => state.language);
   const unreadRides = useAppStore((state) => state.unreadRides) || {};
   const copy = I18N[language].bookings;
+  const localCopy = BOOKING_CARD_I18N[language];
 
   if (!trip) return null;
 
@@ -45,11 +61,11 @@ export default function BookingCard({
       <div className="grid grid-cols-[1fr_auto] gap-4 mb-3 items-start h-12">
         <div className="min-w-0">
           <p className="text-base font-bold text-text truncate block w-full leading-6">
-            {trip.departureCity} → {trip.arrivalCity}
+            {trip.departureCity} {'->'} {trip.arrivalCity}
           </p>
           <div className="flex items-center gap-2 mt-0.5 text-xs text-text-muted h-5">
             <Icon name="clock" size={12} className="shrink-0 flex-none" />
-            <span className="truncate block w-full">{trip.date} • {trip.time}</span>
+            <span className="truncate block w-full">{trip.date} {'·'} {trip.time}</span>
           </div>
         </div>
         <div className="shrink-0 flex-none h-6 flex items-center">
@@ -60,7 +76,7 @@ export default function BookingCard({
       {/* Booking info */}
       <div className="flex items-center gap-4 text-sm text-text-secondary mb-3 h-5">
         <span className="font-semibold text-brand-600 shrink-0 flex-none">{formatPrice(trip.pricePerSeat)}</span>
-        <span className="truncate block w-full">{booking.seatsRequested} yer</span>
+        <span className="truncate block w-full">{booking.seatsRequested} {localCopy.seatsUnit}</span>
       </div>
 
       {/* Driver info */}
@@ -96,7 +112,7 @@ export default function BookingCard({
               className="flex-1 w-full flex items-center justify-center gap-1.5 relative animate-fade-in"
             >
               <Icon name="message-square" size={14} className="shrink-0 flex-none" />
-              <span className="truncate">Chat</span>
+              <span className="truncate">{localCopy.chat}</span>
               {unreadRides[trip.id] && (
                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

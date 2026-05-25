@@ -58,12 +58,64 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
 
 type FormValues = z.infer<ReturnType<typeof getValidationSchema>>;
 
+const CREATE_TRIP_PAGE_I18N = {
+  az: {
+    addVehicleToProfile: 'Avtomobili profilə əlavə et',
+    editRoute: 'Dəyiş',
+    dropoffTab: 'Eniş',
+    mapPickMeeting: 'Xəritədə görüş nöqtəsini seçin',
+    mapPickDropoff: 'Xəritədə eniş nöqtəsini seçin',
+    recurringTrip: 'Təkrarlanan gediş',
+    aiPriceSuggestion: 'Süni İntellekt Tövsiyəsi',
+    applySuggestion: 'Tətbiq et',
+    summaryDoubleCheck: 'Gediş məlumatlarını son dəfə yoxlayın',
+    departureLabel: 'Gediş',
+    destinationLabel: 'Təyinat',
+    standardVehicle: 'Standart avtomobil',
+    seatsUnit: 'yer',
+    saving: 'Yadda saxlanılır...',
+  },
+  ru: {
+    addVehicleToProfile: 'Добавить автомобиль в профиль',
+    editRoute: 'Изменить',
+    dropoffTab: 'Высадка',
+    mapPickMeeting: 'Выберите место встречи на карте',
+    mapPickDropoff: 'Выберите место высадки на карте',
+    recurringTrip: 'Повторяющаяся поездка',
+    aiPriceSuggestion: 'Рекомендация ИИ',
+    applySuggestion: 'Применить',
+    summaryDoubleCheck: 'Проверьте данные поездки в последний раз',
+    departureLabel: 'Отправление',
+    destinationLabel: 'Назначение',
+    standardVehicle: 'Стандартный автомобиль',
+    seatsUnit: 'мест',
+    saving: 'Сохранение...',
+  },
+  en: {
+    addVehicleToProfile: 'Add vehicle to profile',
+    editRoute: 'Edit',
+    dropoffTab: 'Drop-off',
+    mapPickMeeting: 'Select meeting point on the map',
+    mapPickDropoff: 'Select dropoff point on the map',
+    recurringTrip: 'Recurring trip',
+    aiPriceSuggestion: 'AI price suggestion',
+    applySuggestion: 'Apply',
+    summaryDoubleCheck: 'Double check your trip details',
+    departureLabel: 'Departure',
+    destinationLabel: 'Destination',
+    standardVehicle: 'Standard vehicle',
+    seatsUnit: 'seats',
+    saving: 'Saving...',
+  },
+} as const;
+
 export default function CreateTripPage() {
   const router = useRouter();
   const { createTrip, lastError, clearError, language } = useAppStore();
   
   const copy = I18N[language].createTrip;
   const common = I18N[language].common;
+  const pageCopy = CREATE_TRIP_PAGE_I18N[language];
   
   const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepOverview];
   const [step, setStep] = useState(0);
@@ -358,7 +410,7 @@ export default function CreateTripPage() {
                         ? 'Profilə nəqliyyat əlavə et' 
                         : language === 'ru' 
                         ? 'Добавить транспорт в профиль' 
-                        : 'Add Vehicle to Profile'}
+                        : pageCopy.addVehicleToProfile}
                     </span>
                     <Icon name="arrow-right" size={12} />
                   </Link>
@@ -413,7 +465,7 @@ export default function CreateTripPage() {
               onClick={() => setStep(0)}
               className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-brand-600 shadow-sm border border-border hover:bg-surface-muted transition-colors"
             >
-              Edit
+              {pageCopy.editRoute}
             </button>
           </div>
         )}
@@ -466,7 +518,7 @@ export default function CreateTripPage() {
                         onClick={() => setPickerMode('destination')}
                         className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${pickerMode === 'destination' ? 'bg-white shadow-sm text-brand-600' : 'text-text-muted'}`}
                       >
-                        {language === 'az' ? 'Eniş' : language === 'ru' ? 'Высадка' : 'Drop-off'}
+                        {pageCopy.dropoffTab}
                       </button>
                     </div>
                   </div>
@@ -509,9 +561,7 @@ export default function CreateTripPage() {
                     </MapContainer>
                   </div>
                   <p className="text-center text-xs text-text-muted">
-                    {pickerMode === 'origin' 
-                      ? (language === 'az' ? 'Xəritədə görüş nöqtəsini seçin' : language === 'ru' ? 'Выберите место встречи на карте' : 'Select meeting point on the map') 
-                      : (language === 'az' ? 'Xəritədə eniş nöqtəsini seçin' : language === 'ru' ? 'Выберите место высадки на карте' : 'Select dropoff point on the map')}
+                    {pickerMode === 'origin' ? pageCopy.mapPickMeeting : pageCopy.mapPickDropoff}
                   </p>
                   
                   {(() => {
@@ -619,7 +669,7 @@ export default function CreateTripPage() {
                     className="mt-1 h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
                   />
                   <label htmlFor="isRecurring" className="text-xs sm:text-sm font-medium text-text cursor-pointer select-none">
-                    <span className="block font-bold">{language === 'az' ? 'Təkrarlanan gediş' : language === 'ru' ? 'Повторяющаяся поездка' : 'Recurring Trip'}</span>
+                    <span className="block font-bold">{pageCopy.recurringTrip}</span>
                     <span className="block text-text-muted mt-0.5 text-[11px] leading-relaxed">{copy.recurringLabel}</span>
                   </label>
                 </div>
@@ -631,7 +681,9 @@ export default function CreateTripPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{copy.seatsCount}</label>
                   <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setValue('seatsTotal', Math.max(1, formValues.seatsTotal - 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">−</button>
+                    <button type="button" onClick={() => setValue('seatsTotal', Math.max(1, formValues.seatsTotal - 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">
+                      <Icon name="minus" size={16} />
+                    </button>
                     <span className="w-8 text-center text-2xl font-bold">{formValues.seatsTotal}</span>
                     <button type="button" onClick={() => setValue('seatsTotal', Math.min(4, formValues.seatsTotal + 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">+</button>
                   </div>
@@ -684,7 +736,7 @@ export default function CreateTripPage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 text-xs font-bold text-brand-700">
                             <Icon name="sparkles" size={14} className="text-brand-500" />
-                            <span>{language === 'az' ? 'Süni İntellekt Tövsiyəsi' : language === 'ru' ? 'Рекомендация ИИ' : 'AI Price Suggestion'}</span>
+                            <span>{pageCopy.aiPriceSuggestion}</span>
                           </div>
                           <div className="flex items-baseline gap-1 mt-1">
                             <span className="text-lg font-black text-brand-800">{aiSuggestedPrice}</span>
@@ -701,7 +753,7 @@ export default function CreateTripPage() {
                           onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
                           className="shrink-0 rounded-lg bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white px-3.5 py-2 text-xs font-bold transition-colors shadow-sm active:scale-95"
                         >
-                          Apply
+                          {pageCopy.applySuggestion}
                         </button>
                       </div>
                     </div>
@@ -811,7 +863,7 @@ export default function CreateTripPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-extrabold text-text tracking-tight">{copy.summaryTitle}</h3>
-                    <p className="text-sm text-text-muted">{language === 'az' ? 'Gediş məlumatlarını son dəfə yoxlayın' : language === 'ru' ? 'Проверьте данные поездки в последний раз' : 'Double check your trip details'}</p>
+                    <p className="text-sm text-text-muted">{pageCopy.summaryDoubleCheck}</p>
                   </div>
                 </div>
 
@@ -828,12 +880,12 @@ export default function CreateTripPage() {
                     </div>
                     <div className="flex flex-col gap-5 flex-1">
                       <div>
-                        <p className="text-[11px] font-bold text-brand-600/70 uppercase tracking-widest mb-0.5">{language === 'az' ? 'Gediş' : language === 'ru' ? 'Отправление' : 'Departure'}</p>
+                        <p className="text-[11px] font-bold text-brand-600/70 uppercase tracking-widest mb-0.5">{pageCopy.departureLabel}</p>
                         <p className="text-lg font-bold text-text leading-tight">{formValues.departureCity}</p>
                         {formValues.meetingPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.meetingPoint}</p>}
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-0.5">{language === 'az' ? 'Təyinat' : language === 'ru' ? 'Назначение' : 'Destination'}</p>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-0.5">{pageCopy.destinationLabel}</p>
                         <p className="text-lg font-bold text-text leading-tight">{formValues.arrivalCity}</p>
                         {formValues.dropoffPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.dropoffPoint}</p>}
                       </div>
@@ -857,9 +909,9 @@ export default function CreateTripPage() {
                       <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryVehicle}</span>
                     </div>
                     <span className="text-[15px] font-bold text-text truncate">
-                      {vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : (language === 'az' ? 'Standart avtomobil' : 'Standard')}
+                      {vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : pageCopy.standardVehicle}
                     </span>
-                    <span className="text-sm font-medium text-text-muted">{formValues.seatsTotal} {language === 'az' ? 'yer' : 'seats'}</span>
+                    <span className="text-sm font-medium text-text-muted">{formValues.seatsTotal} {pageCopy.seatsUnit}</span>
                   </div>
                 </div>
 
@@ -898,7 +950,7 @@ export default function CreateTripPage() {
                 {createTripMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Saving...
+                    {pageCopy.saving}
                   </span>
                 ) : (
                   <>

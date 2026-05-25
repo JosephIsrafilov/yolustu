@@ -45,6 +45,9 @@ const TRIP_DETAILS_I18N = {
     submitRequestBtn: 'Rezerv sorğusu göndər',
     alreadyBooked: 'Bu gediş üçün artıq sorğu göndərmisiniz.',
     bookedSuccess: 'Sorğu göndərildi! Yönləndirilirsiniz...',
+    driverModeTitle: 'Sərnişin rejimi tələb olunur',
+    driverModeDesc: 'Gediş rezerv etmək üçün sərnişin rejiminə keçin.',
+    switchToPassengerBtn: 'Rejimi dəyiş',
   },
   ru: {
     tripTitle: 'Поездка',
@@ -69,6 +72,9 @@ const TRIP_DETAILS_I18N = {
     submitRequestBtn: 'Отправить запрос',
     alreadyBooked: 'Вы уже отправили запрос на эту поездку.',
     bookedSuccess: 'Запрос отправлен! Перенаправление...',
+    driverModeTitle: 'Требуется режим пассажира',
+    driverModeDesc: 'Переключитесь в режим пассажира, чтобы бронировать поездки.',
+    switchToPassengerBtn: 'Сменить режим',
   },
   en: {
     tripTitle: 'Trip',
@@ -167,9 +173,9 @@ export default function TripDetailsPage() {
   const common = I18N[language].common;
   const preferenceCopy = PREFERENCE_I18N[language] || PREFERENCE_I18N.en;
   const driverModeCopy = {
-    title: 'Passenger mode required',
-    description: 'Switch to passenger mode to book rides.',
-    action: 'Switch mode',
+    title: copy.driverModeTitle,
+    description: copy.driverModeDesc,
+    action: copy.switchToPassengerBtn,
   };
 
   React.useEffect(() => {
@@ -382,7 +388,16 @@ export default function TripDetailsPage() {
                   <p className="text-base font-bold text-text">{copy.bookingRequestTitle}</p>
                   <p className="text-xs text-text-muted">{copy.bookingRequestDesc}</p>
                 </div>
-                <div className="flex items-center justify-between"><span className="text-sm font-medium">{copy.howManySeats}</span><div className="flex items-center gap-2"><button onClick={() => setSeats(Math.max(1, seats - 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">−</button><span className="w-8 text-center font-bold">{seats}</span><button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="w-9 h-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button></div></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{copy.howManySeats}</span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setSeats(Math.max(1, seats - 1))} className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-muted font-bold">
+                      <Icon name="minus" size={14} />
+                    </button>
+                    <span className="w-8 text-center font-bold">{seats}</span>
+                    <button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="h-9 w-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button>
+                  </div>
+                </div>
                 <div className="rounded-xl bg-surface-muted p-3 text-sm">
                   <div className="flex items-center justify-between"><span className="text-text-muted">{copy.selectedSeats}</span><span className="font-semibold">{seats}</span></div>
                   <div className="mt-2 flex items-center justify-between"><span className="text-text-muted">{copy.perSeat}</span><span className="font-semibold">{formatPrice(trip.pricePerSeat)}</span></div>

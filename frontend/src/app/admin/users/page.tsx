@@ -15,6 +15,8 @@ import type { User } from '@/types';
 const USERS_I18N = {
   az: {
     title: 'İstifadəçilər',
+    emptyState: 'İstifadəçi tapılmadı',
+    placeholder: '-',
     table: {
       name: 'Ad',
       email: 'Email',
@@ -34,6 +36,8 @@ const USERS_I18N = {
   },
   ru: {
     title: 'Пользователи',
+    emptyState: 'Пользователи не найдены',
+    placeholder: '-',
     table: {
       name: 'Имя',
       email: 'Email',
@@ -53,6 +57,8 @@ const USERS_I18N = {
   },
   en: {
     title: 'Users',
+    emptyState: 'No users found',
+    placeholder: '-',
     table: {
       name: 'Name',
       email: 'Email',
@@ -154,7 +160,7 @@ export default function AdminUsersPage() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
-                    No users found
+                    {t.emptyState}
                   </td>
                 </tr>
               ) : (
@@ -172,8 +178,8 @@ export default function AdminUsersPage() {
                         <span className="font-medium text-text">{u.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text-muted">{u.email || '—'}</td>
-                    <td className="px-6 py-4 text-text">{u.city || '—'}</td>
+                    <td className="px-6 py-4 text-text-muted">{u.email || t.placeholder}</td>
+                    <td className="px-6 py-4 text-text">{u.city || t.placeholder}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 font-medium">
                         <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />

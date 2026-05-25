@@ -21,6 +21,7 @@ export default function MyTripsPage() {
 
   const copy = I18N[language].myTrips;
   const common = I18N[language].common;
+  const tripDetailsCopy = I18N[language].tripDetails;
 
   React.useEffect(() => {
     fetchTrips();
@@ -63,7 +64,7 @@ export default function MyTripsPage() {
                           onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
                         >
                           <Icon name="message-square" size={14} className="shrink-0" />
-                          <span>Chat</span>
+                          <span>{tripDetailsCopy.chatAction}</span>
                           {(unreadRides || {})[trip.id] && (
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

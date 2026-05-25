@@ -39,6 +39,7 @@ const PROFILE_I18N = {
     verificationTitle: 'Sürücü Təsdiqləməsi',
     uploadSuccess: 'Sənəd uğurla göndərildi! Admin təsdiqləməsini gözləyin.',
     uploadError: 'Yükləmə zamanı xəta baş verdi.',
+    updateError: 'Profil yenilənərkən xəta baş verdi.',
     statusNone: 'Təsdiqlənməyib',
     statusPending: 'Gözləyir',
     statusApproved: 'Təsdiqlənib',
@@ -78,6 +79,7 @@ const PROFILE_I18N = {
     verificationTitle: 'Подтверждение водителя',
     uploadSuccess: 'Документ успешно отправлен! Ожидайте одобрения администратора.',
     uploadError: 'Произошла ошибка при загрузке.',
+    updateError: 'Произошла ошибка при обновлении профиля.',
     statusNone: 'Не подтверждено',
     statusPending: 'На проверке',
     statusApproved: 'Подтверждено',
@@ -117,6 +119,7 @@ const PROFILE_I18N = {
     verificationTitle: 'Driver Verification',
     uploadSuccess: 'Document submitted successfully! Awaiting admin approval.',
     uploadError: 'An error occurred during upload.',
+    updateError: 'Failed to update profile.',
     statusNone: 'Not verified',
     statusPending: 'Pending',
     statusApproved: 'Verified',
@@ -181,7 +184,7 @@ export default function ProfilePage() {
       await updateProfile(form);
       setEditing(false);
     } catch {
-      setProfileError(useAppStore.getState().lastError || 'Failed to update profile.');
+      setProfileError(useAppStore.getState().lastError || copy.updateError);
     } finally {
       setSavingProfile(false);
     }

@@ -8,9 +8,16 @@ import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import { getUserCapabilities } from '@/lib/access-control';
 
+const MODE_SWITCH_I18N = {
+  az: { backendManaged: 'Rejim API modunda backend terefinden idare olunur.' },
+  ru: { backendManaged: 'Режим в API-режиме управляется backend-ом.' },
+  en: { backendManaged: 'Mode is managed by backend in API mode.' },
+} as const;
+
 export default function RoleSwitch() {
   const { activeMode, switchRole, currentUser, isAuthenticated, language } = useAppStore();
   const t = I18N[language].auth;
+  const localCopy = MODE_SWITCH_I18N[language];
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
 
   if (!isAuthenticated || !currentUser || capabilities.canAccessAdmin) {
@@ -20,7 +27,7 @@ export default function RoleSwitch() {
   if (!isMockDataMode) {
     return (
       <div className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs text-text-muted">
-        Mode is managed by backend in API mode.
+        {localCopy.backendManaged}
       </div>
     );
   }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, Suspense } from 'react';
 import Image from 'next/image';
@@ -118,7 +118,7 @@ function TripsContent() {
                   className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
                   aria-label={`${copy.common.passenger} -`}
                 >
-                  в€’
+                  <Icon name="minus" size={14} className="mx-auto" />
                 </button>
                 <span className="ui-label-text min-w-10 text-center text-[#011f23]">{filters.minSeats || 1}</span>
                 <button
@@ -326,7 +326,7 @@ function TripsContent() {
 
                       {/* Pricing, Seats, Preferences */}
                       <div className="order-3 flex shrink-0 flex-col items-end text-right sm:w-35">
-                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} в‚ј</div>
+                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{trip.pricePerSeat} €</div>
                         <div className={`ui-chip-text flex items-center gap-1 mt-1 ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
                           {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
                           <span className="leading-tight">{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
@@ -382,4 +382,5 @@ export default function TripsPage() {
     </Suspense>
   );
 }
+
 
