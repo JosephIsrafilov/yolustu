@@ -37,9 +37,7 @@ class BookingsService:
         if ride.available_seats < booking_in.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough available seats")
         if current_user.role == "admin":
-            raise HTTPException(
-                status_code=403, detail="Admin cannot book rides"
-            )
+            raise HTTPException(status_code=403, detail="Admin cannot book rides")
         if ride.driver_id == current_user.id:
             raise HTTPException(status_code=403, detail="You cannot book your own ride")
         if self.bookings.get_active_for_ride_and_passenger(ride.id, current_user.id):

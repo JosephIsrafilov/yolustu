@@ -48,20 +48,24 @@ def test_blocked_user_raises_403_in_get_current_user():
         verification_status="none",
     )
     repo = FakeUserRepository([user])
-    
+
     # We can mock the UserRepository on dependencies module
     from app.domains.identity import dependencies
+
     original_repo = dependencies.UserRepository
     dependencies.UserRepository = lambda db: repo  # type: ignore
 
     try:
         from jose import jwt
         from app.core.config import settings
-        token = jwt.encode({"sub": user.phone}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-        
+
+        token = jwt.encode(
+            {"sub": user.phone}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        )
+
         with pytest.raises(HTTPException) as exc:
             get_current_user_from_token(token, cast(Session, None))
-        
+
         assert exc.value.status_code == 403
         assert "blocked" in str(exc.value.detail).lower()
     finally:
@@ -73,8 +77,10 @@ def test_cannot_self_promote_role():
     class MockUserRepo:
         def __init__(self, db):
             pass
+
         def get_by_id(self, user_id):
             return User(id=user_id, role="passenger")
+
         def update(self, user, user_in):
             return user
 
@@ -129,18 +135,27 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
     )
 
     from app.domains.trips import services
+
     original_ride_to_response = services.ride_to_response
     services.ride_to_response = lambda ride: ride  # type: ignore
 
     try:
         # 1. Approved driver should be allowed (will try to call repo.create)
         approved_driver = CurrentUser(
-            id=uuid4(), phone="+1", first_name="A", last_name="B",
-            role="driver", is_verified=True, is_blocked=False, verification_status="approved"
+            id=uuid4(),
+            phone="+1",
+            first_name="A",
+            last_name="B",
+            role="driver",
+            is_verified=True,
+            is_blocked=False,
+            verification_status="approved",
         )
+
         class DummyRideRepo:
             def create(self, driver_id, vehicle_id, ride_in):
                 return object()
+
         service.rides = cast(any, DummyRideRepo())
         # Should not raise 403 (will raise AttributeError on 'object' object has no attribute 'id', but not 403!)
         try:
@@ -152,8 +167,14 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
 
         # 2. Pending driver -> 403
         pending_driver = CurrentUser(
-            id=uuid4(), phone="+1", first_name="A", last_name="B",
-            role="driver", is_verified=False, is_blocked=False, verification_status="pending"
+            id=uuid4(),
+            phone="+1",
+            first_name="A",
+            last_name="B",
+            role="driver",
+            is_verified=False,
+            is_blocked=False,
+            verification_status="pending",
         )
         with pytest.raises(HTTPException) as exc:
             service.create_ride(ride_in, pending_driver)
@@ -162,8 +183,14 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
 
         # 3. Rejected driver -> 403
         rejected_driver = CurrentUser(
-            id=uuid4(), phone="+1", first_name="A", last_name="B",
-            role="driver", is_verified=False, is_blocked=False, verification_status="rejected"
+            id=uuid4(),
+            phone="+1",
+            first_name="A",
+            last_name="B",
+            role="driver",
+            is_verified=False,
+            is_blocked=False,
+            verification_status="rejected",
         )
         with pytest.raises(HTTPException) as exc:
             service.create_ride(ride_in, rejected_driver)
@@ -172,8 +199,14 @@ def test_approved_driver_vs_unapproved_driver_create_ride():
 
         # 4. Admin trying to create via public create endpoint -> 403
         admin_user = CurrentUser(
-            id=uuid4(), phone="+1", first_name="A", last_name="B",
-            role="admin", is_verified=True, is_blocked=False, verification_status="approved"
+            id=uuid4(),
+            phone="+1",
+            first_name="A",
+            last_name="B",
+            role="admin",
+            is_verified=True,
+            is_blocked=False,
+            verification_status="approved",
         )
         with pytest.raises(HTTPException) as exc:
             service.create_ride(ride_in, admin_user)
