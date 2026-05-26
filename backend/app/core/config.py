@@ -27,7 +27,12 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-if settings.ENVIRONMENT == "production" and settings.SECRET_KEY == "yolustu-super-secret-key":
-    raise ValueError("CRITICAL: Default SECRET_KEY is used in production. Please change it.")
+if (
+    settings.ENVIRONMENT == "production"
+    and settings.SECRET_KEY == "yolustu-super-secret-key"
+):
+    raise ValueError(
+        "CRITICAL: Default SECRET_KEY is used in production. Please change it."
+    )
 elif settings.SECRET_KEY == "yolustu-super-secret-key":
     logging.warning("SECURITY WARNING: Default SECRET_KEY is being used.")
