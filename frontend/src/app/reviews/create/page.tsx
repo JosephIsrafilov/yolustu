@@ -84,7 +84,7 @@ export default function CreateReviewPage() {
   }[language] || 'Loading...';
 
   return (
-    <WebLayout title={copy.title} showBack narrow hideFooter>
+    <WebLayout title={copy.title} showBack narrow>
       <ProtectedRoute>
         <Suspense fallback={<div className="p-4 text-center text-text-muted">{loadingText}</div>}>
           <ReviewContent />

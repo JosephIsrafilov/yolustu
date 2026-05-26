@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAppStore } from '@/store/useAppStore';
+import Footer from '@/components/layout/Footer';
 
 const ADMIN_LAYOUT_I18N = {
   az: {
@@ -70,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-surface-dim">
+    <div className="min-h-screen flex flex-col bg-surface-dim">
       <header className="bg-brand-900 text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
@@ -118,9 +119,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </div>
       </nav>
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 grow w-full">
         <ProtectedRoute mode="admin">{children}</ProtectedRoute>
       </main>
+      <Footer />
     </div>
   );
 }
