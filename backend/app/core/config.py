@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +22,17 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:3000"
     NVIDIA_API_KEY: str = ""
+    ENVIRONMENT: str = "development"
 
 
 settings = Settings()
+
+if (
+    settings.ENVIRONMENT == "production"
+    and settings.SECRET_KEY == "yolustu-super-secret-key"
+):
+    raise ValueError(
+        "CRITICAL: Default SECRET_KEY is used in production. Please change it."
+    )
+elif settings.SECRET_KEY == "yolustu-super-secret-key":
+    logging.warning("SECURITY WARNING: Default SECRET_KEY is being used.")

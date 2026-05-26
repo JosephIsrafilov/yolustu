@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserBase(BaseModel):
@@ -17,7 +17,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=8, max_length=72)
 
 
 class UserUpdate(BaseModel):
@@ -66,7 +66,7 @@ class TokenData(BaseModel):
 
 class LoginInput(BaseModel):
     phone: str
-    password: str
+    password: str = Field(min_length=8, max_length=72)
 
 
 class DeviceTokenInput(BaseModel):
