@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, Controller, useWatch } from 'react-hook-form';
@@ -18,6 +18,7 @@ import CitySelect from '@/components/ui/CitySelect';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, PRESET_LOCATIONS, formatPriceParts } from '@/lib/utils';
+import Select from '@/components/ui/Select';
 import Icon from '@/components/ui/Icon';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -45,6 +46,7 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
     petsAllowed: z.boolean().optional(),
     musicAllowed: z.boolean().optional(),
     femaleOnly: z.boolean().optional(),
+    vehicleId: z.string().optional(),
   }).superRefine((data, ctx) => {
     if (data.departureCity === data.arrivalCity && data.departureCity) {
       ctx.addIssue({
@@ -119,6 +121,7 @@ export default function CreateTripPage() {
   
   const steps = [copy.stepRoute, copy.stepDate, copy.stepSeats, copy.stepOverview];
   const [step, setStep] = useState(0);
+  const [maxStepReached, setMaxStepReached] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [isRecurring, setIsRecurring] = useState(false);
 
@@ -164,10 +167,17 @@ export default function CreateTripPage() {
       petsAllowed: false,
       musicAllowed: true,
       femaleOnly: false,
+      vehicleId: '',
     }
   });
 
   const formValues = useWatch({ control }) as FormValues;
+
+  useEffect(() => {
+    if (vehicles.length > 0 && !formValues.vehicleId) {
+      setValue('vehicleId', vehicles[0].id);
+    }
+  }, [vehicles, setValue, formValues.vehicleId]);
 
   const mapCenter = useMemo((): [number, number] => {
     if (pickerMode === 'origin') {
@@ -212,6 +222,9 @@ export default function CreateTripPage() {
     setIsAiLoading(true);
     setAiSuggestedPrice(null);
     setAiReasoning('');
+    const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
+    const carModel = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Standard Vehicle';
+
     try {
       const response = await apiAiService.getSmartPricingSuggestion({
         origin: values.departureCity,
@@ -219,7 +232,7 @@ export default function CreateTripPage() {
         departure_time: values.time,
         departure_date: values.date,
         language: language,
-        car_model: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : 'Standard Vehicle',
+        car_model: carModel,
         seats_total: values.seatsTotal,
         origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,
         destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
@@ -240,6 +253,9 @@ export default function CreateTripPage() {
     const values = getValues();
     if (!values.departureCity || !values.arrivalCity || !values.time) return;
     setIsDrafting(true);
+    const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
+    const carModel = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Standard Vehicle';
+
     try {
       const prefs: string[] = [];
       if (values.femaleOnly) prefs.push(language === 'az' ? 'Yalnız xanımlar' : language === 'ru' ? 'Только для женщин' : 'Ladies only');
@@ -252,7 +268,7 @@ export default function CreateTripPage() {
         destination: values.arrivalCity,
         departure_time: values.time,
         departure_date: values.date,
-        car_model: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : 'Standard Vehicle',
+        car_model: carModel,
         seats_total: values.seatsTotal,
         language: language,
         preferences: prefs,
@@ -282,13 +298,18 @@ export default function CreateTripPage() {
 
   const next = async () => {
     const isValid = await validateStep();
-    if (isValid) setStep((s) => Math.min(s + 1, 3));
+    if (isValid) {
+      const nextStep = Math.min(step + 1, 3);
+      setStep(nextStep);
+      setMaxStepReached((prev) => Math.max(prev, nextStep));
+    }
   };
   
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const createTripMutation = useMutation({
     mutationFn: async (values: FormValues) => {
+      const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
       const baseTripData = {
         departureCity: values.departureCity,
         arrivalCity: values.arrivalCity,
@@ -298,11 +319,11 @@ export default function CreateTripPage() {
         time: values.time,
         seatsTotal: values.seatsTotal,
         pricePerSeat: values.pricePerSeat,
-        carModel: vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : '',
+        carModel: selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : '',
         comment: values.comment || '',
         origin: values.origin,
         destination: values.destination,
-        vehicleId: vehicles[0]?.id || '',
+        vehicleId: selectedVehicle?.id || '',
         smokingAllowed: values.smokingAllowed ?? false,
         petsAllowed: values.petsAllowed ?? false,
         musicAllowed: values.musicAllowed ?? true,
@@ -370,7 +391,7 @@ export default function CreateTripPage() {
   };
 
   return (
-    <DriverLayout>
+    <DriverLayout narrow>
       <ProtectedRoute mode="driver">
         {lastError && (
           <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
@@ -397,21 +418,21 @@ export default function CreateTripPage() {
                 </h4>
                 <p className="text-xs text-amber-800/90 leading-relaxed mt-1">
                   {language === 'az' 
-                    ? 'Gediş yaratmaq üçün profilinizə avtomobil əlavə etməyiniz tövsiyə olunur. Əks halda sistem standart avtomobildən istifadə edəcək.' 
+                    ? 'Gediş yaratmaq üçün avtomobil əlavə etməyiniz tövsiyə olunur. Əks halda sistem standart avtomobildən istifadə edəcək.' 
                     : language === 'ru' 
-                    ? 'Для создания поездки рекомендуется добавить автомобиль в ваш профиль. Иначе система использует транспорт по умолчанию.' 
-                    : 'To publish a trip, we recommend registering your vehicle in your profile. Otherwise, a standard default fallback vehicle will be used.'}
+                    ? 'Для создания поездки рекомендуется добавить автомобиль. Иначе система использует транспорт по умолчанию.' 
+                    : 'To publish a trip, we recommend registering your vehicle. Otherwise, a standard default fallback vehicle will be used.'}
                 </p>
                 <div className="mt-3">
                   <Link 
-                    href={ROUTES.profile}
+                    href={ROUTES.driverVehicle}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-sm"
                   >
                     <span>
                       {language === 'az' 
-                        ? 'Profilə nəqliyyat əlavə et' 
+                        ? 'Avtomobil əlavə et' 
                         : language === 'ru' 
-                        ? 'Добавить транспорт в профиль' 
+                        ? 'Добавить транспорт' 
                         : pageCopy.addVehicleToProfile}
                     </span>
                     <Icon name="arrow-right" size={12} />
@@ -424,23 +445,30 @@ export default function CreateTripPage() {
         <>
         <div className="mb-6 flex items-center gap-2">
           {steps.map((s, i) => {
-            const isCompleted = i < step;
             const isCurrent = i === step;
+            const isSelectable = i <= maxStepReached;
             return (
               <div 
                 key={s} 
                 className="flex-1"
-                onClick={() => {
-                  if (isCompleted) setStep(i);
+                onClick={async () => {
+                  if (isSelectable) {
+                    if (i < step) {
+                      setStep(i);
+                    } else if (i > step) {
+                      const isValid = await validateStep();
+                      if (isValid) setStep(i);
+                    }
+                  }
                 }}
               >
                 <div className={`h-2 rounded-full transition-all duration-300 ${
-                  isCompleted ? 'bg-brand-500 cursor-pointer hover:opacity-80' : 
-                  isCurrent ? 'bg-brand-500 scale-y-110' : 'bg-surface-muted'
+                  isCurrent ? 'bg-brand-500 scale-y-110' : 
+                  isSelectable ? 'bg-brand-500/60 cursor-pointer hover:bg-brand-500' : 'bg-surface-muted'
                 }`} />
                 <p className={`mt-1.5 text-center text-[10px] sm:text-xs transition-colors duration-300 ${
                   isCurrent ? 'font-bold text-brand-600' : 
-                  isCompleted ? 'text-text-muted cursor-pointer hover:text-brand-500' : 'text-text-muted/50'
+                  isSelectable ? 'text-text-muted cursor-pointer hover:text-brand-500' : 'text-text-muted/50'
                 }`}>
                   {s}
                 </p>
@@ -450,9 +478,9 @@ export default function CreateTripPage() {
         </div>
 
         {step > 0 && formValues.departureCity && formValues.arrivalCity && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl bg-white dark:bg-slate-900 p-3 shadow-sm border border-border dark:border-slate-800 animate-fade-in">
+          <div className="mb-6 flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm border border-border animate-fade-in">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 border border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 border border-slate-100">
                 <Icon name="map" size={18} />
               </div>
               <div className="min-w-0">
@@ -467,7 +495,7 @@ export default function CreateTripPage() {
             <button 
               type="button"
               onClick={() => setStep(0)}
-              className="shrink-0 rounded-xl bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-text-muted hover:text-text shadow-xs border border-border hover:border-text-muted/30 transition-all"
+              className="shrink-0 rounded-xl bg-transparent hover:bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-text-muted hover:text-text shadow-xs border border-border hover:border-text-muted/30 transition-all"
             >
               {pageCopy.editRoute}
             </button>
@@ -682,6 +710,32 @@ export default function CreateTripPage() {
 
             {step === 2 && (
               <div className="flex flex-col gap-4">
+                {vehicles.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-text-secondary">
+                      {language === 'az' ? 'Avtomobil' : language === 'ru' ? 'Автомобиль' : 'Vehicle'}
+                    </label>
+                    <Controller
+                      name="vehicleId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value || ''}
+                          onChange={(val) => {
+                            field.onChange(val);
+                            setAiSuggestedPrice(null);
+                          }}
+                          options={vehicles.map(v => ({
+                            value: v.id,
+                            label: `${v.brand} ${v.model} (${v.plateNumber})`
+                          }))}
+                          placeholder={language === 'az' ? 'Avtomobil seçin' : language === 'ru' ? 'Выберите автомобиль' : 'Select vehicle'}
+                        />
+                      )}
+                    />
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{copy.seatsCount}</label>
                   <div className="flex items-center gap-3">
@@ -913,7 +967,10 @@ export default function CreateTripPage() {
                       <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryVehicle}</span>
                     </div>
                     <span className="text-[15px] font-bold text-text truncate">
-                      {vehicles[0] ? `${vehicles[0].brand} ${vehicles[0].model}` : pageCopy.standardVehicle}
+                      {(() => {
+                        const selectedVehicle = vehicles.find(v => v.id === formValues.vehicleId);
+                        return selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : pageCopy.standardVehicle;
+                      })()}
                     </span>
                     <span className="text-sm font-medium text-text-muted">{formValues.seatsTotal} {pageCopy.seatsUnit}</span>
                   </div>
@@ -946,7 +1003,13 @@ export default function CreateTripPage() {
             )}
           </div>
           <div className="mt-8 flex gap-3">
-            {step > 0 && <Button variant="outline" className="flex-1" onClick={back}><Icon name="arrow-left" size={16} /> {copy.backBtn}</Button>}
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={step > 0 ? back : () => router.push(ROUTES.driverDashboard)}
+            >
+              <Icon name="arrow-left" size={16} /> {copy.backBtn}
+            </Button>
             {step < 3 ? (
               <Button className="flex-1" onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
             ) : (

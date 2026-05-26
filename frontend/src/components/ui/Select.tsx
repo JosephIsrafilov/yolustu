@@ -94,7 +94,6 @@ export default function Select({
     });
   }, [options]);
 
-  // Cleanup refs on unmount
   useEffect(() => {
     return () => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -103,7 +102,6 @@ export default function Select({
     };
   }, []);
 
-  // Manage shouldRender for transition-out
   useEffect(() => {
     if (isOpen || !shouldRender) return;
     closeTimerRef.current = setTimeout(() => {
@@ -119,15 +117,12 @@ export default function Select({
     };
   }, [isOpen, shouldRender]);
 
-  // Transition from closed to open once positioned
   useEffect(() => {
     if (isPositioned && isOpen && animationState === 'closed') {
-      openRafRef1.current = requestAnimationFrame(() => {
-        setAnimationState('opening');
-        openRafRef2.current = requestAnimationFrame(() => {
-          setAnimationState('open');
-        });
-      });
+      const timer = setTimeout(() => {
+        setAnimationState('open');
+      }, 25);
+      return () => clearTimeout(timer);
     }
   }, [isPositioned, isOpen, animationState]);
 
@@ -275,14 +270,13 @@ export default function Select({
           style={dropdownStyle}
           className={cn(
             "flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg",
-            "transition-all duration-200 ease-out transform-gpu will-change-transform motion-reduce:transition-none motion-reduce:transform-none",
-            placement === 'down' ? 'origin-top' : 'origin-bottom',
-            animationState === 'open'
-              ? "opacity-100 scale-100 translate-y-0"
-              : cn(
-                  "opacity-0 scale-95 pointer-events-none",
-                  placement === 'down' ? "-translate-y-2" : "translate-y-2"
-                )
+            !isPositioned ? "opacity-0 pointer-events-none" : (
+              isOpen ? (
+                placement === 'down' ? 'animate-dropdown-in-down' : 'animate-dropdown-in-up'
+              ) : (
+                placement === 'down' ? 'animate-dropdown-out-down' : 'animate-dropdown-out-up'
+              )
+            )
           )}
         >
           {searchable && (

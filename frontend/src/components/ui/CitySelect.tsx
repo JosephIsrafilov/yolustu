@@ -28,13 +28,32 @@ export default function CitySelect({
   const selectCityText = language === 'az' ? 'Şəhər seçin' : language === 'ru' ? 'Выберите город' : 'Select city';
   
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const openDropdown = () => {
+    setIsOpen(true);
+    setShouldRender(true);
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+  };
   
+  useEffect(() => {
+    if (!isOpen && shouldRender) {
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, shouldRender]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        closeDropdown();
       }
     };
     if (isOpen) {
@@ -55,8 +74,12 @@ export default function CitySelect({
         type="button"
         aria-label={`${selectCityText}: ${label || ''}`}
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) setSearch('');
+          if (isOpen) {
+            closeDropdown();
+          } else {
+            openDropdown();
+            setSearch('');
+          }
         }}
         className={cn(
           'relative flex h-[46px] w-full items-center justify-between rounded-xl border bg-white px-3 text-left text-sm text-text shadow-sm transition-all focus:outline-none focus:ring-2',
@@ -80,8 +103,11 @@ export default function CitySelect({
 
       {error && <p className="text-xs text-danger-500">{error}</p>}
 
-      {isOpen && (
-        <div className="absolute top-[calc(100%+4px)] z-50 flex max-h-60 w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+      {shouldRender && (
+        <div className={cn(
+          "absolute top-[calc(100%+4px)] z-50 flex max-h-60 w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg",
+          isOpen ? "animate-dropdown-in-down" : "animate-dropdown-out-down"
+        )}>
           <div className="border-b border-border p-2">
             <div className="relative flex items-center">
               <Icon name="search" size={14} className="absolute left-3 text-text-muted" />
@@ -107,7 +133,7 @@ export default function CitySelect({
                   type="button"
                   onClick={() => {
                     onChange(option);
-                    setIsOpen(false);
+                    closeDropdown();
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-surface-muted",

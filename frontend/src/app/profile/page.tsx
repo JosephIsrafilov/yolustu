@@ -226,7 +226,7 @@ export default function ProfilePage() {
         )}
 
         <DriverVerificationSection copy={copy} />
-        <DriverVehiclesSection copy={copy} isDriver={currentUser.role !== 'admin' && currentUser.verificationStatus === 'approved'} />
+        <DriverVehiclesSection copy={copy} isDriver={currentUser.role !== 'admin'} />
         {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.reviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><Icon name="log-out" size={16} /> {copy.logoutBtn}</Button>
       </div>
@@ -346,7 +346,7 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
   );
 }
 
-import { CAR_BRANDS_MODELS, CAR_COLORS, CAR_YEARS } from '@/data/cars';
+import { CAR_BRANDS_MODELS, CAR_COLORS_LOCALIZED, CAR_YEARS, getLocalizedColor } from '@/data/cars';
 
 const AZ_REGIONS = [
   { code: '01', name: 'Abşeron' },
@@ -440,6 +440,7 @@ interface CustomPlateDropdownProps {
   dropdownWidthClass?: string;
   nextRef?: FocusableRef;
   buttonRef?: React.RefObject<HTMLButtonElement | null>;
+  plateMode?: boolean;
 }
 
 function CustomPlateDropdown({
@@ -450,7 +451,8 @@ function CustomPlateDropdown({
   widthClass,
   dropdownWidthClass = 'w-full',
   nextRef,
-  buttonRef
+  buttonRef,
+  plateMode = false
 }: CustomPlateDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -476,37 +478,42 @@ function CustomPlateDropdown({
   };
 
   return (
-    <div ref={containerRef} className={`relative ${widthClass}`}>
+    <div ref={containerRef} className={`relative flex items-center justify-center ${widthClass}`}>
       <button
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative w-full bg-white border border-gray-300 hover:border-gray-400 rounded-lg px-2 py-2 text-sm font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 flex items-center justify-center h-10 transition-colors"
+        className={plateMode
+          ? "w-full bg-transparent border-none text-2xl font-black text-slate-900 focus:outline-none flex items-center justify-center h-10 select-none cursor-pointer font-mono tracking-wider"
+          : "relative w-full bg-white border border-gray-300 hover:border-gray-400 rounded-lg px-2 py-2 text-sm font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 flex items-center justify-center h-10 transition-colors"
+        }
       >
         <span className="truncate">
-          {value || <span className="text-gray-400 font-normal">{placeholder}</span>}
+          {value || <span className={plateMode ? "text-slate-300 font-normal" : "text-gray-400 font-normal"}>{placeholder}</span>}
         </span>
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg
-            className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </span>
+        {!plateMode && (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg
+              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+            </svg>
+          </span>
+        )}
       </button>
 
       {isOpen && (
-        <div className={`absolute left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50 py-1 ${dropdownWidthClass}`}>
+        <div className={`absolute left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50 py-1 ${dropdownWidthClass}`}>
           {options.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => handleSelect(opt.value)}
-              className={`w-full px-3 py-1.5 text-sm text-left hover:bg-blue-50 hover:text-blue-600 transition-colors block ${
-                value === opt.value ? 'bg-blue-50/50 text-blue-600 font-bold' : 'text-slate-700'
+              className={`w-full px-3 py-1.5 text-sm text-left hover:bg-slate-50 hover:text-brand-600 transition-colors block ${
+                value === opt.value ? 'bg-brand-50/50 text-brand-600 font-bold' : 'text-slate-700'
               }`}
             >
               {opt.label}
@@ -543,26 +550,31 @@ function AzerbaijanPlateBadge({ plateNumber }: { plateNumber: string }) {
   }
 
   return (
-    <div className="inline-flex items-center bg-white border border-slate-900 rounded px-1.5 py-0.5 shadow-sm select-none h-6 gap-1 font-mono text-[11px] font-black text-slate-900 shrink-0">
-      <div className="flex flex-col items-center justify-center border-[0.5px] border-slate-900 rounded-[1px] bg-white w-4.5 h-[16px] shrink-0 leading-none py-0.5" style={{ width: '18px', height: '16px' }}>
-        <div className="w-[11px] h-[6px] flex flex-col overflow-hidden">
-          <div className="h-1/3 bg-[#00B5E2]"></div>
-          <div className="h-1/3 bg-[#EF3340]"></div>
-          <div className="h-1/3 bg-[#50B848]"></div>
+    <div className="inline-flex items-center bg-white border-2 border-slate-900 rounded-[6px] px-1 py-0.5 shadow-sm select-none h-[28px] gap-1 font-mono text-sm font-black text-slate-900 shrink-0">
+      <div className="flex flex-col items-center justify-center bg-white w-[20px] h-[22px] shrink-0 leading-none" style={{ width: '22px' }}>
+        <div className="w-[18px] h-[9px] overflow-hidden rounded-[1px] border border-slate-100">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="100%" height="100%">
+            <rect width="60" height="10" fill="#00b5e2"/>
+            <rect y="10" width="60" height="10" fill="#ef3340"/>
+            <rect y="20" width="60" height="10" fill="#50b848"/>
+            <circle cx="30" cy="15" r="3.5" fill="#fff"/>
+            <circle cx="31.5" cy="15" r="2.8" fill="#ef3340"/>
+            <polygon points="32.5,13.5 33,14.6 34.2,14.6 33.2,15.3 33.6,16.5 32.5,15.8 31.4,16.5 31.8,15.3 30.8,14.6 32,14.6" fill="#fff"/>
+          </svg>
         </div>
-        <span className="text-[5px] font-black text-slate-900 mt-[0.5px]" style={{ fontSize: '4.5px', transform: 'scale(0.8)' }}>AZ</span>
+        <span className="text-[6.5px] font-black text-slate-900 mt-[1px]" style={{ transform: 'scale(0.85)' }}>AZ</span>
       </div>
 
-      <div className="w-[1px] h-3.5 bg-slate-300 mx-0.5 shrink-0" />
+      <div className="w-[1px] h-4 bg-slate-300 mx-[1px] shrink-0" />
 
       {isValid ? (
-        <div className="flex items-center gap-1 font-mono tracking-wider font-extrabold text-[11px]">
+        <div className="flex items-center gap-1 font-mono tracking-wider font-extrabold text-[13px]">
           <span>{reg}</span>
           <span>{letters}</span>
           <span>{num}</span>
         </div>
       ) : (
-        <span className="font-mono text-[11px] font-extrabold tracking-wide">{plateNumber}</span>
+        <span className="font-mono text-[13px] font-extrabold tracking-wide">{plateNumber}</span>
       )}
     </div>
   );
@@ -653,6 +665,13 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
     }
   });
 
+  const colorOptions = React.useMemo(() => {
+    return CAR_COLORS_LOCALIZED.map(c => ({
+      value: c.value,
+      label: c.label[language] || c.label.en
+    }));
+  }, [language]);
+
   const handleSave = () => {
     if (!form.brand || !form.model || !form.color || !form.year) {
       showAlert("Пожалуйста, заполните марку, модель, год и цвет автомобиля.");
@@ -729,77 +748,96 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
             label={copy.colorLabel || 'Цвет'}
             value={form.color}
             onChange={(val) => setForm({ ...form, color: String(val) })}
-            options={CAR_COLORS}
+            options={colorOptions}
             placeholder={language === 'az' ? 'Rəng seçin' : language === 'ru' ? 'Выберите цвет' : 'Select color'}
           />
           <div className="sm:col-span-2">
             <label className="block text-sm font-semibold text-text mb-2">{copy.plateLabel}</label>
             <div className="flex justify-center py-4 bg-white rounded-xl border border-border">
               <div 
-                className="relative flex items-center bg-white border-[1.5px] border-slate-900 rounded-xl px-2 shadow-sm select-none gap-1.5"
-                style={{ width: '370px', height: '60px' }}
+                className="relative flex items-center bg-white border-2 border-slate-900 rounded-md px-3 shadow-sm select-none gap-2"
+                style={{ width: '330px', height: '56px' }}
               >
-                <div className="flex flex-col items-center justify-center border border-black rounded bg-white w-[42px] h-[44px] shrink-0">
-                  <div className="w-[26px] h-[16px] flex flex-col rounded-sm overflow-hidden border border-gray-100">
-                    <div className="h-1/3 bg-[#00B5E2]"></div>
-                    <div className="h-1/3 bg-[#EF3340] flex items-center justify-center relative">
-                      <div className="w-1.5 h-1.5 rounded-full bg-white absolute" style={{ left: '6px', top: '1px' }}></div>
-                    </div>
-                    <div className="h-1/3 bg-[#50B848]"></div>
+                {/* SVG flag badge AZ */}
+                <div className="flex flex-col items-center justify-center bg-white w-[22px] h-[40px] shrink-0">
+                  <div className="w-[22px] h-[11px] overflow-hidden rounded-[1px] border border-slate-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="100%" height="100%">
+                      <rect width="60" height="10" fill="#00b5e2"/>
+                      <rect y="10" width="60" height="10" fill="#ef3340"/>
+                      <rect y="20" width="60" height="10" fill="#50b848"/>
+                      <circle cx="30" cy="15" r="3.5" fill="#fff"/>
+                      <circle cx="31.5" cy="15" r="2.8" fill="#ef3340"/>
+                      <polygon points="32.5,13.5 33,14.6 34.2,14.6 33.2,15.3 33.6,16.5 32.5,15.8 31.4,16.5 31.8,15.3 30.8,14.6 32,14.6" fill="#fff"/>
+                    </svg>
                   </div>
-                  <span className="text-[10px] font-black text-black tracking-wider mt-0.5 leading-none">AZ</span>
+                  <span className="text-[9px] font-black text-black tracking-widest mt-0.5 leading-none" style={{ transform: 'scale(0.95)' }}>AZ</span>
                 </div>
 
-                <CustomPlateDropdown
-                  value={plateReg}
-                  onChange={setPlateReg}
-                  options={AZ_REGIONS.map(r => ({ value: r.code, label: `${r.code} - ${r.name}` }))}
-                  placeholder="Region"
-                  widthClass="w-[110px]"
-                  dropdownWidthClass="w-56"
-                  nextRef={letter1Ref}
-                />
+                <div className="w-[1.5px] h-8 bg-slate-300 mx-1 shrink-0" />
 
-                <CustomPlateDropdown
-                  value={plateLet1}
-                  onChange={setPlateLet1}
-                  options={AZ_LETTERS.map(l => ({ value: l, label: l }))}
-                  placeholder="-"
-                  widthClass="w-14"
-                  dropdownWidthClass="w-16"
-                  nextRef={letter2Ref}
-                  buttonRef={letter1Ref}
-                />
-
-                <CustomPlateDropdown
-                  value={plateLet2}
-                  onChange={setPlateLet2}
-                  options={AZ_LETTERS.map(l => ({ value: l, label: l }))}
-                  placeholder="-"
-                  widthClass="w-14"
-                  dropdownWidthClass="w-16"
-                  nextRef={plateNumRef}
-                  buttonRef={letter2Ref}
-                />
-
-                <div className="w-20">
-                  <input
-                    ref={plateNumRef}
-                    type="text"
-                    value={plateNum}
-                    onChange={e => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 3);
-                      setPlateNum(val);
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Backspace' && plateNum === '') {
-                        letter2Ref.current?.focus();
-                      }
-                    }}
-                    placeholder="000"
-                    className="w-full bg-white border border-gray-300 rounded px-2 py-2 text-sm font-extrabold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono h-10 placeholder-slate-300"
-                    maxLength={3}
+                <div className="flex items-center gap-1 font-mono text-2xl font-black text-slate-900 tracking-wider w-full justify-between">
+                  {/* Region code */}
+                  <CustomPlateDropdown
+                    value={plateReg}
+                    onChange={setPlateReg}
+                    options={AZ_REGIONS.map(r => ({ value: r.code, label: `${r.code} - ${r.name}` }))}
+                    placeholder="00"
+                    widthClass="w-[50px]"
+                    dropdownWidthClass="w-56"
+                    nextRef={letter1Ref}
+                    plateMode
                   />
+                  
+                  <span className="text-slate-400 font-normal select-none">-</span>
+
+                  {/* Letter 1 */}
+                  <CustomPlateDropdown
+                    value={plateLet1}
+                    onChange={setPlateLet1}
+                    options={AZ_LETTERS.map(l => ({ value: l, label: l }))}
+                    placeholder="-"
+                    widthClass="w-10"
+                    dropdownWidthClass="w-16"
+                    nextRef={letter2Ref}
+                    buttonRef={letter1Ref}
+                    plateMode
+                  />
+
+                  {/* Letter 2 */}
+                  <CustomPlateDropdown
+                    value={plateLet2}
+                    onChange={setPlateLet2}
+                    options={AZ_LETTERS.map(l => ({ value: l, label: l }))}
+                    placeholder="-"
+                    widthClass="w-10"
+                    dropdownWidthClass="w-16"
+                    nextRef={plateNumRef}
+                    buttonRef={letter2Ref}
+                    plateMode
+                  />
+
+                  <span className="text-slate-400 font-normal select-none">-</span>
+
+                  {/* Numbers */}
+                  <div className="w-16">
+                    <input
+                      ref={plateNumRef}
+                      type="text"
+                      value={plateNum}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        setPlateNum(val);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Backspace' && plateNum === '') {
+                          letter2Ref.current?.focus();
+                        }
+                      }}
+                      placeholder="000"
+                      className="w-full bg-transparent border-none p-0 text-2xl font-black text-center text-slate-900 focus:outline-none font-mono h-10 placeholder-slate-300 uppercase tracking-widest"
+                      maxLength={3}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -824,7 +862,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
               <div className="flex items-center gap-4">
                 <div className="flex flex-col gap-1">
                   <p className="font-bold text-text text-base">{v.brand} {v.model}</p>
-                  <p className="text-xs text-text-muted">{v.year} • {v.color}</p>
+                  <p className="text-xs text-text-muted">{v.year} • {getLocalizedColor(v.color, language)}</p>
                 </div>
                 <AzerbaijanPlateBadge plateNumber={v.plateNumber} />
               </div>

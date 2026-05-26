@@ -19,25 +19,77 @@ export const CAR_BRANDS_MODELS: Record<string, string[]> = {
   "Peugeot": ["206", "308", "508", "3008", "406"],
   "Mitsubishi": ["Pajero", "Lancer", "Outlander", "L200"],
   "Changan": ["CS35", "CS75", "Alsvin", "UNI-T", "UNI-K"],
-  "Geely": ["Coolray", "Tugella", "Monjaro", "Atlas", "Emgrand"]
+  "Geely": ["Coolray", "Tugella", "Monjaro", "Atlas", "Emgrand"],
+  "BYD": ["F3", "Song", "Han", "Tang", "Yuan", "Dolphin", "Atto 3", "Seal", "Seagull"]
 };
 
-export const CAR_COLORS = [
-  "Ağ (Белый)", 
-  "Qara (Черный)", 
-  "Gümüşü (Серебристый)", 
-  "Boz (Серый)", 
-  "Qırmızı (Красный)", 
-  "Göy (Синий)", 
-  "Yaşıl (Зеленый)", 
-  "Sarı (Желтый)", 
-  "Qəhvəyi (Коричневый)",
-  "Narıncı (Оранжевый)",
-  "Tünd Göy (Темно-синий)",
-  "Bənövşəyi (Фиолетовый)",
-  "Qızılı (Золотистый)",
-  "Bej (Бежевый)"
+export const CAR_COLORS_LOCALIZED = [
+  { value: 'white', label: { az: 'Ağ', ru: 'Белый', en: 'White' } },
+  { value: 'black', label: { az: 'Qara', ru: 'Черный', en: 'Black' } },
+  { value: 'silver', label: { az: 'Gümüşü', ru: 'Серебристый', en: 'Silver' } },
+  { value: 'gray', label: { az: 'Boz', ru: 'Серый', en: 'Gray' } },
+  { value: 'red', label: { az: 'Qırmızı', ru: 'Красный', en: 'Red' } },
+  { value: 'blue', label: { az: 'Göy', ru: 'Синий', en: 'Blue' } },
+  { value: 'green', label: { az: 'Yaşıl', ru: 'Зеленый', en: 'Green' } },
+  { value: 'yellow', label: { az: 'Sarı', ru: 'Желтый', en: 'Yellow' } },
+  { value: 'brown', label: { az: 'Qəhvəyi', ru: 'Коричневый', en: 'Brown' } },
+  { value: 'orange', label: { az: 'Narıncı', ru: 'Оранжевый', en: 'Orange' } },
+  { value: 'dark_blue', label: { az: 'Tünd Göy', ru: 'Темно-синий', en: 'Dark Blue' } },
+  { value: 'purple', label: { az: 'Bənövşəyi', ru: 'Фиолетовый', en: 'Purple' } },
+  { value: 'gold', label: { az: 'Qızılı', ru: 'Золотистый', en: 'Gold' } },
+  { value: 'beige', label: { az: 'Bej', ru: 'Бежевый', en: 'Beige' } },
 ];
+
+export function getLocalizedColor(color: string, lang: 'az' | 'ru' | 'en'): string {
+  if (!color) return '';
+  const c = color.trim().toLowerCase();
+  
+  const colorMap: Record<string, Record<'az' | 'ru' | 'en', string>> = {
+    white: { az: 'Ağ', ru: 'Белый', en: 'White' },
+    black: { az: 'Qara', ru: 'Черный', en: 'Black' },
+    silver: { az: 'Gümüşü', ru: 'Серебристый', en: 'Silver' },
+    gray: { az: 'Boz', ru: 'Серый', en: 'Gray' },
+    red: { az: 'Qırmızı', ru: 'Красный', en: 'Red' },
+    blue: { az: 'Göy', ru: 'Синий', en: 'Blue' },
+    green: { az: 'Yaşıl', ru: 'Зеленый', en: 'Green' },
+    yellow: { az: 'Sarı', ru: 'Желтый', en: 'Yellow' },
+    brown: { az: 'Qəhvəyi', ru: 'Коричневый', en: 'Brown' },
+    orange: { az: 'Narıncı', ru: 'Оранжевый', en: 'Orange' },
+    dark_blue: { az: 'Tünd Göy', ru: 'Темно-синий', en: 'Dark Blue' },
+    purple: { az: 'Bənövşəyi', ru: 'Фиолетовый', en: 'Purple' },
+    gold: { az: 'Qızılı', ru: 'Золотистый', en: 'Gold' },
+    beige: { az: 'Bej', ru: 'Бежевый', en: 'Beige' },
+  };
+
+  if (colorMap[c]) {
+    return colorMap[c][lang];
+  }
+
+  // Handle legacy combined formats
+  const legacyMap: Record<string, string> = {
+    "ağ (белый)": "white",
+    "qara (черный)": "black",
+    "gümüşü (серебристый)": "silver",
+    "boz (серый)": "gray",
+    "qırmızı (красный)": "red",
+    "göy (синий)": "blue",
+    "yaşıl (зеленый)": "green",
+    "sarı (желтый)": "yellow",
+    "qəhvəyi (коричневый)": "brown",
+    "narıncı (оранжевый)": "orange",
+    "tünd göy (темно-синий)": "dark_blue",
+    "bənövşəyi (фиолетовый)": "purple",
+    "qızılı (золотистый)": "gold",
+    "bej (бежевый)": "beige"
+  };
+
+  const normalized = legacyMap[c];
+  if (normalized && colorMap[normalized]) {
+    return colorMap[normalized][lang];
+  }
+
+  return color;
+}
 
 const currentYear = new Date().getFullYear();
 export const CAR_YEARS = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);

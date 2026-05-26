@@ -92,7 +92,7 @@ export default function DriverDashboardPage() {
         <div className="stagger-children">
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
             <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100/50 dark:bg-brand-950/30 dark:text-brand-400 dark:border-brand-900/30">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100/50">
                 <Icon name="map" size={16} />
               </div>
               <div className="min-w-0">
@@ -101,7 +101,7 @@ export default function DriverDashboardPage() {
               </div>
             </Card>
             <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 border border-accent-100/50 dark:bg-accent-950/30 dark:text-accent-400 dark:border-accent-900/30">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 border border-accent-100/50">
                 <Icon name="inbox" size={16} />
               </div>
               <div className="min-w-0">
@@ -110,7 +110,7 @@ export default function DriverDashboardPage() {
               </div>
             </Card>
             <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 border border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 border border-slate-100">
                 <Icon name="car" size={16} />
               </div>
               <div className="min-w-0">

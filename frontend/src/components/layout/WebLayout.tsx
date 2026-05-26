@@ -45,7 +45,7 @@ export default function WebLayout({ children, title, narrow, showBack, hideFoote
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Header />
-      <main className={`grow w-full mx-auto px-6 py-8 min-w-0 ${narrow ? 'max-w-2xl' : 'max-w-285'}`}>
+      <main className={`grow w-full mx-auto px-6 py-8 min-w-0 ${narrow ? 'max-w-2xl' : 'max-w-[1140px]'}`}>
         {(title || showBack) && (
           <div className="flex items-center gap-3 mb-8 min-w-0">
             {showBack && (

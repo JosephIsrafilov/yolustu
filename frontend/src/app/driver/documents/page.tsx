@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ export default function DriverDocumentsPage() {
   const t = DOCS_I18N[language];
 
   return (
-    <DriverLayout>
+    <DriverLayout narrow>
       <ProtectedRoute mode="driver">
         <Card>
           <div className="flex items-start gap-3">

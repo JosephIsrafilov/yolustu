@@ -50,7 +50,7 @@ const DRIVER_LAYOUT_I18N = {
   },
 } as const;
 
-export default function DriverLayout({ children }: { children: React.ReactNode }) {
+export default function DriverLayout({ children, narrow }: { children: React.ReactNode; narrow?: boolean }) {
   const pathname = usePathname();
   const { language, currentUser, isAuthenticated, activeMode, switchRole } = useAppStore();
   const t = DRIVER_LAYOUT_I18N[language];
@@ -69,11 +69,21 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen flex flex-col bg-surface-dim">
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-              <Icon name="car" size={18} />
-            </span>
-            <span className="text-base font-bold text-text">{t.title}</span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-[#002f37] hover:text-[#054752] transition-all duration-200 ease-out active:scale-[0.98]"
+            >
+              <Icon name="map" size={22} strokeWidth={1.8} />
+              <span className="font-bold text-lg">Yolüstü</span>
+            </Link>
+            <div className="h-4 w-px bg-border hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-2 text-text-muted text-sm font-semibold">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-700">
+                <Icon name="car" size={14} />
+              </span>
+              <span>{t.title}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {capabilities.canAccessDriverDashboard && <RoleSwitch />}
@@ -115,7 +125,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
         </div>
       </nav>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 grow">{children}</main>
+      <main className={cn("mx-auto w-full px-4 py-6 grow", narrow ? "max-w-2xl" : "max-w-6xl")}>{children}</main>
       <Footer />
     </div>
   );
