@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "@playwright/test": "^1.60.0"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .js,.ts,.tsx",
+    "audit": "npm audit && npm run lint && powershell ./scripts/security_audit.ps1"
   }
 }
