@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:e2e": "playwright test",
-    "install:playwright": "npm install --save-dev @playwright/test && npx playwright install chromium"
+    "install:playwright": "npm install --save-dev @playwright/test && npx playwright install chromium",
+    "copy-badges": "node scripts/copy_badges.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

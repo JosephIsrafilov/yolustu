@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -9,6 +8,7 @@ import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
 import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const HEADER_MODE_I18N = {
   az: {
@@ -133,19 +133,13 @@ export default function Header() {
                 href={isAdmin ? ROUTES.admin : ROUTES.profile}
                 className="flex items-center gap-2 transition-transform duration-200 ease-out active:scale-[0.98]"
               >
-                {currentUser.avatarUrl ? (
-                  <Image
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.fullName}
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 rounded-full border border-[#c0c8ca] object-cover shadow-sm"
-                  />
-                ) : (
-                  <div className="ui-action-text flex h-8 w-8 items-center justify-center rounded-full bg-[#054752] text-white shadow-sm">
-                    {currentUser.fullName.charAt(0)}
-                  </div>
-                )}
+                <UserAvatar 
+                  name={currentUser.fullName} 
+                  avatarUrl={currentUser.avatarUrl} 
+                  size={32} 
+                  className="shadow-sm"
+                  fallbackClassName="ui-action-text bg-[#054752] text-white"
+                />
                 <span className="ui-label-text hidden text-[#002f37] lg:block">{currentUser.fullName.split(' ')[0]}</span>
               </Link>
               <button

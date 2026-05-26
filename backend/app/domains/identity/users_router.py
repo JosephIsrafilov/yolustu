@@ -51,6 +51,51 @@ async def submit_verification(
     return IdentityService(db).submit_verification(current_user, document_url)
 
 
+@router.post("/me/avatar", response_model=UserResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        from fastapi import HTTPException, status
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Yalnız şəkil formatı qəbul edilir. / Only image formats are allowed.",
+        )
+
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    file_ext = Path(file.filename or "").suffix.lower()
+
+    # Allow only specific extensions to be extra safe
+    if file_ext not in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+        from fastapi import HTTPException, status
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Səhv şəkil uzantısı. / Invalid image extension.",
+        )
+
+    filename = f"avatar_{uuid.uuid4()}{file_ext}"
+    file_path = UPLOADS_DIR / filename
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    from app.core.config import settings
+
+    # Ensure full URL for frontend Next/Image
+    base_url = str(settings.BACKEND_URL).rstrip("/")
+    avatar_url = f"{base_url}/uploads/{filename}"
+
+    user_model = IdentityService(db).get_current_user_model(current_user)
+    user_model.avatar_url = avatar_url
+    db.commit()
+    db.refresh(user_model)
+    return user_model
+
+
 @router.post("/me/device-token")
 def register_device_token(
     token_in: DeviceTokenInput,

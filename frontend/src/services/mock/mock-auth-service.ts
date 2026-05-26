@@ -126,4 +126,18 @@ export const mockAuthService: AuthService = {
     }));
     return updatedUser;
   },
+
+  async uploadAvatar(file: File) {
+    const currentUser = requireCurrentUser();
+    const updatedUser: User = {
+      ...currentUser,
+      avatarUrl: URL.createObjectURL(file),
+    };
+
+    useAppStore.setState((state) => ({
+      currentUser: updatedUser,
+      users: state.users.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+    }));
+    return updatedUser;
+  },
 };

@@ -1,6 +1,5 @@
-from models.models import User, Vehicle, Ride
-from core.database import SessionLocal
-from core.security import get_password_hash
+from app.domains.models import User, Vehicle, Ride, Booking, Review, Message
+from app.core.database import SessionLocal
 import sys
 import os
 import uuid
@@ -25,6 +24,7 @@ def seed_db():
                 "last_name": "Məmmədov",
                 "role": "driver",
                 "rating": 4.8,
+                "avatar_url": "https://i.pravatar.cc/150?u=Elvin",
             },
             {
                 "id": "u2",
@@ -33,6 +33,7 @@ def seed_db():
                 "last_name": "Əliyeva",
                 "role": "passenger",
                 "rating": 4.6,
+                "avatar_url": "https://i.pravatar.cc/150?u=Aysel",
             },
             {
                 "id": "u3",
@@ -41,6 +42,7 @@ def seed_db():
                 "last_name": "Həsənov",
                 "role": "driver",
                 "rating": 4.9,
+                "avatar_url": "https://i.pravatar.cc/150?u=Murad",
             },
             {
                 "id": "u4",
@@ -49,6 +51,7 @@ def seed_db():
                 "last_name": "Rzayeva",
                 "role": "passenger",
                 "rating": 4.3,
+                "avatar_url": "https://i.pravatar.cc/150?u=Nigar",
             },
             {
                 "id": "u5",
@@ -57,6 +60,7 @@ def seed_db():
                 "last_name": "Quliyev",
                 "role": "driver",
                 "rating": 4.5,
+                "avatar_url": "https://i.pravatar.cc/150?u=Kamran",
             },
             {
                 "id": "u8",
@@ -65,10 +69,11 @@ def seed_db():
                 "last_name": "Aliyev",
                 "role": "admin",
                 "rating": 0.0,
+                "avatar_url": "https://i.pravatar.cc/150?u=Sanan",
             },
         ]
 
-        default_password_hash = get_password_hash("password123")
+        default_password_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQqiRQYq"  # hardcoded 'password123' to bypass passlib bug
         user_map = {}
         for u_data in mock_users:
             user = db.query(User).filter(User.phone == u_data["phone"]).first()
@@ -82,17 +87,19 @@ def seed_db():
                     is_verified=True,
                     role=u_data["role"],
                     rating=u_data["rating"],
+                    avatar_url=u_data.get("avatar_url"),
                 )
                 db.add(user)
                 db.flush()
                 print(f"User {u_data['phone']} created.")
             else:
-                user.first_name = u_data["first_name"]
-                user.last_name = u_data["last_name"]
-                user.hashed_password = default_password_hash
-                user.is_verified = True
-                user.role = u_data["role"]
-                user.rating = u_data["rating"]
+                user.first_name = u_data["first_name"]  # type: ignore
+                user.last_name = u_data["last_name"]  # type: ignore
+                user.hashed_password = default_password_hash  # type: ignore
+                user.is_verified = True  # type: ignore
+                user.role = u_data["role"]  # type: ignore
+                user.rating = u_data["rating"]  # type: ignore
+                user.avatar_url = u_data.get("avatar_url")  # type: ignore
                 print(f"User {u_data['phone']} updated.")
             user_map[u_data["id"]] = user
 
@@ -148,10 +155,10 @@ def seed_db():
                 print(f"Vehicle {v_data['plate_number']} created.")
             else:
                 vehicle.user_id = owner.id
-                vehicle.brand = v_data["brand"]
-                vehicle.model = v_data["model"]
-                vehicle.year = v_data["year"]
-                vehicle.color = v_data["color"]
+                vehicle.brand = v_data["brand"]  # type: ignore
+                vehicle.model = v_data["model"]  # type: ignore
+                vehicle.year = v_data["year"]  # type: ignore
+                vehicle.color = v_data["color"]  # type: ignore
                 print(f"Vehicle {v_data['plate_number']} updated.")
             vehicle_map[v_data["id"]] = vehicle
 
@@ -224,16 +231,85 @@ def seed_db():
                 db.add(ride)
                 print(f"Ride {r_data['origin']} -> {r_data['dest']} created.")
             else:
-                ride.origin_location = r_data["origin_coords"]
-                ride.destination_location = r_data["dest_coords"]
-                ride.departure_time = departure
-                ride.total_seats = r_data["seats"]
-                ride.available_seats = max(
-                    0, min(ride.available_seats, r_data["seats"])
+                ride.origin_location = r_data["origin_coords"]  # type: ignore
+                ride.destination_location = r_data["dest_coords"]  # type: ignore
+                ride.departure_time = departure  # type: ignore
+                ride.total_seats = r_data["seats"]  # type: ignore
+                ride.available_seats = max(  # type: ignore
+                    0,
+                    min(ride.available_seats, r_data["seats"]),  # type: ignore
                 )
-                ride.price_per_seat = r_data["price"]
+                ride.price_per_seat = r_data["price"]  # type: ignore
                 print(f"Ride {r_data['origin']} -> {r_data['dest']} updated.")
+
+        # Seed Booking, Review, and Gamification for Ride 1 (t1)
+        driver_u1 = user_map["u1"]
+        passenger_u2 = user_map["u2"]
+        ride_t1 = db.query(Ride).filter(Ride.driver_id == driver_u1.id).first()
+
+        if ride_t1:
+            booking = (
+                db.query(Booking)
+                .filter(
+                    Booking.ride_id == ride_t1.id,
+                    Booking.passenger_id == passenger_u2.id,
+                )
+                .first()
+            )
+            if not booking:
+                booking = Booking(
+                    id=uuid.uuid4(),
+                    ride_id=ride_t1.id,
+                    passenger_id=passenger_u2.id,
+                    seats_booked=1,
+                    total_price=ride_t1.price_per_seat,
+                    status="completed",
+                )
+                db.add(booking)
+                print("Seeded Booking for Ride t1")
+
+            review = (
+                db.query(Review)
+                .filter(
+                    Review.target_id == driver_u1.id,
+                    Review.author_id == passenger_u2.id,
+                )
+                .first()
+            )
+            if not review:
+                review = Review(
+                    id=uuid.uuid4(),
+                    target_id=driver_u1.id,
+                    author_id=passenger_u2.id,
+                    ride_id=ride_t1.id,
+                    rating=5,
+                    comment="Əla gediş idi, təşəkkürlər!",
+                )
+                db.add(review)
+                print("Seeded Review for Ride t1")
+
+            msg = db.query(Message).filter(Message.ride_id == ride_t1.id).first()
+            if not msg:
+                msg = Message(
+                    id=uuid.uuid4(),
+                    sender_id=passenger_u2.id,
+                    ride_id=ride_t1.id,
+                    content="Salam, mən Qara Qarayev metrosunun yanındayam.",
+                )
+                db.add(msg)
+                print("Seeded Message for Ride t1")
+
         db.commit()
+
+        try:
+            from app.domains.gamification.services import check_and_award_badge
+
+            check_and_award_badge(db, driver_u1.id, "first_ride")  # type: ignore
+            check_and_award_badge(db, driver_u1.id, "5_star")  # type: ignore
+            check_and_award_badge(db, passenger_u2.id, "chatterbox")  # type: ignore
+        except Exception as ex:
+            print("Gamification seed skipped/error:", ex)
+
         print("Seeding completed successfully!")
     except Exception as e:
         print(f"An error occurred during seeding: {e}")

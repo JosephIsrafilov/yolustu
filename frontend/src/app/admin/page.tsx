@@ -12,6 +12,8 @@ import { ROUTES } from '@/lib/routes';
 import { adminService } from '@/services';
 import type { AdminStats } from '@/services/contracts/admin-service';
 import type { User, Trip, Booking } from '@/types';
+import Button from '@/components/ui/Button';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { formatCurrency } from '@/lib/utils';
 import LoadingState from '@/components/ui/LoadingState';
 
@@ -168,8 +170,10 @@ export default function AdminDashboardPage() {
   const [bookingsList, setBookingsList] = React.useState<Booking[]>([]);
   const [apiStats, setApiStats] = React.useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isSimulating, setIsSimulating] = React.useState(false);
+  const { setActiveToast } = usePushNotifications();
 
-  React.useEffect(() => {
+  const fetchData = () => {
     Promise.all([
       adminService.getUsers(1, 100).catch((err) => {
         console.error('Fetch users error:', err);
@@ -197,7 +201,35 @@ export default function AdminDashboardPage() {
       console.error('Fetch admin stats error:', error);
       setIsLoading(false);
     });
+  };
+
+  React.useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleSimulateJourney = async () => {
+    setIsSimulating(true);
+    try {
+      const res = await adminService.simulateJourney();
+      setActiveToast({
+        type: 'notification',
+        title: 'Success',
+        body: res.message,
+        data: {}
+      });
+      fetchData(); // Refresh data
+    } catch (err) {
+      console.error(err);
+      setActiveToast({
+        type: 'notification',
+        title: 'Error',
+        body: 'Failed to simulate journey',
+        data: {}
+      });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   const tripsById = React.useMemo(() => new Map(tripsList.map((trip) => [trip.id, trip])), [tripsList]);
   const usersById = React.useMemo(() => new Map(usersList.map((user) => [user.id, user])), [usersList]);
@@ -312,8 +344,13 @@ export default function AdminDashboardPage() {
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
         <Card className="hover:shadow-sm transition-all duration-200">
-          <p className="text-sm font-bold text-text">{t.quickActions.title}</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-bold text-text">{t.quickActions.title}</p>
+            <Button size="sm" variant="outline" onClick={handleSimulateJourney} loading={isSimulating}>
+              <Icon name="zap" size={16} /> <span className="ml-1 hidden sm:inline">Simulate Journey</span>
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}

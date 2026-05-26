@@ -53,6 +53,9 @@ class User(Base):
     device_tokens = relationship(
         "DeviceToken", back_populates="user", cascade="all, delete-orphan"
     )
+    badges = relationship(
+        "UserBadge", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class DeviceToken(Base):

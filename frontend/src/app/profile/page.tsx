@@ -6,10 +6,12 @@ import WebLayout from '@/components/layout/WebLayout';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import RoleSwitch from '@/components/layout/RoleSwitch';
+import { BadgesSection } from '@/components/gamification/BadgesSection';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
@@ -149,7 +151,26 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
-  const [form, setForm] = useState({ fullName: '', phone: '', city: '', bio: '' });
+  const [form, setForm] = useState({ fullName: '', phone: '', city: '', bio: '', avatarUrl: '' });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      useAppStore.setState({ lastError: 'Yalnız şəkil formatı (JPG, PNG və s.) qəbul edilir.' });
+      return;
+    }
+
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setForm((p) => ({ ...p, avatarUrl: event.target?.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const copy = PROFILE_I18N[language] || PROFILE_I18N.en;
 
@@ -173,7 +194,7 @@ export default function ProfilePage() {
   const userReviews = reviews.filter((r) => r.targetUserId === currentUser.id);
 
   const startEdit = () => {
-    setForm({ fullName: currentUser.fullName, phone: currentUser.phone, city: currentUser.city, bio: currentUser.bio || '' });
+    setForm({ fullName: currentUser.fullName, phone: currentUser.phone, city: currentUser.city, bio: currentUser.bio || '', avatarUrl: currentUser.avatarUrl || '' });
     setEditing(true);
   };
   const saveEdit = async () => {
@@ -181,8 +202,12 @@ export default function ProfilePage() {
     setProfileError('');
     clearError();
     try {
+      if (avatarFile) {
+        await useAppStore.getState().uploadAvatar(avatarFile);
+      }
       await updateProfile(form);
       setEditing(false);
+      setAvatarFile(null);
     } catch {
       setProfileError(useAppStore.getState().lastError || copy.updateError);
     } finally {
@@ -200,10 +225,26 @@ export default function ProfilePage() {
         )}
         <div className="flex justify-end mb-4"><RoleSwitch /></div>
         <ProfileHeader user={currentUser} reviewsCount={userReviews.length} />
+        
+        <div className="mt-4">
+          <BadgesSection />
+        </div>
+
         {currentUser.bio && !editing && (<Card padding="md" className="mb-4 mt-4"><p className="text-sm text-text-secondary">{currentUser.bio}</p></Card>)}
         {editing ? (
           <Card className="mb-4 mt-4">
             <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4 mb-2">
+                <UserAvatar 
+                  name={form.fullName || currentUser.fullName} 
+                  avatarUrl={form.avatarUrl || currentUser.avatarUrl} 
+                  size={64} 
+                />
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Icon name="camera" size={16} /> Şəkil yüklə
+                </Button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarChange} />
+              </div>
               <Input label={copy.nameLabel} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} />
               <Input label={copy.phoneLabel} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
               <Select

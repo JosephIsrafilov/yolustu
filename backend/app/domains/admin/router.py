@@ -107,3 +107,11 @@ def reject_verification(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return AdminService(db).reject_verification(user_id, current_user)
+
+
+@router.post("/mock/journey")
+def simulate_journey(
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return AdminService(db).simulate_journey(current_user)

@@ -2,6 +2,15 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+import bcrypt
+
+if not hasattr(bcrypt, "__about__"):
+
+    class About:
+        __version__ = bcrypt.__version__
+
+    bcrypt.__about__ = About()  # type: ignore
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 

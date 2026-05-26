@@ -11,10 +11,12 @@ from app.domains.identity.repositories import UserRepository
 from app.domains.trips.repositories import RideRepository
 from app.domains.trips.schemas import ride_to_response
 from app.core.pagination import create_paginated_response
+from app.domains.gamification.services import check_and_award_badge
 
 
 class AdminService:
     def __init__(self, db: Session):
+        self.db = db
         self.admin = AdminRepository(db)
         self.users = UserRepository(db)
         self.rides = RideRepository(db)
@@ -89,7 +91,12 @@ class AdminService:
             raise HTTPException(status_code=404, detail="User not found")
         user.role = "driver"
         user.is_verified = True
-        return self.users.update_verification_status(user, "approved")
+        updated_user = self.users.update_verification_status(user, "approved")
+
+        # Gamification: newcomer badge
+        check_and_award_badge(self.db, user.id, "newcomer")
+
+        return updated_user
 
     def reject_verification(self, user_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)
@@ -99,3 +106,109 @@ class AdminService:
         user.role = "passenger"
         user.is_verified = False
         return self.users.update_verification_status(user, "rejected")
+
+    def simulate_journey(self, current_user: CurrentUser):
+        self.require_admin(current_user)
+        import random
+        import uuid
+        from datetime import datetime, timedelta
+        from app.domains.models import User, Vehicle, Ride, Booking, Review, Message
+
+        drivers = (
+            self.db.query(User).filter(User.role == "driver", User.is_verified).all()
+        )
+        if not drivers:
+            raise HTTPException(status_code=400, detail="No verified drivers found.")
+        driver = random.choice(drivers)
+
+        vehicle = self.db.query(Vehicle).filter(Vehicle.user_id == driver.id).first()
+        if not vehicle:
+            vehicle = Vehicle(
+                id=uuid.uuid4(),
+                user_id=driver.id,
+                brand="Hyundai",
+                model="Mock",
+                year=2020,
+                color="White",
+                plate_number=f"{random.randint(10, 99)}-MM-{random.randint(100, 999)}",
+            )
+            self.db.add(vehicle)
+            self.db.flush()
+
+        # Get a passenger
+        passengers = self.db.query(User).filter(User.role == "passenger").all()
+        if not passengers:
+            raise HTTPException(status_code=400, detail="No passengers found.")
+        passenger = random.choice(passengers)
+
+        routes = [
+            ("Bakı", "POINT(49.8671 40.4093)", "Gəncə", "POINT(46.3606 40.6828)"),
+            ("Sumqayıt", "POINT(49.6667 40.5897)", "Quba", "POINT(48.5134 41.3643)"),
+            ("Bakı", "POINT(49.8671 40.4093)", "Şəki", "POINT(47.1706 41.1919)"),
+        ]
+        o_city, o_coords, d_city, d_coords = random.choice(routes)
+
+        # Create ride
+        ride = Ride(
+            id=uuid.uuid4(),
+            driver_id=driver.id,
+            vehicle_id=vehicle.id,
+            origin_location=o_coords,
+            origin_city=o_city,
+            destination_location=d_coords,
+            destination_city=d_city,
+            departure_time=datetime.now() + timedelta(days=random.randint(1, 3)),
+            total_seats=4,
+            available_seats=3,
+            price_per_seat=random.randint(10, 20),
+            status="completed",
+        )
+        self.db.add(ride)
+        self.db.flush()
+
+        # Create booking
+        booking = Booking(
+            id=uuid.uuid4(),
+            ride_id=ride.id,
+            passenger_id=passenger.id,
+            seats_booked=1,
+            total_price=ride.price_per_seat,
+            status="completed",
+        )
+        self.db.add(booking)
+
+        # Create message
+        msg = Message(
+            id=uuid.uuid4(),
+            sender_id=passenger.id,
+            receiver_id=driver.id,
+            ride_id=ride.id,
+            content="Mən hazıram, gözləyirəm.",
+            is_read=True,
+        )
+        self.db.add(msg)
+
+        # Create review
+        review = Review(
+            id=uuid.uuid4(),
+            target_user_id=driver.id,
+            author_id=passenger.id,
+            ride_id=ride.id,
+            rating=5,
+            comment="Gözəl gediş idi!",
+        )
+        self.db.add(review)
+
+        # Update driver stats
+        driver.total_rides = (driver.total_rides or 0) + 1
+        passenger.total_rides = (passenger.total_rides or 0) + 1
+
+        self.db.commit()
+
+        # Gamification
+        check_and_award_badge(self.db, driver.id, "first_ride")
+        check_and_award_badge(self.db, driver.id, "5_star")
+        if driver.total_rides >= 10:
+            check_and_award_badge(self.db, driver.id, "veteran")
+
+        return {"message": "Mock journey created successfully", "ride_id": ride.id}

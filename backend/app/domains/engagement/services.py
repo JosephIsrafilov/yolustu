@@ -11,6 +11,10 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.ports import UserLookupPort
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
+from app.domains.gamification.services import (
+    check_and_award_badge,
+    check_and_award_badge_async,
+)
 
 
 class EngagementService:
@@ -21,6 +25,7 @@ class EngagementService:
         self.bookings = BookingParticipantPort(db)
         self.users = UserLookupPort(db)
         self.notifications = NotificationService(db)
+        self.db = db
 
     def create_review(
         self, review_in: ReviewCreate, current_user: CurrentUser
@@ -67,7 +72,13 @@ class EngagementService:
         target_user.rating = total_rating / (len(existing_reviews) + 1)
 
         review = self.reviews.create(current_user.id, review_in)
-        return self.reviews.save(review)
+        saved_review = self.reviews.save(review)
+
+        # Gamification: 5_star badge
+        if saved_review.rating == 5:
+            check_and_award_badge(self.db, review_in.target_id, "5_star")
+
+        return saved_review
 
     def get_user_reviews(self, user_id: UUID) -> list[Review]:
         return self.reviews.list_for_target(user_id)
@@ -104,6 +115,16 @@ class EngagementService:
                     body=message.content,
                     data={"ride_id": str(ride.id), "type": "new_message"},
                 )
+
+        # Gamification: chatterbox badge (5+ messages)
+        # We can do a quick count of user's messages in this ride or overall. Let's do overall.
+        from app.domains.engagement.models import Message
+
+        msg_count = (
+            self.db.query(Message).filter(Message.sender_id == current_user.id).count()
+        )
+        if msg_count >= 5:
+            await check_and_award_badge_async(self.db, current_user.id, "chatterbox")
 
         return message
 

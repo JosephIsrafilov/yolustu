@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import RouteTimeline from '@/components/trips/RouteTimeline';
@@ -20,6 +19,7 @@ import { tripsService } from '@/services';
 import type { Trip } from '@/types';
 import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const TRIP_DETAILS_I18N = {
   az: {
@@ -303,13 +303,7 @@ export default function TripDetailsPage() {
             {driver && (
               <Card>
                 <div className="flex items-center gap-3">
-                  {driver.avatarUrl ? (
-                    <Image src={driver.avatarUrl} alt={driver.fullName} width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-border" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg">
-                      {driver.fullName.charAt(0)}
-                    </div>
-                  )}
+                  <UserAvatar name={driver.fullName} avatarUrl={driver.avatarUrl} size={48} />
                   <div className="flex-1">
                     <p className="text-base font-semibold text-text flex items-center gap-1">
                       <span>{driver.fullName}</span>

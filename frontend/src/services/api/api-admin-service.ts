@@ -77,4 +77,8 @@ export const apiAdminService: AdminService = {
     const user = await apiClient.patch<ApiUser>(`/admin/verifications/${userId}/reject`);
     return mapApiUserToUser(user);
   },
+
+  async simulateJourney() {
+    return apiClient.post<{ message: string; ride_id: string }>('/admin/mock/journey');
+  },
 };

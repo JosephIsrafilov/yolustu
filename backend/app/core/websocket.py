@@ -51,6 +51,13 @@ class ConnectionManager:
                 except RuntimeError:
                     pass
 
+    async def send_personal_notification_async(self, user_id: UUID, message: dict):
+        """Sends a notification to a specific user asynchronously."""
+        if user_id in self.user_connections:
+            message_json = json.dumps(message, default=str)
+            for connection in self.user_connections[user_id]:
+                await connection.send_text(message_json)
+
     async def broadcast_to_ride(self, message: dict, ride_id: UUID):
         if ride_id in self.active_connections:
             message_json = json.dumps(message, default=str)

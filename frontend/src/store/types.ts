@@ -33,6 +33,7 @@ export interface AuthSlice {
   approveVerification: (userId: string) => Promise<void>;
   rejectVerification: (userId: string) => Promise<void>;
   submitVerification: (file: File) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
 }
 
 export interface TripSlice {

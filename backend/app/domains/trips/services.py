@@ -16,10 +16,12 @@ from app.domains.trips.schemas import (
     VehicleCreate,
     ride_to_response,
 )
+from app.domains.gamification.services import check_and_award_badge
 
 
 class TripsService:
     def __init__(self, db: Session):
+        self.db = db
         self.rides = RideRepository(db)
         self.vehicles = VehicleRepository(db)
         self.users = UserRepository(db)
@@ -125,7 +127,17 @@ class TripsService:
             raise HTTPException(status_code=403, detail="Not authorized")
         ride.status = "completed"
         self.users.increment_total_rides(ride.driver_id)
-        return ride_to_response(self.rides.save(ride))
+        saved_ride = self.rides.save(ride)
+
+        # Gamification: check rides count for driver
+        driver = self.users.get_by_id(ride.driver_id)
+        if driver:
+            if driver.total_rides >= 1:
+                check_and_award_badge(self.db, driver.id, "first_ride")
+            if driver.total_rides >= 10:
+                check_and_award_badge(self.db, driver.id, "veteran")
+
+        return ride_to_response(saved_ride)
 
     def create_vehicle(
         self, vehicle_in: VehicleCreate, current_user: CurrentUser

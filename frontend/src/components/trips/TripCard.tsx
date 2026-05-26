@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { formatPrice, formatRating, cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import type { Trip, User } from '@/types';
@@ -67,13 +67,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
       {/* Driver Section */}
       {driver && !compact && (
         <div className="grid grid-cols-[32px_1fr] gap-2 pt-3 border-t border-border items-center h-12">
-          {driver.avatarUrl ? (
-            <Image src={driver.avatarUrl} alt={driver.fullName} width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-border shrink-0 flex-none" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shrink-0 flex-none">
-              {driver.fullName.charAt(0)}
-            </div>
-          )}
+          <UserAvatar name={driver.fullName} avatarUrl={driver.avatarUrl} size={32} />
           <div className="min-w-0 grid grid-rows-2">
             <p className="text-sm font-medium text-text truncate block w-full leading-4 h-4">{driver.fullName}</p>
             <div className="grid grid-cols-2 gap-2 text-xs text-text-muted items-center h-4">

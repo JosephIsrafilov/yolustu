@@ -287,4 +287,20 @@ export const createAuthSlice: StateCreator<
       throw error;
     }
   },
+
+  uploadAvatar: async (file) => {
+    try {
+      set({ lastError: null });
+      const updated = await authService.uploadAvatar(file);
+      set((s) => ({
+        currentUser: updated,
+        users: s.users.map((u) => (u.id === updated.id ? updated : u)),
+        lastError: null,
+      }));
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to upload avatar.' });
+      throw error;
+    }
+  },
 });

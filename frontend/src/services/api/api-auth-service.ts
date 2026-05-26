@@ -82,6 +82,13 @@ export const apiAuthService: AuthService = {
     return mapApiUserToUser(user);
   },
 
+  async uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const user = await apiClient.post<ApiUser>('/users/me/avatar', formData);
+    return mapApiUserToUser(user);
+  },
+
   async registerDeviceToken(token: string) {
     await apiClient.post('/users/me/device-token', { token });
   },

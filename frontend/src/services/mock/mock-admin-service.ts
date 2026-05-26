@@ -138,4 +138,9 @@ export const mockAdminService: AdminService = {
     }));
     return updatedUser;
   },
+
+  async simulateJourney() {
+    requireAdminUser();
+    return { message: "Mock journey created successfully", ride_id: "mock-ride-id" };
+  },
 };

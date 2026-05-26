@@ -30,4 +30,5 @@ export interface AdminService {
   getPendingVerifications(page?: number, limit?: number): Promise<Paginated<User>>;
   approveVerification(userId: string): Promise<User>;
   rejectVerification(userId: string): Promise<User>;
+  simulateJourney(): Promise<{ message: string; ride_id: string }>;
 }

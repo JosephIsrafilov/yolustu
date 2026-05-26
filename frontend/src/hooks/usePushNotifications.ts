@@ -50,7 +50,16 @@ export function usePushNotifications() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'notification') {
+          if (data.type === 'badge_unlocked') {
+            setActiveToast({
+              type: 'badge_unlocked',
+              title: 'Təbriklər! Yeni nişan! / New Badge!',
+              body: `You unlocked: ${data.badge?.name}`,
+              data: { badge: data.badge }
+            });
+            if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+            toastTimeoutRef.current = setTimeout(() => setActiveToast(null), 8000);
+          } else if (data.type === 'notification') {
             setActiveToast(data);
             
             if (toastTimeoutRef.current) {
