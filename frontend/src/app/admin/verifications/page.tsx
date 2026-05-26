@@ -141,47 +141,53 @@ export default function AdminVerificationsPage() {
           </Card>
         ) : (
           <>
-            <div className="grid gap-4 mb-6">
+            <div className="grid gap-6 mb-6">
               {verifications.map((user) => (
-                <Card key={user.id} className="animate-fade-in shadow-sm border border-border hover:shadow-md transition-shadow duration-200">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between p-2">
-                    <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-full border border-border overflow-hidden shrink-0 flex items-center justify-center bg-surface">
+                <Card key={user.id} className="animate-fade-in shadow-sm border border-border hover:shadow-md transition-all duration-200" padding="lg">
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="h-16 w-16 rounded-full border border-border overflow-hidden shrink-0 flex items-center justify-center bg-surface">
                         {user.avatarUrl ? (
                           <Image
                             src={user.avatarUrl}
                             alt={user.fullName}
-                            width={56}
-                            height={56}
+                            width={64}
+                            height={64}
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-brand-50 text-brand-600">
-                            <Icon name="user" size={24} />
+                            <Icon name="user" size={28} />
                           </div>
                         )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg text-text">{user.fullName}</h3>
-                        <p className="text-sm text-text-muted font-medium">{user.phone}</p>
-                        <p className="text-xs text-text-muted mt-1">
-                          {t.registered} {new Date(user.createdAt).toLocaleDateString(t.locale)}
-                        </p>
+                        <h3 className="font-bold text-xl text-text mb-1">{user.fullName}</h3>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-text-muted">
+                          <span className="flex items-center gap-1.5 font-medium"><Icon name="phone" size={14} />{user.phone}</span>
+                          <span className="hidden sm:inline text-border">•</span>
+                          <span className="flex items-center gap-1.5"><Icon name="calendar" size={14} />{t.registered} {new Date(user.createdAt).toLocaleDateString(t.locale)}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-1 items-center md:justify-center py-2 md:py-0 border-t border-b md:border-0 border-border my-2 md:my-0">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 py-4 lg:py-0 border-y lg:border-0 border-border border-dashed lg:border-solid">
                       {user.documentUrl ? (
-                        <a 
-                          href={user.documentUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 rounded-lg bg-surface-muted px-4 py-2.5 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+                        <button 
+                          onClick={(e) => {
+                            if (user.documentUrl === '#') {
+                              e.preventDefault();
+                              alert('Document preview is not available for mock data.');
+                            } else {
+                              window.open(user.documentUrl, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                          className="flex items-center justify-center gap-2 rounded-xl bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
                         >
                           <Icon name="file-text" size={18} /> {t.viewDoc}
-                        </a>
+                        </button>
                       ) : (
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-danger-50 text-danger-600 rounded-lg text-sm font-medium">
+                        <div className="flex items-center justify-center gap-2 px-5 py-3 bg-danger-50 text-danger-700 rounded-xl text-sm font-semibold">
                           <Icon name="alert-triangle" size={18} />
                           <span>{t.noDoc}</span>
                         </div>
@@ -189,11 +195,11 @@ export default function AdminVerificationsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <Button variant="danger" className="flex-1 md:flex-none" onClick={() => handleReject(user.id)}>
-                        <Icon name="x" size={16} className="mr-1.5" /> {t.reject}
+                      <Button variant="danger" className="flex-1 lg:flex-none" onClick={() => handleReject(user.id)}>
+                        <Icon name="x" size={18} className="mr-1.5" /> {t.reject}
                       </Button>
-                      <Button variant="primary" className="flex-1 md:flex-none" onClick={() => handleApprove(user.id)}>
-                        <Icon name="check" size={16} className="mr-1.5" /> {t.approve}
+                      <Button variant="primary" className="flex-1 lg:flex-none" onClick={() => handleApprove(user.id)}>
+                        <Icon name="check" size={18} className="mr-1.5" /> {t.approve}
                       </Button>
                     </div>
                   </div>

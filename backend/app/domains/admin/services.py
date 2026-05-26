@@ -181,17 +181,15 @@ class AdminService:
         msg = Message(
             id=uuid.uuid4(),
             sender_id=passenger.id,
-            receiver_id=driver.id,
             ride_id=ride.id,
             content="Mən hazıram, gözləyirəm.",
-            is_read=True,
         )
         self.db.add(msg)
 
         # Create review
         review = Review(
             id=uuid.uuid4(),
-            target_user_id=driver.id,
+            target_id=driver.id,
             author_id=passenger.id,
             ride_id=ride.id,
             rating=5,

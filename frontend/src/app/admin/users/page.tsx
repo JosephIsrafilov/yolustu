@@ -494,7 +494,7 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[320px] min-w-[320px]">{t.table.actions}</th>
+              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[320px] min-w-[320px] sticky right-0 bg-surface-muted shadow-[-4px_0_12px_rgba(0,0,0,0.05)] z-10">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -535,7 +535,7 @@ export default function AdminUsersPage() {
 
                 return (
                   <React.Fragment key={u.id}>
-                    <tr className="hover:bg-surface-dim transition-colors duration-150">
+                    <tr className="group hover:bg-surface-dim transition-colors duration-150">
                       <td className="px-6 py-4 w-[280px] min-w-[280px]">
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
@@ -573,7 +573,7 @@ export default function AdminUsersPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 w-[130px] min-w-[130px] text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
-                      <td className="px-6 py-4 text-right w-[320px] min-w-[320px]">
+                      <td className="px-6 py-4 text-right w-[320px] min-w-[320px] sticky right-0 bg-white group-hover:bg-surface-dim transition-colors duration-150 shadow-[-4px_0_12px_rgba(0,0,0,0.05)] z-10">
                         <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
                             <Icon name="file-text" size={14} /> {t.actions.view}
@@ -602,8 +602,9 @@ export default function AdminUsersPage() {
                     </tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan={9} className="bg-surface-muted/50 px-6 py-4">
-                          <div className="grid gap-4 sm:grid-cols-4 text-sm">
+                        <td colSpan={9} className="bg-surface-muted/50 p-0 border-b border-border">
+                          <div className="sticky left-0 w-full max-w-[100vw] px-6 py-4">
+                            <div className="grid gap-4 sm:grid-cols-4 text-sm">
                             <div>
                               <p className="text-xs text-text-muted">{t.details.email}</p>
                               <p className="font-semibold text-text">{u.email || t.placeholder}</p>
@@ -621,6 +622,7 @@ export default function AdminUsersPage() {
                               <p className="font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
                             </div>
                           </div>
+                        </div>
                         </td>
                       </tr>
                     )}
