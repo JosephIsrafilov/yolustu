@@ -75,7 +75,7 @@ export default function DriverLayout({ children, narrow }: { children: React.Rea
               className="flex items-center gap-2 text-[#002f37] hover:text-[#054752] transition-all duration-200 ease-out active:scale-[0.98]"
             >
               <Icon name="map" size={22} strokeWidth={1.8} />
-              <span className="font-bold text-lg">Yolüstü</span>
+              <span className="font-bold text-lg">Yolmates</span>
             </Link>
             <div className="h-4 w-px bg-border hidden sm:block" />
             <div className="hidden sm:flex items-center gap-2 text-text-muted text-sm font-semibold">

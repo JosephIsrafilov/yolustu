@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -65,7 +66,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="bg-white rounded-2xl w-full max-w-md p-8 border border-[#c0c8ca]" style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.08)' }}>
           <div className="text-center mb-6">
-            <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
+            <span className="text-[24px] font-[900] text-[#002f37]">Yolmates</span>
           </div>
           
           <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.loginTitle}</h1>
@@ -95,17 +96,30 @@ export default function LoginPage() {
               <div className="relative">
                 <Icon name="lock" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   placeholder={copy.auth.passwordPlaceholder} 
                   value={password}
                   onChange={(e) => { 
                     setPassword(e.target.value); 
                     if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); 
                   }}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
+                  className="w-full pl-11 pr-12 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#70787b] hover:text-[#054752] transition-colors"
+                >
+                  <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} />
+                </button>
               </div>
               {errors.password && <p className="text-[12px] text-[#ba1a1a]">{errors.password}</p>}
+            </div>
+
+            <div className="flex justify-end -mt-2 mb-1">
+              <Link href={ROUTES.forgotPassword} className="text-[13px] text-[#054752] font-semibold hover:underline">
+                {language === 'az' ? 'Şifrəni unutmusunuz?' : language === 'ru' ? 'Забыли пароль?' : 'Forgot Password?'}
+              </Link>
             </div>
 
             {submitError && (

@@ -1,8 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AppState, TripSlice } from '../types';
 import { tripsService } from '@/services';
-import { MOCK_TRIPS } from '@/data/mock-data';
-import { isMockDataMode } from '@/lib/env';
+
 import { toApiError } from '@/services/api-error';
 
 export const createTripSlice: StateCreator<
@@ -11,7 +10,7 @@ export const createTripSlice: StateCreator<
   [],
   TripSlice
 > = (set, get) => ({
-  trips: isMockDataMode ? [...MOCK_TRIPS] : [],
+  trips: [],
   isLoadingTrips: false,
 
   fetchTrips: async (filters) => {
@@ -47,9 +46,7 @@ export const createTripSlice: StateCreator<
           : state.users,
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchTrips();
-      }
+      await get().fetchTrips();
       return newTrip.id;
     } catch (error) {
       const apiError = toApiError(error);
@@ -67,9 +64,7 @@ export const createTripSlice: StateCreator<
         ),
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchTrips();
-      }
+      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -87,9 +82,7 @@ export const createTripSlice: StateCreator<
         ),
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchTrips();
-      }
+      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);

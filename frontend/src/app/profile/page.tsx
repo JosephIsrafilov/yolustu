@@ -62,6 +62,16 @@ const PROFILE_I18N = {
     plateLabel: 'Nömrə nişanı',
     noVehicles: 'Hələ avtomobil əlavə edilməyib.',
     saveVehicleBtn: 'Yadda saxla',
+    emailVerificationTitle: 'Email Təsdiqi',
+    emailVerified: 'Email təsdiqlənib',
+    emailNotVerified: 'Email təsdiqlənməyib',
+    verifyEmailBtn: 'Emaili təsdiqlə',
+    emailVerifyDesc: 'Hesabınızın təhlükəsizliyini artırmaq və şifrənizi asanlıqla bərpa etmək üçün emailinizi təsdiqləyin.',
+    enterOtpPlaceholder: 'Emailinizə göndərilən kodu daxil edin',
+    submitOtpBtn: 'Kodu təsdiqlə',
+    emailVerifySuccess: 'Email uğurla təsdiqləndi!',
+    emailVerifyError: 'Emaili təsdiqləmək mümkün olmadı.',
+    otpSentSuccess: 'Kod emailinizə göndərildi.',
   },
   ru: {
     title: 'Профиль',
@@ -102,6 +112,16 @@ const PROFILE_I18N = {
     plateLabel: 'Номер',
     noVehicles: 'Автомобили пока не добавлены.',
     saveVehicleBtn: 'Сохранить',
+    emailVerificationTitle: 'Подтверждение Email',
+    emailVerified: 'Email подтвержден',
+    emailNotVerified: 'Email не подтвержден',
+    verifyEmailBtn: 'Подтвердить Email',
+    emailVerifyDesc: 'Подтвердите свой email, чтобы повысить безопасность аккаунта и легко восстановить пароль.',
+    enterOtpPlaceholder: 'Введите код, отправленный на ваш email',
+    submitOtpBtn: 'Подтвердить код',
+    emailVerifySuccess: 'Email успешно подтвержден!',
+    emailVerifyError: 'Не удалось подтвердить email.',
+    otpSentSuccess: 'Код был отправлен на ваш email.',
   },
   en: {
     title: 'Profile',
@@ -142,6 +162,16 @@ const PROFILE_I18N = {
     plateLabel: 'Plate Number',
     noVehicles: 'No vehicles added yet.',
     saveVehicleBtn: 'Save',
+    emailVerificationTitle: 'Email Verification',
+    emailVerified: 'Email is verified',
+    emailNotVerified: 'Email is not verified',
+    verifyEmailBtn: 'Verify Email',
+    emailVerifyDesc: 'Verify your email to enhance account security and recover your password easily.',
+    enterOtpPlaceholder: 'Enter OTP sent to your email',
+    submitOtpBtn: 'Confirm OTP',
+    emailVerifySuccess: 'Email verified successfully!',
+    emailVerifyError: 'Failed to verify email.',
+    otpSentSuccess: 'OTP has been sent to your email.',
   },
 };
 
@@ -266,6 +296,7 @@ export default function ProfilePage() {
           </div>
         )}
 
+        <EmailVerificationSection copy={copy} />
         <DriverVerificationSection copy={copy} />
         <DriverVehiclesSection copy={copy} isDriver={currentUser.role !== 'admin'} />
         {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.reviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
@@ -288,6 +319,89 @@ interface VehiclePayload {
   year: number;
   color: string;
   plate_number: string;
+}
+
+function EmailVerificationSection({ copy }: VerificationSectionProps) {
+  const { currentUser, requestEmailVerification, verifyEmail } = useAppStore();
+  const [loading, setLoading] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [msg, setMsg] = useState({ type: '', text: '' });
+
+  if (!currentUser) return null;
+
+  const handleRequest = async () => {
+    setLoading(true);
+    setMsg({ type: '', text: '' });
+    const success = await requestEmailVerification();
+    if (success) {
+      setShowOtp(true);
+      setMsg({ type: 'success', text: copy.otpSentSuccess });
+    } else {
+      setMsg({ type: 'error', text: useAppStore.getState().lastError || copy.emailVerifyError });
+    }
+    setLoading(false);
+  };
+
+  const handleVerify = async () => {
+    if (otp.length < 6) return;
+    setLoading(true);
+    setMsg({ type: '', text: '' });
+    const success = await verifyEmail(otp);
+    if (success) {
+      setMsg({ type: 'success', text: copy.emailVerifySuccess });
+      setShowOtp(false);
+    } else {
+      setMsg({ type: 'error', text: useAppStore.getState().lastError || copy.emailVerifyError });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Card className="mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-text">{copy.emailVerificationTitle}</h3>
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${currentUser.isEmailVerified ? 'bg-success-50 text-success-600' : 'bg-warn-50 text-warn-600'}`}>
+          <Icon name={currentUser.isEmailVerified ? 'check-circle' : 'alert-triangle'} size={14} />
+          {currentUser.isEmailVerified ? copy.emailVerified : copy.emailNotVerified}
+        </div>
+      </div>
+
+      {!currentUser.isEmailVerified && (
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">{copy.emailVerifyDesc}</p>
+          <div className="text-sm font-medium text-text bg-surface-muted p-3 rounded-lg flex items-center justify-between">
+            <span>{currentUser.email}</span>
+          </div>
+
+          {msg.text && (
+            <div className={`p-3 rounded-lg text-sm font-medium ${msg.type === 'success' ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'}`}>
+              {msg.text}
+            </div>
+          )}
+
+          {!showOtp ? (
+            <Button fullWidth onClick={handleRequest} loading={loading}>
+              {copy.verifyEmailBtn}
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder={copy.enterOtpPlaceholder}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                maxLength={6}
+                className="flex-1"
+              />
+              <Button onClick={handleVerify} loading={loading} disabled={otp.length < 6}>
+                {copy.submitOtpBtn}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
 }
 
 function DriverVerificationSection({ copy }: VerificationSectionProps) {

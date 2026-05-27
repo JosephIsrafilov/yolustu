@@ -18,7 +18,7 @@ export function usePushNotifications() {
   const shouldReconnectRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated || env.dataMode !== 'api') {
+    if (!isAuthenticated) {
       shouldReconnectRef.current = false;
       if (wsRef.current) {
         wsRef.current.close();

@@ -18,7 +18,8 @@ export type IconName =
   | 'dog' | 'repeat' | 'send' | 'refresh-cw' | 'file-text' | 'upload' | 'credit-card' | 'bell' | 'sparkles'
   | 'venus' | 'cigarette' | 'paw-print' | 'music' | 'info'
   | 'zap'
-  | 'camera';
+  | 'camera'
+  | 'eye' | 'eye-off';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -81,6 +82,8 @@ const PATHS: Record<IconName, string> = {
   'info': 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 16v-4 M12 8h.01',
   'zap': 'M5 12l5-5v10l5-5',
   'camera': 'M4 7h4l2-2h4l2 2h4v10H4z M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  'eye': 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 15a3 3 0 100-6 3 3 0 000 6z',
+  'eye-off': 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

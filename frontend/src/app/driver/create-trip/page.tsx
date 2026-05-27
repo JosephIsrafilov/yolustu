@@ -26,7 +26,6 @@ import { MapContainer, LocationPicker } from '@/components/ui/Map';
 import { apiClient } from '@/services/api-client';
 import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
 import { apiAiService } from '@/services/api/api-ai-service';
-import { isMockDataMode } from '@/lib/env';
 import { I18N } from '@/lib/i18n';
 
 const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string) => {
@@ -128,7 +127,7 @@ export default function CreateTripPage() {
   const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
     queryFn: async () => {
-      if (isMockDataMode) return [];
+
       try {
         const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
         return response.map(mapApiVehicleToVehicle);
@@ -137,7 +136,6 @@ export default function CreateTripPage() {
         return [];
       }
     },
-    enabled: !isMockDataMode,
   });
 
   const validationSchema = useMemo(() => {
@@ -402,7 +400,7 @@ export default function CreateTripPage() {
           </div>
         )}
         
-        {!isLoadingVehicles && !isMockDataMode && vehicles.length === 0 && (
+        {!isLoadingVehicles && vehicles.length === 0 && (
           <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm animate-fade-in">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">

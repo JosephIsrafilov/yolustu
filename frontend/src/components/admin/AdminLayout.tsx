@@ -12,7 +12,7 @@ import Footer from '@/components/layout/Footer';
 
 const ADMIN_LAYOUT_I18N = {
   az: {
-    adminTitle: 'Yolüstü Admin',
+    adminTitle: 'Yolmates Admin',
     roleLabel: 'Admin',
     signOut: 'Çıxış',
     tabs: {
@@ -24,7 +24,7 @@ const ADMIN_LAYOUT_I18N = {
     },
   },
   ru: {
-    adminTitle: 'Админ Yolüstü',
+    adminTitle: 'Админ Yolmates',
     roleLabel: 'Администратор',
     signOut: 'Выйти',
     tabs: {
@@ -36,7 +36,7 @@ const ADMIN_LAYOUT_I18N = {
     },
   },
   en: {
-    adminTitle: 'Yolüstü Admin',
+    adminTitle: 'Yolmates Admin',
     roleLabel: 'Administrator',
     signOut: 'Sign out',
     tabs: {

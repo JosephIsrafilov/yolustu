@@ -12,10 +12,14 @@ export interface AuthSlice {
   users: User[];
   pendingVerifications: User[];
 
-  register: (data: { fullName: string; phone: string; password: string }) => Promise<boolean>;
+  register: (data: { fullName: string; phone: string; email: string; password: string }) => Promise<boolean>;
   login: (phone: string, password: string) => Promise<boolean>;
   requestOtp: (phone: string) => Promise<boolean>;
   verifyAccount: (phone: string, otp: string) => Promise<boolean>;
+  requestPasswordReset: (email: string) => Promise<boolean>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<boolean>;
+  requestEmailVerification: () => Promise<boolean>;
+  verifyEmail: (otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
   switchRole: (role: 'passenger' | 'driver') => void;
   loginAsAdmin: () => Promise<void>;

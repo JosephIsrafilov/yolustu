@@ -38,7 +38,7 @@ class StripePaymentProvider(BasePaymentProvider):
                     "price_data": {
                         "currency": "azn",
                         "product_data": {
-                            "name": "YolUstu Gediş Ödənişi",
+                            "name": "Yolmates Gediş Ödənişi",
                             "description": f"Rezerv ID: {booking_id}",
                         },
                         "unit_amount": int(amount * 100),

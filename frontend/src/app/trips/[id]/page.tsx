@@ -349,10 +349,10 @@ export default function TripDetailsPage() {
                   <a
                     href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
                       language === 'az' 
-                        ? `Salam! Mən Yolüstü ilə ${trip.departureCity} şəhərindən ${trip.arrivalCity} şəhərinə gedirəm. Sürücü: ${driver?.fullName || 'Sürücü'}, Vaxt: ${trip.date} ${trip.time}. Gediş detalları: ${window.location.origin}/trips/${trip.id}`
+                        ? `Salam! Mən Yolmates ilə ${trip.departureCity} şəhərindən ${trip.arrivalCity} şəhərinə gedirəm. Sürücü: ${driver?.fullName || 'Sürücü'}, Vaxt: ${trip.date} ${trip.time}. Gediş detalları: ${window.location.origin}/trips/${trip.id}`
                         : language === 'ru'
-                        ? `Привет! Я еду с Yolustu из ${trip.departureCity} в ${trip.arrivalCity}. Водитель: ${driver?.fullName || 'Водитель'}, Время: ${trip.date} ${trip.time}. Детали поездки: ${window.location.origin}/trips/${trip.id}`
-                        : `Hi! I am traveling with Yolustu from ${trip.departureCity} to ${trip.arrivalCity}. Driver: ${driver?.fullName || 'Driver'}, Time: ${trip.date} ${trip.time}. Trip details: ${window.location.origin}/trips/${trip.id}`
+                        ? `Привет! Я еду с Yolmates из ${trip.departureCity} в ${trip.arrivalCity}. Водитель: ${driver?.fullName || 'Водитель'}, Время: ${trip.date} ${trip.time}. Детали поездки: ${window.location.origin}/trips/${trip.id}`
+                        : `Hi! I am traveling with Yolmates from ${trip.departureCity} to ${trip.arrivalCity}. Driver: ${driver?.fullName || 'Driver'}, Time: ${trip.date} ${trip.time}. Trip details: ${window.location.origin}/trips/${trip.id}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

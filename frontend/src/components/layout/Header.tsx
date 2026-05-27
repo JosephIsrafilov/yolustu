@@ -73,7 +73,7 @@ export default function Header() {
             className="ui-panel-title flex items-center gap-2 text-[#002f37] transition-all duration-200 ease-out hover:text-[#054752] active:scale-[0.98]"
           >
             <Icon name="map" size={22} strokeWidth={1.8} />
-            Yolüstü
+            Yolmates
           </Link>
           <nav className="hidden h-[72px] min-w-0 items-center gap-6 md:flex">
             {navLinks.map((link) => (

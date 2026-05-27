@@ -16,11 +16,15 @@ class UserRepository:
     def get_by_phone(self, phone: str) -> User | None:
         return self.db.query(User).filter(User.phone == phone).first()
 
+    def get_by_email(self, email: str) -> User | None:
+        return self.db.query(User).filter(User.email == email).first()
+
     def create(self, user_in: UserCreate, hashed_password: str) -> User:
         # Keep self-registration constrained to passenger/driver roles.
         role = user_in.role if user_in.role in {"passenger", "driver"} else "passenger"
         user = User(
             phone=user_in.phone,
+            email=user_in.email,
             first_name=user_in.first_name,
             last_name=user_in.last_name,
             avatar_url=user_in.avatar_url,
@@ -39,6 +43,9 @@ class UserRepository:
     def update(self, user: User, user_in: UserUpdate) -> User:
         if user_in.phone and user_in.phone != user.phone:
             user.phone = user_in.phone
+
+        if user_in.email and user_in.email != user.email:
+            user.email = user_in.email
 
         for field in (
             "first_name",

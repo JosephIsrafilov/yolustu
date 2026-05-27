@@ -22,6 +22,7 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     phone = Column(String(20), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     hashed_password = Column(String(255), nullable=True)
@@ -32,6 +33,7 @@ class User(Base):
     bio = Column(Text, nullable=True)
     is_blocked = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False)
+    is_email_verified = Column(Boolean, default=False)
     verification_status = Column(
         String(20), default="none", nullable=False
     )  # none, pending, approved, rejected

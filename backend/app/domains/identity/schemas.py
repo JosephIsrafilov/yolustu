@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class UserBase(BaseModel):
     phone: str
+    email: Optional[str] = None
     first_name: str
     last_name: str
     avatar_url: Optional[str] = None
@@ -22,6 +23,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     phone: Optional[str] = None
+    email: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -35,12 +37,13 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    is_blocked: bool
-    is_verified: bool
-    verification_status: str
+    is_blocked: bool = False
+    is_verified: bool = False
+    is_email_verified: bool = False
+    verification_status: str = "pending"
     document_url: Optional[str] = None
-    rating: float
-    total_rides: int
+    rating: float = 0.0
+    total_rides: int = 0
     created_at: datetime
 
 
@@ -71,3 +74,17 @@ class LoginInput(BaseModel):
 
 class DeviceTokenInput(BaseModel):
     token: str
+
+
+class PasswordResetRequestInput(BaseModel):
+    email: str
+
+
+class PasswordResetConfirmInput(BaseModel):
+    email: str
+    code: str
+    new_password: str = Field(min_length=8, max_length=72)
+
+
+class VerifyEmailInput(BaseModel):
+    otp: str

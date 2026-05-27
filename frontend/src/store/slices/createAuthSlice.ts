@@ -1,9 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AppState, AuthSlice } from '../types';
 import { adminService, authService } from '@/services';
-import { MOCK_USERS } from '@/data/mock-data';
 import { toApiError } from '@/services/api-error';
-import { isMockDataMode } from '@/lib/env';
 import { getUserCapabilities } from '@/lib/access-control';
 
 export const createAuthSlice: StateCreator<
@@ -17,7 +15,7 @@ export const createAuthSlice: StateCreator<
   activeRole: 'passenger',
   activeMode: 'passenger',
   lastError: null,
-  users: isMockDataMode ? [...MOCK_USERS] : [],
+  users: [],
   pendingVerifications: [],
 
   requestOtp: async (phone) => {
@@ -40,6 +38,55 @@ export const createAuthSlice: StateCreator<
     } catch (error) {
       const apiError = toApiError(error);
       set({ lastError: apiError.message || 'Failed to verify OTP.' });
+      return false;
+    }
+  },
+
+  requestPasswordReset: async (email) => {
+    try {
+      set({ lastError: null });
+      await authService.requestPasswordReset(email);
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to request password reset.' });
+      return false;
+    }
+  },
+
+  resetPassword: async (email, otp, newPassword) => {
+    try {
+      set({ lastError: null });
+      await authService.resetPassword(email, otp, newPassword);
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to reset password.' });
+      return false;
+    }
+  },
+
+  requestEmailVerification: async () => {
+    try {
+      set({ lastError: null });
+      await authService.requestEmailVerification();
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to request email verification.' });
+      return false;
+    }
+  },
+
+  verifyEmail: async (otp) => {
+    try {
+      set({ lastError: null });
+      const user = await authService.verifyEmail(otp);
+      set({ currentUser: user });
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to verify email.' });
       return false;
     }
   },
@@ -208,11 +255,9 @@ export const createAuthSlice: StateCreator<
 
   blockUser: async (userId) => {
     try {
-      const updated = isMockDataMode
-        ? undefined
-        : await adminService.blockUser(userId);
+      const updated = await adminService.blockUser(userId);
       set((s) => ({
-        users: s.users.map((u) => (u.id === userId ? updated ?? { ...u, isBlocked: true } : u)),
+        users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
       console.error('Block user error:', error);
@@ -221,11 +266,9 @@ export const createAuthSlice: StateCreator<
 
   unblockUser: async (userId) => {
     try {
-      const updated = isMockDataMode
-        ? undefined
-        : await adminService.unblockUser(userId);
+      const updated = await adminService.unblockUser(userId);
       set((s) => ({
-        users: s.users.map((u) => (u.id === userId ? updated ?? { ...u, isBlocked: false } : u)),
+        users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
       console.error('Unblock user error:', error);
@@ -234,7 +277,6 @@ export const createAuthSlice: StateCreator<
 
   fetchUsers: async () => {
     try {
-      if (isMockDataMode) return;
       const response = await adminService.getUsers();
       set({ users: response.items });
     } catch (error) {
@@ -244,7 +286,6 @@ export const createAuthSlice: StateCreator<
 
   fetchPendingVerifications: async () => {
     try {
-      if (isMockDataMode) return;
       const response = await adminService.getPendingVerifications();
       set({ pendingVerifications: response.items });
     } catch (error) {

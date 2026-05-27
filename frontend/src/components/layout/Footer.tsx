@@ -24,9 +24,9 @@ export default function Footer() {
         <div className="flex min-w-0 flex-col items-center gap-2 md:items-start">
           <Link href="/" className="ui-panel-title flex items-center gap-2 whitespace-nowrap text-[#002f37]">
             <Icon name="map" size={20} strokeWidth={1.8} />
-            Yolüstü
+            Yolmates
           </Link>
-          <span className="ui-meta-text text-[#40484a]">© {currentYear} Yolüstü. {copy.footer.rights}</span>
+          <span className="ui-meta-text text-[#40484a]">© {currentYear} Yolmates. {copy.footer.rights}</span>
         </div>
         <nav className="flex min-w-0 flex-wrap justify-center gap-x-5 gap-y-2 md:flex-nowrap">
           {links.map((l) => (

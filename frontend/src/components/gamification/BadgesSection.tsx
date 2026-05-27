@@ -1,22 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BadgeComponent } from './BadgeComponent';
-import { apiClient } from '@/services/api-client';
+import { gamificationService } from '@/services';
+import type { Badge, UserBadge } from '@/services/contracts/gamification-service';
 import Card from '@/components/ui/Card';
 import { useAppStore } from '@/store/useAppStore';
-
-interface Badge {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  icon_url: string | null;
-}
-
-interface UserBadge {
-  id: string;
-  badge: Badge;
-  awarded_at: string;
-}
 
 export const BadgesSection: React.FC = () => {
   const { currentUser, language } = useAppStore();
@@ -35,8 +22,8 @@ export const BadgesSection: React.FC = () => {
     const fetchBadges = async () => {
       try {
         const [badgesRes, userBadgesRes] = await Promise.all([
-          apiClient.get<Badge[]>('/gamification/badges'),
-          apiClient.get<UserBadge[]>('/gamification/my-badges')
+          gamificationService.getBadges(),
+          gamificationService.getMyBadges()
         ]);
         setAllBadges(badgesRes);
         setUserBadges(userBadgesRes);

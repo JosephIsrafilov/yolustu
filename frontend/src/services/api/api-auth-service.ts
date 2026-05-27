@@ -32,6 +32,7 @@ export const apiAuthService: AuthService = {
     const lastName = names.slice(1).join(' ') || ' ';
     const payload = {
       phone: input.phone,
+      email: input.email,
       first_name: firstName,
       last_name: lastName,
       password: input.password,
@@ -49,6 +50,23 @@ export const apiAuthService: AuthService = {
     await apiClient.post<unknown>(
       `/auth/verify-otp?phone=${encodeURIComponent(input.phone)}&otp=${encodeURIComponent(input.otp)}`
     );
+  },
+
+  async requestPasswordReset(email: string) {
+    await apiClient.post<unknown>('/auth/request-password-reset', { email });
+  },
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    await apiClient.post<unknown>('/auth/reset-password', { email, code: otp, new_password: newPassword });
+  },
+
+  async requestEmailVerification() {
+    await apiClient.post<unknown>('/auth/request-email-verification');
+  },
+
+  async verifyEmail(otp: string) {
+    const user = await apiClient.post<ApiUser>('/auth/verify-email', { otp });
+    return mapApiUserToUser(user);
   },
 
   async logout() {

@@ -14,6 +14,7 @@ export interface User {
   totalTrips: number;
   isBlocked: boolean;
   verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  isEmailVerified: boolean;
   documentUrl?: string;
   bio?: string;
   createdAt: string;

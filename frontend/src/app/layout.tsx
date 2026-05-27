@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Yolüstü — Azərbaycan üçün carpooling platforması",
+  title: "Yolmates — Azərbaycan üçün carpooling platforması",
   description: "Şəhərlərarası gedişləri tap, paylaş, ucuz və rahat səyahət et. Bakı, Gəncə, Sumqayıt, Şəki, Quba və daha çox.",
 };
 

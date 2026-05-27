@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -9,10 +9,42 @@ from app.domains.identity.schemas import (
     LoginInput,
     RefreshTokenInput,
     UserCreate,
+    PasswordResetRequestInput,
+    PasswordResetConfirmInput,
+    VerifyEmailInput,
+    UserResponse,
 )
 from app.domains.identity.services import IdentityService
+from app.domains.identity.dependencies import get_current_user, CurrentUser
 
 router = APIRouter()
+
+
+@router.post("/request-password-reset")
+@limiter.limit("5/minute")
+def request_password_reset(
+    request: Request,
+    reset_data: PasswordResetRequestInput,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).request_password_reset(
+        reset_data.email, redis_client, background_tasks
+    )
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+def reset_password(
+    request: Request,
+    reset_data: PasswordResetConfirmInput,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).reset_password(
+        reset_data.email, reset_data.code, reset_data.new_password, redis_client
+    )
 
 
 @router.post("/request-otp")
@@ -36,6 +68,32 @@ def verify_otp(
     redis_client=Depends(get_redis),
 ):
     return IdentityService(db).verify_otp(phone, otp, redis_client)
+
+
+@router.post("/request-email-verification")
+@limiter.limit("5/minute")
+def request_email_verification(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).request_email_verification(
+        current_user, redis_client, background_tasks
+    )
+
+
+@router.post("/verify-email", response_model=UserResponse)
+@limiter.limit("10/minute")
+def verify_email(
+    request: Request,
+    verify_data: VerifyEmailInput,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).verify_email(current_user, verify_data.otp, redis_client)
 
 
 @router.post("/register", response_model=AuthSessionResponse)

@@ -1,8 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AppState, BookingSlice } from '../types';
 import { bookingsService } from '@/services';
-import { MOCK_BOOKINGS } from '@/data/mock-data';
-import { isMockDataMode } from '@/lib/env';
+
 import { toApiError } from '@/services/api-error';
 
 export const createBookingSlice: StateCreator<
@@ -33,7 +32,7 @@ export const createBookingSlice: StateCreator<
     });
 
   return ({
-  bookings: isMockDataMode ? [...MOCK_BOOKINGS] : [],
+  bookings: [],
 
   fetchBookings: async () => {
     try {
@@ -65,10 +64,8 @@ export const createBookingSlice: StateCreator<
           : state.trips,
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchBookings();
-        await get().fetchTrips();
-      }
+      await get().fetchBookings();
+      await get().fetchTrips();
       return booking.id;
     } catch (error) {
       const apiError = toApiError(error);
@@ -89,10 +86,8 @@ export const createBookingSlice: StateCreator<
           : state.trips,
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchBookingRequests();
-        await get().fetchTrips();
-      }
+      await get().fetchBookingRequests();
+      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -113,9 +108,7 @@ export const createBookingSlice: StateCreator<
           : state.trips,
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchBookingRequests();
-      }
+      await get().fetchBookingRequests();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -136,10 +129,8 @@ export const createBookingSlice: StateCreator<
           : state.trips,
         lastError: null,
       }));
-      if (!isMockDataMode) {
-        await get().fetchBookings();
-        await get().fetchTrips();
-      }
+      await get().fetchBookings();
+      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);

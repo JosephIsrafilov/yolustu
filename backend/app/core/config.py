@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = ""
     ENVIRONMENT: str = "development"
 
+    SMTP_SERVER: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "yolmatessupport@gmail.com"
+
 
 settings = Settings()
 

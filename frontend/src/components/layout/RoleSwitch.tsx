@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { isMockDataMode } from '@/lib/env';
 import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
@@ -17,19 +16,10 @@ const MODE_SWITCH_I18N = {
 export default function RoleSwitch() {
   const { activeMode, switchRole, currentUser, isAuthenticated, language } = useAppStore();
   const t = I18N[language].auth;
-  const localCopy = MODE_SWITCH_I18N[language];
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
 
   if (!isAuthenticated || !currentUser || capabilities.canAccessAdmin) {
     return null;
-  }
-
-  if (!isMockDataMode) {
-    return (
-      <div className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs text-text-muted">
-        {localCopy.backendManaged}
-      </div>
-    );
   }
 
   return (

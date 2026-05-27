@@ -44,8 +44,18 @@ function VerifyContent() {
       const ok = await verifyAccount(phone, otp);
       setLoading(false);
       if (ok) {
-        setSuccessMessage(language === 'az' ? 'Hesabınız təsdiqləndi! İndi daxil ola bilərsiniz.' : language === 'ru' ? 'Аккаунт подтвержден! Теперь вы можете войти.' : 'Account verified! You can now log in.');
-        setTimeout(() => router.push(ROUTES.login), 2000);
+        const fromParam = searchParams.get('from');
+        const msg = fromParam === 'register' 
+          ? (language === 'az' ? 'Hesabınız təsdiqləndi! Profilinizi tamamlamağa yönləndirilirsiniz.' : language === 'ru' ? 'Аккаунт подтвержден! Перенаправление на настройку профиля.' : 'Account verified! Redirecting to profile setup.')
+          : (language === 'az' ? 'Hesabınız təsdiqləndi! İndi daxil ola bilərsiniz.' : language === 'ru' ? 'Аккаунт подтвержден! Теперь вы можете войти.' : 'Account verified! You can now log in.');
+        setSuccessMessage(msg);
+        setTimeout(() => {
+          if (fromParam === 'register') {
+            router.push(ROUTES.profileSetup);
+          } else {
+            router.push(ROUTES.login);
+          }
+        }, 2000);
         return;
       }
       setSubmitError(useAppStore.getState().lastError || copy.auth.otpError);
@@ -75,7 +85,7 @@ function VerifyContent() {
   return (
     <div className="bg-white rounded-2xl w-full max-w-md p-8 border border-[#c0c8ca]" style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.08)' }}>
       <div className="text-center mb-6">
-        <span className="text-[24px] font-[900] text-[#002f37]">Yolüstü</span>
+        <span className="text-[24px] font-[900] text-[#002f37]">Yolmates</span>
       </div>
       
       <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.verifyTitle}</h1>

@@ -13,6 +13,7 @@ export interface VerifyOtpInput {
 export interface RegisterInput {
   fullName: string;
   phone: string;
+  email: string;
   password: string;
 }
 
@@ -29,6 +30,10 @@ export interface AuthService {
   register(input: RegisterInput): Promise<User>;
   requestOtp(phone: string): Promise<void>;
   verifyOtp(input: VerifyOtpInput): Promise<void>;
+  requestPasswordReset(email: string): Promise<void>;
+  resetPassword(email: string, otp: string, newPassword: string): Promise<void>;
+  requestEmailVerification(): Promise<void>;
+  verifyEmail(otp: string): Promise<User>;
   logout(): Promise<void>;
   getCurrentUser(): Promise<User | null>;
   updateProfile(input: UpdateProfileInput): Promise<User>;

@@ -65,11 +65,13 @@ describe('apiAuthService', () => {
     const user = await apiAuthService.register({
       fullName: 'Elvin Mammadov',
       phone: apiUser.phone,
+      email: 'elvin@example.com',
       password: 'password123',
     });
 
     expect(mockedApiClient.post).toHaveBeenCalledWith('/auth/register', {
       phone: apiUser.phone,
+      email: 'elvin@example.com',
       first_name: 'Elvin',
       last_name: 'Mammadov',
       password: 'password123',

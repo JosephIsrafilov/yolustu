@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Yolustu API", lifespan=lifespan)
+app = FastAPI(title="Yolmates API", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(
     RateLimitExceeded,
@@ -124,7 +124,7 @@ app.include_router(v1_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Yolustu API", "version": "v1"}
+    return {"message": "Welcome to Yolmates API", "version": "v1"}
 
 
 @app.get("/health")

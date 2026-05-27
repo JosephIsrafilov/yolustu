@@ -12,7 +12,10 @@ export interface ApiUser {
   role?: User['role'] | null;
   city?: string | null;
   bio?: string | null;
+  email?: string | null;
   is_blocked?: boolean | null;
+  is_verified?: boolean | null;
+  is_email_verified?: boolean | null;
   verification_status?: User['verificationStatus'] | null;
   document_url?: string | null;
 }
@@ -179,7 +182,7 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
   return {
     id: apiUser.id,
     fullName: `${apiUser.first_name} ${apiUser.last_name}`,
-    email: '', 
+    email: apiUser.email ?? '', 
     phone: apiUser.phone,
     city: apiUser.city ?? '', 
     avatarUrl: apiUser.avatar_url ?? undefined,
@@ -188,6 +191,7 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     totalTrips: apiUser.total_rides, 
     isBlocked: apiUser.is_blocked ?? false, 
     verificationStatus: apiUser.verification_status ?? 'none',
+    isEmailVerified: apiUser.is_email_verified ?? false,
     documentUrl: apiUser.document_url ?? undefined,
     bio: apiUser.bio ?? undefined,
     createdAt: apiUser.created_at,

@@ -1,6 +1,6 @@
-# Yolüstü — Azerbaijan Carpooling Platform 🚗
+# Yolmates — Azerbaijan Carpooling Platform 🚗
 
-**Yolüstü** is a modern car‑pooling prototype tailored for Azerbaijan. It includes:
+**Yolmates** is a modern car‑pooling prototype tailored for Azerbaijan. It includes:
 - **Real‑time chat and notifications** via WebSockets
 - **AI Smart Pricing** powered by NVIDIA NIM (LLaMA‑3.1) that suggests optimal seat prices based on route and time
 - Full Stripe integration for secure sandbox payments
