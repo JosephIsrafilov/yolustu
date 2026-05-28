@@ -59,6 +59,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://yolustu_user:yolustu_password@127.0.0.1:5432/yolustu_db
+      SECRET_KEY: ci-migrations-secret-key
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python

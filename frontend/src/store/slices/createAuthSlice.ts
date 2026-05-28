@@ -213,7 +213,7 @@ export const createAuthSlice: StateCreator<
       }
     } catch (error) {
       if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-        // Expected behavior for unauthenticated users, do not log an error
+
       } else {
         console.error('Failed to initialize auth:', error);
       }

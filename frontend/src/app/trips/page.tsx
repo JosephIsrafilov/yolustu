@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
@@ -14,6 +14,49 @@ import { MapContainer, RideMarkers } from '@/components/ui/Map';
 import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
+
+const TransparentCar = ({ src, className }: { src: string, className?: string }) => {
+  const [dataUrl, setDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    const img = new window.Image();
+    img.src = src;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 300 / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const w = canvas.width;
+      const h = canvas.height;
+      const stack = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+      const visited = new Uint8Array(w * h);
+      while (stack.length > 0) {
+        const p = stack.pop();
+        if (!p) continue;
+        const x = p[0], y = p[1];
+        if (x < 0 || x >= w || y < 0 || y >= h) continue;
+        const idx = y * w + x;
+        if (visited[idx]) continue;
+        visited[idx] = 1;
+        const i = idx * 4;
+        if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
+          data[i+3] = 0;
+          stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      setDataUrl(canvas.toDataURL('image/png'));
+    };
+  }, [src]);
+
+  if (!dataUrl) return <div className={className} />;
+  return <img src={dataUrl} alt="car" className={className} />;
+};
 
 function TripsContent() {
   const searchParams = useSearchParams();
@@ -183,55 +226,55 @@ function TripsContent() {
         {}
         <section className="order-1 flex min-w-0 flex-1 flex-col gap-4 md:order-2">
           {}
-          <div className="bg-surface-container-low p-5 rounded-2xl border border-[#c0c8ca] flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div>
-              <div className="ui-stat-text flex items-center gap-2 text-[#002f37] mb-1">
+          <div className="bg-[#EAF7F9] p-4 sm:p-5 rounded-2xl border border-[#BDE0E5] flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm">
+            <div className="flex flex-col gap-1">
+              <div className="text-[22px] font-bold text-[#002f37] flex items-center gap-2">
                 <span>{from}</span>
                 <Icon name="arrow-right" size={20} className="text-[#70787b]" />
                 <span>{to}</span>
               </div>
-              <div className="ui-meta-text text-[#40484a] flex items-center gap-2">
-                <Icon name="calendar" size={14} />
+              <div className="text-[15px] font-medium text-[#40484a] flex items-center gap-2">
+                <Icon name="calendar" size={16} />
                 <span>{filters.date || copy.common.allDates}</span>
               </div>
             </div>
-            <div className="mt-2 sm:mt-0 flex flex-col items-end gap-2">
-              <div className="flex bg-white rounded-lg p-1 border border-[#c0c8ca] shadow-sm">
+            <div className="mt-4 sm:mt-0 flex flex-col items-end gap-3">
+              <div className="flex bg-white rounded-lg p-1 border border-[#BDE0E5] shadow-sm">
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`ui-action-text px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm font-bold ${
                     viewMode === 'list' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
                   }`}
                 >
-                  <Icon name="list" size={14} />
+                  <Icon name="list" size={16} />
                   {copy.tripsPage.list}
                 </button>
                 <button 
                   onClick={() => setViewMode('map')}
-                  className={`ui-action-text px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm font-bold ${
                     viewMode === 'map' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
                   }`}
                 >
-                  <Icon name="map" size={14} />
+                  <Icon name="map" size={16} />
                   {copy.tripsPage.map}
                 </button>
               </div>
-              <span className="ui-meta-text text-[#40484a]">
+              <span className="text-[15px] font-medium text-[#40484a]">
                 {filteredTrips.length} {copy.tripsPage.resultsFound}
               </span>
             </div>
           </div>
+
           {activeFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-[-4px]">
               {activeFilters.map((filter) => (
-                <span key={filter} className="ui-chip-text rounded-full border border-[#c0c8ca] bg-white px-3 py-1 text-[#054752]">
+                <span key={filter} className="rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#054752] flex items-center shadow-sm">
                   {filter}
                 </span>
               ))}
             </div>
           )}
 
-          {}
           {viewMode === 'map' ? (
             <div className="h-100 md:h-150 w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
               <MapContainer className="h-full">
@@ -255,108 +298,90 @@ function TripsContent() {
               )}
             />
           ) : filteredTrips.length > 0 ? (
-            <div className="flex flex-col gap-3 stagger-children">
+            <div className="flex flex-col gap-4">
               {filteredTrips.map((trip) => {
                 const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
                 const isFull = trip.seatsAvailable === 0;
                 return (
                   <article key={trip.id}
                     onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
-                    className={`bg-white rounded-2xl border border-[#c0c8ca] p-5 shadow-card transition-all sm:min-h-36.75 ${
-                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:border-[#9acfdc] hover:shadow-card-hover cursor-pointer'
+                    className={`group bg-white rounded-2xl border border-gray-100 shadow-sm p-4 transition-all duration-500 overflow-hidden relative flex flex-col gap-4 ${
+                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:shadow-md hover:border-[#BDE0E5] cursor-pointer'
                     }`}>
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-[#EAF7F9]/30 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1500 ease-in-out pointer-events-none" />
 
-                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                      <div className="order-2 flex shrink-0 items-center gap-3 sm:w-45">
+                    <div className="flex justify-between items-center relative z-10">
+                      <div className="flex gap-2.5 items-center">
+                         <div className="bg-[#F0F7F8] text-[#054752] font-bold px-2.5 py-1 rounded-lg text-[13px] flex items-center gap-1.5">
+                           <Icon name="calendar" size={13} /> 
+                           {trip.date}
+                           <span className="mx-0.5 opacity-40">|</span>
+                           <Icon name="clock" size={13} /> {trip.time}
+                         </div>
+                         {trip.carModel && <span className="text-[13px] font-medium text-gray-500 flex items-center gap-1.5"><Icon name="car" size={13} className="text-gray-400" /> {trip.carModel}</span>}
+                      </div>
+                      <div className="text-[18px] font-black text-[#054752] tracking-tight flex items-center gap-1">
+                        {formatPrice(trip.pricePerSeat)}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 relative z-10 w-full mt-1">
+                      <div className="flex justify-between text-[16px] font-extrabold text-gray-900 px-1">
+                        <span className="group-hover:text-[#054752] transition-colors duration-300">{trip.departureCity}</span>
+                        <span className="group-hover:text-[#054752] transition-colors duration-300">{trip.arrivalCity}</span>
+                      </div>
+                      <div className="relative w-full h-6 flex items-center px-1 mt-1">
+                        <div className="absolute left-1 right-1 h-[2px] bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#054752] w-0 group-hover:w-full transition-all duration-1200 ease-in-out" />
+                        </div>
+                        <div className="absolute left-0 group-hover:left-[calc(100%-44px)] transition-all duration-1200 ease-in-out z-10 px-1 -mt-1.5">
+                          <TransparentCar 
+                            src="/api/car-image" 
+                            className="w-10 object-contain drop-shadow-sm hover:scale-110 transition-transform" 
+                          />
+                        </div>
+                        <div className="absolute left-[2px] w-2 h-2 rounded-full bg-gray-300 border-2 border-white z-0 group-hover:bg-[#054752] transition-colors duration-300" />
+                        <div className="absolute right-[2px] w-2 h-2 rounded-full bg-gray-300 border-2 border-white z-0 group-hover:bg-[#054752] transition-colors duration-300 delay-900" />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-100 relative z-10">
+                      <div className="flex items-center gap-2.5">
                         <div className="relative">
                           {driver?.avatarUrl ? (
-                            <Image src={driver.avatarUrl} alt={driver.fullName} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-[#c0c8ca]" />
+                            <Image src={driver.avatarUrl} alt={driver.fullName} width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
                           ) : (
-                            <div className="w-11 h-11 rounded-full bg-[#054752] flex items-center justify-center text-white text-[15px] font-bold">
+                            <div className="w-9 h-9 rounded-full bg-[#054752] flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
                               {driver?.fullName.charAt(0) || '?'}
                             </div>
                           )}
-                          {driver && driver.rating >= 4.5 && (
-                            <span className="absolute -bottom-0.5 -right-0.5 bg-[#054752] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
-                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><polyline points="20 6 9 17 4 12"/></svg>
-                            </span>
+                          {driver?.verificationStatus === 'approved' && (
+                             <span className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full w-3.5 h-3.5 flex items-center justify-center border-[1.5px] border-white shadow-sm">
+                               <Icon name="check" size={8} className="text-white" strokeWidth={3} />
+                             </span>
                           )}
                         </div>
-                        <div>
-                          <h4 className="ui-card-title text-[#002f37] flex items-center gap-1">
-                            <span>{driver?.fullName.split(' ')[0] || copy.common.unknown}</span>
-                            {driver?.verificationStatus === 'approved' && (
-                              <Icon name="shield-check" size={14} className="text-green-600 shrink-0" />
-                            )}
-                          </h4>
-                          <div className="ui-meta-text flex items-center gap-1 text-[#40484a]">
-                            <Icon name="star" size={13} className="text-[#F5A623]" fill="currentColor" />
-                            <span className="font-bold">{driver?.rating.toFixed(1)}</span>
-                            <span>({driver?.totalTrips})</span>
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-bold text-gray-900 leading-tight">{driver?.fullName.split(' ')[0] || copy.common.unknown}</span>
+                          <div className="flex items-center gap-1 text-[12px] font-semibold text-gray-500 mt-0.5 leading-tight">
+                            <Icon name="star" size={10} className="text-[#F5A623]" fill="currentColor"/> 
+                            <span className="text-gray-700">{driver?.rating.toFixed(1)}</span>
+                            <span className="font-medium">({driver?.totalTrips})</span>
                           </div>
                         </div>
                       </div>
-
-                      {/* Timeline / Route Banner */}
-                      <div className="order-1 flex min-w-0 flex-1 flex-col gap-2">
-                        {/* Cities Route */}
-                        <div className="ui-card-route flex min-w-0 items-center gap-2 text-[#002f37]">
-                          <span className="min-w-0 wrap-break-word hyphens-auto">{trip.departureCity}</span>
-                          <Icon name="arrow-right" size={16} className="text-[#054752] shrink-0" />
-                          <span className="min-w-0 wrap-break-word hyphens-auto">{trip.arrivalCity}</span>
+                      
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-1 opacity-50">
+                          {trip.femaleOnly && <span title={copy.createTrip.femaleOnlyLabel}><Icon name="venus" size={13} /></span>}
+                          {trip.musicAllowed && <span title={copy.createTrip.musicAllowedLabel}><Icon name="music" size={13} /></span>}
+                          {trip.petsAllowed && <span title={copy.createTrip.petsAllowedLabel}><Icon name="paw-print" size={13} /></span>}
+                          {trip.smokingAllowed && <span title={copy.createTrip.smokingAllowedLabel}><Icon name="cigarette" size={13} /></span>}
                         </div>
-                        
-                        {/* Trip Info Meta Row */}
-                        <div className="ui-meta-text flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[#40484a]">
-                          {/* Departure Time */}
-                          <div className="ui-chip-text flex items-center gap-1 bg-[#edfcff] px-2 py-0.5 rounded text-[#054752] border border-[#054752]/10">
-                            <Icon name="clock" size={13} />
-                            <span>{trip.time}</span>
-                          </div>
-                          
-                          {/* Car Model */}
-                          {trip.carModel && (
-                            <div className="ui-meta-text flex items-center gap-1.5 text-[#50585a]">
-                              <Icon name="car" size={13} />
-                              <span>{trip.carModel}</span>
-                            </div>
-                          )}
+                        <div className={`flex items-center gap-1 text-[13px] font-bold px-2.5 py-1 rounded-lg ${isFull ? 'text-[#ba1a1a] bg-red-50' : 'text-[#054752] bg-[#F0F7F8]'}`}>
+                          {isFull ? <Icon name="ban" size={13} /> : <Icon name="users" size={13} />}
+                          {isFull ? copy.common.noSeats : `${trip.seatsAvailable} left`}
                         </div>
-                      </div>
-
-                      {/* Pricing, Seats, Preferences */}
-                      <div className="order-3 flex shrink-0 flex-col items-end text-right sm:w-35">
-                        <div className="ui-stat-text whitespace-nowrap text-[#002f37]">{formatPrice(trip.pricePerSeat)}</div>
-                        <div className={`ui-chip-text flex items-center gap-1 mt-1 ${isFull ? 'text-[#ba1a1a]' : 'text-[#054752]'}`}>
-                          {isFull ? <Icon name="ban" size={14} /> : <Icon name="armchair" size={14} />}
-                          <span className="leading-tight">{isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}</span>
-                        </div>
-                        
-                        {/* Comfort Preference Badges */}
-                        <div className="flex items-center gap-1 mt-2.5">
-                          {trip.femaleOnly && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-pink-50 text-pink-600 border border-pink-100 shadow-sm" title={copy.createTrip.femaleOnlyLabel}>
-                              <Icon name="venus" size={11} />
-                            </span>
-                          )}
-                          {trip.smokingAllowed && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.smokingAllowedLabel}>
-                              <Icon name="cigarette" size={11} />
-                            </span>
-                          )}
-                          {trip.petsAllowed && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.petsAllowedLabel}>
-                              <Icon name="paw-print" size={11} />
-                            </span>
-                          )}
-                          {trip.musicAllowed && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-50 text-brand-600 border border-brand-100 shadow-sm" title={copy.createTrip.musicAllowedLabel}>
-                              <Icon name="music" size={11} />
-                            </span>
-                          )}
-                        </div>
-
-                        {!isFull && <span className="ui-action-text mt-2 whitespace-nowrap text-[#054752]">{copy.common.details}</span>}
                       </div>
                     </div>
                   </article>
