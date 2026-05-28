@@ -46,6 +46,7 @@ class UserRepository:
 
         if user_in.email and user_in.email != user.email:
             user.email = user_in.email
+            user.is_email_verified = False
 
         for field in (
             "first_name",
@@ -83,7 +84,7 @@ class UserRepository:
         return user
 
     def update_verification_status(
-        self, user: User, status: str, document_url: str = None
+        self, user: User, status: str, document_url: str | None = None
     ) -> User:
         user.verification_status = status
         if document_url:

@@ -105,6 +105,20 @@ class RideResponse(RideBase):
     def convert_geometry(cls, value):
         return geometry_to_location(value)
 
+    @field_validator("smoking_allowed", "pets_allowed", "female_only", mode="before")
+    @classmethod
+    def default_false_booleans(cls, v: Any) -> bool:
+        if v is None:
+            return False
+        return v
+
+    @field_validator("music_allowed", mode="before")
+    @classmethod
+    def default_true_boolean(cls, v: Any) -> bool:
+        if v is None:
+            return True
+        return v
+
 
 def geometry_to_location(value: Any) -> Any:
     if value is None or isinstance(value, (dict, Location)):

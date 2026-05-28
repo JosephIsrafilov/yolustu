@@ -83,6 +83,7 @@ export const apiAuthService: AuthService = {
     const names = input.fullName?.trim().split(/\s+/) ?? [];
     const payload = {
       phone: input.phone,
+      email: input.email,
       first_name: names[0],
       last_name: names.length > 1 ? names.slice(1).join(' ') : undefined,
       avatar_url: input.avatarUrl,

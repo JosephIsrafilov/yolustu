@@ -29,6 +29,7 @@ const PROFILE_I18N = {
     loginBtn: 'Daxil ol',
     nameLabel: 'Ad',
     phoneLabel: 'Telefon',
+    emailLabel: 'Email',
     cityLabel: 'Şəhər',
     selectCity: 'Seçin',
     bioPlaceholder: 'Haqqımda',
@@ -79,6 +80,7 @@ const PROFILE_I18N = {
     loginBtn: 'Войти',
     nameLabel: 'Имя',
     phoneLabel: 'Телефон',
+    emailLabel: 'Email',
     cityLabel: 'Город',
     selectCity: 'Выберите',
     bioPlaceholder: 'О себе',
@@ -129,6 +131,7 @@ const PROFILE_I18N = {
     loginBtn: 'Log in',
     nameLabel: 'Name',
     phoneLabel: 'Phone',
+    emailLabel: 'Email',
     cityLabel: 'City',
     selectCity: 'Select',
     bioPlaceholder: 'About me',
@@ -181,7 +184,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
-  const [form, setForm] = useState({ fullName: '', phone: '', city: '', bio: '', avatarUrl: '' });
+  const [form, setForm] = useState({ fullName: '', phone: '', email: '', city: '', bio: '', avatarUrl: '' });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -224,7 +227,7 @@ export default function ProfilePage() {
   const userReviews = reviews.filter((r) => r.targetUserId === currentUser.id);
 
   const startEdit = () => {
-    setForm({ fullName: currentUser.fullName, phone: currentUser.phone, city: currentUser.city, bio: currentUser.bio || '', avatarUrl: currentUser.avatarUrl || '' });
+    setForm({ fullName: currentUser.fullName, phone: currentUser.phone, email: currentUser.email || '', city: currentUser.city, bio: currentUser.bio || '', avatarUrl: currentUser.avatarUrl || '' });
     setEditing(true);
   };
   const saveEdit = async () => {
@@ -277,6 +280,7 @@ export default function ProfilePage() {
               </div>
               <Input label={copy.nameLabel} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} />
               <Input label={copy.phoneLabel} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
+              <Input label={copy.emailLabel || 'Email'} value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} type="email" />
               <Select
                 label={copy.cityLabel}
                 value={form.city}
@@ -328,7 +332,7 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
   const [otp, setOtp] = useState('');
   const [msg, setMsg] = useState({ type: '', text: '' });
 
-  if (!currentUser) return null;
+  if (!currentUser || !currentUser.email) return null;
 
   const handleRequest = async () => {
     setLoading(true);

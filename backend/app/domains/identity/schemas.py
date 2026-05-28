@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UserBase(BaseModel):
@@ -45,6 +45,27 @@ class UserResponse(UserBase):
     rating: float = 0.0
     total_rides: int = 0
     created_at: datetime
+
+    @field_validator("is_blocked", "is_verified", "is_email_verified", mode="before")
+    @classmethod
+    def default_booleans(cls, v: Any) -> bool:
+        if v is None:
+            return False
+        return v
+
+    @field_validator("rating", mode="before")
+    @classmethod
+    def default_rating(cls, v: Any) -> float:
+        if v is None:
+            return 0.0
+        return v
+
+    @field_validator("total_rides", mode="before")
+    @classmethod
+    def default_total_rides(cls, v: Any) -> int:
+        if v is None:
+            return 0
+        return v
 
 
 class Token(BaseModel):

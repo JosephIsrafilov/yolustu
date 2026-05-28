@@ -315,12 +315,94 @@ class IdentityService:
 
         subject = "Yolmates - Verify your email"
         html_content = f"""
+        <!DOCTYPE html>
         <html>
-            <body>
-                <h2>Email Verification</h2>
-                <p>Your email verification code is: <strong>{otp}</strong></p>
-                <p>This code will expire in 10 minutes.</p>
-            </body>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    background-color: #f5f8fa;
+                    margin: 0;
+                    padding: 0;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 40px auto;
+                    background: #ffffff;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+                    overflow: hidden;
+                }}
+                .header {{
+                    background-color: #054752;
+                    padding: 32px 24px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    color: #ffffff;
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 800;
+                    letter-spacing: -0.5px;
+                }}
+                .content {{
+                    padding: 40px 32px;
+                    color: #1a202c;
+                    line-height: 1.6;
+                }}
+                .content h2 {{
+                    color: #054752;
+                    font-size: 20px;
+                    margin-top: 0;
+                    margin-bottom: 16px;
+                }}
+                .otp-box {{
+                    background-color: #f0fdf4;
+                    border: 2px dashed #16a34a;
+                    border-radius: 12px;
+                    padding: 24px;
+                    text-align: center;
+                    margin: 32px 0;
+                }}
+                .otp-code {{
+                    font-size: 36px;
+                    font-weight: 800;
+                    color: #16a34a;
+                    letter-spacing: 8px;
+                    font-family: monospace;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 24px;
+                    text-align: center;
+                    color: #64748b;
+                    font-size: 13px;
+                    border-top: 1px solid #e2e8f0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Yolmates</h1>
+                </div>
+                <div class="content">
+                    <h2>Verify Your Email</h2>
+                    <p>Hello,</p>
+                    <p>Please use the verification code below to confirm your email address and secure your Yolmates account.</p>
+                    
+                    <div class="otp-box">
+                        <div class="otp-code">{otp}</div>
+                    </div>
+                    
+                    <p>This code will expire in <strong>10 minutes</strong>. If you did not request this verification, please ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; 2026 Yolmates. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
         </html>
         """
         text_content = f"Your email verification code is: {otp}\n\nThis code will expire in 10 minutes."

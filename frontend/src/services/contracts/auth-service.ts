@@ -20,6 +20,7 @@ export interface RegisterInput {
 export interface UpdateProfileInput {
   fullName?: string;
   phone?: string;
+  email?: string;
   city?: string;
   bio?: string;
   avatarUrl?: string;

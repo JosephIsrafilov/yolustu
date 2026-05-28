@@ -59,3 +59,69 @@ def test_ride_to_response_converts_ewkb_geometry_locations():
     assert response.origin_location.lon == 49.8671
     assert response.destination_location.lat == 40.6828
     assert response.destination_location.lon == 46.3606
+
+
+def test_user_response_handles_null_values():
+    from app.domains.identity.schemas import UserResponse
+
+    user_data = SimpleNamespace(
+        id=uuid4(),
+        phone="+994501112233",
+        email=None,
+        first_name="Test",
+        last_name="User",
+        avatar_url=None,
+        language="az",
+        role="driver",
+        city=None,
+        bio=None,
+        is_blocked=None,
+        is_verified=None,
+        is_email_verified=None,
+        verification_status="pending",
+        document_url=None,
+        rating=None,
+        total_rides=None,
+        created_at=datetime.now(timezone.utc),
+    )
+
+    response = UserResponse.model_validate(user_data)
+    assert response.is_blocked is False
+    assert response.is_verified is False
+    assert response.is_email_verified is False
+    assert response.rating == 0.0
+    assert response.total_rides == 0
+
+
+def test_ride_response_handles_null_values():
+    from app.domains.trips.schemas import RideResponse
+
+    ride_data = SimpleNamespace(
+        id=uuid4(),
+        driver_id=uuid4(),
+        vehicle_id=uuid4(),
+        created_at=datetime.now(timezone.utc),
+        departure_time=datetime.now(timezone.utc),
+        total_seats=4,
+        available_seats=4,
+        price_per_seat=10.0,
+        origin_city="Baku",
+        destination_city="Sumqayit",
+        intermediate_cities=None,
+        status="active",
+        description=None,
+        smoking_allowed=None,
+        pets_allowed=None,
+        music_allowed=None,
+        female_only=None,
+        origin_location={"lat": 40.4093, "lon": 49.8671},
+        destination_location={"lat": 40.4093, "lon": 49.8671},
+        vehicle=None,
+        driver=None,
+    )
+
+    response = RideResponse.model_validate(ride_data)
+    assert response.smoking_allowed is False
+    assert response.pets_allowed is False
+    assert response.music_allowed is True
+    assert response.female_only is False
