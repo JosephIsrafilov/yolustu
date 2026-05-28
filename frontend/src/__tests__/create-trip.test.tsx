@@ -43,6 +43,14 @@ describe('CreateTripPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (globalThis as { fetch?: typeof fetch }).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: {
+        get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json' : null),
+      },
+      text: async () => '[]',
+    }) as unknown as typeof fetch;
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -50,6 +58,10 @@ describe('CreateTripPage', () => {
         },
       },
     });
+  });
+
+  afterEach(() => {
+    delete (globalThis as { fetch?: typeof fetch }).fetch;
   });
 
   const renderComponent = () => {

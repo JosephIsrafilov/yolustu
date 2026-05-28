@@ -5,6 +5,7 @@ from uuid import uuid4
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import app
+from app.domains.identity.models import User
 
 client = TestClient(app)
 
@@ -92,6 +93,30 @@ def test_login_verified_user_returns_tokens_and_user():
     assert "refreshToken" in data
     assert data["user"]["phone"] == SEED_PHONE
     assert data["user"]["is_verified"] is True
+    assert response.cookies.get("csrf_token")
+
+
+def test_cookie_auth_post_requires_valid_csrf_token():
+    login_response = client.post(
+        "/api/v1/auth/login", json={"phone": SEED_PHONE, "password": SEED_PASSWORD}
+    )
+    assert login_response.status_code == 200
+    csrf_token = client.cookies.get("csrf_token")
+    assert csrf_token
+
+    missing_response = client.post("/api/v1/auth/logout")
+    assert missing_response.status_code == 403
+    assert missing_response.json()["error"]["message"] == "Invalid CSRF token"
+
+    mismatch_response = client.post(
+        "/api/v1/auth/logout", headers={"X-CSRF-Token": "wrong-token"}
+    )
+    assert mismatch_response.status_code == 403
+
+    valid_response = client.post(
+        "/api/v1/auth/logout", headers={"X-CSRF-Token": csrf_token}
+    )
+    assert valid_response.status_code == 200
 
 
 def test_request_otp():
@@ -106,23 +131,26 @@ def test_verify_otp_invalid():
     assert "Invalid or expired OTP" in response.json()["error"]["message"]
 
 
-def test_refresh_token_contract(redis_mock):
+def test_refresh_token_contract(redis_mock, db):
     previous_get = redis_mock.get.side_effect
     previous_get_return = redis_mock.get.return_value
 
     token_value = "refresh-token-123"
+    user = db.query(User).filter(User.phone == SEED_PHONE).one()
 
     def _get(key):
         if key == f"refresh_token:{token_value}":
-            return "+994501234567"
+            return str(user.id)
         return None
 
     redis_mock.get.side_effect = _get
 
     try:
+        client.cookies.set("refresh_token", token_value)
+        client.cookies.set("csrf_token", "csrf-refresh-token")
         response = client.post(
             "/api/v1/auth/refresh",
-            json={"refreshToken": token_value},
+            headers={"X-CSRF-Token": "csrf-refresh-token"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -130,6 +158,8 @@ def test_refresh_token_contract(redis_mock):
         assert "refreshToken" in data
         assert data["user"]["phone"] == "+994501234567"
     finally:
+        client.cookies.delete("refresh_token")
+        client.cookies.delete("csrf_token")
         redis_mock.get.side_effect = previous_get
         redis_mock.get.return_value = previous_get_return
 

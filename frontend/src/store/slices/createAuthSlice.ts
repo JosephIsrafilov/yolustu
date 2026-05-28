@@ -194,17 +194,6 @@ export const createAuthSlice: StateCreator<
 
   initAuth: async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        set({
-          currentUser: null,
-          isAuthenticated: false,
-          activeRole: 'passenger',
-          activeMode: 'passenger',
-        });
-        return;
-      }
-
       const user = await authService.getCurrentUser();
       if (user) {
         set({
@@ -215,8 +204,6 @@ export const createAuthSlice: StateCreator<
           lastError: null,
         });
       } else {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
         set({
           currentUser: null,
           isAuthenticated: false,
@@ -225,9 +212,11 @@ export const createAuthSlice: StateCreator<
         });
       }
     } catch (error) {
-      console.error('Failed to initialize auth:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        // Expected behavior for unauthenticated users, do not log an error
+      } else {
+        console.error('Failed to initialize auth:', error);
+      }
       set({
         currentUser: null,
         isAuthenticated: false,

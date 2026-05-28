@@ -85,7 +85,7 @@ class RefreshTokenInput(BaseModel):
 
 
 class TokenData(BaseModel):
-    phone: Optional[str] = None
+    user_id: Optional[UUID] = None
 
 
 class LoginInput(BaseModel):

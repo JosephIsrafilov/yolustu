@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -9,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 import app.domains.models as _domain_models  # noqa: F401
 from app.core.config import UPLOADS_DIR, settings
+from app.core.csrf import validate_csrf_request
 from app.core.logging_config import setup_logging
 from app.core.limiter import limiter
 from slowapi.errors import RateLimitExceeded
@@ -63,6 +65,14 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def csrf_middleware(request: Request, call_next):
+    csrf_error = validate_csrf_request(request)
+    if csrf_error is not None:
+        return csrf_error
+    return await call_next(request)
+
+
 # Global Exception Handler
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -82,6 +92,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logging.exception(f"Unhandled error: {exc}")
     status_code = 500
     if hasattr(exc, "status_code") and isinstance(exc.status_code, int):
         status_code = exc.status_code

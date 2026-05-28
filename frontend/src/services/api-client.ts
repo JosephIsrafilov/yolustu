@@ -32,6 +32,41 @@ function mapStatusToCode(status: number): ApiErrorCode {
 }
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+const UNSAFE_METHODS = new Set<RequestMethod>(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+function normalizeApiBaseUrl(baseUrl: string): string {
+  const trimmedBaseUrl = baseUrl.replace(/\/+$/, '');
+  if (typeof window === 'undefined') {
+    return trimmedBaseUrl;
+  }
+
+  try {
+    const url = new URL(trimmedBaseUrl);
+    const pageHost = window.location.hostname;
+    const isPageLoopback = pageHost === 'localhost' || pageHost === '127.0.0.1';
+    const isApiLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+    if (isPageLoopback && isApiLoopback && url.hostname !== pageHost) {
+      url.hostname = pageHost;
+      return url.toString().replace(/\/+$/, '');
+    }
+  } catch {
+    return trimmedBaseUrl;
+  }
+
+  return trimmedBaseUrl;
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${encodeURIComponent(name)}=`));
+  return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : null;
+}
 
 async function parseResponseBody(response: Response): Promise<unknown> {
   if (response.status === 204 || response.status === 205) {
@@ -108,7 +143,7 @@ class ApiClient {
   private refreshSubscribers: RefreshSubscriber[] = [];
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    this.baseUrl = normalizeApiBaseUrl(baseUrl);
   }
 
   private async request<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
@@ -121,12 +156,9 @@ class ApiClient {
       if (!isFormData) {
         headers['Content-Type'] = 'application/json';
       }
-
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token && shouldAttemptRefresh(path)) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+      const csrfToken = UNSAFE_METHODS.has(method) ? getCookie('csrf_token') : null;
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
       }
 
       let requestBody: BodyInit | undefined;
@@ -142,6 +174,7 @@ class ApiClient {
         method,
         headers,
         body: requestBody,
+        credentials: 'include',
       });
 
       const responseBody = await parseResponseBody(response);
@@ -170,16 +203,7 @@ class ApiClient {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const { accessToken, refreshToken: rotatedRefreshToken } =
-          await this.post<RefreshResponse>('/auth/refresh', { refreshToken });
-
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('refresh_token', rotatedRefreshToken);
+        const { accessToken } = await this.post<RefreshResponse>('/auth/refresh');
 
         this.onTokenRefreshed(accessToken);
         this.isRefreshing = false;
@@ -187,10 +211,12 @@ class ApiClient {
       } catch (error) {
         this.isRefreshing = false;
         this.onTokenRefreshFailed(error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
+
         if (typeof window !== 'undefined') {
-          window.location.href = ROUTES.login;
+          if (!window.location.pathname.includes(ROUTES.login)) {
+            const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `${ROUTES.login}?redirect_to=${currentUrl}`;
+          }
         }
         throw error;
       }
@@ -244,6 +270,18 @@ class ApiClient {
 
   delete<T>(path: string): Promise<T> {
     return this.request<T>('DELETE', path);
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.post('/auth/logout');
+    } catch (e) {
+      console.error('Logout failed', e);
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.location.href = ROUTES.login;
+      }
+    }
   }
 }
 

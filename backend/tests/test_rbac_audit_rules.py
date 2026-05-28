@@ -30,10 +30,10 @@ class FakeUser:
 
 class FakeUserRepository:
     def __init__(self, users: list[FakeUser]):
-        self.users = {u.phone: u for u in users}
+        self.users = {u.id: u for u in users}
 
-    def get_by_phone(self, phone: str) -> FakeUser | None:
-        return self.users.get(phone)
+    def get_by_id(self, user_id: UUID) -> FakeUser | None:
+        return self.users.get(user_id)
 
 
 def test_blocked_user_raises_403_in_get_current_user():
@@ -60,7 +60,7 @@ def test_blocked_user_raises_403_in_get_current_user():
         from app.core.config import settings
 
         token = jwt.encode(
-            {"sub": user.phone}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            {"sub": str(user.id)}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
         )
 
         with pytest.raises(HTTPException) as exc:

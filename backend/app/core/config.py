@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql://yolustu_user:yolustu_password@127.0.0.1:5433/yolustu_db"
     )
-    SECRET_KEY: str = "yolustu-super-secret-key"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REDIS_URL: str = "redis://127.0.0.1:6379/0"
 
     STRIPE_SECRET_KEY: str = ""
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "yolmatessupport@gmail.com"
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]
 
 if (
     settings.ENVIRONMENT == "production"

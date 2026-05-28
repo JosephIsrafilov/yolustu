@@ -93,8 +93,8 @@ class IdentityService:
         return self._create_auth_session(user, redis_client)
 
     def refresh_token(self, refresh_token: str, redis_client):
-        phone = redis_client.get(f"refresh_token:{refresh_token}")
-        if not phone:
+        user_id_bytes = redis_client.get(f"refresh_token:{refresh_token}")
+        if not user_id_bytes:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired refresh token",
@@ -102,10 +102,20 @@ class IdentityService:
 
         redis_client.delete(f"refresh_token:{refresh_token}")
 
-        normalized_phone = (
-            phone.decode("utf-8") if isinstance(phone, bytes) else str(phone)
+        user_id_str = (
+            user_id_bytes.decode("utf-8")
+            if isinstance(user_id_bytes, bytes)
+            else str(user_id_bytes)
         )
-        user = self.users.get_by_phone(normalized_phone)
+        try:
+            user_id = UUID(user_id_str)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+
+        user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -115,21 +125,23 @@ class IdentityService:
         return self._create_auth_session(user, redis_client)
 
     def _create_auth_session(self, user: User, redis_client):
-        tokens = self._create_tokens(user.phone, redis_client)
+        tokens = self._create_tokens(str(user.id), redis_client)
         return {
             "accessToken": tokens["access_token"],
             "refreshToken": tokens["refresh_token"],
             "user": user,
         }
 
-    def _create_tokens(self, phone: str, redis_client):
+    def _create_tokens(self, user_id_str: str, redis_client):
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": phone}, expires_delta=access_token_expires
+            data={"sub": user_id_str}, expires_delta=access_token_expires
         )
 
         refresh_token = create_refresh_token()
-        redis_client.setex(f"refresh_token:{refresh_token}", 30 * 24 * 60 * 60, phone)
+        redis_client.setex(
+            f"refresh_token:{refresh_token}", 30 * 24 * 60 * 60, user_id_str
+        )
 
         return {
             "access_token": access_token,

@@ -11,8 +11,31 @@ from app.core.database import get_db
 from app.domains.identity.models import User
 from app.domains.identity.repositories import UserRepository
 from app.domains.identity.schemas import TokenData
+from fastapi import Request
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
+    async def __call__(self, request: Request) -> str | None:
+        authorization = request.headers.get("Authorization")
+        if authorization:
+            scheme, _, param = authorization.partition(" ")
+            if scheme.lower() == "bearer":
+                return param
+
+        token = request.cookies.get("access_token")
+        if not token:
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+                )
+            return None
+
+        if token.startswith("Bearer "):
+            return token.split(" ")[1]
+        return token
+
+
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="api/v1/auth/login")
 
 
 @dataclass(frozen=True)
@@ -56,14 +79,18 @@ def get_current_user_from_token(token: str, db: Session) -> CurrentUser:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        phone: str = payload.get("sub")
-        if phone is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
             raise credentials_exception
-        token_data = TokenData(phone=phone)
+        try:
+            user_id = UUID(user_id_str)
+        except ValueError:
+            raise credentials_exception
+        token_data = TokenData(user_id=user_id)
     except JWTError:
         raise credentials_exception
 
-    user = UserRepository(db).get_by_phone(token_data.phone)
+    user = UserRepository(db).get_by_id(token_data.user_id)
     if user is None:
         raise credentials_exception
     if user.is_blocked:

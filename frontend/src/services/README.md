@@ -10,31 +10,19 @@ This directory contains a service abstraction between UI/store and data sources.
 
 ## Current Mode
 
-- `NEXT_PUBLIC_DATA_MODE=mock` is the default.
-- In mock mode, services call thin wrappers around existing Zustand mock logic.
-- In api mode, services call backend endpoints via `apiClient`.
+Services call backend endpoints via `apiClient`.
 
 ## Environment
 
 - `NEXT_PUBLIC_API_URL` - base URL for future backend API.
 - `NEXT_PUBLIC_WS_URL` - WebSocket base URL for realtime endpoints.
-- `NEXT_PUBLIC_DATA_MODE` - `mock` or `api` (default fallback is `mock`).
-
-Switch examples:
-
-```bash
-NEXT_PUBLIC_DATA_MODE=mock
-NEXT_PUBLIC_DATA_MODE=api
-```
-
 Important:
-- `api` mode requires a running backend at `NEXT_PUBLIC_API_URL`.
-- Without backend, network calls in api mode will fail with `ApiError`.
+- The frontend requires a running backend at `NEXT_PUBLIC_API_URL`.
+- Without a backend, network calls fail with `ApiError`.
 
 Recommended local `.env.local` for Sprint 1:
 
 ```bash
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
@@ -42,7 +30,6 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 Recommended local `.env.local` for Sprint 2:
 
 ```bash
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
@@ -68,7 +55,6 @@ Seat rules expected by UI:
 - `AdminService`
 
 Contracts are in `src/services/contracts`.
-Mock implementations are in `src/services/mock`.
 API implementations are in `src/services/api`.
 
 ## Expected API Endpoints
@@ -84,7 +70,7 @@ Auth:
 
 Auth response contract used by frontend API services:
 - login/register response shape: `{ accessToken, refreshToken, user }`
-- refresh request body: `{ refreshToken }`
+- refresh uses the HttpOnly `refresh_token` cookie.
 - refresh response shape: `{ accessToken, refreshToken, user }`
 - verify-otp response shape: `{ message }` (no token issuance)
 
@@ -126,8 +112,8 @@ Admin:
    - bookings
    - driver/admin actions
 3. Keep auth lifecycle stable:
-   - `register/login` store `token` + `refresh_token`
-   - expired access token triggers `/auth/refresh` with `{ refreshToken }`
-   - refresh success replaces both tokens from `{ accessToken, refreshToken }`
+   - `register/login` rely on HttpOnly auth cookies.
+   - expired access token triggers `/auth/refresh` using the refresh cookie.
+   - unsafe cookie-auth requests send `X-CSRF-Token` from the readable `csrf_token` cookie.
    - refresh failure clears session and redirects to `/auth/login`
 4. Move store logic from direct mutations to service-driven actions where needed.

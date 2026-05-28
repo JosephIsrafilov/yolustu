@@ -14,15 +14,15 @@ interface AuthSessionResponse {
   user: ApiUser;
 }
 
-function persistAuthTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem('token', accessToken);
-  localStorage.setItem('refresh_token', refreshToken);
+function clearLegacyAuthTokens() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refresh_token');
 }
 
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
     const session = await apiClient.post<AuthSessionResponse>('/auth/login', input);
-    persistAuthTokens(session.accessToken, session.refreshToken);
+    clearLegacyAuthTokens();
     return mapApiUserToUser(session.user);
   },
 
@@ -38,7 +38,7 @@ export const apiAuthService: AuthService = {
       password: input.password,
     };
     const session = await apiClient.post<AuthSessionResponse>('/auth/register', payload);
-    persistAuthTokens(session.accessToken, session.refreshToken);
+    clearLegacyAuthTokens();
     return mapApiUserToUser(session.user);
   },
 
@@ -70,8 +70,11 @@ export const apiAuthService: AuthService = {
   },
 
   async logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
+    try {
+      await apiClient.post('/auth/logout');
+    } finally {
+      clearLegacyAuthTokens();
+    }
   },
 
   async getCurrentUser() {

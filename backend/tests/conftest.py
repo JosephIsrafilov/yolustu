@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 from main import app
 from app.core.database import Base, get_db

@@ -1,32 +1,141 @@
-import { test, expect } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
-test.describe('Authentication Flow', () => {
-  test('should login successfully with valid credentials', async ({ page }) => {
-    // Go to login page
-    await page.goto('/auth/login');
+const apiUser = {
+  id: 'u-1',
+  first_name: 'Elvin',
+  last_name: 'Mammadov',
+  phone: '+994501234567',
+  rating: 4.8,
+  total_rides: 12,
+  created_at: '2026-05-23T10:00:00Z',
+  role: 'driver',
+  city: 'Baku',
+  verification_status: 'approved',
+};
 
-    // Fill in phone and password
-    await page.locator('input[type="text"]').fill('+994501234567');
-    await page.locator('input[type="password"]').fill('password123');
+async function mockApi(page: Page) {
+  let logoutCsrfHeader: string | null = null;
 
-    // Submit form
-    await page.locator('button[type="submit"]').click();
-
-    // Verify it redirects to the search/trips page
-    await expect(page).toHaveURL(/\/trips/);
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'yolustu-storage',
+      JSON.stringify({ state: { language: 'en' }, version: 2 }),
+    );
   });
 
-  test('should show error with invalid password length', async ({ page }) => {
+  await page.route('**/api/v1/**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname;
+
+    if (path.endsWith('/auth/login')) {
+      await page.context().addCookies([
+        {
+          name: 'access_token',
+          value: 'Bearer access-e2e-token',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'refresh_token',
+          value: 'refresh-e2e-token',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'csrf_token',
+          value: 'csrf-e2e-token',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: false,
+          sameSite: 'Lax',
+        },
+      ]);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          accessToken: 'access-e2e-token',
+          refreshToken: 'refresh-e2e-token',
+          user: apiUser,
+        }),
+      });
+      return;
+    }
+
+    if (path.endsWith('/auth/logout')) {
+      logoutCsrfHeader = request.headers()['x-csrf-token'] ?? null;
+      await page.context().clearCookies();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Logged out successfully' }),
+      });
+      return;
+    }
+
+    if (path.endsWith('/users/me')) {
+      const hasAccessCookie = request.headers().cookie?.includes('access_token=');
+      await route.fulfill({
+        status: hasAccessCookie ? 200 : 401,
+        contentType: 'application/json',
+        body: JSON.stringify(hasAccessCookie ? apiUser : { detail: 'Not authenticated' }),
+      });
+      return;
+    }
+
+    if (path.endsWith('/rides/search')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  return {
+    getLogoutCsrfHeader: () => logoutCsrfHeader,
+  };
+}
+
+test.describe('Authentication Flow', () => {
+  test('logs in, sends CSRF on logout, and gates protected pages after logout', async ({ page }) => {
+    const api = await mockApi(page);
+
     await page.goto('/auth/login');
-
-    // Fill in valid phone but too short password (length < 6)
     await page.locator('input[type="text"]').fill('+994501234567');
-    await page.locator('input[type="password"]').fill('123');
-
-    // Submit form
+    await page.locator('input[type="password"]').fill('password123');
     await page.locator('button[type="submit"]').click();
 
-    // It should not redirect
+    await expect(page).toHaveURL(/\/trips/);
+    await expect(page.getByLabel('Log out')).toBeVisible();
+
+    await page.getByLabel('Log out').click();
+    await expect.poll(api.getLogoutCsrfHeader).toBe('csrf-e2e-token');
+
+    await page.goto('/bookings');
+    await expect(page.getByText('Login required')).toBeVisible();
+  });
+
+  test('shows validation error with missing password', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/auth/login');
+
+    await page.locator('input[type="text"]').fill('+994501234567');
+    await page.locator('button[type="submit"]').click();
+
     await expect(page).toHaveURL(/\/auth\/login/);
+    await expect(page.getByText('Password is required')).toBeVisible();
   });
 });

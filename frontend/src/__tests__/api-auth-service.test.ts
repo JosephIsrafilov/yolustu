@@ -34,7 +34,9 @@ describe('apiAuthService', () => {
     localStorage.clear();
   });
 
-  it('calls login endpoint and persists tokens', async () => {
+  it('calls login endpoint and clears legacy local tokens', async () => {
+    localStorage.setItem('token', 'old-access');
+    localStorage.setItem('refresh_token', 'old-refresh');
     mockedApiClient.post.mockResolvedValueOnce({
       accessToken: 'access-1',
       refreshToken: 'refresh-1',
@@ -50,12 +52,14 @@ describe('apiAuthService', () => {
       phone: apiUser.phone,
       password: 'password123',
     });
-    expect(localStorage.getItem('token')).toBe('access-1');
-    expect(localStorage.getItem('refresh_token')).toBe('refresh-1');
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
     expect(user.id).toBe(apiUser.id);
   });
 
-  it('calls register endpoint and persists tokens', async () => {
+  it('calls register endpoint and clears legacy local tokens', async () => {
+    localStorage.setItem('token', 'old-access');
+    localStorage.setItem('refresh_token', 'old-refresh');
     mockedApiClient.post.mockResolvedValueOnce({
       accessToken: 'access-2',
       refreshToken: 'refresh-2',
@@ -76,9 +80,21 @@ describe('apiAuthService', () => {
       last_name: 'Mammadov',
       password: 'password123',
     });
-    expect(localStorage.getItem('token')).toBe('access-2');
-    expect(localStorage.getItem('refresh_token')).toBe('refresh-2');
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
     expect(user.fullName).toBe('Elvin Mammadov');
+  });
+
+  it('calls logout endpoint and clears legacy local tokens', async () => {
+    localStorage.setItem('token', 'old-access');
+    localStorage.setItem('refresh_token', 'old-refresh');
+    mockedApiClient.post.mockResolvedValueOnce({});
+
+    await apiAuthService.logout();
+
+    expect(mockedApiClient.post).toHaveBeenCalledWith('/auth/logout');
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
   });
 
   it('gets current user from /users/me and maps fields', async () => {

@@ -22,13 +22,14 @@ describe('apiClient refresh flow', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.restoreAllMocks();
+    document.cookie = 'csrf_token=; Max-Age=0; path=/';
   });
 
   afterEach(() => {
     delete (globalThis as { fetch?: typeof fetch }).fetch;
   });
 
-  it('sends refresh request with JSON body and retries original request', async () => {
+  it('uses cookie refresh and retries original request with credentials', async () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce(
@@ -50,9 +51,6 @@ describe('apiClient refresh flow', () => {
       );
     (globalThis as { fetch?: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
 
-    localStorage.setItem('token', 'old-access-token');
-    localStorage.setItem('refresh_token', 'old-refresh-token');
-
     const result = await apiClient.get<{ id: string }>('/users/me');
 
     expect(result).toEqual({ id: 'u-1' });
@@ -61,11 +59,28 @@ describe('apiClient refresh flow', () => {
     const refreshCall = fetchMock.mock.calls[1];
     expect(refreshCall[0]).toContain('/auth/refresh');
     expect((refreshCall[1] as RequestInit).method).toBe('POST');
-    expect((refreshCall[1] as RequestInit).body).toBe(
-      JSON.stringify({ refreshToken: 'old-refresh-token' }),
-    );
+    expect((refreshCall[1] as RequestInit).body).toBeUndefined();
+    expect((refreshCall[1] as RequestInit).credentials).toBe('include');
 
-    expect(localStorage.getItem('token')).toBe('new-access-token');
-    expect(localStorage.getItem('refresh_token')).toBe('new-refresh-token');
+    const retryCall = fetchMock.mock.calls[2];
+    expect((retryCall[1] as RequestInit).credentials).toBe('include');
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+  });
+
+  it('sends CSRF header for unsafe requests when csrf cookie exists', async () => {
+    document.cookie = 'csrf_token=csrf-123; path=/';
+    const fetchMock = jest.fn().mockResolvedValueOnce(
+      createJsonResponse(200, {
+        ok: true,
+      }) as unknown as Response,
+    );
+    (globalThis as { fetch?: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+
+    await apiClient.post<{ ok: boolean }>('/auth/logout');
+
+    const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((requestInit.headers as Record<string, string>)['X-CSRF-Token']).toBe('csrf-123');
+    expect(requestInit.credentials).toBe('include');
   });
 });
