@@ -259,15 +259,15 @@ export default function HomePage() {
         <section className="w-full bg-teal-50 py-20 sm:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-              <div className="lg:max-w-[560px] animate-slide-up">
-                <div className="inline-flex items-center gap-2 rounded-full bg-teal-100 px-3.5 py-1 text-sm font-semibold text-teal-700 hover:scale-105 transition-transform duration-300">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-teal-100 px-3 py-1 text-sm font-medium text-teal-700">
                   <Icon name="zap" className="h-4 w-4" />
                   {copy.home.aiBadge}
                 </div>
                 <h2 className="mt-4 font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl leading-tight">
                   {copy.home.aiTitle}
                 </h2>
-                <p className="mt-4 text-lg text-slate-600 leading-relaxed">
+                <p className="mt-4 text-lg text-slate-600">
                   {copy.home.aiDesc}
                 </p>
                 <ul className="mt-8 space-y-4">
@@ -277,76 +277,59 @@ export default function HomePage() {
                     copy.home.aiPoint3,
                     copy.home.aiPoint4,
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-700 font-medium hover:translate-x-1 transition-transform duration-200">
-                      <div className="flex h-6 w-6 items-center justify-center bg-teal-100 rounded-full shrink-0 shadow-xs">
-                        <Icon name="zap" className="h-3.5 w-3.5 text-teal-600 animate-pulse" />
+                    <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
+                      <div className="flex h-6 w-6 items-center justify-center bg-teal-100 rounded-full shrink-0">
+                        <Icon name="zap" className="h-3.5 w-3.5 text-teal-600" />
                       </div>
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
-              <Card className="overflow-hidden rounded-[28px] border border-white/80 bg-white/90 p-3 shadow-[0_24px_70px_rgba(0,31,36,0.14)] backdrop-blur lg:ml-auto lg:w-[512px] hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgba(0,31,36,0.2)] transition-all duration-500">
-                <div className="relative overflow-hidden rounded-[22px] bg-navy p-6 text-white">
-                  <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-teal-400/20 blur-2xl animate-pulse" />
-                  <div className="absolute -bottom-16 left-10 h-28 w-28 rounded-full bg-cyan-300/10 blur-2xl" />
-                  <div className="relative z-10 flex items-center justify-between gap-4">
-                    <span className="text-sm font-semibold text-teal-200">Baku to Ganja</span>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-teal-100 ring-1 ring-white/10">
+              <Card className="group overflow-hidden border-0 !p-0 shadow-xl transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-[0_28px_70px_rgba(0,31,36,0.20)] lg:ml-auto lg:w-[512px]">
+                <div className="relative overflow-hidden bg-navy p-6 text-white">
+                  <div className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-linear-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-teal-300">Baku &rarr; Ganja</span>
+                    <span className="rounded-full bg-teal-400/20 px-2 py-0.5 text-xs font-medium text-teal-300 transition-all duration-300 group-hover:bg-teal-300/25 group-hover:text-teal-100 group-hover:shadow-[0_0_18px_rgba(94,234,212,0.20)]">
                       {copy.home.aiRecommended}
                     </span>
                   </div>
-                  <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-heading text-5xl font-extrabold tracking-tight">11.50</span>
-                      <span className="pb-1 text-base font-semibold text-teal-100/80">AZN / {copy.home.aiSeat}</span>
-                    </div>
-                    <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10 sm:flex hover:rotate-12 transition-transform duration-300">
-                      <Icon name="zap" className="h-5 w-5 text-teal-200" />
-                    </div>
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="font-heading text-4xl font-bold transition-transform duration-500 ease-out group-hover:scale-[1.03]">11.50</span>
+                    <span className="text-lg text-teal-200/70">AZN / {copy.home.aiSeat}</span>
                   </div>
-                  <p className="relative z-10 mt-3 max-w-[390px] text-sm leading-relaxed text-teal-100/65">
+                  <p className="mt-2 text-sm text-teal-200/60">
                     {copy.home.aiCardReasoning}
                   </p>
                 </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-bold text-white shadow-sm">
-                        RM
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-navy">Rashad M.</p>
-                        <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-                          <Icon name="star" className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="font-medium text-slate-700">4.9</span>
-                          <span>- 312 trips</span>
-                        </div>
-                      </div>
+                <div className="bg-background p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_0_5px_rgba(43,138,154,0.12)]">
+                      RM
                     </div>
-                    <div className="rounded-full bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 ring-1 ring-teal-100">
-                      Verified driver
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Rashad M.</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Icon name="star" className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        <span>4.9</span>
+                        <span>- 312 trips</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="my-5 grid grid-cols-[auto_1fr_auto] items-center gap-3">
-                    <div className="h-2.5 w-2.5 rounded-full bg-teal-500 ring-4 ring-teal-50" />
-                    <div className="h-px bg-linear-to-r from-teal-200 via-slate-200 to-navy/20" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-navy ring-4 ring-slate-100" />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3 text-center text-xs text-slate-500">
-                    <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-3 hover:border-teal-300 transition-colors">
-                      <p className="font-heading text-lg font-extrabold text-navy">2</p>
-                      <p className="mt-0.5 font-medium">Seats left</p>
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
+                    <div className="rounded-lg bg-secondary p-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-teal-100/80 hover:shadow-sm">
+                      <p className="font-semibold text-foreground">2</p>
+                      <p>Seats left</p>
                     </div>
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 hover:border-slate-300 transition-colors">
-                      <p className="font-heading text-lg font-extrabold text-navy">08:00</p>
-                      <p className="mt-0.5 font-medium">Departure</p>
+                    <div className="rounded-lg bg-secondary p-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-teal-100/80 hover:shadow-sm">
+                      <p className="font-semibold text-foreground">08:00</p>
+                      <p>Departure</p>
                     </div>
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 hover:border-slate-300 transition-colors">
-                      <p className="font-heading text-lg font-extrabold text-navy">Toyota</p>
-                      <p className="mt-0.5 font-medium">Camry</p>
+                    <div className="rounded-lg bg-secondary p-2 transition-all duration-300 hover:-translate-y-0.5 hover:bg-teal-100/80 hover:shadow-sm">
+                      <p className="font-semibold text-foreground">Toyota</p>
+                      <p>Camry</p>
                     </div>
                   </div>
                 </div>
