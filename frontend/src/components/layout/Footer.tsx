@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon';
 import { I18N, LANGUAGES } from '@/lib/i18n';
 import { CURRENCY_CODE, CURRENCY_SYMBOL } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
+import YolmatesLogo from '@/components/brand/YolmatesLogo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -22,10 +23,7 @@ export default function Footer() {
     <footer className="mt-auto w-full border-t border-[#c0c8ca] bg-[#edfcff]">
       <div className="mx-auto grid w-full max-w-[1140px] grid-cols-1 items-center gap-6 px-4 py-8 text-center md:grid-cols-[minmax(220px,1fr)_minmax(0,auto)_minmax(180px,1fr)] md:text-left">
         <div className="flex min-w-0 flex-col items-center gap-2 md:items-start">
-          <Link href="/" className="ui-panel-title flex items-center gap-2 whitespace-nowrap text-[#002f37]">
-            <Icon name="map" size={20} strokeWidth={1.8} />
-            Yolmates
-          </Link>
+          <YolmatesLogo size="sm" className="whitespace-nowrap" />
           <span className="ui-meta-text text-[#40484a]">© {currentYear} Yolmates. {copy.footer.rights}</span>
         </div>
         <nav className="flex min-w-0 flex-wrap justify-center gap-x-5 gap-y-2 md:flex-nowrap">

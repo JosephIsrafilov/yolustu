@@ -22,6 +22,7 @@ interface SelectProps {
   searchable?: boolean;
   icon?: IconName;
   ariaLabel?: string;
+  className?: string;
 }
 
 export default function Select({
@@ -35,6 +36,7 @@ export default function Select({
   searchable = false,
   icon,
   ariaLabel,
+  className,
 }: SelectProps) {
   const { language } = useAppStore();
   const searchPlaceholder = language === 'az' ? 'Axtar...' : language === 'ru' ? 'Поиск...' : 'Search...';
@@ -240,7 +242,8 @@ export default function Select({
             ? 'opacity-50 bg-gray-50 cursor-not-allowed border-border'
             : error
               ? 'border-danger-500 focus:ring-danger-500'
-              : 'border-border hover:border-border-strong focus:ring-brand-500 cursor-pointer'
+              : 'border-border hover:border-border-strong focus:ring-brand-500 cursor-pointer',
+          className
         )}
       >
         {icon && (

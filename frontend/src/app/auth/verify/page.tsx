@@ -10,6 +10,7 @@ import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import { toApiError } from '@/services/api-error';
 import { I18N } from '@/lib/i18n';
+import YolmatesLogo from '@/components/brand/YolmatesLogo';
 
 function VerifyContent() {
   const router = useRouter();
@@ -85,7 +86,7 @@ function VerifyContent() {
   return (
     <div className="bg-white rounded-2xl w-full max-w-md p-8 border border-[#c0c8ca]" style={{ boxShadow: '0 8px 32px rgba(5,71,82,0.08)' }}>
       <div className="text-center mb-6">
-        <span className="text-[24px] font-[900] text-[#002f37]">Yolmates</span>
+        <YolmatesLogo size="lg" href="" className="justify-center" />
       </div>
       
       <h1 className="text-[24px] font-semibold text-[#002f37] text-center mb-1">{copy.auth.verifyTitle}</h1>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { useState, Suspense, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
@@ -14,49 +14,6 @@ import { MapContainer, RideMarkers } from '@/components/ui/Map';
 import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
-
-const TransparentCar = ({ src, className }: { src: string, className?: string }) => {
-  const [dataUrl, setDataUrl] = useState<string>('');
-
-  useEffect(() => {
-    const img = new window.Image();
-    img.src = src;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1, 300 / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      const w = canvas.width;
-      const h = canvas.height;
-      const stack = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
-      const visited = new Uint8Array(w * h);
-      while (stack.length > 0) {
-        const p = stack.pop();
-        if (!p) continue;
-        const x = p[0], y = p[1];
-        if (x < 0 || x >= w || y < 0 || y >= h) continue;
-        const idx = y * w + x;
-        if (visited[idx]) continue;
-        visited[idx] = 1;
-        const i = idx * 4;
-        if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
-          data[i+3] = 0;
-          stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-      setDataUrl(canvas.toDataURL('image/png'));
-    };
-  }, [src]);
-
-  if (!dataUrl) return <div className={className} />;
-  return <img src={dataUrl} alt="car" className={className} />;
-};
 
 function TripsContent() {
   const searchParams = useSearchParams();
@@ -72,11 +29,16 @@ function TripsContent() {
     minSeats: searchParams.get('passengers') ? Number(searchParams.get('passengers')) : undefined,
   });
 
-  React.useEffect(() => {
+  // Local state for search inputs
+  const [searchFrom, setSearchFrom] = useState(filters.departureCity || '');
+  const [searchTo, setSearchTo] = useState(filters.arrivalCity || '');
+  const [searchDate, setSearchDate] = useState(filters.date || '');
+
+  useEffect(() => {
     fetchTrips(filters);
   }, [fetchTrips, filters]);
 
-  const filteredTrips = React.useMemo(() => {
+  const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
       if (filters.femaleOnly && !t.femaleOnly) return false;
       if (filters.smokingAllowed && !t.smokingAllowed) return false;
@@ -86,11 +48,26 @@ function TripsContent() {
     });
   }, [trips, filters.femaleOnly, filters.smokingAllowed, filters.petsAllowed, filters.musicAllowed]);
 
-  const from = filters.departureCity || copy.common.all;
-  const to = filters.arrivalCity || copy.common.all;
+  const handleSearch = () => {
+    setFilters((p) => ({
+      ...p,
+      departureCity: searchFrom || undefined,
+      arrivalCity: searchTo || undefined,
+      date: searchDate || undefined,
+    }));
+
+    const params = new URLSearchParams();
+    if (searchFrom) params.set('from', searchFrom);
+    if (searchTo) params.set('to', searchTo);
+    if (searchDate) params.set('date', searchDate);
+    if (filters.minSeats) params.set('passengers', String(filters.minSeats));
+    router.replace(`/trips?${params.toString()}`);
+  };
+
   const updateMinSeats = (nextSeats: number) => {
     setFilters((p) => ({ ...p, minSeats: nextSeats > 1 ? nextSeats : undefined }));
   };
+
   const activeFilters = [
     filters.departureCity && `${copy.tripsPage.filterFrom}: ${filters.departureCity}`,
     filters.arrivalCity && `${copy.tripsPage.filterTo}: ${filters.arrivalCity}`,
@@ -102,294 +79,479 @@ function TripsContent() {
     filters.musicAllowed && copy.createTrip.musicAllowedLabel,
   ].filter((f): f is string => !!f);
 
+  const renderTripCard = (trip: typeof trips[number]) => {
+    const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
+    const isFull = trip.seatsAvailable === 0;
+
+    return (
+      <article
+        key={trip.id}
+        onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
+        className={`group grid gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 sm:grid-cols-[minmax(0,1fr)_180px] ${
+          isFull ? 'cursor-not-allowed opacity-60 grayscale' : 'cursor-pointer hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md'
+        }`}
+      >
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-100">
+              <Icon name="calendar" size={13} />
+              {trip.date}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-100">
+              <Icon name="clock" size={13} />
+              {trip.time}
+            </span>
+            {trip.carModel && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-100">
+                <Icon name="car" size={13} />
+                {trip.carModel}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+            <div className="flex flex-col items-center pt-1">
+              <span className="h-3 w-3 rounded-full bg-teal-500 ring-4 ring-teal-50" />
+              <span className="my-1 h-10 w-px bg-slate-200" />
+              <span className="h-3 w-3 rounded-full bg-navy ring-4 ring-slate-100" />
+            </div>
+            <div className="min-w-0 space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{copy.common.from}</p>
+                <p className="truncate font-heading text-lg font-extrabold text-navy">{trip.departureCity}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{copy.common.to}</p>
+                <p className="truncate font-heading text-lg font-extrabold text-navy">{trip.arrivalCity}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+            <div className="flex items-center gap-3">
+              {driver?.avatarUrl ? (
+                <Image
+                  src={driver.avatarUrl}
+                  alt={driver.fullName}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+                  {driver?.fullName.charAt(0) || '?'}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-bold text-navy">{driver?.fullName || copy.common.unknown}</p>
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                  <Icon name="star" size={12} className="fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-slate-700">{driver?.rating.toFixed(1)}</span>
+                  <span>- {driver?.totalTrips ?? 0} trips</span>
+                  {driver?.verificationStatus === 'approved' && (
+                    <span className="ml-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700">Verified</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-slate-400">
+              {trip.femaleOnly && <span title={copy.createTrip.femaleOnlyLabel}><Icon name="venus" size={14} /></span>}
+              {trip.musicAllowed && <span title={copy.createTrip.musicAllowedLabel}><Icon name="music" size={14} /></span>}
+              {trip.petsAllowed && <span title={copy.createTrip.petsAllowedLabel}><Icon name="paw-print" size={14} /></span>}
+              {trip.smokingAllowed && <span title={copy.createTrip.smokingAllowedLabel}><Icon name="cigarette" size={14} /></span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-row items-center justify-between gap-4 rounded-xl bg-teal-50/70 p-4 sm:flex-col sm:items-stretch sm:justify-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700/70">{copy.createTrip.summaryPrice}</p>
+            <p className="font-heading text-3xl font-extrabold text-navy">{formatPrice(trip.pricePerSeat)}</p>
+          </div>
+          <div className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold ${
+            isFull ? 'bg-red-50 text-red-600' : 'bg-white text-teal-700 ring-1 ring-teal-100'
+          }`}>
+            {isFull ? <Icon name="ban" size={15} /> : <Icon name="users" size={15} />}
+            {isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}
+          </div>
+          <span className="hidden rounded-lg bg-navy px-4 py-2 text-center text-sm font-bold text-white transition-colors group-hover:bg-teal-700 sm:block">
+            {copy.common.details}
+          </span>
+        </div>
+      </article>
+    );
+  };
+
+  const renderMapTripCard = (trip: typeof trips[number]) => {
+    const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
+    const isFull = trip.seatsAvailable === 0;
+
+    return (
+      <article
+        key={trip.id}
+        onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
+        className={`rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 ${
+          isFull ? 'cursor-not-allowed opacity-60 grayscale' : 'cursor-pointer hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md'
+        }`}
+      >
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 ring-1 ring-slate-100">
+                <Icon name="calendar" size={12} />
+                {trip.date}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 ring-1 ring-slate-100">
+                <Icon name="clock" size={12} />
+                {trip.time}
+              </span>
+            </div>
+            {trip.carModel && (
+              <div className="mt-2 inline-flex max-w-full items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700">
+                <Icon name="car" size={12} />
+                <span className="truncate">{trip.carModel}</span>
+              </div>
+            )}
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-[10px] font-bold uppercase text-slate-400">{copy.createTrip.summaryPrice}</p>
+            <p className="font-heading text-2xl font-extrabold text-navy">{formatPrice(trip.pricePerSeat)}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+          <div className="flex flex-col items-center pt-1">
+            <span className="h-3 w-3 rounded-full bg-teal-500 ring-4 ring-teal-50" />
+            <span className="my-1 h-8 w-px bg-slate-200" />
+            <span className="h-3 w-3 rounded-full bg-navy ring-4 ring-slate-100" />
+          </div>
+          <div className="min-w-0 space-y-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{copy.common.from}</p>
+              <p className="truncate text-base font-extrabold text-navy">{trip.departureCity}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{copy.common.to}</p>
+              <p className="truncate text-base font-extrabold text-navy">{trip.arrivalCity}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {driver?.avatarUrl ? (
+              <Image
+                src={driver.avatarUrl}
+                alt={driver.fullName}
+                width={34}
+                height={34}
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-white shadow-sm"
+              />
+            ) : (
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
+                {driver?.fullName.charAt(0) || '?'}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-navy">{driver?.fullName || copy.common.unknown}</p>
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                <Icon name="star" size={11} className="fill-amber-400 text-amber-400" />
+                <span>{driver?.rating.toFixed(1)}</span>
+                <span>- {driver?.totalTrips ?? 0}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
+            isFull ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700 ring-1 ring-teal-100'
+          }`}>
+            {isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}
+          </div>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <WebLayout>
-      <div className="flex flex-col items-start gap-6 md:flex-row">
-        {}
-        <aside className="order-2 w-full md:order-1 md:w-70 shrink-0">
-          <div className="bg-white rounded-2xl border border-[#c0c8ca] p-5 sticky top-20" style={{ boxShadow: '0 4px 12px rgba(5,71,82,0.05)' }}>
-            <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#c0c8ca]">
-              <h2 className="ui-panel-title text-[18px] text-[#002f37]">{copy.tripsPage.filters}</h2>
-              <button onClick={() => setFilters({})} className="ui-action-text text-[#054752] hover:underline">{copy.tripsPage.reset}</button>
+      <section className="mb-6 w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-heading text-2xl font-extrabold tracking-tight text-navy sm:text-3xl">
+              {copy.tripsPage.title}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">{copy.searchPage.routeDesc}</p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1.5 text-sm font-bold text-teal-700">
+            <Icon name="list" size={14} />
+            {filteredTrips.length} {copy.tripsPage.resultsFound}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_56px] md:items-end">
+          <Select
+            value={searchFrom}
+            onChange={(value) => setSearchFrom(String(value))}
+            options={[
+              { value: '', label: copy.common.allCities },
+              ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+            ]}
+            label={copy.common.from}
+            placeholder={copy.common.from}
+            icon="map-pin"
+            searchable
+          />
+
+          <Select
+            value={searchTo}
+            onChange={(value) => setSearchTo(String(value))}
+            options={[
+              { value: '', label: copy.common.allCities },
+              ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+            ]}
+            label={copy.common.to}
+            placeholder={copy.common.to}
+            icon="map-pin"
+            searchable
+          />
+
+          <DatePicker
+            value={searchDate}
+            onChange={(newDate) => setSearchDate(newDate || '')}
+            label={copy.common.date}
+            placeholder={copy.common.selectDate}
+          />
+
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700 active:translate-y-0"
+            aria-label={copy.common.search}
+          >
+            <Icon name="search" size={20} />
+          </button>
+        </div>
+      </section>
+
+      {/* Main Grid: Filters Sidebar + Results / Map */}
+      <div className="flex w-full flex-col items-start gap-6 lg:flex-row">
+        {/* Left Sidebar Filters */}
+        <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-72">
+          <div className="flex flex-col gap-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            {/* Sidebar Title */}
+            <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+              <h2 className="font-heading font-bold text-base text-navy">{copy.tripsPage.filters}</h2>
+              <button
+                onClick={() => {
+                  setFilters({
+                    minSeats: undefined,
+                    femaleOnly: undefined,
+                    smokingAllowed: undefined,
+                    petsAllowed: undefined,
+                    musicAllowed: undefined,
+                  });
+                  setSearchFrom('');
+                  setSearchTo('');
+                  setSearchDate('');
+                }}
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors cursor-pointer"
+              >
+                {copy.tripsPage.reset}
+              </button>
             </div>
 
-            {}
-            <div className="mb-5">
-              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.from}</h3>
-              <Select
-                value={filters.departureCity || ''}
-                onChange={(value) => setFilters((p) => ({ ...p, departureCity: value ? String(value) : undefined }))}
-                options={[
-                  { value: '', label: copy.common.allCities },
-                  ...AZ_CITIES.map((city) => ({ value: city, label: city })),
-                ]}
-                icon="map-pin"
-                ariaLabel={copy.common.from}
-              />
-            </div>
-
-            <div className="mb-5">
-              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.common.to}</h3>
-              <Select
-                value={filters.arrivalCity || ''}
-                onChange={(value) => setFilters((p) => ({ ...p, arrivalCity: value ? String(value) : undefined }))}
-                options={[
-                  { value: '', label: copy.common.allCities },
-                  ...AZ_CITIES.map((city) => ({ value: city, label: city })),
-                ]}
-                icon="map-pin"
-                ariaLabel={copy.common.to}
-              />
-            </div>
-
-            <div className="mb-5">
-              <DatePicker
-                value={filters.date || ''}
-                onChange={(value) => setFilters((p) => ({ ...p, date: value || undefined }))}
-                label={copy.common.date}
-                placeholder={copy.common.selectDate}
-                className="[&_label]:ui-label-text [&_label]:text-[#40484a]"
-              />
-            </div>
-
-            <div className="mb-5">
-              <h3 className="ui-label-text text-[#40484a] mb-2">{copy.tripsPage.passengerCount}</h3>
-              <div className="flex items-center justify-between rounded-xl border border-[#c0c8ca] bg-white px-2 py-1.5">
+            {/* Passenger Count Filter */}
+            <div className="flex flex-col gap-2.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-400">{copy.tripsPage.passengerCount}</label>
+              <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 p-1.5">
                 <button
                   type="button"
                   onClick={() => updateMinSeats(Math.max(1, (filters.minSeats || 1) - 1))}
-                  className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  className="h-9 w-9 rounded-xl bg-white border border-gray-100 text-navy transition-all duration-200 hover:bg-gray-50 flex items-center justify-center shadow-xs active:scale-90 cursor-pointer"
                   aria-label={`${copy.common.passenger} -`}
                 >
-                  <Icon name="minus" size={14} className="mx-auto" />
+                  <Icon name="minus" size={14} />
                 </button>
-                <span className="ui-label-text min-w-10 text-center text-[#011f23]">{filters.minSeats || 1}</span>
+                <span className="font-heading font-extrabold text-navy min-w-10 text-center">{filters.minSeats || 1}</span>
                 <button
                   type="button"
                   onClick={() => updateMinSeats(Math.min(4, (filters.minSeats || 1) + 1))}
-                  className="ui-label-text h-8 w-8 rounded-lg bg-[#eef3f4] text-[#011f23] transition-colors hover:bg-[#dce4e6]"
+                  className="h-9 w-9 rounded-xl bg-white border border-gray-100 text-navy transition-all duration-200 hover:bg-gray-50 flex items-center justify-center shadow-xs active:scale-90 cursor-pointer"
                   aria-label={`${copy.common.passenger} +`}
                 >
-                  +
+                  <Icon name="plus" size={14} />
                 </button>
               </div>
             </div>
 
-            <div className="mb-5 border-t border-[#c0c8ca] pt-4">
-              <h3 className="ui-label-text text-[#40484a] mb-3">{copy.createTrip.preferencesTitle}</h3>
-              <div className="flex flex-col gap-2.5">
-                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={filters.femaleOnly || false}
-                    onChange={(e) => setFilters((p) => ({ ...p, femaleOnly: e.target.checked || undefined }))}
-                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.femaleOnlyLabel}</span>
-                </label>
-                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={filters.smokingAllowed || false}
-                    onChange={(e) => setFilters((p) => ({ ...p, smokingAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.smokingAllowedLabel}</span>
-                </label>
-                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={filters.petsAllowed || false}
-                    onChange={(e) => setFilters((p) => ({ ...p, petsAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.petsAllowedLabel}</span>
-                </label>
-                <label className="ui-chip-text flex items-center gap-2 text-text-secondary cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={filters.musicAllowed || false}
-                    onChange={(e) => setFilters((p) => ({ ...p, musicAllowed: e.target.checked || undefined }))}
-                    className="h-4 w-4 shrink-0 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="min-w-0 wrap-break-word hyphens-auto">{copy.createTrip.musicAllowedLabel}</span>
-                </label>
+            {/* Preference Checkboxes */}
+            <div className="flex flex-col gap-3 border-t border-gray-100 pt-5">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-400">{copy.createTrip.preferencesTitle}</label>
+              <div className="flex flex-col gap-3">
+                {[
+                  {
+                    key: 'femaleOnly',
+                    label: copy.createTrip.femaleOnlyLabel,
+                    icon: 'venus' as const,
+                  },
+                  {
+                    key: 'smokingAllowed',
+                    label: copy.createTrip.smokingAllowedLabel,
+                    icon: 'cigarette' as const,
+                  },
+                  {
+                    key: 'petsAllowed',
+                    label: copy.createTrip.petsAllowedLabel,
+                    icon: 'paw-print' as const,
+                  },
+                  {
+                    key: 'musicAllowed',
+                    label: copy.createTrip.musicAllowedLabel,
+                    icon: 'music' as const,
+                  },
+                ].map((pref) => (
+                  <label key={pref.key} className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-navy cursor-pointer select-none transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(filters[pref.key as keyof TripSearchFilters])}
+                      onChange={(e) => setFilters((p) => ({ ...p, [pref.key]: e.target.checked || undefined }))}
+                      className="peer h-5 w-5 rounded-lg border-gray-200 text-teal-600 focus:ring-teal-500/20 focus:ring-offset-0 transition-all cursor-pointer"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Icon name={pref.icon} size={15} className="text-gray-400" />
+                      <span>{pref.label}</span>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
 
-            <div className="ui-note-text wrap-break-word rounded-xl bg-[#edfcff] p-3 leading-4.5 text-[#40484a] hyphens-auto">
-              {copy.tripsPage.helper}
+            {/* Helper Info Card */}
+            <div className="rounded-2xl bg-teal-50/60 p-4 border border-teal-100/70 text-xs leading-relaxed text-teal-800 font-medium">
+              <div className="flex gap-2">
+                <Icon name="info" size={14} className="shrink-0 text-teal-600 mt-0.5" />
+                <span>{copy.tripsPage.helper}</span>
+              </div>
             </div>
           </div>
         </aside>
 
-        {}
-        <section className="order-1 flex min-w-0 flex-1 flex-col gap-4 md:order-2">
-          {}
-          <div className="bg-[#EAF7F9] p-4 sm:p-5 rounded-2xl border border-[#BDE0E5] flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm">
+        {/* Results section */}
+        <section className="flex-1 min-w-0 flex flex-col gap-6 w-full">
+          {/* Header Banner - Results Info & List/Map Toggles */}
+          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
             <div className="flex flex-col gap-1">
-              <div className="text-[22px] font-bold text-[#002f37] flex items-center gap-2">
-                <span>{from}</span>
-                <Icon name="arrow-right" size={20} className="text-[#70787b]" />
-                <span>{to}</span>
+              <div className="text-lg font-heading font-extrabold text-navy flex flex-wrap items-center gap-2">
+                <span>{filters.departureCity || copy.common.all}</span>
+                <Icon name="arrow-right" size={16} className="text-gray-400" />
+                <span>{filters.arrivalCity || copy.common.all}</span>
               </div>
-              <div className="text-[15px] font-medium text-[#40484a] flex items-center gap-2">
-                <Icon name="calendar" size={16} />
+              <div className="text-xs font-semibold text-gray-400 flex items-center gap-1.5">
+                <Icon name="calendar" size={14} />
                 <span>{filters.date || copy.common.allDates}</span>
+                <span className="text-gray-200">-</span>
+                <span>
+                  {filteredTrips.length} {copy.tripsPage.resultsFound}
+                </span>
               </div>
             </div>
-            <div className="mt-4 sm:mt-0 flex flex-col items-end gap-3">
-              <div className="flex bg-white rounded-lg p-1 border border-[#BDE0E5] shadow-sm">
-                <button 
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm font-bold ${
-                    viewMode === 'list' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
-                  }`}
-                >
-                  <Icon name="list" size={16} />
-                  {copy.tripsPage.list}
-                </button>
-                <button 
-                  onClick={() => setViewMode('map')}
-                  className={`px-4 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm font-bold ${
-                    viewMode === 'map' ? 'bg-[#054752] text-white' : 'text-[#40484a] hover:bg-[#f0f3f4]'
-                  }`}
-                >
-                  <Icon name="map" size={16} />
-                  {copy.tripsPage.map}
-                </button>
-              </div>
-              <span className="text-[15px] font-medium text-[#40484a]">
-                {filteredTrips.length} {copy.tripsPage.resultsFound}
-              </span>
+
+            {/* Toggle buttons */}
+            <div className="flex rounded-2xl border border-gray-100 bg-slate-50 p-1 shadow-xs">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold cursor-pointer ${
+                  viewMode === 'list' ? 'bg-navy text-white shadow-sm' : 'text-gray-500 hover:text-navy hover:bg-gray-100/50'
+                }`}
+              >
+                <Icon name="list" size={14} />
+                {copy.tripsPage.list}
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold cursor-pointer ${
+                  viewMode === 'map' ? 'bg-navy text-white shadow-sm' : 'text-gray-500 hover:text-navy hover:bg-gray-100/50'
+                }`}
+              >
+                <Icon name="map" size={14} />
+                {copy.tripsPage.map}
+              </button>
             </div>
           </div>
 
+          {/* Active filters badges */}
           {activeFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-[-4px]">
+            <div className="flex flex-wrap gap-2">
               {activeFilters.map((filter) => (
-                <span key={filter} className="rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#054752] flex items-center shadow-sm">
+                <span key={filter} className="rounded-full border border-gray-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-brand-700 flex items-center shadow-xs">
                   {filter}
                 </span>
               ))}
             </div>
           )}
 
+          {/* Main Content Area */}
           {viewMode === 'map' ? (
-            <div className="h-100 md:h-150 w-full rounded-2xl overflow-hidden border border-[#c0c8ca] shadow-card">
-              <MapContainer className="h-full">
-                <RideMarkers trips={filteredTrips} users={users} />
-              </MapContainer>
-            </div>
-          ) : isLoadingTrips ? (
-            <LoadingState />
-          ) : lastError ? (
-            <EmptyState
-              title={copy.tripsPage.emptyTitle}
-              description={lastError}
-              action={(
-                <button
-                  type="button"
-                  onClick={clearError}
-                  className="rounded-xl border border-[#c0c8ca] px-4 py-2 text-sm font-semibold text-[#054752] hover:bg-[#f7fbfc]"
-                >
-                  {copy.common.close}
-                </button>
-              )}
-            />
-          ) : filteredTrips.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {filteredTrips.map((trip) => {
-                const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
-                const isFull = trip.seatsAvailable === 0;
-                return (
-                  <article key={trip.id}
-                    onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
-                    className={`group bg-white rounded-2xl border border-gray-100 shadow-sm p-4 transition-all duration-500 overflow-hidden relative flex flex-col gap-4 ${
-                      isFull ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:shadow-md hover:border-[#BDE0E5] cursor-pointer'
-                    }`}>
-                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-[#EAF7F9]/30 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1500 ease-in-out pointer-events-none" />
+            /* Side-by-side list + map */
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start w-full">
+              {/* Scrollable list column */}
+              <div className="lg:col-span-4 flex max-h-[650px] flex-col gap-3 overflow-y-auto pr-1">
+                {isLoadingTrips ? (
+                  <LoadingState />
+                ) : lastError ? (
+                  <EmptyState
+                    title={copy.tripsPage.emptyTitle}
+                    description={lastError}
+                    action={(
+                      <button
+                        type="button"
+                        onClick={clearError}
+                        className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50"
+                      >
+                        {copy.common.close}
+                      </button>
+                    )}
+                  />
+                ) : filteredTrips.length > 0 ? (
+                  filteredTrips.map(renderMapTripCard)
+                ) : (
+                  <EmptyState title={copy.tripsPage.emptyTitle} description={copy.tripsPage.emptyDescription} />
+                )}
+              </div>
 
-                    <div className="flex justify-between items-center relative z-10">
-                      <div className="flex gap-2.5 items-center">
-                         <div className="bg-[#F0F7F8] text-[#054752] font-bold px-2.5 py-1 rounded-lg text-[13px] flex items-center gap-1.5">
-                           <Icon name="calendar" size={13} /> 
-                           {trip.date}
-                           <span className="mx-0.5 opacity-40">|</span>
-                           <Icon name="clock" size={13} /> {trip.time}
-                         </div>
-                         {trip.carModel && <span className="text-[13px] font-medium text-gray-500 flex items-center gap-1.5"><Icon name="car" size={13} className="text-gray-400" /> {trip.carModel}</span>}
-                      </div>
-                      <div className="text-[18px] font-black text-[#054752] tracking-tight flex items-center gap-1">
-                        {formatPrice(trip.pricePerSeat)}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1 relative z-10 w-full mt-1">
-                      <div className="flex justify-between text-[16px] font-extrabold text-gray-900 px-1">
-                        <span className="group-hover:text-[#054752] transition-colors duration-300">{trip.departureCity}</span>
-                        <span className="group-hover:text-[#054752] transition-colors duration-300">{trip.arrivalCity}</span>
-                      </div>
-                      <div className="relative w-full h-6 flex items-center px-1 mt-1">
-                        <div className="absolute left-1 right-1 h-[2px] bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#054752] w-0 group-hover:w-full transition-all duration-1200 ease-in-out" />
-                        </div>
-                        <div className="absolute left-0 group-hover:left-[calc(100%-44px)] transition-all duration-1200 ease-in-out z-10 px-1 -mt-1.5">
-                          <TransparentCar 
-                            src="/api/car-image" 
-                            className="w-10 object-contain drop-shadow-sm hover:scale-110 transition-transform" 
-                          />
-                        </div>
-                        <div className="absolute left-[2px] w-2 h-2 rounded-full bg-gray-300 border-2 border-white z-0 group-hover:bg-[#054752] transition-colors duration-300" />
-                        <div className="absolute right-[2px] w-2 h-2 rounded-full bg-gray-300 border-2 border-white z-0 group-hover:bg-[#054752] transition-colors duration-300 delay-900" />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-100 relative z-10">
-                      <div className="flex items-center gap-2.5">
-                        <div className="relative">
-                          {driver?.avatarUrl ? (
-                            <Image src={driver.avatarUrl} alt={driver.fullName} width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-[#054752] flex items-center justify-center text-white text-[14px] font-bold shadow-sm">
-                              {driver?.fullName.charAt(0) || '?'}
-                            </div>
-                          )}
-                          {driver?.verificationStatus === 'approved' && (
-                             <span className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full w-3.5 h-3.5 flex items-center justify-center border-[1.5px] border-white shadow-sm">
-                               <Icon name="check" size={8} className="text-white" strokeWidth={3} />
-                             </span>
-                          )}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[14px] font-bold text-gray-900 leading-tight">{driver?.fullName.split(' ')[0] || copy.common.unknown}</span>
-                          <div className="flex items-center gap-1 text-[12px] font-semibold text-gray-500 mt-0.5 leading-tight">
-                            <Icon name="star" size={10} className="text-[#F5A623]" fill="currentColor"/> 
-                            <span className="text-gray-700">{driver?.rating.toFixed(1)}</span>
-                            <span className="font-medium">({driver?.totalTrips})</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex items-center gap-1 opacity-50">
-                          {trip.femaleOnly && <span title={copy.createTrip.femaleOnlyLabel}><Icon name="venus" size={13} /></span>}
-                          {trip.musicAllowed && <span title={copy.createTrip.musicAllowedLabel}><Icon name="music" size={13} /></span>}
-                          {trip.petsAllowed && <span title={copy.createTrip.petsAllowedLabel}><Icon name="paw-print" size={13} /></span>}
-                          {trip.smokingAllowed && <span title={copy.createTrip.smokingAllowedLabel}><Icon name="cigarette" size={13} /></span>}
-                        </div>
-                        <div className={`flex items-center gap-1 text-[13px] font-bold px-2.5 py-1 rounded-lg ${isFull ? 'text-[#ba1a1a] bg-red-50' : 'text-[#054752] bg-[#F0F7F8]'}`}>
-                          {isFull ? <Icon name="ban" size={13} /> : <Icon name="users" size={13} />}
-                          {isFull ? copy.common.noSeats : `${trip.seatsAvailable} left`}
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
+              {/* Map column */}
+              <div className="lg:col-span-8 h-[450px] lg:h-[650px] lg:sticky lg:top-24 rounded-3xl overflow-hidden border border-gray-100 shadow-sm w-full">
+                <MapContainer className="h-full w-full">
+                  <RideMarkers trips={filteredTrips} users={users} />
+                </MapContainer>
+              </div>
             </div>
           ) : (
-            <EmptyState title={copy.tripsPage.emptyTitle} description={copy.tripsPage.emptyDescription} />
+            /* Full width readable list */
+            isLoadingTrips ? (
+              <LoadingState />
+            ) : lastError ? (
+              <EmptyState
+                title={copy.tripsPage.emptyTitle}
+                description={lastError}
+                action={(
+                  <button
+                    type="button"
+                    onClick={clearError}
+                    className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50"
+                  >
+                    {copy.common.close}
+                  </button>
+                )}
+              />
+            ) : filteredTrips.length > 0 ? (
+              <div className="flex w-full flex-col gap-4">
+                {filteredTrips.map(renderTripCard)}
+              </div>
+            ) : (
+              <EmptyState title={copy.tripsPage.emptyTitle} description={copy.tripsPage.emptyDescription} />
+            )
           )}
         </section>
       </div>
@@ -407,5 +569,3 @@ export default function TripsPage() {
     </Suspense>
   );
 }
-
-

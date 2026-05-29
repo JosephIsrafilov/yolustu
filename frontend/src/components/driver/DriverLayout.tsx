@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import RoleSwitch from '@/components/layout/RoleSwitch';
 import { getUserCapabilities } from '@/lib/access-control';
 import Footer from '@/components/layout/Footer';
+import YolmatesLogo from '@/components/brand/YolmatesLogo';
 
 const DRIVER_LAYOUT_I18N = {
   az: {
@@ -66,17 +67,11 @@ export default function DriverLayout({ children, narrow }: { children: React.Rea
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface-dim">
+    <div className="min-h-screen flex flex-col bg-[#f6fafb]">
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-[#002f37] hover:text-[#054752] transition-all duration-200 ease-out active:scale-[0.98]"
-            >
-              <Icon name="map" size={22} strokeWidth={1.8} />
-              <span className="font-bold text-lg">Yolmates</span>
-            </Link>
+            <YolmatesLogo size="md" />
             <div className="h-4 w-px bg-border hidden sm:block" />
             <div className="hidden sm:flex items-center gap-2 text-text-muted text-sm font-semibold">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 text-brand-700">
