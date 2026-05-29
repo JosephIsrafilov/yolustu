@@ -135,7 +135,6 @@ class AdminService:
             self.db.add(vehicle)
             self.db.flush()
 
-        # Get a passenger
         passengers = self.db.query(User).filter(User.role == "passenger").all()
         if not passengers:
             raise HTTPException(status_code=400, detail="No passengers found.")
@@ -148,7 +147,6 @@ class AdminService:
         ]
         o_city, o_coords, d_city, d_coords = random.choice(routes)
 
-        # Create ride
         ride = Ride(
             id=uuid.uuid4(),
             driver_id=driver.id,
@@ -166,7 +164,6 @@ class AdminService:
         self.db.add(ride)
         self.db.flush()
 
-        # Create booking
         booking = Booking(
             id=uuid.uuid4(),
             ride_id=ride.id,
@@ -177,7 +174,6 @@ class AdminService:
         )
         self.db.add(booking)
 
-        # Create message
         msg = Message(
             id=uuid.uuid4(),
             sender_id=passenger.id,
@@ -186,7 +182,6 @@ class AdminService:
         )
         self.db.add(msg)
 
-        # Create review
         review = Review(
             id=uuid.uuid4(),
             target_id=driver.id,
@@ -197,7 +192,6 @@ class AdminService:
         )
         self.db.add(review)
 
-        # Update driver stats
         driver.total_rides = (driver.total_rides or 0) + 1
         passenger.total_rides = (passenger.total_rides or 0) + 1
 

@@ -18,8 +18,7 @@ import { AZ_CITIES } from '@/lib/utils';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
-import type { ApiVehicle } from '@/services/api/mappers';
-import { mapApiVehicleToVehicle } from '@/services/api/mappers';
+import { mapApiVehicleToVehicle, type ApiVehicle } from "@/services/api/mappers";
 import type { Vehicle } from '@/types';
 
 const PROFILE_I18N = {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import ReviewForm from '@/components/reviews/ReviewForm';

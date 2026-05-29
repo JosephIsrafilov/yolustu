@@ -40,7 +40,6 @@ export function usePushNotifications() {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('[WebSocket] Connected to push notifications');
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;

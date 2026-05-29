@@ -51,7 +51,6 @@ def parse_text_with_ai(raw_text: str):
 
         response_content = (completion.choices[0].message.content or "").strip()
 
-        # Clean up markdown if the model hallucinates it
         if response_content.startswith("```json"):
             response_content = response_content[7:]
         if response_content.endswith("```"):

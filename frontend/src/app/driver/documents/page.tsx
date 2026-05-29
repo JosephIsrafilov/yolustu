@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import DriverLayout from '@/components/driver/DriverLayout';
 import Card from '@/components/ui/Card';

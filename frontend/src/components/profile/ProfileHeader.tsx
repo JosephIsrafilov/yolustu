@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Icon from '@/components/ui/Icon';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatRating } from '@/lib/utils';

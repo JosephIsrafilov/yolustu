@@ -65,7 +65,6 @@ export function getLocalizedColor(color: string, lang: 'az' | 'ru' | 'en'): stri
     return colorMap[c][lang];
   }
 
-  // Handle legacy combined formats
   const legacyMap: Record<string, string> = {
     "ağ (белый)": "white",
     "qara (черный)": "black",

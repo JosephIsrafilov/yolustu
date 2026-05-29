@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';

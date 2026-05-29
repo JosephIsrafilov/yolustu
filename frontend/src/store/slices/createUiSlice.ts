@@ -12,14 +12,14 @@ export const createUiSlice: StateCreator<
   unreadRides: {},
   markRideAsRead: (rideId) =>
     set((state) => {
-      const updated = { ...(state.unreadRides || {}) };
+      const updated = { ...state.unreadRides };
       delete updated[rideId];
       return { unreadRides: updated };
     }),
   markRideAsUnread: (rideId) =>
     set((state) => ({
       unreadRides: {
-        ...(state.unreadRides || {}),
+        ...state.unreadRides,
         [rideId]: true,
       },
     })),

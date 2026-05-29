@@ -26,6 +26,5 @@ def setup_logging():
 
     logger.addHandler(handler)
 
-    # Specific loggers
     logging.getLogger("uvicorn.access").handlers = [handler]
     logging.getLogger("uvicorn.error").handlers = [handler]

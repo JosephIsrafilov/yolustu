@@ -9,7 +9,6 @@ def check_and_award_badge(db: Session | None, user_id: UUID, badge_code: str):
     if db is None:
         return None
 
-    # check if user already has it
     existing = (
         db.query(UserBadge)
         .join(Badge)
@@ -32,9 +31,6 @@ def check_and_award_badge(db: Session | None, user_id: UUID, badge_code: str):
     # send notification
     badge_data = BadgeResponse.model_validate(badge).model_dump(mode="json")
 
-    # send notification asynchronously in background or synchronously if we are in sync context
-    # Usually services are called from async routers, but SQLAlchemy is sync right now.
-    # We will use the sync version to schedule it in the event loop.
     manager.send_personal_notification_sync(
         user_id, {"type": "badge_unlocked", "badge": badge_data}
     )

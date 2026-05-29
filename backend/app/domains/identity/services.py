@@ -264,7 +264,6 @@ class IdentityService:
         """
         text_content = f"You have requested to reset your password.\n\nYour password reset code is: {otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email."
 
-        # This function handles failures inside itself if SMTP is not configured
         send_email(
             to_email=email,
             subject=subject,

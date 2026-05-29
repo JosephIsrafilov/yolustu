@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';

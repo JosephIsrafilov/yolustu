@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { BookingStatus, TripStatus } from '@/types';
 import Badge from './Badge';
 import { useAppStore } from '@/store/useAppStore';

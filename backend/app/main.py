@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-import app.domains.models as _domain_models  # noqa: F401
 from app.core.config import UPLOADS_DIR, settings
 from app.core.csrf import validate_csrf_request
 from app.core.logging_config import setup_logging
@@ -29,7 +28,6 @@ from app.domains.payments.router import router as payments_router
 from app.domains.ai.router import router as ai_router
 from app.domains.gamification.router import router as gamification_router
 
-# Setup logging
 setup_logging()
 
 
@@ -73,7 +71,6 @@ async def csrf_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# Global Exception Handler
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(

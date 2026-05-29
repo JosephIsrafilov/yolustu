@@ -1,4 +1,3 @@
-import React from 'react';
 import { Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 

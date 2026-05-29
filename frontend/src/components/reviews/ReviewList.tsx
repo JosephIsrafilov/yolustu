@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiReviewsService } from '@/services/api/api-reviews-service';
 import ReviewCard from './ReviewCard';

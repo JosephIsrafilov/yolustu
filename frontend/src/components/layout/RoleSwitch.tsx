@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';

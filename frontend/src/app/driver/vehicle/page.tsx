@@ -10,8 +10,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAppStore } from '@/store/useAppStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
-import type { ApiVehicle } from '@/services/api/mappers';
-import { mapApiVehicleToVehicle } from '@/services/api/mappers';
+import { mapApiVehicleToVehicle, type ApiVehicle } from "@/services/api/mappers";
 import type { Vehicle } from '@/types';
 import { CAR_BRANDS_MODELS, CAR_COLORS_LOCALIZED, CAR_YEARS, getLocalizedColor } from '@/data/cars';
 

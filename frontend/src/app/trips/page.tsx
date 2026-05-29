@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useEffect, useMemo } from 'react';
+import { useState, Suspense, useEffect, useMemo } from "react";
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';

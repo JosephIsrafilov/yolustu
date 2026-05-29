@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';

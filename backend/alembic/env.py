@@ -1,12 +1,9 @@
-import logging  # noqa: F401
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 from app.core.database import Base
 from app.core.config import settings
-import app.domains.models  # noqa: F401
-import geoalchemy2  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

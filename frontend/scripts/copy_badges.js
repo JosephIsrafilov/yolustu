@@ -20,6 +20,5 @@ files.forEach(file => {
         if (file.includes('chatterbox')) newName = 'badge_chatterbox.png';
         
         fs.copyFileSync(path.join(srcDir, file), path.join(destDir, newName));
-        console.log(`Copied ${file} to ${newName}`);
     }
 });

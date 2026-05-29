@@ -17,7 +17,6 @@ try:
     from firebase_admin import credentials, messaging
 
     if not firebase_admin._apps:
-        # Check if credential file exists from environment variable
         cred_path = os.getenv("FIREBASE_CREDENTIALS")
         if cred_path and os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
@@ -58,7 +57,6 @@ class NotificationService:
         # Always deliver via WebSocket as well for real-time in-app experience
         manager.send_personal_notification_sync(user_id, notification_payload)
 
-        # Print to console for local testing visibility
         print("\n" + "=" * 50)
         print(f"🔔 [NOTIFICATION via WebSocket to {user_id}]")
         print(f"Title:  {title}")

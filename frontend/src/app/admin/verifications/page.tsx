@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import AdminLayout from '@/components/admin/AdminLayout';
 import Card from '@/components/ui/Card';
 import Icon from '@/components/ui/Icon';

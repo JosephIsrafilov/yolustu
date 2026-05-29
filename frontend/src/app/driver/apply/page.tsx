@@ -1,6 +1,5 @@
 ﻿'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import WebLayout from '@/components/layout/WebLayout';
 import Card from '@/components/ui/Card';
