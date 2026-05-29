@@ -212,11 +212,13 @@ export const createAuthSlice: StateCreator<
         });
       }
     } catch (error) {
-      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+      const isUnauthorized =
+        error && typeof error === 'object' && 'status' in error && error.status === 401;
 
-      } else {
+      if (!isUnauthorized) {
         console.error('Failed to initialize auth:', error);
       }
+
       set({
         currentUser: null,
         isAuthenticated: false,

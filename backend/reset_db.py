@@ -1,5 +1,9 @@
+import logging
+
 from app.core.database import engine
 from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
 
 
 def reset_db():
@@ -18,15 +22,17 @@ def reset_db():
             try:
                 conn.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
                 print(f"Dropped table {table} (if it existed)")
-            except Exception as e:
-                print(f"Error dropping table {table}: {e}")
+            except Exception:
+                logger.exception("Error dropping table %s", table)
+                raise
 
         try:
             conn.execute(text("DROP INDEX IF EXISTS idx_rides_destination_location"))
             conn.execute(text("DROP INDEX IF EXISTS idx_rides_origin_location"))
             print("Dropped indexes (if they existed)")
-        except Exception as e:
-            print(f"Error dropping indexes: {e}")
+        except Exception:
+            logger.exception("Error dropping indexes")
+            raise
         conn.commit()
     print("Database reset completed.")
 

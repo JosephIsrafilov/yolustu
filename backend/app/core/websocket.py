@@ -1,9 +1,12 @@
 import json
 import asyncio
+import logging
 from typing import Dict, Set, Optional
 from uuid import UUID
 
 from fastapi import WebSocket
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
@@ -48,8 +51,12 @@ class ConnectionManager:
                     asyncio.run_coroutine_threadsafe(
                         connection.send_text(message_json), self.loop
                     )
-                except RuntimeError:
-                    pass
+                except RuntimeError as exc:
+                    logger.debug(
+                        "Skipped WebSocket notification for user %s: %s",
+                        user_id,
+                        exc,
+                    )
 
     async def send_personal_notification_async(self, user_id: UUID, message: dict):
         """Sends a notification to a specific user asynchronously."""

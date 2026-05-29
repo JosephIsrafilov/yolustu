@@ -5,12 +5,11 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.domains.identity.models import DeviceToken
 from app.core.websocket import manager
+from app.domains.identity.models import DeviceToken
 
 logger = logging.getLogger(__name__)
 
-# Try to initialize Firebase Admin SDK
 firebase_ready = False
 try:
     import firebase_admin
@@ -22,12 +21,12 @@ try:
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred)
         else:
-            # Fallback to default credentials/app
             firebase_admin.initialize_app()
     firebase_ready = True
-except Exception as e:
+except Exception as exc:
     logger.warning(
-        f"Firebase Admin SDK initialization skipped/failed (using fallback): {e}"
+        "Firebase Admin SDK initialization skipped; using WebSocket fallback: %s",
+        exc,
     )
 
 
@@ -42,9 +41,6 @@ class NotificationService:
         body: str,
         data: dict[str, Any] | None = None,
     ):
-        """
-        Send push notification via WebSocket (for active web clients) and Firebase FCM (for background delivery).
-        """
         tokens = self.db.query(DeviceToken).filter(DeviceToken.user_id == user_id).all()
 
         notification_payload = {
@@ -54,54 +50,49 @@ class NotificationService:
             "data": data or {},
         }
 
-        # Always deliver via WebSocket as well for real-time in-app experience
         manager.send_personal_notification_sync(user_id, notification_payload)
-
-        print("\n" + "=" * 50)
-        print(f"🔔 [NOTIFICATION via WebSocket to {user_id}]")
-        print(f"Title:  {title}")
-        print(f"Body:   {body}")
-        if data:
-            print(f"Data:   {data}")
-        print("=" * 50 + "\n")
+        logger.info(
+            "Notification queued for user %s via WebSocket: title=%r body=%r data=%r",
+            user_id,
+            title,
+            body,
+            data,
+        )
 
         if not tokens:
             logger.info(
-                f"No device tokens found for user {user_id}. Skipping FCM push notification."
+                "No device tokens found for user %s. Skipping FCM push notification.",
+                user_id,
             )
             return
 
-        token_strings = [t.token for t in tokens]
+        token_strings = [token.token for token in tokens]
 
-        # Send via Firebase Admin SDK if initialized successfully
         if firebase_ready:
             try:
-                # Firebase requires all data dictionary values to be strings
-                stringified_data = {k: str(v) for k, v in (data or {}).items()}
-
+                stringified_data = {key: str(value) for key, value in (data or {}).items()}
                 message = messaging.MulticastMessage(
                     tokens=token_strings,
-                    notification=messaging.Notification(
-                        title=title,
-                        body=body,
-                    ),
+                    notification=messaging.Notification(title=title, body=body),
                     data=stringified_data,
                 )
 
                 response = messaging.send_multicast(message)
                 logger.info(
-                    f"FCM push notification sent successfully: {response.success_count} success, {response.failure_count} failed."
+                    "FCM push notification sent: %s success, %s failed.",
+                    response.success_count,
+                    response.failure_count,
                 )
 
                 if response.failure_count > 0:
                     for idx, resp in enumerate(response.responses):
                         if not resp.success:
                             logger.error(
-                                f"FCM Token {token_strings[idx]} failed: {resp.exception}"
+                                "FCM token %s failed: %s",
+                                token_strings[idx],
+                                resp.exception,
                             )
-            except Exception as e:
-                logger.error(f"Failed to send FCM push notification: {e}")
+            except Exception as exc:
+                logger.error("Failed to send FCM push notification: %s", exc)
         else:
-            logger.info(
-                "Firebase Admin not configured. FCM push notification logged but skipped."
-            )
+            logger.info("Firebase Admin not configured. FCM push notification skipped.")

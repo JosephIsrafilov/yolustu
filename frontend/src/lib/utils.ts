@@ -13,12 +13,12 @@ export function generateId(): string {
 
 export function formatCurrency(amount: number | string): string {
   const numeric = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(numeric) || !Number.isFinite(numeric)) return `0 ${CURRENCY_SYMBOL}`;
-  return `${formatPriceValue(numeric)} ${CURRENCY_SYMBOL}`;
+  return formatPrice(numeric);
 }
 
 export function formatPrice(price: number): string {
-  return formatCurrency(price);
+  if (!Number.isFinite(price)) return `0 ${CURRENCY_SYMBOL}`;
+  return `${formatPriceValue(price)} ${CURRENCY_SYMBOL}`;
 }
 
 export function formatPriceParts(price: number): { amount: string; symbol: string; code: string } {

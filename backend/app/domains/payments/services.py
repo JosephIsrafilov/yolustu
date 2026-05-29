@@ -1,13 +1,17 @@
 from uuid import UUID
+import logging
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.payments.repositories import PaymentRepository
-from app.domains.payments.providers import get_payment_provider
+from app.domains.payments.providers import StripePaymentProvider
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 from app.domains.identity.dependencies import CurrentUser
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentService:
@@ -16,7 +20,7 @@ class PaymentService:
         self.payments = PaymentRepository(db)
         self.bookings = BookingRepository(db)
         self.rides = RideLookupPort(db)
-        self.provider = get_payment_provider()
+        self.provider = StripePaymentProvider()
         self.notifications = NotificationService(db)
 
     def create_payment_session(
@@ -63,7 +67,8 @@ class PaymentService:
                 event = stripe.Webhook.construct_event(
                     payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
                 )
-            except Exception:
+            except Exception as exc:
+                logger.warning("Stripe webhook validation failed: %s", exc)
                 raise HTTPException(status_code=400, detail="Error confirming payment.")
 
             if event["type"] == "checkout.session.completed":

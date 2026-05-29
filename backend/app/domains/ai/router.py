@@ -185,8 +185,8 @@ async def get_smart_pricing_suggestion(
                 time_multiplier = 1.1
             elif (total_minutes >= 23 * 60) or (total_minutes <= 5 * 60):
                 time_multiplier = 1.05
-    except Exception:
-        pass
+    except ValueError as exc:
+        logger.debug("Invalid departure_time for pricing multiplier: %s", exc)
 
     day_multiplier = 1.0
     try:
@@ -196,8 +196,8 @@ async def get_smart_pricing_suggestion(
             dt = datetime.strptime(request.departure_date, "%Y-%m-%d")
             if dt.weekday() >= 5:
                 day_multiplier = 1.1
-    except Exception:
-        pass
+    except ValueError as exc:
+        logger.debug("Invalid departure_date for pricing multiplier: %s", exc)
 
     vehicle_multiplier = 1.0
 

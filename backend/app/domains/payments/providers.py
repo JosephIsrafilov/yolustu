@@ -54,7 +54,3 @@ class StripePaymentProvider(BasePaymentProvider):
         )
 
         return {"transaction_id": session.id, "checkout_url": session.url}
-
-
-def get_payment_provider() -> BasePaymentProvider:
-    return StripePaymentProvider()

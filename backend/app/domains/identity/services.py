@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import timedelta
 from uuid import UUID
@@ -17,6 +18,8 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.models import User
 from app.domains.identity.repositories import UserRepository
 from app.domains.identity.schemas import LoginInput, UserCreate, UserUpdate
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityService:
@@ -200,10 +203,7 @@ class IdentityService:
     def _send_otp_simulation(phone: str, redis_client):
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
-        print("--- [SMS SIMULATION] ---")
-        print(f"To: {phone}")
-        print(f"Code: {otp}")
-        print("------------------------")
+        logger.info("SMS OTP simulation for %s: %s", phone, otp)
         return otp
 
     def request_password_reset(
@@ -271,10 +271,7 @@ class IdentityService:
             text_content=text_content,
         )
 
-        print("--- [EMAIL LOG] ---")
-        print(f"To: {email}")
-        print(f"Password Reset Code: {otp}")
-        print("--------------------------")
+        logger.info("Password reset email simulation for %s: %s", email, otp)
         return otp
 
     def request_email_verification(
@@ -425,8 +422,5 @@ class IdentityService:
             text_content=text_content,
         )
 
-        print("--- [EMAIL LOG] ---")
-        print(f"To: {email}")
-        print(f"Verify Code: {otp}")
-        print("--------------------------")
+        logger.info("Email verification simulation for %s: %s", email, otp)
         return otp

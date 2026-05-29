@@ -37,7 +37,6 @@ export default function ProfileHeader({ user, reviewsCount = 0 }: ProfileHeaderP
         )}
       </div>
 
-      {}
       <div className="flex items-center gap-6 mt-4 pt-4 border-t border-border w-full max-w-xs">
         <div className="flex-1 text-center">
           <p className="text-xl font-bold text-brand-600">{user.totalTrips}</p>

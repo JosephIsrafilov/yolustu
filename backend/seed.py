@@ -1,11 +1,13 @@
 from app.domains.models import User, Vehicle, Ride, Booking, Review, Message
 from app.core.database import SessionLocal
+import logging
 import sys
 import os
 import uuid
 from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+logger = logging.getLogger(__name__)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -308,12 +310,13 @@ def seed_db():
             check_and_award_badge(db, driver_u1.id, "5_star")  # type: ignore
             check_and_award_badge(db, passenger_u2.id, "chatterbox")  # type: ignore
         except Exception as ex:
-            print("Gamification seed skipped/error:", ex)
+            logger.warning("Gamification seed skipped: %s", ex)
 
         print("Seeding completed successfully!")
-    except Exception as e:
-        print(f"An error occurred during seeding: {e}")
+    except Exception:
+        logger.exception("An error occurred during seeding")
         db.rollback()
+        raise
     finally:
         db.close()
 

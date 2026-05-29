@@ -118,7 +118,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex justify-end -mt-2 mb-1">
-              <Link href={ROUTES.forgotPassword} className="text-[13px] text-[#054752] font-semibold hover:underline">
+              <Link href={ROUTES.passwordReset} className="text-[13px] text-[#054752] font-semibold hover:underline">
                 {language === 'az' ? 'Şifrəni unutmusunuz?' : language === 'ru' ? 'Забыли пароль?' : 'Forgot Password?'}
               </Link>
             </div>

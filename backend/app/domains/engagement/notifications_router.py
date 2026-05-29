@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+import logging
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -6,6 +7,7 @@ from app.core.websocket import manager
 from app.domains.identity.dependencies import get_current_user
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.websocket("/ws")
@@ -14,7 +16,8 @@ async def notifications_websocket(
 ):
     try:
         user = get_current_user(db=db, token=token)
-    except Exception:
+    except Exception as exc:
+        logger.debug("Rejected notification WebSocket connection: %s", exc)
         await websocket.close(code=1008)
         return
 

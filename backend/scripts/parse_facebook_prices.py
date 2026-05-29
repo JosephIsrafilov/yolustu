@@ -1,8 +1,11 @@
 import os
 import sys
 import json
+import logging
 from openai import OpenAI
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables (NVIDIA_API_KEY)
 # Assuming this script is run from backend folder or scripts folder
@@ -57,8 +60,8 @@ def parse_text_with_ai(raw_text: str):
             response_content = response_content[:-3]
 
         return json.loads(response_content.strip())
-    except Exception as e:
-        print(f"Failed to parse with AI: {e}")
+    except Exception:
+        logger.exception("Failed to parse Facebook prices with AI")
         return None
 
 
@@ -102,7 +105,7 @@ def main():
             try:
                 existing_data = json.load(f)
             except json.JSONDecodeError:
-                pass
+                logger.warning("Existing market rates file is invalid JSON; replacing it")
 
     for k, v in extracted_data.items():
         existing_data[k] = v

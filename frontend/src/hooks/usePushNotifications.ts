@@ -52,7 +52,7 @@ export function usePushNotifications() {
           if (data.type === 'badge_unlocked') {
             setActiveToast({
               type: 'badge_unlocked',
-              title: 'Təbriklər! Yeni nişan! / New Badge!',
+              title: 'New badge unlocked',
               body: `You unlocked: ${data.badge?.name}`,
               data: { badge: data.badge }
             });
@@ -113,7 +113,9 @@ export function usePushNotifications() {
         reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
       };
 
-      ws.onerror = () => {};
+      ws.onerror = (event) => {
+        console.error('[WebSocket] Notification connection error', event);
+      };
 
       wsRef.current = ws;
     };
