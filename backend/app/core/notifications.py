@@ -70,7 +70,9 @@ class NotificationService:
 
         if firebase_ready:
             try:
-                stringified_data = {key: str(value) for key, value in (data or {}).items()}
+                stringified_data = {
+                    key: str(value) for key, value in (data or {}).items()
+                }
                 message = messaging.MulticastMessage(
                     tokens=token_strings,
                     notification=messaging.Notification(title=title, body=body),

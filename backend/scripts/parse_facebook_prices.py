@@ -105,7 +105,9 @@ def main():
             try:
                 existing_data = json.load(f)
             except json.JSONDecodeError:
-                logger.warning("Existing market rates file is invalid JSON; replacing it")
+                logger.warning(
+                    "Existing market rates file is invalid JSON; replacing it"
+                )
 
     for k, v in extracted_data.items():
         existing_data[k] = v

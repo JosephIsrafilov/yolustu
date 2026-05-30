@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.payments.repositories import PaymentRepository
-from app.domains.payments.providers import StripePaymentProvider
+from app.domains.payments.providers import BasePaymentProvider, StripePaymentProvider
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
@@ -20,7 +20,7 @@ class PaymentService:
         self.payments = PaymentRepository(db)
         self.bookings = BookingRepository(db)
         self.rides = RideLookupPort(db)
-        self.provider = StripePaymentProvider()
+        self.provider: BasePaymentProvider = StripePaymentProvider()
         self.notifications = NotificationService(db)
 
     def create_payment_session(
