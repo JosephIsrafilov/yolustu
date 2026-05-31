@@ -67,7 +67,7 @@ export default function ChatPage() {
       }
     };
     if (rideId) fetchHistory();
-  }, [rideId, setMessages]);
+  }, [rideId, setMessages, isConnected]);
 
   useEffect(() => {
     if (scrollRef.current) {

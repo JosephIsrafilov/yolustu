@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { env } from '@/lib/env';
+import { buildApiWebSocketUrl } from '@/lib/env';
 
 export interface PushNotification {
   type: string;
@@ -31,12 +31,24 @@ export function usePushNotifications() {
       return;
     }
 
-    const connectWebSocket = () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+    const refreshCanonicalData = () => {
+      const store = useAppStore.getState();
+      void store.fetchBookings();
+      void store.fetchBookingRequests();
+      void store.fetchTrips();
+    };
+
+    const connectWebSocket = async () => {
+      await useAppStore.getState().initAuth();
+      const latestState = useAppStore.getState();
+      if (!latestState.isAuthenticated || !latestState.currentUser) {
+        shouldReconnectRef.current = false;
+        return;
+      }
+
       shouldReconnectRef.current = true;
       
-      const wsUrl = `${env.wsUrl}/api/v1/notifications/ws?token=${encodeURIComponent(token)}`;
+      const wsUrl = buildApiWebSocketUrl('/notifications/ws');
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -44,6 +56,7 @@ export function usePushNotifications() {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;
         }
+        refreshCanonicalData();
       };
 
       ws.onmessage = (event) => {
@@ -72,10 +85,7 @@ export function usePushNotifications() {
             const notificationType = data.data?.type;
             if (typeof notificationType === 'string') {
               if (notificationType.startsWith('booking_')) {
-                const store = useAppStore.getState();
-                store.fetchBookings();
-                store.fetchBookingRequests();
-                store.fetchTrips();
+                refreshCanonicalData();
               } else if (notificationType === 'new_message') {
                 const rideId = data.data?.ride_id;
                 if (typeof rideId === 'string') {
@@ -105,25 +115,30 @@ export function usePushNotifications() {
 
         if (event.code === 1008) {
           shouldReconnectRef.current = false;
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
           return;
         }
 
-        reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          void connectWebSocket();
+        }, 5000);
       };
 
       ws.onerror = (event) => {
-        console.error('[WebSocket] Notification connection error', event);
+        console.debug('[WebSocket] Notification connection error', event);
       };
 
       wsRef.current = ws;
     };
 
-    connectWebSocket();
+    void connectWebSocket();
+    const handleFocus = () => {
+      refreshCanonicalData();
+    };
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       shouldReconnectRef.current = false;
+      window.removeEventListener('focus', handleFocus);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       if (wsRef.current) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { env } from '@/lib/env';
+import { buildApiWebSocketUrl } from '@/lib/env';
 import { Message } from '@/types';
 
 export function useChat(rideId: string) {
@@ -15,15 +15,12 @@ export function useChat(rideId: string) {
   const connect = useCallback(() => {
     if (!rideId) return;
 
-    const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
-    if (!token) return;
-
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
 
-    const wsUrl = `${env.wsUrl}/api/v1/messages/ws/${rideId}?token=${encodeURIComponent(token)}`;
+    const wsUrl = buildApiWebSocketUrl(`/messages/ws/${rideId}`);
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 
 import stripe
+from fastapi import HTTPException
 from app.core.config import settings
 
 
@@ -25,6 +26,11 @@ class StripePaymentProvider(BasePaymentProvider):
         self, amount: float, booking_id: uuid.UUID
     ) -> Dict[str, Any]:
         if not settings.STRIPE_SECRET_KEY:
+            if settings.ENVIRONMENT.lower() not in {"development", "test"}:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Stripe secret key is not configured.",
+                )
             transaction_id = f"mock_tx_{uuid.uuid4().hex[:8]}"
             return {
                 "transaction_id": transaction_id,

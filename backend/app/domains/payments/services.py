@@ -10,6 +10,14 @@ from app.domains.bookings.repositories import BookingRepository
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 from app.domains.identity.dependencies import CurrentUser
+from app.domains.lifecycle import (
+    BOOKING_ACCEPTED,
+    BOOKING_PAID,
+    PAYMENT_COMPLETED,
+    PAYMENT_FAILED,
+    can_transition_booking,
+    can_transition_payment,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +43,7 @@ class PaymentService:
                 status_code=403, detail="You can only pay for your own bookings"
             )
 
-        if booking.status != "accepted":
+        if booking.status != BOOKING_ACCEPTED:
             raise HTTPException(
                 status_code=400, detail="Booking must be accepted before payment"
             )
@@ -98,11 +106,19 @@ class PaymentService:
         if not payment:
             raise HTTPException(status_code=404, detail="Payment not found")
 
+        target_payment_status = (
+            PAYMENT_COMPLETED if status == "success" else PAYMENT_FAILED
+        )
+        if payment.status == target_payment_status:
+            return {"detail": "Webhook processed"}
+        if not can_transition_payment(payment.status, target_payment_status):
+            return {"detail": "Webhook processed"}
+
         if status == "success":
-            self.payments.update_status(payment, "completed")
+            self.payments.update_status(payment, PAYMENT_COMPLETED)
             booking = self.bookings.get(payment.booking_id)
-            if booking:
-                booking.status = "paid"
+            if booking and can_transition_booking(booking.status, BOOKING_PAID):
+                booking.status = BOOKING_PAID
                 self.bookings.save(booking)
 
                 ride = self.rides.get_ride(booking.ride_id)
@@ -117,6 +133,6 @@ class PaymentService:
                         },
                     )
         else:
-            self.payments.update_status(payment, "failed")
+            self.payments.update_status(payment, PAYMENT_FAILED)
 
         return {"detail": "Webhook processed"}

@@ -66,6 +66,7 @@ export interface Trip {
   petsAllowed?: boolean;
   musicAllowed?: boolean;
   femaleOnly?: boolean;
+  availableSpots?: string[];
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed';
@@ -148,4 +149,5 @@ export interface CreateTripData {
   petsAllowed?: boolean;
   musicAllowed?: boolean;
   femaleOnly?: boolean;
+  availableSpots?: string[];
 }

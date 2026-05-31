@@ -9,7 +9,7 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export default function SpotlightCard({
   children,
-  spotlightColor,
+  spotlightColor = 'rgba(20,184,166,0.12)',
   className = '',
   ...props
 }: SpotlightCardProps) {
@@ -53,7 +53,7 @@ export default function SpotlightCard({
         className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-500"
         style={{
           opacity,
-          background: `radial-gradient(350px circle at ${position.x}px ${position.y}px, rgba(20,184,166,0.12) 0%, rgba(99,102,241,0.08) 50%, rgba(236,72,153,0.02) 80%, transparent 100%)`,
+          background: `radial-gradient(350px circle at ${position.x}px ${position.y}px, ${spotlightColor} 0%, rgba(99,102,241,0.08) 50%, rgba(236,72,153,0.02) 80%, transparent 100%)`,
         }}
       />
 

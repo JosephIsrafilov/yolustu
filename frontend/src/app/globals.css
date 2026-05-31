@@ -464,6 +464,11 @@
   }
 }
 
+.animate-gradient {
+  background-size: 300% 300%;
+  animation: google-aurora 6s ease infinite;
+}
+
 @keyframes draw-line {
   0% {
     stroke-dasharray: 1000;

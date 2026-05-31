@@ -1,0 +1,58 @@
+RIDE_ACTIVE = "active"
+RIDE_CANCELLED = "cancelled"
+RIDE_COMPLETED = "completed"
+
+BOOKING_PENDING = "pending"
+BOOKING_ACCEPTED = "accepted"
+BOOKING_PAID = "paid"
+BOOKING_REJECTED = "rejected"
+BOOKING_CANCELLED = "cancelled"
+BOOKING_COMPLETED = "completed"
+
+PAYMENT_PENDING = "pending"
+PAYMENT_COMPLETED = "completed"
+PAYMENT_FAILED = "failed"
+
+RIDE_STATUSES = {RIDE_ACTIVE, RIDE_CANCELLED, RIDE_COMPLETED}
+BOOKING_STATUSES = {
+    BOOKING_PENDING,
+    BOOKING_ACCEPTED,
+    BOOKING_PAID,
+    BOOKING_REJECTED,
+    BOOKING_CANCELLED,
+    BOOKING_COMPLETED,
+}
+PAYMENT_STATUSES = {PAYMENT_PENDING, PAYMENT_COMPLETED, PAYMENT_FAILED}
+
+_RIDE_TRANSITIONS = {
+    RIDE_ACTIVE: {RIDE_CANCELLED, RIDE_COMPLETED},
+    RIDE_CANCELLED: set(),
+    RIDE_COMPLETED: set(),
+}
+
+_BOOKING_TRANSITIONS = {
+    BOOKING_PENDING: {BOOKING_ACCEPTED, BOOKING_REJECTED, BOOKING_CANCELLED},
+    BOOKING_ACCEPTED: {BOOKING_PAID, BOOKING_CANCELLED},
+    BOOKING_PAID: {BOOKING_CANCELLED, BOOKING_COMPLETED},
+    BOOKING_REJECTED: set(),
+    BOOKING_CANCELLED: set(),
+    BOOKING_COMPLETED: set(),
+}
+
+_PAYMENT_TRANSITIONS = {
+    PAYMENT_PENDING: {PAYMENT_COMPLETED, PAYMENT_FAILED},
+    PAYMENT_COMPLETED: set(),
+    PAYMENT_FAILED: set(),
+}
+
+
+def can_transition_ride(current: str, target: str) -> bool:
+    return target in _RIDE_TRANSITIONS.get(current, set())
+
+
+def can_transition_booking(current: str, target: str) -> bool:
+    return target in _BOOKING_TRANSITIONS.get(current, set())
+
+
+def can_transition_payment(current: str, target: str) -> bool:
+    return target in _PAYMENT_TRANSITIONS.get(current, set())

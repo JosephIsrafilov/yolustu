@@ -7,6 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
+from app.domains.lifecycle import (
+    RIDE_ACTIVE,
+    RIDE_CANCELLED,
+    RIDE_COMPLETED,
+    can_transition_ride,
+)
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.repositories import RideRepository, VehicleRepository
 from app.domains.trips.schemas import (
@@ -62,6 +68,7 @@ class TripsService:
                     current_user.id, ride_in.car_model or "Car"
                 )
 
+        ride_in = ride_in.model_copy(update={"status": RIDE_ACTIVE})
         return ride_to_response(self.rides.create(current_user.id, vehicle.id, ride_in))
 
     def search_rides(
@@ -118,14 +125,22 @@ class TripsService:
         ride = self.get_ride_model(ride_id)
         if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
-        ride.status = "cancelled"
+        if ride.status == RIDE_CANCELLED:
+            return ride_to_response(ride)
+        if not can_transition_ride(ride.status, RIDE_CANCELLED):
+            raise HTTPException(status_code=400, detail="Ride cannot be cancelled")
+        ride.status = RIDE_CANCELLED
         return ride_to_response(self.rides.save(ride))
 
     def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
         ride = self.get_ride_model(ride_id)
         if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
-        ride.status = "completed"
+        if ride.status == RIDE_COMPLETED:
+            return ride_to_response(ride)
+        if not can_transition_ride(ride.status, RIDE_COMPLETED):
+            raise HTTPException(status_code=400, detail="Ride cannot be completed")
+        ride.status = RIDE_COMPLETED
         self.users.increment_total_rides(ride.driver_id)
         saved_ride = self.rides.save(ride)
 

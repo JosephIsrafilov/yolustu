@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.notifications import NotificationService
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.identity.dependencies import CurrentUser
-from app.domains.payments.providers import BasePaymentProvider
+from app.domains.payments.providers import BasePaymentProvider, StripePaymentProvider
 from app.domains.payments.repositories import PaymentRepository
 from app.domains.payments.services import PaymentService
 from app.domains.trips.ports import RideLookupPort
@@ -213,7 +213,9 @@ def test_success_webhook_marks_booking_paid_and_keeps_seats():
 
 
 def test_repeated_success_webhook_keeps_state_consistent():
-    service, booking, ride, payment_repo, _ = make_service(booking_status="accepted")
+    service, booking, ride, payment_repo, notifications = make_service(
+        booking_status="accepted"
+    )
     passenger = make_current_user(booking.passenger_id)
     service.create_payment_session(booking.id, passenger)
     payload = json.dumps({"transaction_id": "tx-123", "status": "success"}).encode()
@@ -226,6 +228,7 @@ def test_repeated_success_webhook_keeps_state_consistent():
     assert payment.status == "completed"
     assert booking.status == "paid"
     assert ride.available_seats == 2
+    assert len(notifications.sent) == 1
 
 
 def test_unsigned_webhook_is_rejected_outside_development(monkeypatch):
@@ -242,3 +245,14 @@ def test_unsigned_webhook_is_rejected_outside_development(monkeypatch):
 
     assert exc.value.status_code == 503
     assert "not configured" in str(exc.value.detail)
+
+
+def test_missing_stripe_secret_rejected_outside_development(monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "STRIPE_SECRET_KEY", "")
+
+    with pytest.raises(HTTPException) as exc:
+        StripePaymentProvider().create_payment_session(amount=10, booking_id=uuid4())
+
+    assert exc.value.status_code == 503
+    assert "Stripe secret key" in str(exc.value.detail)

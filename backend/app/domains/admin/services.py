@@ -12,6 +12,7 @@ from app.domains.trips.repositories import RideRepository
 from app.domains.trips.schemas import ride_to_response
 from app.core.pagination import create_paginated_response
 from app.domains.gamification.services import check_and_award_badge
+from app.domains.lifecycle import RIDE_CANCELLED, can_transition_ride
 
 
 class AdminService:
@@ -62,8 +63,12 @@ class AdminService:
         ride = self.rides.get(ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
-        self.rides.delete(ride)
-        return {"message": "Ride deleted"}
+        if ride.status != RIDE_CANCELLED:
+            if not can_transition_ride(ride.status, RIDE_CANCELLED):
+                raise HTTPException(status_code=400, detail="Ride cannot be cancelled")
+            ride.status = RIDE_CANCELLED
+            self.rides.save(ride)
+        return {"message": "Ride cancelled"}
 
     def get_bookings(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
         self.require_admin(current_user)

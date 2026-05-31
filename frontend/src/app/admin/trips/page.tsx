@@ -91,7 +91,7 @@ const TRIPS_I18N = {
   en: {
     title: 'Trips',
     subtitle: 'Monitor routes and manage statuses.',
-    confirmDelete: 'Are you sure you want to delete this trip?',
+    confirmDelete: 'Are you sure you want to cancel this trip?',
     emptyState: 'No trips found',
     placeholder: '-',
     locale: 'en-US',
@@ -120,7 +120,7 @@ const TRIPS_I18N = {
       view: 'View',
       deactivate: 'Deactivate',
       activate: 'Activate',
-      delete: 'Delete',
+      delete: 'Cancel',
     }
   }
 } as const;
@@ -169,23 +169,16 @@ export default function AdminTripsPage() {
     setPage(nextPage);
   };
 
-  const deleteTrip = async (tripId: string) => {
+  const cancelTrip = async (tripId: string) => {
     if (!window.confirm(t.confirmDelete)) {
       return;
     }
     try {
       await adminService.deleteTrip(tripId);
-      setTrips((current) => current.filter((trip) => trip.id !== tripId));
+      void fetchTrips(page);
     } catch (error) {
       console.error('Delete trip error:', error);
     }
-  };
-
-  const updateTripStatus = (tripId: string, status: Trip['status']) => {
-    setTrips((current) => current.map((trip) => trip.id === tripId ? { ...trip, status } : trip));
-    useAppStore.setState((state) => ({
-      trips: state.trips.map((trip) => trip.id === tripId ? { ...trip, status } : trip),
-    }));
   };
 
   const handleSort = (key: string) => {
@@ -411,7 +404,6 @@ export default function AdminTripsPage() {
             ) : (
               sortedTrips.map((trip) => {
                 const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
-                const showActivate = trip.status === 'cancelled';
                 const showDeactivate = trip.status === 'active';
                 return (
                   <tr key={trip.id} className="transition-colors duration-150 hover:bg-surface-dim">
@@ -454,18 +446,10 @@ export default function AdminTripsPage() {
                           <Icon name="file-text" size={14} /> {t.actions.view}
                         </Button>
                         {showDeactivate && (
-                          <Button size="sm" variant="outline" onClick={() => updateTripStatus(trip.id, 'cancelled')}>
-                            <Icon name="ban" size={14} /> {t.actions.deactivate}
+                          <Button size="sm" variant="danger" onClick={() => cancelTrip(trip.id)}>
+                            <Icon name="ban" size={14} /> {t.actions.delete}
                           </Button>
                         )}
-                        {showActivate && (
-                          <Button size="sm" variant="secondary" onClick={() => updateTripStatus(trip.id, 'active')}>
-                            <Icon name="check-circle" size={14} /> {t.actions.activate}
-                          </Button>
-                        )}
-                        <Button size="sm" variant="danger" onClick={() => deleteTrip(trip.id)}>
-                          <Icon name="trash-2" size={14} /> {t.actions.delete}
-                        </Button>
                       </div>
                     </td>
                   </tr>

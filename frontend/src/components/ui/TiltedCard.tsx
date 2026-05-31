@@ -59,7 +59,7 @@ export default function TiltedCard({
       }}
       {...props}
     >
-      <div style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d', height: '100%', width: '100%' }}>
+      <div className="relative" style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d', height: '100%', width: '100%' }}>
         {children}
       </div>
     </div>

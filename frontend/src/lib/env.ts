@@ -1,6 +1,45 @@
+function trimTrailingSlashes(value: string): string {
+  return value.replace(/\/+$/, '');
+}
+
+function normalizeLoopbackHost(url: URL): URL {
+  if (typeof window === 'undefined') {
+    return url;
+  }
+
+  const pageHost = window.location.hostname;
+  const isPageLoopback = pageHost === 'localhost' || pageHost === '127.0.0.1';
+  const isUrlLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+  if (isPageLoopback && isUrlLoopback && url.hostname !== pageHost) {
+    url.hostname = pageHost;
+  }
+
+  return url;
+}
+
+export function normalizeWebSocketBaseUrl(baseUrl: string): string {
+  const trimmed = trimTrailingSlashes(baseUrl);
+  try {
+    const url = normalizeLoopbackHost(new URL(trimmed));
+    url.pathname = trimTrailingSlashes(url.pathname).replace(/\/api\/v1$/, '') || '';
+    return trimTrailingSlashes(url.toString());
+  } catch {
+    return trimTrailingSlashes(trimmed.replace(/\/api\/v1$/, ''));
+  }
+}
+
+export function buildApiWebSocketUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const apiPath = normalizedPath.startsWith('/api/v1')
+    ? normalizedPath
+    : `/api/v1${normalizedPath}`;
+  return `${normalizeWebSocketBaseUrl(env.wsUrl)}${apiPath}`;
+}
+
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1',
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'ws://127.0.0.1:8000/api/v1',
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'ws://127.0.0.1:8000',
 } satisfies {
   apiUrl: string;
   wsUrl: string;

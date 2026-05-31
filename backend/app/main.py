@@ -7,8 +7,12 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from redis import Redis
+from sqlalchemy import text
 
 from app.core.config import UPLOADS_DIR, settings
+from app.core.database import engine
+from app.core.redis import redis_pool
 from app.core.csrf import validate_csrf_request
 from app.core.logging_config import setup_logging
 from app.core.limiter import limiter
@@ -137,4 +141,45 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+    checks: dict[str, dict[str, object]] = {
+        "api": {"status": "ok"},
+        "database": {"status": "ok"},
+        "redis": {"status": "ok"},
+        "configuration": {"status": "ok", "warnings": []},
+    }
+
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        checks["database"] = {"status": "error", "message": str(exc)}
+
+    try:
+        Redis(connection_pool=redis_pool).ping()
+    except Exception as exc:
+        checks["redis"] = {"status": "error", "message": str(exc)}
+
+    warnings = checks["configuration"].get("warnings")
+    if isinstance(warnings, list):
+        if not settings.NVIDIA_API_KEY:
+            warnings.append(
+                "NVIDIA_API_KEY is not configured; deterministic AI fallback is active."
+            )
+        if settings.ENVIRONMENT.lower() == "production":
+            if not settings.STRIPE_SECRET_KEY:
+                warnings.append("STRIPE_SECRET_KEY is not configured.")
+            if not settings.STRIPE_WEBHOOK_SECRET:
+                warnings.append("STRIPE_WEBHOOK_SECRET is not configured.")
+        if warnings:
+            checks["configuration"]["status"] = "warning"
+
+    overall_status = (
+        "ok"
+        if all(check.get("status") != "error" for check in checks.values())
+        else "degraded"
+    )
+    return {
+        "status": overall_status,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }

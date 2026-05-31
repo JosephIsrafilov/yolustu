@@ -35,6 +35,12 @@ class FakeUser:
     bio: str | None = None
 
 
+@dataclass
+class FakeRide:
+    id: UUID
+    status: str = "active"
+
+
 class FakeAdminRepository:
     def __init__(self, users: list[FakeUser]):
         self.users = users
@@ -88,11 +94,21 @@ class FakeUserRepository:
 
 
 class FakeRideRepository:
-    def list_all(self) -> list[object]:
-        return []
+    def __init__(self, rides: list[FakeRide]):
+        self.rides: dict[UUID, FakeRide] = {ride.id: ride for ride in rides}
 
-    def get(self, ride_id: UUID) -> None:
-        return None
+    def list_all(self, skip: int = 0, limit: int = 100) -> list[FakeRide]:
+        return list(self.rides.values())[skip : skip + limit]
+
+    def count_all(self) -> int:
+        return len(self.rides)
+
+    def get(self, ride_id: UUID) -> FakeRide | None:
+        return self.rides.get(ride_id)
+
+    def save(self, ride: FakeRide) -> FakeRide:
+        self.rides[ride.id] = ride
+        return ride
 
 
 class FakeBookingRepository:
@@ -112,7 +128,7 @@ def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     )
 
 
-def make_service() -> tuple[AdminService, list[FakeUser]]:
+def make_service() -> tuple[AdminService, list[FakeUser], FakeRide]:
     admin_id = uuid4()
     user_id = uuid4()
     users = [
@@ -137,16 +153,17 @@ def make_service() -> tuple[AdminService, list[FakeUser]]:
         ),
     ]
 
+    ride = FakeRide(id=uuid4())
     service = AdminService(db=cast(Session, None))
     service.admin = cast(AdminRepository, FakeAdminRepository(users))
     service.users = cast(UserRepository, FakeUserRepository(users))
-    service.rides = cast(RideRepository, FakeRideRepository())
+    service.rides = cast(RideRepository, FakeRideRepository([ride]))
     service.bookings = cast(BookingRepository, FakeBookingRepository())
-    return service, users
+    return service, users, ride
 
 
 def test_non_admin_access_is_forbidden_for_admin_methods():
-    service, users = make_service()
+    service, users, _ = make_service()
     non_admin = make_current_user(users[1].id, role="driver")
 
     with pytest.raises(HTTPException) as stats_exc:
@@ -174,7 +191,7 @@ def test_non_admin_access_is_forbidden_for_admin_methods():
 
 
 def test_admin_can_list_and_update_verification_status():
-    service, users = make_service()
+    service, users, _ = make_service()
     admin = make_current_user(users[0].id, role="admin")
     target = users[1]
 
@@ -194,9 +211,20 @@ def test_admin_can_list_and_update_verification_status():
 
 
 def test_admin_stats_available_only_for_admin():
-    service, users = make_service()
+    service, users, _ = make_service()
     admin = make_current_user(users[0].id, role="admin")
 
     stats = service.get_stats(admin)
     assert stats["totalUsers"] == 2
     assert stats["pendingVerifications"] == 1
+
+
+def test_admin_delete_ride_soft_cancels_and_preserves_record():
+    service, users, ride = make_service()
+    admin = make_current_user(users[0].id, role="admin")
+
+    response = service.delete_ride(ride.id, admin)
+
+    assert response["message"] == "Ride cancelled"
+    assert service.rides.get(ride.id) is ride
+    assert ride.status == "cancelled"

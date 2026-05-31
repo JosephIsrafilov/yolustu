@@ -104,6 +104,18 @@ def test_login_verified_user_returns_tokens_and_user():
     assert data["user"]["phone"] == SEED_PHONE
     assert data["user"]["is_verified"] is True
     assert response.cookies.get("csrf_token")
+    set_cookie_headers = response.headers.get_list("set-cookie")
+    assert any(
+        "access_token=" in header and "Path=/" in header
+        for header in set_cookie_headers
+    )
+    assert any(
+        "refresh_token=" in header and "Path=/" in header
+        for header in set_cookie_headers
+    )
+    assert any(
+        "csrf_token=" in header and "Path=/" in header for header in set_cookie_headers
+    )
 
 
 def test_login_does_not_grant_special_phone_admin_backdoor():

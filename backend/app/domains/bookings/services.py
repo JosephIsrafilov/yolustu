@@ -11,6 +11,17 @@ from app.domains.bookings.schemas import (
     booking_to_response,
 )
 from app.domains.identity.dependencies import CurrentUser
+from app.domains.lifecycle import (
+    BOOKING_ACCEPTED,
+    BOOKING_CANCELLED,
+    BOOKING_COMPLETED,
+    BOOKING_PAID,
+    BOOKING_PENDING,
+    BOOKING_REJECTED,
+    RIDE_ACTIVE,
+    RIDE_COMPLETED,
+    can_transition_booking,
+)
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 
@@ -32,7 +43,7 @@ class BookingsService:
         ride = self.rides.get_ride_for_update(booking_in.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
-        if ride.status != "active":
+        if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
         if ride.available_seats < booking_in.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough available seats")
@@ -80,14 +91,16 @@ class BookingsService:
             raise HTTPException(
                 status_code=403, detail="Only the driver can confirm this booking"
             )
-        if booking.status != "pending":
+        if booking.status != BOOKING_PENDING:
             raise HTTPException(status_code=400, detail="Booking is not pending")
-        if ride.status != "active":
+        if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
         if ride.available_seats < booking.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough seats left")
+        if not can_transition_booking(booking.status, BOOKING_ACCEPTED):
+            raise HTTPException(status_code=400, detail="Invalid booking transition")
 
-        booking.status = "accepted"
+        booking.status = BOOKING_ACCEPTED
         ride.available_seats -= booking.seats_booked
         self.bookings.save(booking)
 
@@ -109,10 +122,12 @@ class BookingsService:
             raise HTTPException(
                 status_code=403, detail="Only the driver can reject this booking"
             )
-        if booking.status != "pending":
+        if booking.status != BOOKING_PENDING:
             raise HTTPException(status_code=400, detail="Booking is not pending")
+        if not can_transition_booking(booking.status, BOOKING_REJECTED):
+            raise HTTPException(status_code=400, detail="Invalid booking transition")
 
-        booking.status = "rejected"
+        booking.status = BOOKING_REJECTED
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
@@ -133,19 +148,21 @@ class BookingsService:
                 status_code=403, detail="Only the passenger can cancel this booking"
             )
 
-        if booking.status in ["cancelled", "rejected", "completed"]:
+        if booking.status in [BOOKING_CANCELLED, BOOKING_REJECTED, BOOKING_COMPLETED]:
             raise HTTPException(
                 status_code=400, detail="Booking cannot be cancelled in current status"
             )
+        if not can_transition_booking(booking.status, BOOKING_CANCELLED):
+            raise HTTPException(status_code=400, detail="Invalid booking transition")
 
-        if booking.status in ["accepted", "paid"]:
+        if booking.status in [BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)
-            if ride.status != "completed":
+            if ride.status != RIDE_COMPLETED:
                 ride.available_seats = min(
                     ride.total_seats, ride.available_seats + booking.seats_booked
                 )
 
-        booking.status = "cancelled"
+        booking.status = BOOKING_CANCELLED
         self.bookings.save(booking)
 
         ride = self._get_booking_ride(booking)

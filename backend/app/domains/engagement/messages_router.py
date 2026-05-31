@@ -19,7 +19,7 @@ from app.domains.engagement.services import EngagementService
 from app.domains.identity.dependencies import (
     CurrentUser,
     get_current_user,
-    get_current_user_from_token,
+    get_current_user_from_websocket,
 )
 
 router = APIRouter()
@@ -41,12 +41,8 @@ async def websocket_endpoint(
     token: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    if not token:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-
     try:
-        current_user = get_current_user_from_token(token, db)
+        current_user = get_current_user_from_websocket(websocket, db, token)
         EngagementService(db).get_ride_messages(ride_id, current_user)
     except HTTPException:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)

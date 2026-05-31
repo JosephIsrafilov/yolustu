@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,11 +14,11 @@ import Input from '@/components/ui/Input';
 import DatePicker from '@/components/ui/DatePicker';
 import TimePicker from '@/components/ui/TimePicker';
 import CitySelect from '@/components/ui/CitySelect';
-import { useAppStore } from '@/store/useAppStore';
-import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, PRESET_LOCATIONS, formatPriceParts } from '@/lib/utils';
 import Select from '@/components/ui/Select';
 import Icon from '@/components/ui/Icon';
+import { useAppStore } from '@/store/useAppStore';
+import { ROUTES } from '@/lib/routes';
+import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan } from '@/lib/utils';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
@@ -36,7 +35,8 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
     dropoffPoint: z.string().optional(),
     date: z.string().min(1, requiredErrorMsg),
     time: z.string().min(1, requiredErrorMsg),
-    seatsTotal: z.number().int().min(1, seatsErrorMsg).max(4, seatsErrorMsg),
+    seatsTotal: z.number().int().min(1, seatsErrorMsg).max(8, seatsErrorMsg),
+    availableSpots: z.array(z.string()).optional(),
     pricePerSeat: z.number().min(0.01, priceErrorMsg),
     comment: z.string().optional(),
     origin: z.object({ lat: z.number(), lng: z.number() }).optional(),
@@ -123,11 +123,11 @@ export default function CreateTripPage() {
   const [maxStepReached, setMaxStepReached] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [carLayout, setCarLayout] = useState<'5-seater' | '7-seater'>('5-seater');
 
-  const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
     queryFn: async () => {
-
       try {
         const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
         return response.map(mapApiVehicleToVehicle);
@@ -156,7 +156,8 @@ export default function CreateTripPage() {
       dropoffPoint: '',
       date: '',
       time: '',
-      seatsTotal: 3,
+      seatsTotal: 0,
+      availableSpots: [],
       pricePerSeat: 10,
       comment: '',
       origin: undefined,
@@ -179,17 +180,13 @@ export default function CreateTripPage() {
 
   const mapCenter = useMemo((): [number, number] => {
     if (pickerMode === 'origin') {
-      if (formValues.origin) {
-        return [formValues.origin.lat, formValues.origin.lng];
-      }
+      if (formValues.origin) return [formValues.origin.lat, formValues.origin.lng];
       if (formValues.departureCity) {
         const coords = getCityCoordinates(formValues.departureCity);
         if (coords) return [coords.lat, coords.lng];
       }
     } else {
-      if (formValues.destination) {
-        return [formValues.destination.lat, formValues.destination.lng];
-      }
+      if (formValues.destination) return [formValues.destination.lat, formValues.destination.lng];
       if (formValues.arrivalCity) {
         const coords = getCityCoordinates(formValues.arrivalCity);
         if (coords) return [coords.lat, coords.lng];
@@ -211,8 +208,6 @@ export default function CreateTripPage() {
   const [aiReasoning, setAiReasoning] = useState('');
   const [aiSuggestedPrice, setAiSuggestedPrice] = useState<number | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
-  const aiSuggestedPriceParts = aiSuggestedPrice ? formatPriceParts(aiSuggestedPrice) : null;
-  const summaryPriceParts = formatPriceParts(formValues.pricePerSeat);
 
   const getAiSuggestion = async () => {
     const values = getValues();
@@ -231,7 +226,7 @@ export default function CreateTripPage() {
         departure_date: values.date,
         language: language,
         car_model: carModel,
-        seats_total: values.seatsTotal,
+        seats_total: values.seatsTotal || 4,
         origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,
         destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
       });
@@ -267,7 +262,7 @@ export default function CreateTripPage() {
         departure_time: values.time,
         departure_date: values.date,
         car_model: carModel,
-        seats_total: values.seatsTotal,
+        seats_total: values.seatsTotal || 4,
         language: language,
         preferences: prefs,
       });
@@ -282,15 +277,9 @@ export default function CreateTripPage() {
   };
 
   const validateStep = async () => {
-    if (step === 0) {
-      return await trigger(['departureCity', 'arrivalCity']);
-    }
-    if (step === 1) {
-      return await trigger(['date', 'time']);
-    }
-    if (step === 2) {
-      return await trigger(['seatsTotal', 'pricePerSeat']);
-    }
+    if (step === 0) return await trigger(['departureCity', 'arrivalCity']);
+    if (step === 1) return await trigger(['date', 'time']);
+    if (step === 2) return await trigger(['seatsTotal', 'pricePerSeat']);
     return true;
   };
 
@@ -316,6 +305,7 @@ export default function CreateTripPage() {
         date: values.date,
         time: values.time,
         seatsTotal: values.seatsTotal,
+        availableSpots: values.availableSpots || [],
         pricePerSeat: values.pricePerSeat,
         carModel: selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : '',
         comment: values.comment || '',
@@ -366,17 +356,13 @@ export default function CreateTripPage() {
         const coordField = isMeeting ? 'origin' : 'destination';
 
         if (countryCode && countryCode.toLowerCase() !== 'az') {
-          setError(coordField, {
-            type: 'manual',
-            message: copy.onlyAzerbaijanError
-          });
+          setError(coordField, { type: 'manual', message: copy.onlyAzerbaijanError });
           setValue(coordField, undefined);
           setValue(field, '');
           return;
         }
 
         clearErrors(coordField);
-
         const addr = data.address;
         const shortName = addr.road 
           ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}` 
@@ -388,647 +374,401 @@ export default function CreateTripPage() {
     }
   };
 
+  // Spot toggle helper
+  const toggleSpot = (spotId: string) => {
+    const current = getValues('availableSpots') || [];
+    let next = [];
+    if (current.includes(spotId)) {
+      next = current.filter(id => id !== spotId);
+    } else {
+      next = [...current, spotId];
+    }
+    setValue('availableSpots', next);
+    setValue('seatsTotal', next.length, { shouldValidate: true });
+  };
+
+  const renderSpot = (id: string, label: string) => {
+    const isSelected = formValues.availableSpots?.includes(id);
+    return (
+      <button 
+        type="button" 
+        onClick={() => toggleSpot(id)}
+        className={`w-full py-2.5 rounded-xl border-2 font-bold text-xs transition-all active:scale-95 ${
+          isSelected 
+            ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm' 
+            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+        }`}
+      >
+        {label}
+      </button>
+    );
+  };
+
   return (
     <DriverLayout narrow>
-      <ProtectedRoute mode="driver">
-        {lastError && (
-          <div className="mb-4 rounded-xl border border-[#ffdad6] bg-[#fff4f2] px-4 py-3 text-sm font-medium text-[#93000a]">
-            <div className="flex items-center justify-between gap-3">
-              <span>{lastError}</span>
-              <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">{common.close}</button>
-            </div>
-          </div>
-        )}
-        
-        {!isLoadingVehicles && vehicles.length === 0 && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm animate-fade-in">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                <Icon name="car" size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-amber-900 leading-tight">
-                  {language === 'az' 
-                    ? 'Nəqliyyat vasitəsi əlavə edilməyib' 
-                    : language === 'ru' 
-                    ? 'Транспорт не добавлен' 
-                    : 'No Vehicle Registered'}
-                </h4>
-                <p className="text-xs text-amber-800/90 leading-relaxed mt-1">
-                  {language === 'az' 
-                    ? 'Gediş yaratmaq üçün avtomobil əlavə etməyiniz tövsiyə olunur. Əks halda sistem standart avtomobildən istifadə edəcək.' 
-                    : language === 'ru' 
-                    ? 'Для создания поездки рекомендуется добавить автомобиль. Иначе система использует транспорт по умолчанию.' 
-                    : 'To publish a trip, we recommend registering your vehicle. Otherwise, a standard default fallback vehicle will be used.'}
-                </p>
-                <div className="mt-3">
-                  <Link 
-                    href={ROUTES.driverVehicle}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-sm"
-                  >
-                    <span>
-                      {language === 'az' 
-                        ? 'Avtomobil əlavə et' 
-                        : language === 'ru' 
-                        ? 'Добавить транспорт' 
-                        : pageCopy.addVehicleToProfile}
-                    </span>
-                    <Icon name="arrow-right" size={12} />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        <>
-        <div className="mb-6 flex items-center gap-2">
-          {steps.map((s, i) => {
-            const isCurrent = i === step;
-            const isSelectable = i <= maxStepReached;
-            return (
-              <div 
-                key={s} 
-                className="flex-1"
-                onClick={async () => {
-                  if (isSelectable) {
-                    if (i < step) {
-                      setStep(i);
-                    } else if (i > step) {
-                      const isValid = await validateStep();
-                      if (isValid) setStep(i);
-                    }
-                  }
-                }}
-              >
-                <div className={`h-2 rounded-full transition-all duration-300 ${
-                  isCurrent ? 'bg-brand-500 scale-y-110' : 
-                  isSelectable ? 'bg-brand-500/60 cursor-pointer hover:bg-brand-500' : 'bg-surface-muted'
-                }`} />
-                <p className={`mt-1.5 text-center text-[10px] sm:text-xs transition-colors duration-300 ${
-                  isCurrent ? 'font-bold text-brand-600' : 
-                  isSelectable ? 'text-text-muted cursor-pointer hover:text-brand-500' : 'text-text-muted/50'
-                }`}>
-                  {s}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {step > 0 && formValues.departureCity && formValues.arrivalCity && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm border border-border animate-fade-in">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 border border-slate-100">
-                <Icon name="map" size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-0.5">{copy.summaryRoute}</p>
-                <p className="text-[15px] font-bold text-text truncate flex items-center gap-1.5">
-                  <span>{formValues.departureCity}</span>
-                  <Icon name="arrow-right" size={13} className="text-text-muted shrink-0" />
-                  <span>{formValues.arrivalCity}</span>
-                </p>
-              </div>
-            </div>
-            <button 
-              type="button"
-              onClick={() => setStep(0)}
-              className="shrink-0 rounded-xl bg-transparent hover:bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-text-muted hover:text-text shadow-xs border border-border hover:border-text-muted/30 transition-all"
-            >
-              {pageCopy.editRoute}
-            </button>
-          </div>
-        )}
-
-        <Card className="p-6">
-          <div className="animate-fade-in">
-            {step === 0 && (
-              <div className="flex flex-col gap-4">
-                <Controller
-                  name="departureCity"
-                  control={control}
-                  render={({ field }) => (
-                    <CitySelect 
-                      label={copy.fromCity} 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      options={AZ_CITIES} 
-                      error={errors.departureCity?.message} 
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="arrivalCity"
-                  control={control}
-                  render={({ field }) => (
-                    <CitySelect 
-                      label={copy.toCity} 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      options={AZ_CITIES} 
-                      error={errors.arrivalCity?.message} 
-                    />
-                  )}
-                />
-
-                <div className="mt-2 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">{copy.mapHint}</label>
-                    <div className="flex gap-1 rounded-lg bg-surface-muted p-1">
-                      <button 
-                        type="button"
-                        onClick={() => setPickerMode('origin')}
-                        className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${pickerMode === 'origin' ? 'bg-white shadow-sm text-brand-600' : 'text-text-muted'}`}
-                      >
-                        {copy.summaryMeeting}
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setPickerMode('destination')}
-                        className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${pickerMode === 'destination' ? 'bg-white shadow-sm text-brand-600' : 'text-text-muted'}`}
-                      >
-                        {pageCopy.dropoffTab}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="overflow-hidden rounded-xl border border-border">
-                    <MapContainer center={mapCenter} zoom={mapZoom}>
-                      <LocationPicker 
-                        mode={pickerMode}
-                        origin={formValues.origin}
-                        destination={formValues.destination}
-                        onSelectOrigin={(pos) => { 
-                          if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
-                            setError('origin', {
-                              type: 'manual',
-                              message: copy.onlyAzerbaijanError
-                            });
-                            setValue('origin', undefined);
-                            setValue('meetingPoint', '');
-                            return;
-                          }
-                          clearErrors('origin');
-                          setValue('origin', pos); 
-                          reverseGeocode(pos.lat, pos.lng, 'meetingPoint'); 
-                        }}
-                        onSelectDestination={(pos) => { 
-                          if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
-                            setError('destination', {
-                              type: 'manual',
-                              message: copy.onlyAzerbaijanError
-                            });
-                            setValue('destination', undefined);
-                            setValue('dropoffPoint', '');
-                            return;
-                          }
-                          clearErrors('destination');
-                          setValue('destination', pos); 
-                          reverseGeocode(pos.lat, pos.lng, 'dropoffPoint'); 
-                        }}
-                      />
-                    </MapContainer>
-                  </div>
-                  <p className="text-center text-xs text-text-muted">
-                    {pickerMode === 'origin' ? pageCopy.mapPickMeeting : pageCopy.mapPickDropoff}
-                  </p>
-                  
-                  {(() => {
-                    const activeCity = pickerMode === 'origin' ? formValues.departureCity : formValues.arrivalCity;
-                    const presets = activeCity ? PRESET_LOCATIONS[activeCity] : null;
-                    if (!presets || presets.length === 0) return null;
-                    return (
-                      <div className="flex flex-col gap-1.5 mt-1 border-t border-dashed border-border pt-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                          {copy.presetTitle}
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {presets.map((preset) => (
-                            <button
-                              key={preset.name}
-                              type="button"
-                              onClick={() => {
-                                const pos = { lat: preset.lat, lng: preset.lng };
-                                if (pickerMode === 'origin') {
-                                  setValue('origin', pos);
-                                  setValue('meetingPoint', preset.name);
-                                  clearErrors('origin');
-                                } else {
-                                  setValue('destination', pos);
-                                  setValue('dropoffPoint', preset.name);
-                                  clearErrors('destination');
-                                }
-                              }}
-                              className="rounded-lg bg-brand-50 border border-brand-100 hover:bg-brand-100 hover:border-brand-200 text-brand-700 px-2.5 py-1 text-xs font-semibold transition-colors duration-200"
-                            >
-                              {preset.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {errors.origin?.message && pickerMode === 'origin' && (
-                    <p className="text-center text-xs font-semibold text-[#ba1a1a] mt-1">
-                      {errors.origin.message}
-                    </p>
-                  )}
-                  {errors.destination?.message && pickerMode === 'destination' && (
-                    <p className="text-center text-xs font-semibold text-[#ba1a1a] mt-1">
-                      {errors.destination.message}
-                    </p>
-                  )}
-                </div>
-
-                <Input 
-                  label={copy.meetingPoint} 
-                  placeholder={copy.meetingPlaceholder} 
-                  value={formValues.meetingPoint || ''} 
-                  onChange={(e) => setValue('meetingPoint', e.target.value)} 
-                  icon={<Icon name="map-pin" size={16} />} 
-                />
-                <Input 
-                  label={copy.dropoffPoint} 
-                  placeholder={copy.dropoffPlaceholder} 
-                  value={formValues.dropoffPoint || ''} 
-                  onChange={(e) => setValue('dropoffPoint', e.target.value)} 
-                  icon={<Icon name="map-pin" size={16} />} 
-                />
-              </div>
-            )}
-
-            {step === 1 && (
-              <div className="flex flex-col gap-4">
-                <div>
-                  <Controller
-                    name="date"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker 
-                        value={field.value} 
-                        onChange={field.onChange} 
-                        label={copy.dateLabel} 
-                        placeholder={common.selectDate} 
-                      />
-                    )}
-                  />
-                  {errors.date && <p className="mt-1.5 text-xs text-danger-500">{errors.date.message}</p>}
-                </div>
-                <Controller
-                  name="time"
-                  control={control}
-                  render={({ field }) => (
-                    <TimePicker 
-                      label={copy.timeLabel} 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      error={errors.time?.message} 
-                      placeholder={copy.timeLabel} 
-                    />
-                  )}
-                />
-                
-                <div className="flex items-start gap-3 rounded-xl border border-border p-4 bg-surface-muted/30">
-                  <input
-                    type="checkbox"
-                    id="isRecurring"
-                    checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                  />
-                  <label htmlFor="isRecurring" className="text-xs sm:text-sm font-medium text-text cursor-pointer select-none">
-                    <span className="block font-bold">{pageCopy.recurringTrip}</span>
-                    <span className="block text-text-muted mt-0.5 text-[11px] leading-relaxed">{copy.recurringLabel}</span>
-                  </label>
+      <div className="min-h-screen bg-slate-50 text-slate-900 pb-24 pt-8">
+        <div className="max-w-xl mx-auto px-4 sm:px-6">
+          <ProtectedRoute mode="driver">
+            {lastError && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                <div className="flex items-center justify-between gap-3">
+                  <span>{lastError}</span>
+                  <button type="button" onClick={clearError} className="text-xs font-bold hover:underline">{common.close}</button>
                 </div>
               </div>
             )}
-
-            {step === 2 && (
-              <div className="flex flex-col gap-4">
-                {vehicles.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-text-secondary">
-                      {language === 'az' ? 'Avtomobil' : language === 'ru' ? 'Автомобиль' : 'Vehicle'}
-                    </label>
-                    <Controller
-                      name="vehicleId"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value || ''}
-                          onChange={(val) => {
-                            field.onChange(val);
-                            setAiSuggestedPrice(null);
-                          }}
-                          options={vehicles.map(v => ({
-                            value: v.id,
-                            label: `${v.brand} ${v.model} (${v.plateNumber})`
-                          }))}
-                          placeholder={language === 'az' ? 'Avtomobil seçin' : language === 'ru' ? 'Выберите автомобиль' : 'Select vehicle'}
-                        />
-                      )}
-                    />
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{copy.seatsCount}</label>
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setValue('seatsTotal', Math.max(1, formValues.seatsTotal - 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">
-                      <Icon name="minus" size={16} />
-                    </button>
-                    <span className="w-8 text-center text-2xl font-bold">{formValues.seatsTotal}</span>
-                    <button type="button" onClick={() => setValue('seatsTotal', Math.min(4, formValues.seatsTotal + 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-muted text-lg font-bold transition-transform active:scale-95">+</button>
-                  </div>
-                  {errors.seatsTotal && <p className="text-xs text-danger-500">{errors.seatsTotal.message}</p>}
-                </div>
-                
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-text">{copy.pricePerSeat}</label>
-                    <button
-                      type="button"
-                      onClick={getAiSuggestion}
-                      disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-95"
+            
+            {/* Step Indicators */}
+            <div className="mb-8">
+              <div className="relative flex items-center justify-between">
+                <div className="absolute left-4 right-4 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
+                <div 
+                  className="absolute left-4 top-1/2 h-1 -translate-y-1/2 rounded-full bg-teal-500 transition-all duration-500 ease-out" 
+                  style={{ width: `calc(${(step / (steps.length - 1)) * 100}% - 2rem)` }} 
+                />
+                {steps.map((s, i) => {
+                  const isCurrent = i === step;
+                  const isSelectable = i <= maxStepReached;
+                  const isPast = i < step;
+                  return (
+                    <div 
+                      key={s} 
+                      className="relative z-10 flex flex-col items-center gap-2 cursor-pointer group"
+                      onClick={async () => {
+                        if (isSelectable) {
+                          if (i < step) setStep(i);
+                          else if (i > step && await validateStep()) setStep(i);
+                        }
+                      }}
                     >
-                      {isAiLoading ? (
-                        <>
-                          <Icon name="loader-2" size={12} className="animate-spin" />
-                          <span>{copy.aiLoading}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="sparkles" size={12} className="text-brand-500 animate-pulse" />
-                          <span>{copy.aiSuggestBtn}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  
-                  <Input 
-                    type="number" 
-                    value={formValues.pricePerSeat} 
-                    onChange={(e) => setValue('pricePerSeat', Number(e.target.value))} 
-                    error={errors.pricePerSeat?.message} 
-                  />
-
-                  {/* AI Suggestion Result Area */}
-                  {isAiLoading && (
-                    <div className="mt-2 rounded-xl border border-border bg-white p-4 animate-fade-in shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <Icon name="loader-2" size={16} className="animate-spin text-brand-500" />
-                        <span className="text-xs font-medium text-text-muted">{copy.aiLoading}</span>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                        isCurrent ? 'border-teal-500 bg-white text-teal-600 shadow-sm scale-110' : 
+                        isPast ? 'border-teal-500 bg-teal-500 text-white' : 
+                        'border-slate-200 bg-white text-slate-400 group-hover:border-slate-300'
+                      }`}>
+                        {isPast ? <Icon name="check" size={14} /> : <span className="text-xs font-bold">{i + 1}</span>}
                       </div>
+                      <span className={`absolute -bottom-6 w-max text-[10px] font-bold transition-colors duration-300 uppercase tracking-wide ${
+                        isCurrent ? 'text-teal-600' : isPast ? 'text-slate-600' : 'text-slate-400'
+                      }`}>
+                        {s}
+                      </span>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            </div>
 
-                  {!isAiLoading && aiSuggestedPrice && (
-                    <div className="mt-2 rounded-xl border border-brand-100 bg-brand-50/20 p-4 animate-fade-in shadow-sm">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-brand-700">
-                            <Icon name="sparkles" size={14} className="text-brand-500" />
-                            <span>{pageCopy.aiPriceSuggestion}</span>
-                          </div>
-                          <div className="flex items-baseline gap-1 mt-1">
-                            <span className="text-lg font-black text-brand-800">{aiSuggestedPriceParts?.amount}</span>
-                            <span className="text-sm font-semibold text-brand-700">{aiSuggestedPriceParts?.symbol}</span>
-                          </div>
-                          {aiReasoning && (
-                            <p className="text-xs text-text-muted leading-relaxed mt-1 max-w-[320px] sm:max-w-[420px]">
-                              {aiReasoning}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setValue('pricePerSeat', aiSuggestedPrice)}
-                          className="shrink-0 rounded-lg bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white px-3.5 py-2 text-xs font-bold transition-colors shadow-sm active:scale-95"
-                        >
-                          {pageCopy.applySuggestion}
+            {/* Route Summary Card */}
+            {step > 0 && formValues.departureCity && formValues.arrivalCity && (
+              <div className="mb-6 flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+                    <Icon name="map" size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{copy.summaryRoute}</p>
+                    <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>{formValues.departureCity}</span>
+                      <Icon name="arrow-right" size={12} className="text-slate-400" />
+                      <span>{formValues.arrivalCity}</span>
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setStep(0)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors border border-slate-200"
+                >
+                  {pageCopy.editRoute}
+                </button>
+              </div>
+            )}
+
+            <Card className="p-6 sm:p-8 rounded-3xl shadow-md border-slate-200 bg-white">
+              {/* STEP 1: ROUTE */}
+              {step === 0 && (
+                <div className="flex flex-col gap-5">
+                  <Controller name="departureCity" control={control} render={({ field }) => (
+                    <CitySelect label={copy.fromCity} value={field.value} onChange={field.onChange} options={AZ_CITIES} error={errors.departureCity?.message} />
+                  )} />
+                  <Controller name="arrivalCity" control={control} render={({ field }) => (
+                    <CitySelect label={copy.toCity} value={field.value} onChange={field.onChange} options={AZ_CITIES} error={errors.arrivalCity?.message} />
+                  )} />
+
+                  <div className="mt-2 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-bold text-slate-700">{copy.mapHint}</label>
+                      <div className="flex gap-1 rounded-lg bg-slate-100 p-1 border border-slate-200">
+                        <button type="button" onClick={() => setPickerMode('origin')} className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${pickerMode === 'origin' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500'}`}>
+                          {copy.summaryMeeting}
+                        </button>
+                        <button type="button" onClick={() => setPickerMode('destination')} className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${pickerMode === 'destination' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500'}`}>
+                          {pageCopy.dropoffTab}
                         </button>
                       </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="mt-4 border-t border-border pt-4">
-                  <h4 className="text-sm font-bold text-text mb-3">{copy.preferencesTitle}</h4>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.femaleOnly ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
-                         onClick={() => setValue('femaleOnly', !formValues.femaleOnly)}>
-                      <input
-                        type="checkbox"
-                        checked={formValues.femaleOnly || false}
-                        onChange={() => {}}
-                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Icon name="venus" size={16} className={formValues.femaleOnly ? 'text-brand-600' : 'text-text-muted'} />
-                        <span className="text-xs font-semibold text-text">{copy.femaleOnlyLabel}</span>
-                      </div>
+                    
+                    <div className="overflow-hidden rounded-xl border border-slate-200 h-64">
+                      <MapContainer center={mapCenter} zoom={mapZoom}>
+                        <LocationPicker 
+                          mode={pickerMode}
+                          origin={formValues.origin}
+                          destination={formValues.destination}
+                          onSelectOrigin={(pos) => { 
+                            if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
+                              setError('origin', { type: 'manual', message: copy.onlyAzerbaijanError });
+                              return;
+                            }
+                            clearErrors('origin'); setValue('origin', pos); reverseGeocode(pos.lat, pos.lng, 'meetingPoint'); 
+                          }}
+                          onSelectDestination={(pos) => { 
+                            if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
+                              setError('destination', { type: 'manual', message: copy.onlyAzerbaijanError });
+                              return;
+                            }
+                            clearErrors('destination'); setValue('destination', pos); reverseGeocode(pos.lat, pos.lng, 'dropoffPoint'); 
+                          }}
+                        />
+                      </MapContainer>
                     </div>
 
-                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.smokingAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
-                         onClick={() => setValue('smokingAllowed', !formValues.smokingAllowed)}>
-                      <input
-                        type="checkbox"
-                        checked={formValues.smokingAllowed || false}
-                        onChange={() => {}}
-                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Icon name={formValues.smokingAllowed ? 'cigarette' : 'cigarette-off'} size={16} className={formValues.smokingAllowed ? 'text-brand-600' : 'text-text-muted'} />
-                        <span className="text-xs font-semibold text-text">{copy.smokingAllowedLabel}</span>
-                      </div>
-                    </div>
-
-                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.petsAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
-                         onClick={() => setValue('petsAllowed', !formValues.petsAllowed)}>
-                      <input
-                        type="checkbox"
-                        checked={formValues.petsAllowed || false}
-                        onChange={() => {}}
-                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Icon name="paw-print" size={16} className={formValues.petsAllowed ? 'text-brand-600' : 'text-text-muted'} />
-                        <span className="text-xs font-semibold text-text">{copy.petsAllowedLabel}</span>
-                      </div>
-                    </div>
-
-                    <div className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all ${formValues.musicAllowed ? 'border-brand-500 bg-brand-50/20' : 'border-border bg-white hover:bg-surface-muted/30'}`}
-                         onClick={() => setValue('musicAllowed', !formValues.musicAllowed)}>
-                      <input
-                        type="checkbox"
-                        checked={formValues.musicAllowed !== false}
-                        onChange={() => {}}
-                        className="h-4 w-4 rounded border-[#c0c8ca] text-brand-600 focus:ring-brand-500"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Icon name="music" size={16} className={formValues.musicAllowed !== false ? 'text-brand-600' : 'text-text-muted'} />
-                        <span className="text-xs font-semibold text-text">{copy.musicAllowedLabel}</span>
-                      </div>
-                    </div>
+                    <Input label={copy.meetingPoint} placeholder={copy.meetingPlaceholder} value={formValues.meetingPoint || ''} onChange={(e) => setValue('meetingPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
+                    <Input label={copy.dropoffPoint} placeholder={copy.dropoffPlaceholder} value={formValues.dropoffPoint || ''} onChange={(e) => setValue('dropoffPoint', e.target.value)} icon={<Icon name="map-pin" size={16} />} />
                   </div>
                 </div>
+              )}
 
-                <div className="mt-5 border-t border-border pt-4 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-text">{copy.commentLabel}</label>
-                    <button
-                      type="button"
-                      onClick={handleGenerateDescription}
-                      disabled={isDrafting || !formValues.departureCity || !formValues.arrivalCity || !formValues.time}
-                      className="flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-95"
-                    >
-                      {isDrafting ? (
-                        <>
-                          <Icon name="loader-2" size={14} className="animate-spin" />
-                          <span>{copy.aiDraftLoading}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="sparkles" size={14} className="text-brand-500 animate-pulse" />
-                          <span>{copy.aiDraftBtn}</span>
-                        </>
+              {/* STEP 2: DATE & TIME */}
+              {step === 1 && (
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <Controller name="date" control={control} render={({ field }) => (
+                      <DatePicker value={field.value} onChange={field.onChange} label={copy.dateLabel} placeholder={common.selectDate} />
+                    )} />
+                    {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>}
+                  </div>
+                  <Controller name="time" control={control} render={({ field }) => (
+                    <TimePicker label={copy.timeLabel} value={field.value} onChange={field.onChange} error={errors.time?.message} placeholder={copy.timeLabel} />
+                  )} />
+                  <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 bg-slate-50">
+                    <input type="checkbox" id="isRecurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <label htmlFor="isRecurring" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                      <span className="block font-bold">{pageCopy.recurringTrip}</span>
+                      <span className="block text-slate-500 mt-0.5 text-xs">{copy.recurringLabel}</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: SEATS & PRICE */}
+              {step === 2 && (
+                <div className="flex flex-col gap-6">
+                  {vehicles.length > 0 && (
+                    <Controller name="vehicleId" control={control} render={({ field }) => (
+                      <Select value={field.value || ''} onChange={(val) => { field.onChange(val); setAiSuggestedPrice(null); }} options={vehicles.map(v => ({ value: v.id, label: `${v.brand} ${v.model} (${v.plateNumber})` }))} placeholder="Select vehicle" />
+                    )} />
+                  )}
+
+                  {/* Dynamic Seat Selector */}
+                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="text-sm font-bold text-slate-900">Select Available Spots</label>
+                      <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                        <button type="button" onClick={() => {setCarLayout('5-seater'); setValue('availableSpots', []); setValue('seatsTotal', 0);}} className={`px-2 py-1 text-xs font-bold rounded-md ${carLayout === '5-seater' ? 'bg-slate-100 text-slate-900' : 'text-slate-500'}`}>5-Seater</button>
+                        <button type="button" onClick={() => {setCarLayout('7-seater'); setValue('availableSpots', []); setValue('seatsTotal', 0);}} className={`px-2 py-1 text-xs font-bold rounded-md ${carLayout === '7-seater' ? 'bg-slate-100 text-slate-900' : 'text-slate-500'}`}>7-Seater</button>
+                      </div>
+                    </div>
+
+                    <div className="mx-auto w-56 flex flex-col gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                      <div className="flex gap-2">
+                        <div className="w-1/2 py-2.5 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 border-2 border-transparent">
+                          <Icon name="car" size={16} />
+                        </div>
+                        <div className="w-1/2">{renderSpot('front_passenger', 'Front')}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="w-1/3">{renderSpot('rear_left', 'Rear L')}</div>
+                        <div className="w-1/3">{renderSpot('rear_middle', 'Rear M')}</div>
+                        <div className="w-1/3">{renderSpot('rear_right', 'Rear R')}</div>
+                      </div>
+                      {carLayout === '7-seater' && (
+                        <div className="flex gap-2 justify-center">
+                          <div className="w-1/2">{renderSpot('third_row_left', '3rd Row L')}</div>
+                          <div className="w-1/2">{renderSpot('third_row_right', '3rd Row R')}</div>
+                        </div>
                       )}
+                    </div>
+                    
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500">Total spots offered:</span>
+                      <span className="text-sm font-black text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{formValues.seatsTotal}</span>
+                    </div>
+                    {errors.seatsTotal && <p className="text-xs font-semibold text-red-500 mt-2">{errors.seatsTotal.message}</p>}
+                  </div>
+
+                  {/* Tactical Price Input */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">{copy.pricePerSeat}</label>
+                      <button type="button" onClick={getAiSuggestion} disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time} className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-md border border-teal-200 hover:bg-teal-100 transition-colors flex items-center gap-1 disabled:opacity-50">
+                        {isAiLoading ? <Icon name="loader-2" size={12} className="animate-spin" /> : <Icon name="sparkles" size={12} />}
+                        {copy.aiSuggestBtn}
+                      </button>
+                    </div>
+                    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-between focus-within:border-teal-500 transition-colors">
+                      <span className="text-2xl font-black text-slate-400">₼</span>
+                      <input type="number" value={formValues.pricePerSeat || ''} onChange={(e) => setValue('pricePerSeat', Number(e.target.value))} className="w-full bg-transparent text-right text-3xl font-black text-slate-900 outline-none border-none focus:ring-0 p-0" placeholder="0" />
+                    </div>
+                    {errors.pricePerSeat && <p className="text-xs font-semibold text-red-500">{errors.pricePerSeat.message}</p>}
+
+                    {aiSuggestedPrice && (() => {
+                      const ratio = formValues.pricePerSeat / aiSuggestedPrice;
+                      let statusColor = '#14b8a6';
+                      let statusText = 'Fair Price';
+                      let textColor = 'text-teal-600';
+
+                      if (ratio <= 0.8) {
+                        statusColor = '#3b82f6';
+                        statusText = 'Low Price';
+                        textColor = 'text-blue-600';
+                      } else if (ratio >= 1.2) {
+                        statusColor = '#f59e0b';
+                        statusText = 'High Price';
+                        textColor = 'text-amber-600';
+                      }
+
+                      return (
+                      <div className="mt-2 p-4 rounded-xl bg-slate-50 border border-slate-200 shadow-sm transition-all">
+                        <div className="flex items-center justify-between text-xs mb-3">
+                          <span className="font-bold text-slate-500 flex items-center gap-1"><Icon name="sparkles" size={12} className="text-teal-500" /> AI Suggested: {aiSuggestedPrice} ₼</span>
+                          <span className={`font-bold uppercase tracking-wider text-[10px] bg-white px-2 py-1 rounded shadow-sm border border-slate-100 ${textColor}`}>{statusText}</span>
+                        </div>
+                        <div className="relative h-2.5 w-full rounded-full bg-slate-200 overflow-hidden shadow-inner">
+                          <div className="absolute h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (formValues.pricePerSeat / (aiSuggestedPrice * 2)) * 100)}%`, backgroundColor: statusColor }} />
+                          {/* Suggested Price Marker tick */}
+                          <div className="absolute left-1/2 top-0 h-full w-0.5 bg-slate-400 z-10" />
+                        </div>
+                        <div className="flex justify-between mt-1 text-[9px] font-bold text-slate-400">
+                          <span>0 ₼</span>
+                          <span>{aiSuggestedPrice * 2} ₼</span>
+                        </div>
+                        {aiReasoning && <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">{aiReasoning}</p>}
+                        {formValues.pricePerSeat !== aiSuggestedPrice && (
+                          <button type="button" onClick={() => setValue('pricePerSeat', aiSuggestedPrice)} className="mt-4 w-full rounded-lg bg-white border border-slate-200 text-teal-600 font-bold text-xs py-2.5 hover:bg-slate-50 hover:border-teal-300 transition-all active:scale-95">
+                            Apply Recommended Price ({aiSuggestedPrice} ₼)
+                          </button>
+                        )}
+                      </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Preferences Grid */}
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    {([
+                      { key: 'femaleOnly', label: copy.femaleOnlyLabel, icon: 'venus' },
+                      { key: 'smokingAllowed', label: copy.smokingAllowedLabel, icon: 'cigarette' },
+                      { key: 'petsAllowed', label: copy.petsAllowedLabel, icon: 'paw-print' },
+                      { key: 'musicAllowed', label: copy.musicAllowedLabel, icon: 'music' },
+                    ] as const).map(pref => {
+                      const isActive = pref.key === 'musicAllowed' ? formValues.musicAllowed !== false : Boolean(formValues[pref.key]);
+                      return (
+                        <button key={pref.key} type="button" onClick={() => setValue(pref.key, !isActive)} className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${isActive ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                          <Icon name={pref.icon} size={16} />
+                          <span className="text-xs font-bold">{pref.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-2 flex flex-col gap-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">{copy.commentLabel}</label>
+                    <textarea rows={3} value={formValues.comment || ''} onChange={(e) => setValue('comment', e.target.value)} placeholder={copy.commentPlaceholder} className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none" />
+                    <button type="button" onClick={handleGenerateDescription} disabled={isDrafting} className="text-xs font-bold text-teal-600 self-start flex items-center gap-1 hover:underline">
+                      {isDrafting ? <Icon name="loader-2" size={12} className="animate-spin" /> : <Icon name="sparkles" size={12} />}
+                      {copy.aiDraftBtn}
                     </button>
                   </div>
-                  <textarea
-                    rows={3}
-                    value={formValues.comment || ''}
-                    onChange={(e) => setValue('comment', e.target.value)}
-                    placeholder={copy.commentPlaceholder}
-                    className="w-full rounded-xl border border-[#c0c8ca] p-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-none transition-all"
-                  />
                 </div>
-              </div>
-            )}
+              )}
 
-            {step === 3 && (
-              <div className="flex flex-col gap-5 animate-fade-in">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100">
-                    <Icon name="check-circle" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-text tracking-tight">{copy.summaryTitle}</h3>
-                    <p className="text-sm text-text-muted">{pageCopy.summaryDoubleCheck}</p>
-                  </div>
-                </div>
-
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-surface-muted border border-border shadow-sm p-5">
-                  <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] pointer-events-none transform rotate-12">
-                    <Icon name="map" size={140} />
-                  </div>
-                  
-                  <div className="relative flex gap-4">
-                    <div className="flex flex-col items-center mt-1.5">
-                      <div className="h-3.5 w-3.5 rounded-full border-[3px] border-brand-500 bg-white shadow-sm"></div>
-                      <div className="w-0.5 bg-gradient-to-b from-brand-300 to-border flex-1 my-1.5"></div>
-                      <div className="h-3.5 w-3.5 rounded-full bg-brand-600 shadow-sm"></div>
+              {/* STEP 4: TICKET */}
+              {step === 3 && (
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col items-center text-center mb-2">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-100 text-teal-600 mb-3">
+                      <Icon name="check-circle" size={24} />
                     </div>
-                    <div className="flex flex-col gap-5 flex-1">
-                      <div>
-                        <p className="text-[11px] font-bold text-brand-600/70 uppercase tracking-widest mb-0.5">{pageCopy.departureLabel}</p>
-                        <p className="text-lg font-bold text-text leading-tight">{formValues.departureCity}</p>
-                        {formValues.meetingPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.meetingPoint}</p>}
+                    <h3 className="text-xl font-black text-slate-900">{copy.summaryTitle}</h3>
+                    <p className="text-sm text-slate-500 mt-1">{pageCopy.summaryDoubleCheck}</p>
+                  </div>
+
+                  {/* Clean Light Ticket */}
+                  <div className="relative mx-auto w-full max-w-sm rounded-2xl bg-white shadow-lg border border-slate-200 overflow-hidden">
+                    <div className="p-6 pb-8 border-b border-dashed border-slate-300 relative">
+                      <div className="absolute -left-3 bottom-[-12px] h-6 w-6 rounded-full bg-slate-50 border border-slate-200" />
+                      <div className="absolute -right-3 bottom-[-12px] h-6 w-6 rounded-full bg-slate-50 border border-slate-200" />
+                      
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">{copy.summaryDate}</span>
+                          <span className="block text-sm font-black text-slate-900">{formValues.date}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">{copy.timeLabel}</span>
+                          <span className="block text-sm font-black text-slate-900">{formValues.time}</span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-0.5">{pageCopy.destinationLabel}</p>
-                        <p className="text-lg font-bold text-text leading-tight">{formValues.arrivalCity}</p>
-                        {formValues.dropoffPoint && <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5"><Icon name="map-pin" size={14} className="text-text-muted/60"/> {formValues.dropoffPoint}</p>}
+
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <p className="text-2xl font-black text-slate-900">{formValues.departureCity}</p>
+                          {formValues.meetingPoint && <p className="text-xs text-slate-500 mt-1"><Icon name="map-pin" size={12} className="inline mr-1 text-teal-500"/>{formValues.meetingPoint}</p>}
+                        </div>
+                        <div className="h-4 w-0.5 bg-slate-200 ml-2" />
+                        <div>
+                          <p className="text-2xl font-black text-slate-900">{formValues.arrivalCity}</p>
+                          {formValues.dropoffPoint && <p className="text-xs text-slate-500 mt-1"><Icon name="map-pin" size={12} className="inline mr-1 text-teal-500"/>{formValues.dropoffPoint}</p>}
+                        </div>
                       </div>
                     </div>
+
+                    <div className="p-6 bg-slate-50">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">{copy.summaryPrice}</span>
+                          <span className="text-2xl font-black text-slate-900">{formValues.pricePerSeat} ₼</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">{copy.seatsCount}</span>
+                          <span className="text-sm font-black text-teal-600 bg-teal-100 px-2 py-0.5 rounded">{formValues.seatsTotal} spots</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5 rounded-xl bg-white p-4 border border-border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Icon name="calendar" size={16} className="text-brand-500" />
-                      <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryDate}</span>
-                    </div>
-                    <span className="text-[15px] font-bold text-text truncate">{formValues.date}</span>
-                    <span className="text-sm font-medium text-text-muted">{formValues.time}</span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-1.5 rounded-xl bg-white p-4 border border-border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Icon name="car" size={16} className="text-brand-500" />
-                      <span className="text-xs text-text-muted font-semibold uppercase tracking-wider">{copy.summaryVehicle}</span>
-                    </div>
-                    <span className="text-[15px] font-bold text-text truncate">
-                      {(() => {
-                        const selectedVehicle = vehicles.find(v => v.id === formValues.vehicleId);
-                        return selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : pageCopy.standardVehicle;
-                      })()}
-                    </span>
-                    <span className="text-sm font-medium text-text-muted">{formValues.seatsTotal} {pageCopy.seatsUnit}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl bg-brand-50/50 p-4 border border-brand-100">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100/50 text-brand-600">
-                      <Icon name="banknote" size={20} />
-                    </div>
-                    <span className="text-sm font-bold text-text-secondary">{copy.summaryPrice}</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-brand-700">{summaryPriceParts.amount}</span>
-                    <span className="text-sm font-bold text-brand-600">{summaryPriceParts.symbol}</span>
-                  </div>
-                </div>
-
-                {formValues.comment && (
-                  <div className="flex flex-col gap-2 mt-1">
-                    <span className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1 flex items-center gap-1.5">
-                      <Icon name="message-square" size={14} /> {copy.summaryComment}
-                    </span>
-                    <div className="relative rounded-2xl rounded-tl-sm bg-surface-muted/60 p-4 text-sm text-text leading-relaxed border border-border">
-                      {formValues.comment}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="mt-8 flex gap-3">
-            <Button 
-              variant="outline" 
-              className="flex-1" 
-              onClick={step > 0 ? back : () => router.push(ROUTES.driverDashboard)}
-            >
-              <Icon name="arrow-left" size={16} /> {copy.backBtn}
-            </Button>
-            {step < 3 ? (
-              <Button className="flex-1" onClick={next} disabled={createTripMutation.isPending}>{copy.nextBtn} <Icon name="arrow-right" size={16} /></Button>
-            ) : (
-              <Button className="flex-1" size="lg" onClick={publish} disabled={createTripMutation.isPending}>
-                {createTripMutation.isPending ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    {pageCopy.saving}
-                  </span>
+              {/* Navigation Buttons */}
+              <div className="mt-8 flex gap-3">
+                <Button variant="outline" className="flex-1 py-3" onClick={step > 0 ? back : () => router.push(ROUTES.driverDashboard)}>
+                  {copy.backBtn}
+                </Button>
+                {step < 3 ? (
+                  <Button className="flex-1 py-3" onClick={next}>
+                    {copy.nextBtn}
+                  </Button>
                 ) : (
-                  <>
-                    <Icon name="check" size={16} /> {copy.publishBtn}
-                  </>
+                  <Button className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white" onClick={publish} disabled={createTripMutation.isPending}>
+                    {createTripMutation.isPending ? pageCopy.saving : copy.publishBtn}
+                  </Button>
                 )}
-              </Button>
-            )}
-          </div>
-        </Card>
-          </>
-      </ProtectedRoute>
+              </div>
+            </Card>
+          </ProtectedRoute>
+        </div>
+      </div>
     </DriverLayout>
   );
 }
-

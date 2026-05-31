@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.schemas import RideCreate, RideSearch, VehicleCreate
+from app.domains.lifecycle import RIDE_ACTIVE
 
 
 class VehicleRepository:
@@ -104,7 +105,7 @@ class RideRepository:
 
     def search(self, criteria: RideSearch) -> list[Ride]:
         query = self.db.query(Ride).filter(
-            Ride.status == "active", Ride.available_seats >= criteria.min_seats
+            Ride.status == RIDE_ACTIVE, Ride.available_seats >= criteria.min_seats
         )
 
         if criteria.departure_date:

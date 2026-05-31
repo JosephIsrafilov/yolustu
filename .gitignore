@@ -18,6 +18,7 @@ node_modules/
 Thumbs.db
 .superpowers/
 check-ci.ps1
+scripts/
 
 # Python
 __pycache__/

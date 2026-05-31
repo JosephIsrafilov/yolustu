@@ -3,6 +3,14 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.domains.bookings.models import Booking
+from app.domains.lifecycle import (
+    BOOKING_ACCEPTED,
+    BOOKING_CANCELLED,
+    BOOKING_COMPLETED,
+    BOOKING_PAID,
+    BOOKING_PENDING,
+    BOOKING_REJECTED,
+)
 
 
 class BookingRepository:
@@ -17,7 +25,7 @@ class BookingRepository:
             passenger_id=passenger_id,
             seats_booked=seats_booked,
             total_price=total_price,
-            status="pending",
+            status=BOOKING_PENDING,
         )
         self.db.add(booking)
         self.db.commit()
@@ -43,7 +51,7 @@ class BookingRepository:
             .filter(
                 Booking.ride_id == ride_id,
                 Booking.passenger_id == passenger_id,
-                Booking.status.notin_(["cancelled", "rejected"]),
+                Booking.status.notin_([BOOKING_CANCELLED, BOOKING_REJECTED]),
             )
             .first()
         )
@@ -54,7 +62,7 @@ class BookingRepository:
             .filter(
                 Booking.ride_id == ride_id,
                 Booking.passenger_id == passenger_id,
-                Booking.status.in_(["accepted", "paid", "completed"]),
+                Booking.status.in_([BOOKING_ACCEPTED, BOOKING_PAID, BOOKING_COMPLETED]),
             )
             .first()
             is not None
@@ -65,7 +73,7 @@ class BookingRepository:
             self.db.query(Booking)
             .filter(
                 Booking.ride_id == ride_id,
-                Booking.status.in_(["accepted", "paid", "completed"]),
+                Booking.status.in_([BOOKING_ACCEPTED, BOOKING_PAID, BOOKING_COMPLETED]),
             )
             .all()
         )

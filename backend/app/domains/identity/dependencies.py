@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, WebSocket, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -99,3 +99,19 @@ def get_current_user_from_token(token: str, db: Session) -> CurrentUser:
             detail="User account is blocked",
         )
     return CurrentUser.from_model(user)
+
+
+def get_current_user_from_websocket(
+    websocket: WebSocket, db: Session, token: str | None = None
+) -> CurrentUser:
+    websocket_token = token or websocket.cookies.get("access_token")
+    if not websocket_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    if websocket_token.startswith("Bearer "):
+        websocket_token = websocket_token.split(" ", 1)[1]
+
+    return get_current_user_from_token(websocket_token, db)

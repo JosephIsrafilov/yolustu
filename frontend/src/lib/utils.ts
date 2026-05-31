@@ -61,6 +61,7 @@ export const AZ_CITIES = [
   'Şamaxı',
   'Mingəçevir',
   'Naftalan',
+  'Göyçay',
 ] as const;
 
 export type AZCity = (typeof AZ_CITIES)[number];
@@ -80,6 +81,7 @@ export const AZ_CITY_COORDINATES: Record<AZCity, Coordinates> = {
   'Şamaxı': { lat: 40.6314, lng: 48.6414 },
   'Mingəçevir': { lat: 40.7703, lng: 47.0486 },
   'Naftalan': { lat: 40.5067, lng: 46.8250 },
+  'Göyçay': { lat: 40.6533, lng: 47.7408 },
 };
 
 export function getCityCoordinates(city: string): Coordinates | undefined {
@@ -133,5 +135,3 @@ export function getNextWeekdays(startDateStr: string, count: number): string[] {
   }
   return dates;
 }
-
-

@@ -35,12 +35,12 @@ def test_websocket_without_token_is_rejected():
 
 
 def test_websocket_with_invalid_token_is_rejected(monkeypatch):
-    def fake_current_user_from_token(token, db):
+    def fake_current_user_from_websocket(websocket, db, token=None):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     monkeypatch.setattr(
-        "app.domains.engagement.messages_router.get_current_user_from_token",
-        fake_current_user_from_token,
+        "app.domains.engagement.messages_router.get_current_user_from_websocket",
+        fake_current_user_from_websocket,
     )
 
     with pytest.raises(WebSocketDisconnect):
@@ -50,8 +50,8 @@ def test_websocket_with_invalid_token_is_rejected(monkeypatch):
 
 def test_websocket_with_valid_token_but_non_participant_is_rejected(monkeypatch):
     monkeypatch.setattr(
-        "app.domains.engagement.messages_router.get_current_user_from_token",
-        lambda token, db: make_user(),
+        "app.domains.engagement.messages_router.get_current_user_from_websocket",
+        lambda websocket, db, token=None: make_user(),
     )
     monkeypatch.setattr(
         EngagementService,
@@ -77,8 +77,8 @@ def test_websocket_with_participant_token_connects(monkeypatch, token: str):
     }
 
     monkeypatch.setattr(
-        "app.domains.engagement.messages_router.get_current_user_from_token",
-        lambda incoming_token, db: token_to_user[incoming_token],
+        "app.domains.engagement.messages_router.get_current_user_from_websocket",
+        lambda websocket, db, token=None: token_to_user[token],
     )
     monkeypatch.setattr(
         EngagementService,
@@ -88,3 +88,43 @@ def test_websocket_with_participant_token_connects(monkeypatch, token: str):
 
     with client.websocket_connect(f"/api/v1/messages/ws/{uuid4()}?token={token}") as ws:
         ws.send_text("ping")
+
+
+def test_websocket_with_cookie_auth_connects(monkeypatch):
+    def fake_current_user_from_websocket(websocket, db, token=None):
+        assert token is None
+        assert websocket.cookies.get("access_token") == "Bearer cookie-token"
+        return make_user()
+
+    monkeypatch.setattr(
+        "app.domains.engagement.messages_router.get_current_user_from_websocket",
+        fake_current_user_from_websocket,
+    )
+    monkeypatch.setattr(
+        EngagementService,
+        "get_ride_messages",
+        lambda self, ride_id, current_user: [],
+    )
+
+    with client.websocket_connect(
+        f"/api/v1/messages/ws/{uuid4()}",
+        cookies={"access_token": "Bearer cookie-token"},
+    ) as ws:
+        ws.send_text("ping")
+
+
+def test_websocket_rejects_blocked_user(monkeypatch):
+    def fake_current_user_from_websocket(websocket, db, token=None):
+        raise HTTPException(status_code=403, detail="User account is blocked")
+
+    monkeypatch.setattr(
+        "app.domains.engagement.messages_router.get_current_user_from_websocket",
+        fake_current_user_from_websocket,
+    )
+
+    with pytest.raises(WebSocketDisconnect):
+        with client.websocket_connect(
+            f"/api/v1/messages/ws/{uuid4()}",
+            cookies={"access_token": "Bearer blocked-token"},
+        ):
+            pass

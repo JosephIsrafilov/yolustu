@@ -158,12 +158,14 @@ def refresh_token(
 def logout(response: Response):
     secure = _use_secure_cookies()
     response.delete_cookie(
-        key="access_token", httponly=True, secure=secure, samesite="lax"
+        key="access_token", httponly=True, secure=secure, samesite="lax", path="/"
     )
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=secure, samesite="lax"
+        key="refresh_token", httponly=True, secure=secure, samesite="lax", path="/"
     )
-    response.delete_cookie(key=CSRF_COOKIE_NAME, secure=secure, samesite="lax")
+    response.delete_cookie(
+        key=CSRF_COOKIE_NAME, secure=secure, samesite="lax", path="/"
+    )
     return {"message": "Logged out successfully"}
 
 
@@ -176,6 +178,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         httponly=True,
         secure=secure,
         samesite="lax",
+        path="/",
         max_age=15 * 60,  # 15 minutes
     )
     response.set_cookie(
@@ -184,6 +187,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         httponly=True,
         secure=secure,
         samesite="lax",
+        path="/",
         max_age=30 * 24 * 60 * 60,  # 30 days
     )
     response.set_cookie(
@@ -192,6 +196,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         httponly=False,
         secure=secure,
         samesite="lax",
+        path="/",
         max_age=30 * 24 * 60 * 60,  # 30 days
     )
 

@@ -148,8 +148,8 @@ export default function HomePage() {
         {/* Hero */}
         <section className="relative w-full overflow-hidden bg-navy text-white py-24 sm:py-32 lg:py-[140px] animate-fade-in">
           {/* Animated Background Gradients */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 animate-pulse-slow-1 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 animate-pulse-slow-2 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 pointer-events-none" />
           
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -322,7 +322,7 @@ export default function HomePage() {
                   ))}
                 </ul>
               </div>
-              <Card className="group overflow-hidden border-0 !p-0 shadow-xl transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-[0_28px_70px_rgba(0,31,36,0.20)] lg:ml-auto lg:w-[512px]">
+              <Card className="group overflow-hidden border-0 p-0! shadow-xl transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-[0_28px_70px_rgba(0,31,36,0.20)] lg:ml-auto lg:w-[512px]">
                 <div className="relative overflow-hidden bg-navy p-6 text-white">
                   <div className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-linear-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
                   <div className="flex items-center justify-between">
