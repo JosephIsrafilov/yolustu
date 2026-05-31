@@ -73,9 +73,7 @@ class PaymentService:
             transaction_id = data.get("transaction_id")
             status = data.get("status")
             if not transaction_id or status not in {"success", "failed"}:
-                raise HTTPException(
-                    status_code=400, detail="Invalid webhook payload."
-                )
+                raise HTTPException(status_code=400, detail="Invalid webhook payload.")
         else:
             try:
                 event = stripe.Webhook.construct_event(

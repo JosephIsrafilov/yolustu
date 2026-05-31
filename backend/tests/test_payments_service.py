@@ -234,7 +234,9 @@ def test_unsigned_webhook_is_rejected_outside_development(monkeypatch):
 
     with pytest.raises(HTTPException) as exc:
         service.handle_webhook(
-            payload=json.dumps({"transaction_id": "tx-123", "status": "success"}).encode(),
+            payload=json.dumps(
+                {"transaction_id": "tx-123", "status": "success"}
+            ).encode(),
             stripe_signature="",
         )
 
