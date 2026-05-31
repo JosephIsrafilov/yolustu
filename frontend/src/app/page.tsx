@@ -14,6 +14,16 @@ import Icon, { type IconName } from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { getUserCapabilities } from '@/lib/access-control';
+import SplitText from '@/components/ui/SplitText';
+import ShinyText from '@/components/ui/ShinyText';
+import SpotlightCard from '@/components/ui/SpotlightCard';
+import TiltedCard from '@/components/ui/TiltedCard';
+import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
+import AnimatedCounter from '@/components/ui/AnimatedCounter';
+import MagneticButton from '@/components/ui/MagneticButton';
+import ConnectingRoutesMap, { type RouteKey } from '@/components/ui/ConnectingRoutesMap';
+import HeroMap from '@/components/ui/HeroMap';
+
 
 const TOP_ROUTES: Array<{
   from: string;
@@ -113,6 +123,7 @@ export default function HomePage() {
 
   const [from, setFrom] = React.useState('Bakı');
   const [to, setTo] = React.useState('Gəncə');
+  const [hoveredRoute, setHoveredRoute] = React.useState<RouteKey>(null);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -141,85 +152,108 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 animate-pulse-slow-2 pointer-events-none" />
           
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-teal-300 backdrop-blur-sm hover:scale-105 active:scale-95 transition-transform duration-300 cursor-default shadow-md select-none border border-white/5">
-                <Icon name="zap" className="h-4 w-4" />
-                {copy.home.zapBadge}
-              </div>
-              <h1 className="mt-5 font-heading text-4xl font-extrabold tracking-tight leading-[1.05] sm:text-5xl sm:leading-none lg:text-[56px] lg:leading-[0.92]">
-                {language === 'az' ? 'Azərbaycan daxilində' : language === 'ru' ? 'Делитесь поездками' : 'Share the road across'}{' '}
-                <span className="block text-teal-400 mt-2">
-                  {language === 'az' ? 'yolu paylaşın' : language === 'ru' ? 'по Азербайджану' : 'Azerbaijan'}
-                </span>
-              </h1>
-              <p className="mt-5 text-lg text-teal-100/70 sm:text-xl max-w-2xl mx-auto">
-                {copy.home.heroSubtitle}
-              </p>
-              
-              <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href={`${ROUTES.trips}?from=${from}&to=${to}&passengers=${passengers}`}>
-                  <Button size="lg" className="h-12 px-8 text-sm bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_25px_rgba(20,184,166,0.35)] cursor-pointer">
-                    <Icon name="search" className="mr-2 h-5 w-5" />
-                    {language === 'en' ? 'Find a Ride' : copy.common.search}
-                  </Button>
-                </Link>
-                <Link href={offerRoute}>
-                  <Button size="lg" variant="outline" className="h-12 px-8 text-sm border-white/20! bg-white/5! text-white! hover:bg-white/10! hover:text-white! rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
-                    <Icon name="car" className="mr-2 h-5 w-5" />
-                    {language === 'en' ? 'Offer a Ride' : copy.home.driverCtaButton}
-                  </Button>
-                </Link>
-              </div>
+            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="text-center lg:text-left max-w-3xl mx-auto lg:mx-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-teal-300 backdrop-blur-sm hover:scale-105 active:scale-95 transition-transform duration-300 cursor-default shadow-md select-none border border-white/5">
+                  <Icon name="zap" className="h-4 w-4" />
+                  <ShinyText text={copy.home.zapBadge} className="font-semibold text-teal-300" speed={3} />
+                </div>
+                <h1 className="mt-5 font-heading text-4xl font-extrabold tracking-tight leading-[1.05] sm:text-5xl sm:leading-none lg:text-[56px] lg:leading-[0.92]">
+                  <SplitText
+                    text={language === 'az' ? 'Azərbaycan daxilində' : language === 'ru' ? 'Делитесь поездками' : 'Share the road across'}
+                    delay={60}
+                    animationDuration={800}
+                  />{' '}
+                  <span className="block text-teal-400 mt-2">
+                    <SplitText
+                      text={language === 'az' ? 'yolu paylaşın' : language === 'ru' ? 'по Азербайджану' : 'Azerbaijan'}
+                      delay={60}
+                      animationDuration={800}
+                    />
+                  </span>
+                </h1>
+                <p className="mt-5 text-lg text-teal-100/70 sm:text-xl max-w-2xl mx-auto lg:mx-0">
+                  {copy.home.heroSubtitle}
+                </p>
+                
+                <div className="mt-6 flex flex-col items-center justify-center lg:justify-start gap-4 sm:flex-row z-10 relative">
+                  <MagneticButton>
+                    <Link href={`${ROUTES.trips}?from=${from}&to=${to}&passengers=${passengers}`} className="block">
+                      <Button size="lg" className="h-12 px-8 text-sm bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_25px_rgba(20,184,166,0.35)] cursor-pointer">
+                        <Icon name="search" className="mr-2 h-5 w-5" />
+                        {language === 'en' ? 'Find a Ride' : copy.common.search}
+                      </Button>
+                    </Link>
+                  </MagneticButton>
+                  <MagneticButton>
+                    <Link href={offerRoute} className="block">
+                      <Button size="lg" variant="outline" className="h-12 px-8 text-sm border-white/20! bg-white/5! text-white! hover:bg-white/10! hover:text-white! rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
+                        <Icon name="car" className="mr-2 h-5 w-5" />
+                        {language === 'en' ? 'Offer a Ride' : copy.home.driverCtaButton}
+                      </Button>
+                    </Link>
+                  </MagneticButton>
+                </div>
 
-              <div className="mt-8 rounded-2xl bg-white/5 p-2 backdrop-blur-md border border-white/10 max-w-[672px] mx-auto transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <HeroSelect
-                    label={copy.common.from}
-                    value={from}
-                    onChange={setFrom}
-                    options={AZ_CITIES}
-                    icon="map-pin" // IconName
-                  />
-                  
-                  <HeroSelect
-                    label={copy.common.to}
-                    value={to}
-                    onChange={setTo}
-                    options={AZ_CITIES}
-                    icon="map-pin"
-                  />
+                <div className="mt-8 rounded-2xl bg-white/5 p-2 backdrop-blur-md border border-white/10 max-w-[672px] mx-auto lg:mx-0 transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <HeroSelect
+                      label={copy.common.from}
+                      value={from}
+                      onChange={setFrom}
+                      options={AZ_CITIES}
+                      icon="map-pin" // IconName
+                    />
+                    
+                    <HeroSelect
+                      label={copy.common.to}
+                      value={to}
+                      onChange={setTo}
+                      options={AZ_CITIES}
+                      icon="map-pin"
+                    />
 
-                  <div className="relative w-full">
-                    <button 
-                      type="button" 
-                      onClick={handleSearch} 
-                      className="flex h-full w-full min-w-0 items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 text-left border border-transparent transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
-                    >
-                      <Icon name="calendar" className="h-5 w-5 shrink-0 text-teal-400" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-teal-200/50 mb-0.5">{copy.home.searchWhen}</p>
-                        <p className="truncate text-sm font-medium text-white">{copy.home.searchToday}</p>
-                      </div>
-                    </button>
+                    <div className="relative w-full">
+                      <button 
+                        type="button" 
+                        onClick={handleSearch} 
+                        className="flex h-full w-full min-w-0 items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 text-left border border-transparent transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
+                      >
+                        <Icon name="calendar" className="h-5 w-5 shrink-0 text-teal-400" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-teal-200/50 mb-0.5">{copy.home.searchWhen}</p>
+                          <p className="truncate text-sm font-medium text-white">{copy.home.searchToday}</p>
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Right column: Beautiful animated route map with 3D tilt effect */}
+              <div className="hidden lg:block relative w-full h-[450px]">
+                <TiltedCard maxRotation={5} scale={1.02} className="w-full h-full">
+                  <HeroMap />
+                </TiltedCard>
               </div>
             </div>
           </div>
         </section>
 
         {/* How it works */}
-        <section className="w-full bg-slate-50 py-20 sm:py-28">
+        <section className="w-full bg-slate-50 py-20 sm:py-28 overflow-hidden">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h2 className="font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-                {copy.home.howItWorksTitle}
-              </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                {copy.home.howItWorksSub}
-              </p>
-            </div>
-            <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3 stagger-children">
+            <FadeInOnScroll>
+              <div className="text-center">
+                <h2 className="font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl">
+                  {copy.home.howItWorksTitle}
+                </h2>
+                <p className="mt-4 text-lg text-slate-500">
+                  {copy.home.howItWorksSub}
+                </p>
+              </div>
+            </FadeInOnScroll>
+            <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
               {([
                 {
                   icon: "search",
@@ -237,19 +271,21 @@ export default function HomePage() {
                   desc: copy.home.step3Desc,
                 },
               ] satisfies Array<{ icon: IconName; title: string; desc: string }>).map((step, i) => (
-                <div 
-                  key={i} 
-                  className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-teal-100"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 transition-all duration-300 group-hover:bg-teal-500 group-hover:text-white group-hover:scale-110 shadow-xs">
-                    <Icon name={step.icon} className="h-7 w-7" />
-                  </div>
-                  <div className="mt-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
-                    {i + 1}
-                  </div>
-                  <h3 className="mt-4 font-heading text-lg font-semibold text-navy transition-colors duration-300 group-hover:text-teal-600">{step.title}</h3>
-                  <p className="mt-2 text-sm text-slate-500 leading-relaxed">{step.desc}</p>
-                </div>
+                <FadeInOnScroll key={i} delay={i * 150} className="h-full">
+                  <SpotlightCard 
+                    className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-teal-100 h-full"
+                    spotlightColor="rgba(20, 184, 166, 0.15)"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 transition-all duration-300 group-hover:bg-teal-500 group-hover:text-white group-hover:scale-110 shadow-xs">
+                      <Icon name={step.icon} className="h-7 w-7" />
+                    </div>
+                    <div className="mt-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+                      {i + 1}
+                    </div>
+                    <h3 className="mt-4 font-heading text-lg font-semibold text-navy transition-colors duration-300 group-hover:text-teal-600">{step.title}</h3>
+                    <p className="mt-2 text-sm text-slate-500 leading-relaxed">{step.desc}</p>
+                  </SpotlightCard>
+                </FadeInOnScroll>
               ))}
             </div>
           </div>
@@ -292,11 +328,12 @@ export default function HomePage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-teal-300">Baku &rarr; Ganja</span>
                     <span className="rounded-full bg-teal-400/20 px-2 py-0.5 text-xs font-medium text-teal-300 transition-all duration-300 group-hover:bg-teal-300/25 group-hover:text-teal-100 group-hover:shadow-[0_0_18px_rgba(94,234,212,0.20)]">
-                      {copy.home.aiRecommended}
+                      <ShinyText text={copy.home.aiRecommended} className="font-semibold text-teal-300" speed={3} />
                     </span>
                   </div>
                   <div className="mt-4 flex items-baseline gap-2">
-                    <span className="font-heading text-4xl font-bold transition-transform duration-500 ease-out group-hover:scale-[1.03]">11.50</span>
+                    <ShinyText text="11.50" className="font-heading text-4xl font-bold text-white transition-transform duration-500 ease-out group-hover:scale-[1.03]" speed={3} />
+
                     <span className="text-lg text-teal-200/70">AZN / {copy.home.aiSeat}</span>
                   </div>
                   <p className="mt-2 text-sm text-teal-200/60">
@@ -339,29 +376,44 @@ export default function HomePage() {
         </section>
 
         {/* Popular Rides */}
-        <section className="w-full bg-white py-20 sm:py-28">
+        <section className="w-full bg-white py-20 sm:py-28 overflow-hidden">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between animate-slide-up">
-              <div>
-                <h2 className="font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-                  {copy.home.popularTitle}
-                </h2>
-                <p className="mt-4 text-lg text-slate-500">
-                  {copy.home.popularSub}
-                </p>
+            <FadeInOnScroll>
+              <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="font-heading text-3xl font-bold tracking-tight text-navy sm:text-4xl">
+                    {copy.home.popularTitle}
+                  </h2>
+                  <p className="mt-4 text-lg text-slate-500">
+                    {copy.home.popularSub}
+                  </p>
+                </div>
+                <Link href={ROUTES.trips} className="hidden items-center gap-2 text-sm font-bold text-teal-600 hover:text-teal-700 hover:underline sm:flex transition-all duration-200 hover:translate-x-1">
+                  {copy.home.viewAll} <Icon name="arrow-right" className="h-4 w-4" />
+                </Link>
               </div>
-              <Link href={ROUTES.trips} className="hidden items-center gap-2 text-sm font-bold text-teal-600 hover:text-teal-700 hover:underline sm:flex transition-all duration-200 hover:translate-x-1">
-                {copy.home.viewAll} <Icon name="arrow-right" className="h-4 w-4" />
-              </Link>
-            </div>
+            </FadeInOnScroll>
 
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
-              {TOP_ROUTES.map((r) => (
-                <button
-                  key={`${r.from}-${r.to}`}
-                  onClick={() => router.push(`${ROUTES.trips}?from=${r.from}&to=${r.to}`)}
-                  className="group relative h-[320px] w-full cursor-pointer overflow-hidden rounded-[24px] text-left shadow-lg transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-xl"
-                >
+            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-12">
+              <FadeInOnScroll delay={100} className="lg:col-span-5 h-[350px] lg:h-auto rounded-[24px] bg-navy p-6 overflow-hidden shadow-2xl relative flex items-center justify-center">
+                 <div className="absolute top-8 left-8 z-10 pointer-events-none">
+                   <ShinyText text="Azerbaijan" className="text-2xl font-heading font-bold text-teal-400 drop-shadow-md" speed={4} />
+                   <p className="text-xs font-semibold text-teal-200/50 mt-1 uppercase tracking-widest">Connecting the country</p>
+                 </div>
+                 <ConnectingRoutesMap activeRoute={hoveredRoute} className="w-full max-w-[400px]" />
+              </FadeInOnScroll>
+
+              <div className="lg:col-span-7 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {TOP_ROUTES.map((r, i) => (
+                  <FadeInOnScroll key={`${r.from}-${r.to}`} delay={200 + i * 150} className="h-full">
+                    <TiltedCard
+                      onMouseEnter={() => setHoveredRoute(r.tripsKey)}
+                      onMouseLeave={() => setHoveredRoute(null)}
+                      onClick={() => router.push(`${ROUTES.trips}?from=${r.from}&to=${r.to}`)}
+                      className="group relative h-[320px] w-full overflow-hidden rounded-[24px] text-left shadow-lg"
+                      maxRotation={8}
+                      scale={1.03}
+                    >
                   <Image
                     src={r.img}
                     alt={`${r.from} → ${r.to}`}
@@ -376,7 +428,7 @@ export default function HomePage() {
 
                   <div className="absolute inset-0 flex flex-col justify-end p-6 pointer-events-none">
                     <div className="flex items-end justify-between">
-                      <div>
+                      <div style={{ transform: 'translateZ(30px)' }}>
                         <h3 className="mb-1 font-heading text-2xl font-bold text-white drop-shadow-md flex items-center">
                           {r.from} 
                           <Icon name="arrow-right" size={16} className="inline mx-1.5 opacity-70 transition-transform duration-300 group-hover:translate-x-1" /> 
@@ -386,13 +438,18 @@ export default function HomePage() {
                           <Icon name="car" size={14} /> {copy.home.dailyTrips[r.tripsKey]}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-sm font-bold text-white shadow-sm backdrop-blur-md">
+                      <div 
+                        className="rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-sm font-bold text-white shadow-sm backdrop-blur-md"
+                        style={{ transform: 'translateZ(40px)' }}
+                      >
                         {formatRoutePrice(r.price)}
                       </div>
                     </div>
                   </div>
-                </button>
-              ))}
+                    </TiltedCard>
+                  </FadeInOnScroll>
+                ))}
+              </div>
             </div>
 
             <div className="mt-10 text-center sm:hidden">
@@ -404,28 +461,32 @@ export default function HomePage() {
         </section>
 
         {/* Stats */}
-        <section className="w-full bg-navy py-16 text-white border-t border-white/10">
+        <section className="w-full bg-navy py-16 text-white border-t border-white/10 overflow-hidden">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 gap-8 md:grid-cols-4 stagger-children">
-              {[
-                { value: copy.home.stat1Val, label: copy.home.stat1Lbl },
-                { value: copy.home.stat2Val, label: copy.home.stat2Lbl },
-                { value: copy.home.stat3Val, label: copy.home.stat3Lbl },
-                { value: copy.home.stat4Val, label: copy.home.stat4Lbl },
-              ].map((stat, i) => (
-                <div key={i} className="text-center group">
-                  <p className="font-heading text-3xl font-bold text-teal-400 sm:text-4xl transition-all duration-300 group-hover:scale-105 group-hover:text-teal-300">{stat.value}</p>
-                  <p className="mt-2 text-sm font-medium uppercase tracking-wider text-teal-200/60">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+            <FadeInOnScroll>
+              <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+                {[
+                  { value: copy.home.stat1Val, label: copy.home.stat1Lbl },
+                  { value: copy.home.stat2Val, label: copy.home.stat2Lbl },
+                  { value: copy.home.stat3Val, label: copy.home.stat3Lbl },
+                  { value: copy.home.stat4Val, label: copy.home.stat4Lbl },
+                ].map((stat, i) => (
+                  <div key={i} className="text-center group">
+                    <p className="font-heading text-3xl font-bold text-teal-400 sm:text-4xl transition-all duration-300 group-hover:scale-105 group-hover:text-teal-300">
+                      <AnimatedCounter value={stat.value} duration={2500} />
+                    </p>
+                    <p className="mt-2 text-sm font-medium uppercase tracking-wider text-teal-200/60">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </FadeInOnScroll>
           </div>
         </section>
 
         {/* CTA */}
         <section className="w-full bg-white py-20 sm:py-28 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-linear-to-b from-slate-50/50 to-white pointer-events-none" />
-          <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 animate-slide-up">
+          <FadeInOnScroll className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div className="inline-flex items-center justify-center p-4 bg-teal-50 rounded-2xl mb-8 transition-transform duration-500 hover:rotate-12 hover:scale-110 shadow-xs">
               <Icon name="car" size={32} className="text-teal-600 animate-pulse" />
             </div>
@@ -436,19 +497,23 @@ export default function HomePage() {
               {copy.home.ctaDesc}
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href={ROUTES.register} className="w-full sm:w-auto">
-                <Button size="lg" className="h-14 px-8 text-base bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_8px_20px_rgba(20,184,166,0.25)] w-full cursor-pointer">
-                  <Icon name="user" className="mr-2 h-5 w-5" />
-                  {copy.home.ctaJoin}
-                </Button>
-              </Link>
-              <Link href={ROUTES.trips} className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 w-full transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
-                  {copy.home.ctaBrowse}
-                </Button>
-              </Link>
+              <MagneticButton>
+                <Link href={ROUTES.register} className="w-full sm:w-auto">
+                  <Button size="lg" className="h-14 px-8 text-base bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_8px_20px_rgba(20,184,166,0.25)] w-full cursor-pointer">
+                    <Icon name="user" className="mr-2 h-5 w-5" />
+                    {copy.home.ctaJoin}
+                  </Button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <Link href={ROUTES.trips} className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 w-full transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
+                    {copy.home.ctaBrowse}
+                  </Button>
+                </Link>
+              </MagneticButton>
             </div>
-          </div>
+          </FadeInOnScroll>
         </section>
       </main>
 

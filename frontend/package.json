@@ -13,7 +13,8 @@
     "test": "jest",
     "test:e2e": "playwright test",
     "install:playwright": "npm install --save-dev @playwright/test && npx playwright install chromium",
-    "copy-badges": "node scripts/copy_badges.js"
+    "copy-badges": "node scripts/copy_badges.js",
+    "copy-image": "node -e \"require('fs').copyFileSync('C:/Users/YUSIF/.gemini/antigravity-ide/brain/403c59b8-da6c-4d2a-ad6b-43776da7dc8b/roadtrip_illustration_1780248304070.png', 'public/roadtrip_illustration.png')\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
