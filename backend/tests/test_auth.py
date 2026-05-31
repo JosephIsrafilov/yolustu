@@ -96,6 +96,15 @@ def test_login_verified_user_returns_tokens_and_user():
     assert response.cookies.get("csrf_token")
 
 
+def test_login_does_not_grant_special_phone_admin_backdoor():
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"phone": "+994513944224", "password": TEST_PASSWORD},
+    )
+    assert response.status_code == 401
+    assert "Incorrect phone or password" in response.json()["error"]["message"]
+
+
 def test_cookie_auth_post_requires_valid_csrf_token():
     login_response = client.post(
         "/api/v1/auth/login", json={"phone": SEED_PHONE, "password": SEED_PASSWORD}

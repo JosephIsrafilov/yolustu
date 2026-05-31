@@ -57,11 +57,25 @@ class PaymentService:
         from app.core.config import settings
 
         if not settings.STRIPE_WEBHOOK_SECRET:
+            if settings.ENVIRONMENT.lower() not in {"development", "test"}:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Stripe webhook secret is not configured.",
+                )
             import json
 
-            data = json.loads(payload)
+            try:
+                data = json.loads(payload)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(
+                    status_code=400, detail="Invalid webhook payload."
+                ) from exc
             transaction_id = data.get("transaction_id")
             status = data.get("status")
+            if not transaction_id or status not in {"success", "failed"}:
+                raise HTTPException(
+                    status_code=400, detail="Invalid webhook payload."
+                )
         else:
             try:
                 event = stripe.Webhook.construct_event(

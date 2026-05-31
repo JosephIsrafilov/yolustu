@@ -74,3 +74,26 @@ def test_update_current_user_cannot_self_assign_admin_role(access_token):
     )
     assert after.status_code == 200
     assert after.json()["role"] == original_role
+
+
+def test_submit_verification_rejects_unsafe_file_types(access_token):
+    response = client.post(
+        "/api/v1/users/me/verify",
+        headers={"Authorization": f"Bearer {access_token}"},
+        files={"file": ("proof.html", b"<script>alert(1)</script>", "text/html")},
+    )
+
+    assert response.status_code == 400
+    assert "Unsupported upload type" in response.json()["error"]["message"]
+
+
+def test_upload_avatar_rejects_oversized_file(access_token):
+    oversized = b"\x89PNG\r\n\x1a\n" + b"0" * (5 * 1024 * 1024 + 1)
+    response = client.post(
+        "/api/v1/users/me/avatar",
+        headers={"Authorization": f"Bearer {access_token}"},
+        files={"file": ("avatar.png", oversized, "image/png")},
+    )
+
+    assert response.status_code == 413
+    assert "5MB limit" in response.json()["error"]["message"]

@@ -226,3 +226,17 @@ def test_repeated_success_webhook_keeps_state_consistent():
     assert payment.status == "completed"
     assert booking.status == "paid"
     assert ride.available_seats == 2
+
+
+def test_unsigned_webhook_is_rejected_outside_development(monkeypatch):
+    service, _, _, _, _ = make_service(booking_status="accepted")
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+
+    with pytest.raises(HTTPException) as exc:
+        service.handle_webhook(
+            payload=json.dumps({"transaction_id": "tx-123", "status": "success"}).encode(),
+            stripe_signature="",
+        )
+
+    assert exc.value.status_code == 503
+    assert "not configured" in str(exc.value.detail)
