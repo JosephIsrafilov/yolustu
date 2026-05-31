@@ -6,6 +6,16 @@ from uuid import uuid4
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import app
 from app.domains.identity.models import User
+from app.core.limiter import limiter
+
+
+def setup_module(module):
+    limiter.enabled = True
+
+
+def teardown_module(module):
+    limiter.enabled = False
+
 
 client = TestClient(app)
 

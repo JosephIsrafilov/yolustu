@@ -14,9 +14,12 @@ from main import app
 from app.core.database import Base, get_db
 from app.core.redis import get_redis
 from app.core.security import get_password_hash
+from app.core.limiter import limiter
 from app.domains.identity.models import User
 
-# Mock Database
+limiter.enabled = False
+
+
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
