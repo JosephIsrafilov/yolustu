@@ -62,4 +62,4 @@ def test_health_reports_degraded_redis(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "degraded"
-    assert data["checks"]["redis"]["status"] == "error"
+    assert data["checks"]["redis"]["status"] == "unavailable"

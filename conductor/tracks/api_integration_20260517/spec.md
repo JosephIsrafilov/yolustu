@@ -1,7 +1,7 @@
 # Specification: Replace frontend mock stores with real API calls
 
 ## Overview
-Currently, the Yolüstü frontend uses Zustand stores with hardcoded mock data for all features (Auth, Trips, Bookings, etc.). This track aims to replace these mock implementations with real API calls to the FastAPI backend, ensuring the application is fully data-driven.
+Currently, the Yolmates frontend uses Zustand stores with hardcoded mock data for all features (Auth, Trips, Bookings, etc.). This track aims to replace these mock implementations with real API calls to the FastAPI backend, ensuring the application is fully data-driven.
 
 ## Goals
 - Connect the Next.js frontend to the local FastAPI backend.

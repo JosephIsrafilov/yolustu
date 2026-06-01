@@ -251,7 +251,7 @@ async def get_smart_pricing_suggestion(
             max_price = int(round(suggested_price * 1.15))
 
             prompt = (
-                f"You are a transportation pricing assistant for the Yolustu carpooling platform in Azerbaijan.\n"
+                f"You are a transportation pricing assistant for the Yolmates carpooling platform in Azerbaijan.\n"
                 f"Analyze the following trip and price details to calculate a final recommended price and provide a short explanation.\n\n"
                 f"Trip Details:\n"
                 f"- Route: {request.origin} -> {request.destination}\n"
@@ -345,7 +345,7 @@ async def generate_trip_description(
             )
 
             prompt = (
-                f"You are a friendly ride-sharing assistant for Yolustu platform.\n"
+                f"You are a friendly ride-sharing assistant for Yolmates platform.\n"
                 f"Write a short, engaging description for a driver posting a trip.\n\n"
                 f"Trip parameters:\n"
                 f"- From: {request.origin}\n"

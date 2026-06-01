@@ -151,13 +151,15 @@ def health_check():
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-    except Exception as exc:
-        checks["database"] = {"status": "error", "message": str(exc)}
+    except Exception:
+        logging.exception("Database health check failed")
+        checks["database"] = {"status": "unavailable"}
 
     try:
         Redis(connection_pool=redis_pool).ping()
-    except Exception as exc:
-        checks["redis"] = {"status": "error", "message": str(exc)}
+    except Exception:
+        logging.exception("Redis health check failed")
+        checks["redis"] = {"status": "unavailable"}
 
     warnings = checks["configuration"].get("warnings")
     if isinstance(warnings, list):
@@ -171,13 +173,11 @@ def health_check():
             if not settings.STRIPE_WEBHOOK_SECRET:
                 warnings.append("STRIPE_WEBHOOK_SECRET is not configured.")
         if warnings:
-            checks["configuration"]["status"] = "warning"
+            checks["configuration"]["status"] = "degraded"
 
-    overall_status = (
-        "ok"
-        if all(check.get("status") != "error" for check in checks.values())
-        else "degraded"
-    )
+    overall_status = "ok"
+    if any(check.get("status") == "unavailable" for check in checks.values()):
+        overall_status = "degraded"
     return {
         "status": overall_status,
         "timestamp": datetime.now(timezone.utc).isoformat(),

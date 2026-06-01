@@ -7,12 +7,20 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 UPLOADS_DIR = BACKEND_DIR / "uploads"
 
 
+def normalize_database_url(url: str) -> str:
+    normalized = url.strip()
+    if normalized.startswith("postgres://"):
+        return normalized.replace("postgres://", "postgresql://", 1)
+    return normalized
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     DATABASE_URL: str = (
         "postgresql://yolustu_user:yolustu_password@127.0.0.1:5433/yolustu_db"
     )
+    DIRECT_DATABASE_URL: str | None = None
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -33,6 +41,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore[call-arg]
+settings.DATABASE_URL = normalize_database_url(settings.DATABASE_URL)
+if settings.DIRECT_DATABASE_URL:
+    settings.DIRECT_DATABASE_URL = normalize_database_url(settings.DIRECT_DATABASE_URL)
 
 if (
     settings.ENVIRONMENT == "production"

@@ -1,8 +1,8 @@
-# Yolmates — Azerbaijan Carpooling Platform 🚗
+# Yolmates вЂ” Azerbaijan Carpooling Platform рџљ—
 
-**Yolmates** is a modern car‑pooling prototype tailored for Azerbaijan. It includes:
-- **Real‑time chat and notifications** via WebSockets
-- **AI Smart Pricing** powered by NVIDIA NIM (LLaMA‑3.1) that suggests optimal seat prices based on route and time
+**Yolmates** is a modern carвЂ‘pooling prototype tailored for Azerbaijan. It includes:
+- **RealвЂ‘time chat and notifications** via WebSockets
+- **AI Smart Pricing** powered by NVIDIA NIM (LLaMAвЂ‘3.1) that suggests optimal seat prices based on route and time
 - Full Stripe integration for secure sandbox payments
 - Secure JWT authentication with simulated SMS OTP verification
 - Interactive Leaflet Maps on OpenStreetMap tiles (no Google Maps API key required)
@@ -13,35 +13,35 @@
 
 ```text
 yolustu/
-├── backend/               # FastAPI Python backend
-│   ├── alembic/           # DB migrations
-│   ├── app/
-│   │   ├── core/          # Config, database, security, WebSockets event loop
-│   │   ├── domains/       # Feature domains (auth, rides, bookings, engagement, payments, ai)
-│   │   │   ├── identity/  # User profile & authentication
-│   │   │   ├── trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
-│   │   │   ├── bookings/  # Seat reservations
-│   │   │   ├── engagement/# Chat messages & ratings
-│   │   │   ├── payments/  # Stripe sessions & Webhooks
-│   │   │   └── ai/        # AI pricing suggestion
-│   │   └── main.py        # FastAPI entry point & lifespan manager
-│   ├── requirements.txt   # Python deps
-│   └── .env               # Local secrets (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
-│
-├── frontend/              # Next.js 16 (App Router) with TypeScript
-│   ├── public/            # Static assets
-│   └── src/
-│       ├── app/
-│       │   ├── driver/
-│       │   │   └── create-trip/page.tsx   # Ride‑creation wizard with Leaflet Map & AI Smart Pricing
-│       │   └── (dashboard)/rides/create/page.tsx
-│       ├── components/    # UI primitives & helpers (TimePicker, CitySelect, Icon, Map)
-│       ├── services/      # Axios wrappers for API and AI services
-│       └── lib/           # Constants, utils (AZ_CITIES, mapping configs)
-│
-├── docs/                  # Project roadmap, database schema, API contracts, acceptance criteria
-├── docker-compose.yml     # PostgreSQL + PostGIS & Redis container configurations
-└── README.md              # ↗️ This file (updated)
+в”њв”Ђв”Ђ backend/               # FastAPI Python backend
+в”‚   в”њв”Ђв”Ђ alembic/           # DB migrations
+в”‚   в”њв”Ђв”Ђ app/
+в”‚   в”‚   в”њв”Ђв”Ђ core/          # Config, database, security, WebSockets event loop
+в”‚   в”‚   в”њв”Ђв”Ђ domains/       # Feature domains (auth, rides, bookings, engagement, payments, ai)
+в”‚   в”‚   в”‚   в”њв”Ђв”Ђ identity/  # User profile & authentication
+в”‚   в”‚   в”‚   в”њв”Ђв”Ђ trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
+в”‚   в”‚   в”‚   в”њв”Ђв”Ђ bookings/  # Seat reservations
+в”‚   в”‚   в”‚   в”њв”Ђв”Ђ engagement/# Chat messages & ratings
+в”‚   в”‚   в”‚   в”њв”Ђв”Ђ payments/  # Stripe sessions & Webhooks
+в”‚   в”‚   в”‚   в””в”Ђв”Ђ ai/        # AI pricing suggestion
+в”‚   в”‚   в””в”Ђв”Ђ main.py        # FastAPI entry point & lifespan manager
+в”‚   в”њв”Ђв”Ђ requirements.txt   # Python deps
+в”‚   в””в”Ђв”Ђ .env               # Local secrets (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
+в”‚
+в”њв”Ђв”Ђ frontend/              # Next.js 16 (App Router) with TypeScript
+в”‚   в”њв”Ђв”Ђ public/            # Static assets
+в”‚   в””в”Ђв”Ђ src/
+в”‚       в”њв”Ђв”Ђ app/
+в”‚       в”‚   в”њв”Ђв”Ђ driver/
+в”‚       в”‚   в”‚   в””в”Ђв”Ђ create-trip/page.tsx   # RideвЂ‘creation wizard with Leaflet Map & AI Smart Pricing
+в”‚       в”‚   в””в”Ђв”Ђ (dashboard)/rides/create/page.tsx
+в”‚       в”њв”Ђв”Ђ components/    # UI primitives & helpers (TimePicker, CitySelect, Icon, Map)
+в”‚       в”њв”Ђв”Ђ services/      # Axios wrappers for API and AI services
+в”‚       в””в”Ђв”Ђ lib/           # Constants, utils (AZ_CITIES, mapping configs)
+в”‚
+в”њв”Ђв”Ђ docs/                  # Project roadmap, database schema, API contracts, acceptance criteria
+в”њв”Ђв”Ђ docker-compose.yml     # PostgreSQL + PostGIS & Redis container configurations
+в””в”Ђв”Ђ README.md              # в†—пёЏ This file (updated)
 ```
 
 ---
@@ -65,12 +65,12 @@ yolustu/
 
 ## Setup & Development
 
-### 1️⃣ Infrastructure (PostgreSQL & Redis)
+### 1пёЏвѓЈ Infrastructure (PostgreSQL & Redis)
 ```bash
 docker-compose up -d   # starts db and redis containers
 ```
 
-### 2️⃣ Backend (FastAPI)
+### 2пёЏвѓЈ Backend (FastAPI)
 ```bash
 cd backend
 python -m venv venv
@@ -80,13 +80,13 @@ python -m venv venv
 source venv/bin/activate
 
 pip install -r requirements.txt
-# Copy .env.example → .env and configure keys (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
+# Copy backend/.env.example -> backend/.env and configure required keys
 alembic upgrade head   # apply migrations
 uvicorn main:app --reload   # API at http://localhost:8000
 ```
 Visit `http://localhost:8000/docs` for the Swagger UI.
 
-### 3️⃣ Frontend (Next.js)
+### 3пёЏвѓЈ Frontend (Next.js)
 ```bash
 cd frontend
 npm install
@@ -103,7 +103,7 @@ Remove-Item -Recurse -Force .next
 npm run dev:lowmem
 ```
 
-### 4️⃣ Frontend API Mode (Sprint 1 Auth/Profile)
+### 4пёЏвѓЈ Frontend API Mode (Sprint 1 Auth/Profile)
 Create `frontend/.env.local`:
 ```bash
 NEXT_PUBLIC_DATA_MODE=api
@@ -116,7 +116,7 @@ Current auth/profile behavior in API mode:
 - `POST /auth/login` returns `accessToken`, `refreshToken`, `user`.
 - `POST /auth/request-otp` returns `{ message, phone }`.
 - `POST /auth/verify-otp` returns `{ message: "Account verified successfully" }` and does not return tokens.
-- `POST /auth/refresh` receives `{ refreshToken }` and returns rotated `accessToken`, `refreshToken`, `user`.
+- `POST /auth/refresh` uses `refresh_token` HttpOnly cookie and returns rotated `accessToken`, `refreshToken`, `user`.
 - Frontend stores tokens in `localStorage` keys: `token` and `refresh_token`.
 - `GET /users/me` is used on app boot to restore session after reload.
 - `PUT /users/me` powers profile/profile-setup updates.
@@ -206,6 +206,74 @@ This will create standard test users with the password `password123` and `is_ver
 
 ### 3. FastAPI Lifecycle Stability
 - Replaced legacy startup/shutdown event handlers with the `lifespan` context manager in `backend/app/main.py`. This correctly binds the WebSocket manager's event loop in the context of the running asyncio loop, ensuring real-time messages are dispatched concurrently without hanging.
+
+---
+
+## Supabase Postgres Setup (Managed DB)
+
+The project keeps backend-owned auth (HttpOnly cookies + CSRF + JWT + Redis) and uses Supabase only as managed Postgres.
+
+### 1) Create Supabase project
+- Create project in Supabase dashboard.
+- Set a strong DB password.
+- Enable PostGIS in SQL editor:
+
+```sql
+create extension if not exists postgis;
+```
+
+### 2) Configure connection strings
+- `DATABASE_URL`: pooled runtime connection for backend traffic.
+- `DIRECT_DATABASE_URL`: direct connection for Alembic migrations.
+- Both URLs should include `sslmode=require`.
+
+Example placeholders:
+
+```bash
+DATABASE_URL=postgresql://<pooled-user>:<password>@<pooled-host>:<pooled-port>/postgres?sslmode=require
+DIRECT_DATABASE_URL=postgresql://postgres:<password>@<direct-host>:5432/postgres?sslmode=require
+```
+
+### 3) Run migrations
+
+```bash
+cd backend
+python -m alembic upgrade head
+```
+
+### 4) Local fallback (Docker PostGIS + Redis)
+- For local-only development, keep using `docker compose up -d` (db + redis).
+- With no external `DATABASE_URL`, compose defaults to local PostGIS (`db` service).
+- With external `DATABASE_URL` set, backend can target remote DB while local services remain available.
+
+### 5) CI/CD guidance
+- PR checks should not depend on production Supabase secrets.
+- Production migration/deploy should be controlled (manual/protected environment).
+- Use direct migration URL only for migration jobs.
+
+Recommended GitHub Secrets (deploy environments):
+- `DATABASE_URL`
+- `DIRECT_DATABASE_URL`
+- `SECRET_KEY`
+- `REDIS_URL` (if remote Redis is used)
+- `FRONTEND_URL`
+- `BACKEND_URL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+### 6) Security notes
+- Do not commit real secrets to git.
+- `SUPABASE_SERVICE_ROLE_KEY` is not required when Supabase is used only as Postgres.
+- Never expose service-role secrets to frontend bundles.
+- Frontend should keep using backend API (no direct frontend-to-Supabase DB integration in current architecture).
+
+---
+
+## Mobile app preparation (no scaffold yet)
+
+- Read the readiness audit and integration contract notes in [docs/mobile-app-readiness.md](docs/mobile-app-readiness.md).
+- Current scope is preparation only: backend/docs/API readiness for future React Native or Flutter client.
+- No mobile app code generation is included in this phase.
 
 ---
 

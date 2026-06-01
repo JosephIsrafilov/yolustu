@@ -1,4 +1,4 @@
-# Sprint 0 Report — Yolüstü
+# Sprint 0 Report — Yolmates
 
 ## Sprint Metadata
 
@@ -13,7 +13,7 @@
 
 ## Sprint Goal
 
-Sprint 0 establishes a working frontend prototype for Yolüstü, a carpooling platform concept for Azerbaijan. The goal is to validate navigation, screen coverage, passenger/driver/admin flows, and mock business rules before Sprint 1 backend integration.
+Sprint 0 establishes a working frontend prototype for Yolmates, a carpooling platform concept for Azerbaijan. The goal is to validate navigation, screen coverage, passenger/driver/admin flows, and mock business rules before Sprint 1 backend integration.
 
 ## Current Implementation
 

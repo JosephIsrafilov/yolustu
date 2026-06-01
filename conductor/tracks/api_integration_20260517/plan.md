@@ -1,6 +1,6 @@
 # Implementation Plan: Replace frontend mock stores with real API calls
 
-This plan outlines the steps to replace mock data with real API calls, ensuring the Yolüstü frontend is fully integrated with the backend.
+This plan outlines the steps to replace mock data with real API calls, ensuring the Yolmates frontend is fully integrated with the backend.
 
 ## Phase 1: API Client Infrastructure
 

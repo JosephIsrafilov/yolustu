@@ -6,7 +6,7 @@
 - **Audience:** Both local Azerbaijani users and visitors.
 
 ## Branding
-- **Name:** Yolüstü (Azerbaijani for "on the way").
+- **Name:** Yolmates (Azerbaijani for "on the way").
 - **Visual Identity:** Clean, modern, and reliable.
 - **Consistency:** Ensure uniform terminology across all platforms (e.g., "Sürücü" for Driver, "Sərnişin" for Passenger).
 

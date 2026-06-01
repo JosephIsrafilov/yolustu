@@ -1,4 +1,4 @@
-# YolUstu — Архитектурные решения (приложение к дипломной работе)
+# Yolmates — Архитектурные решения (приложение к дипломной работе)
 
 ---
 
@@ -40,7 +40,7 @@ sequenceDiagram
     API->>API: Генерация 6-значного OTP
     API->>Redis: Сохранение OTP (TTL 5 мин)
     API->>SMS: Отправка СМС с кодом
-    SMS-->>P: СМС-сообщение: "YolUstu: 123456"
+    SMS-->>P: СМС-сообщение: "Yolmates: 123456"
     P->>App: Вводит OTP код в форму
     App->>API: POST /api/v1/auth/verify-otp {phone, otp}
     API->>Redis: Проверка соответствия OTP

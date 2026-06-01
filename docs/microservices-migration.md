@@ -2,7 +2,7 @@
 
 ## Current State
 
-Yolustu now uses a modular monolith backend. The application still runs as one
+Yolmates now uses a modular monolith backend. The application still runs as one
 FastAPI process and uses one PostgreSQL database, but backend code is grouped by
 domain under `backend/app/domains`.
 

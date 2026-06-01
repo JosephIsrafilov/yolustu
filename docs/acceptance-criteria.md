@@ -1,4 +1,4 @@
-# Acceptance Criteria — Yolüstü MVP
+# Acceptance Criteria — Yolmates MVP
 
 ## Əsas Qəbul Meyarları
 

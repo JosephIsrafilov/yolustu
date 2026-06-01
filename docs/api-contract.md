@@ -1,4 +1,4 @@
-# API Kontraktı — Yolüstü
+# API Kontraktı — Yolmates
 
 Bu sənəd sistemin backend API endpointlərinin real strukturunu, sorğu və cavab formalarını (request/response models) təsvir edir. Bütün endpointlər `/api/v1` prefiksi altındadır.
 
@@ -119,12 +119,9 @@ Response (200):
 
 Purpose: rotate refresh token and return a new auth session.
 
-Request body:
-```json
-{
-  "refreshToken": "string"
-}
-```
+Request source:
+- `refresh_token` HttpOnly cookie (set by login/register/refresh).
+- If cookie is missing, backend returns `401` (`Refresh token missing`).
 
 Response (200):
 ```json
@@ -256,6 +253,9 @@ Response (200):
 - `min_seats` (int, default 1) — Minimum tələb olunan yer
 - `radius_meters` (float, default 10000) — Axtarış radiusu
 
+**Smoke test example (geo):**
+`GET /api/v1/rides/search?min_seats=1&origin_lat=40.4093&origin_lon=49.8671&dest_lat=40.6828&dest_lon=46.3606`
+
 **Response (200):** [Gediş Obyektlərinin siyahısı]
 
 ---
@@ -351,12 +351,8 @@ This section reflects the effective frontend/backend contract used in `NEXT_PUBL
 
 ### POST /api/v1/auth/refresh
 
-Request body:
-```json
-{
-  "refreshToken": "string"
-}
-```
+Request source:
+- `refresh_token` HttpOnly cookie.
 
 Response body:
 ```json

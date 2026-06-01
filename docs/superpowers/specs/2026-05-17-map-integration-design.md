@@ -1,7 +1,7 @@
 # Design Spec: Map & Location Integration
 
 **Date:** 2026-05-17
-**Topic:** Interactive Maps for Yolüstü Carpooling
+**Topic:** Interactive Maps for Yolmates Carpooling
 
 ## 1. Overview
 The goal is to replace text-based location selection with an interactive map interface using Leaflet and OpenStreetMap. This integration will span the Search, Create Ride, and Ride Details pages, providing a superior UX for Azerbaijani users.

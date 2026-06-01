@@ -1,4 +1,4 @@
-# MVP Scope — Yolüstü
+# MVP Scope — Yolmates
 
 ## MVP-yə Daxil Olanlar
 

@@ -285,7 +285,7 @@ $skippedFrontendPortBusy = $false
 if ($runBackend) {
     $backendCommand = "Set-Location '$backendDir'; & '$venvPython' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
     Write-Step "[backend] Starting API"
-    Start-DevProcessWindow -Title "Yolustu Backend" -Command $backendCommand
+    Start-DevProcessWindow -Title "Yolmates Backend" -Command $backendCommand
     $startedBackend = $true
 }
 
@@ -297,7 +297,7 @@ if ($runFrontend) {
         $frontendScript = if ($FrontendBundler -eq "webpack") { "dev:lowmem" } else { "dev" }
         $frontendCommand = "Set-Location '$frontendDir'; npm run $frontendScript"
         Write-Step "[frontend] Starting Next.js via npm run $frontendScript"
-        Start-DevProcessWindow -Title "Yolustu Frontend" -Command $frontendCommand
+        Start-DevProcessWindow -Title "Yolmates Frontend" -Command $frontendCommand
         $startedFrontend = $true
     }
 }

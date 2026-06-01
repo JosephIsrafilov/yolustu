@@ -31,3 +31,5 @@ backend/uploads/
 frontend/.next/
 frontend/out/
 frontend/tsconfig.tsbuildinfo
+
+/generated/prisma

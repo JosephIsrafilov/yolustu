@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from geoalchemy2 import Geography
 from sqlalchemy import Date, cast, func
 from sqlalchemy.orm import Session
 
@@ -115,20 +116,21 @@ class RideRepository:
 
         dist_origin = None
         dist_dest = None
+        geography_type = Geography(geometry_type="POINT", srid=4326)
 
         if criteria.origin_lat is not None and criteria.origin_lon is not None:
             origin_pt = f"POINT({criteria.origin_lon} {criteria.origin_lat})"
             origin_geom = func.ST_GeomFromText(origin_pt, 4326)
             query = query.filter(
                 func.ST_DWithin(
-                    func.cast(Ride.origin_location, func.geography()),
-                    func.cast(origin_geom, func.geography()),
+                    cast(Ride.origin_location, geography_type),
+                    cast(origin_geom, geography_type),
                     criteria.radius_meters,
                 )
             )
             dist_origin = func.ST_Distance(
-                func.cast(Ride.origin_location, func.geography()),
-                func.cast(origin_geom, func.geography()),
+                cast(Ride.origin_location, geography_type),
+                cast(origin_geom, geography_type),
             )
         elif criteria.origin_city:
             query = query.filter(
@@ -141,14 +143,14 @@ class RideRepository:
             dest_geom = func.ST_GeomFromText(dest_pt, 4326)
             query = query.filter(
                 func.ST_DWithin(
-                    func.cast(Ride.destination_location, func.geography()),
-                    func.cast(dest_geom, func.geography()),
+                    cast(Ride.destination_location, geography_type),
+                    cast(dest_geom, geography_type),
                     criteria.radius_meters,
                 )
             )
             dist_dest = func.ST_Distance(
-                func.cast(Ride.destination_location, func.geography()),
-                func.cast(dest_geom, func.geography()),
+                cast(Ride.destination_location, geography_type),
+                cast(dest_geom, geography_type),
             )
         elif criteria.dest_city:
             query = query.filter(

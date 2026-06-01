@@ -1,8 +1,8 @@
-# Product Vision — Yolüstü
+# Product Vision — Yolmates
 
 ## Məhsul Vizyonu
 
-Yolüstü, Azərbaycan bazarı üçün hazırlanmış şəhərlərarası carpooling platformasıdır. Tətbiq sərnişinlərə sürücülərlə yol paylaşaraq ucuz, rahat və təhlükəsiz şəkildə şəhərlərarası gediş etmək imkanı yaradır.
+Yolmates, Azərbaycan bazarı üçün hazırlanmış şəhərlərarası carpooling platformasıdır. Tətbiq sərnişinlərə sürücülərlə yol paylaşaraq ucuz, rahat və təhlükəsiz şəkildə şəhərlərarası gediş etmək imkanı yaradır.
 
 **Vizyon cümləsi:**
 > "Azərbaycan üzrə ən rahat və əlçatan şəhərlərarası gediş platforması."

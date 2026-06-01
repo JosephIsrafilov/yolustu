@@ -1,4 +1,4 @@
-# User Stories — Yolüstü
+# User Stories — Yolmates
 
 ## US-01: İstifadəçi Qeydiyyatı
 

@@ -3,12 +3,11 @@ services:
     build:
       context: ./backend
     environment:
-      DATABASE_URL: postgresql://yolustu_user:yolustu_password@db:5432/yolustu_db
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: ${DATABASE_URL:-postgresql://yolustu_user:yolustu_password@db:5432/yolustu_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
       - "8000:8000"
     depends_on:
-      - db
       - redis
     restart: unless-stopped
 

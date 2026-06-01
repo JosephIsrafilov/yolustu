@@ -1,4 +1,4 @@
-# Verilənlər Bazası Sxemi — Yolüstü
+# Verilənlər Bazası Sxemi — Yolmates
 
 ## ER Diaqramı
 
