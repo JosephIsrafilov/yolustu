@@ -1,8 +1,8 @@
-# Yolmates вЂ” Azerbaijan Carpooling Platform рџљ—
+# Yolmates - Azerbaijan Carpooling Platform
 
-**Yolmates** is a modern carвЂ‘pooling prototype tailored for Azerbaijan. It includes:
-- **RealвЂ‘time chat and notifications** via WebSockets
-- **AI Smart Pricing** powered by NVIDIA NIM (LLaMAвЂ‘3.1) that suggests optimal seat prices based on route and time
+**Yolmates** is a modern car-pooling prototype tailored for Azerbaijan. It includes:
+- **Real-time chat and notifications** via WebSockets
+- **AI Smart Pricing** powered by NVIDIA NIM (LLaMA-3.1) that suggests optimal seat prices based on route and time
 - Full Stripe integration for secure sandbox payments
 - Secure JWT authentication with simulated SMS OTP verification
 - Interactive Leaflet Maps on OpenStreetMap tiles (no Google Maps API key required)
@@ -13,35 +13,35 @@
 
 ```text
 yolustu/
-в”њв”Ђв”Ђ backend/               # FastAPI Python backend
-в”‚   в”њв”Ђв”Ђ alembic/           # DB migrations
-в”‚   в”њв”Ђв”Ђ app/
-в”‚   в”‚   в”њв”Ђв”Ђ core/          # Config, database, security, WebSockets event loop
-в”‚   в”‚   в”њв”Ђв”Ђ domains/       # Feature domains (auth, rides, bookings, engagement, payments, ai)
-в”‚   в”‚   в”‚   в”њв”Ђв”Ђ identity/  # User profile & authentication
-в”‚   в”‚   в”‚   в”њв”Ђв”Ђ trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
-в”‚   в”‚   в”‚   в”њв”Ђв”Ђ bookings/  # Seat reservations
-в”‚   в”‚   в”‚   в”њв”Ђв”Ђ engagement/# Chat messages & ratings
-в”‚   в”‚   в”‚   в”њв”Ђв”Ђ payments/  # Stripe sessions & Webhooks
-в”‚   в”‚   в”‚   в””в”Ђв”Ђ ai/        # AI pricing suggestion
-в”‚   в”‚   в””в”Ђв”Ђ main.py        # FastAPI entry point & lifespan manager
-в”‚   в”њв”Ђв”Ђ requirements.txt   # Python deps
-в”‚   в””в”Ђв”Ђ .env               # Local secrets (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
-в”‚
-в”њв”Ђв”Ђ frontend/              # Next.js 16 (App Router) with TypeScript
-в”‚   в”њв”Ђв”Ђ public/            # Static assets
-в”‚   в””в”Ђв”Ђ src/
-в”‚       в”њв”Ђв”Ђ app/
-в”‚       в”‚   в”њв”Ђв”Ђ driver/
-в”‚       в”‚   в”‚   в””в”Ђв”Ђ create-trip/page.tsx   # RideвЂ‘creation wizard with Leaflet Map & AI Smart Pricing
-в”‚       в”‚   в””в”Ђв”Ђ (dashboard)/rides/create/page.tsx
-в”‚       в”њв”Ђв”Ђ components/    # UI primitives & helpers (TimePicker, CitySelect, Icon, Map)
-в”‚       в”њв”Ђв”Ђ services/      # Axios wrappers for API and AI services
-в”‚       в””в”Ђв”Ђ lib/           # Constants, utils (AZ_CITIES, mapping configs)
-в”‚
-в”њв”Ђв”Ђ docs/                  # Project roadmap, database schema, API contracts, acceptance criteria
-в”њв”Ђв”Ђ docker-compose.yml     # PostgreSQL + PostGIS & Redis container configurations
-в””в”Ђв”Ђ README.md              # в†—пёЏ This file (updated)
+|-- backend/               # FastAPI Python backend
+|   |-- alembic/           # DB migrations
+|   |-- app/
+|   |   |-- core/          # Config, database, security, WebSockets event loop
+|   |   |-- domains/       # Feature domains (auth, rides, bookings, engagement, payments, ai)
+|   |   |   |-- identity/  # User profile & authentication
+|   |   |   |-- trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
+|   |   |   |-- bookings/  # Seat reservations
+|   |   |   |-- engagement/# Chat messages & ratings
+|   |   |   |-- payments/  # Stripe sessions & Webhooks
+|   |   |   `-- ai/        # AI pricing suggestion
+|   |   `-- main.py        # FastAPI entry point & lifespan manager
+|   |-- requirements.txt   # Python deps
+|   `-- .env               # Local secrets (NVIDIA_API_KEY, STRIPE_SECRET_KEY, DB URL)
+|
+|-- frontend/              # Next.js 16 (App Router) with TypeScript
+|   |-- public/            # Static assets
+|   `-- src/
+|       |-- app/
+|       |   |-- driver/
+|       |   |   `-- create-trip/page.tsx   # Ride-creation wizard with Leaflet Map & AI Smart Pricing
+|       |   `-- (dashboard)/rides/create/page.tsx
+|       |-- components/    # UI primitives & helpers (TimePicker, CitySelect, Icon, Map)
+|       |-- services/      # Axios wrappers for API and AI services
+|       `-- lib/           # Constants, utils (AZ_CITIES, mapping configs)
+|
+|-- docs/                  # Project roadmap, database schema, API contracts, acceptance criteria
+|-- docker-compose.yml     # PostgreSQL + PostGIS & Redis container configurations
+`-- README.md              # This file (updated)
 ```
 
 ---
@@ -65,12 +65,12 @@ yolustu/
 
 ## Setup & Development
 
-### 1пёЏвѓЈ Infrastructure (PostgreSQL & Redis)
+### 1) Infrastructure (PostgreSQL & Redis)
 ```bash
 docker-compose up -d   # starts db and redis containers
 ```
 
-### 2пёЏвѓЈ Backend (FastAPI)
+### 2) Backend (FastAPI)
 ```bash
 cd backend
 python -m venv venv
@@ -86,7 +86,7 @@ uvicorn main:app --reload   # API at http://localhost:8000
 ```
 Visit `http://localhost:8000/docs` for the Swagger UI.
 
-### 3пёЏвѓЈ Frontend (Next.js)
+### 3) Frontend (Next.js)
 ```bash
 cd frontend
 npm install
@@ -103,7 +103,7 @@ Remove-Item -Recurse -Force .next
 npm run dev:lowmem
 ```
 
-### 4пёЏвѓЈ Frontend API Mode (Sprint 1 Auth/Profile)
+### 4) Frontend API Mode (Sprint 1 Auth/Profile)
 Create `frontend/.env.local`:
 ```bash
 NEXT_PUBLIC_DATA_MODE=api
