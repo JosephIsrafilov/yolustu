@@ -33,3 +33,5 @@ frontend/out/
 frontend/tsconfig.tsbuildinfo
 
 /generated/prisma
+
+skills-lock.json
