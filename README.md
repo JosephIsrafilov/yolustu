@@ -105,11 +105,20 @@ npm run dev:lowmem
 
 ### 4) Frontend API Mode (Sprint 1 Auth/Profile)
 Create `frontend/.env.local`:
-```bash
+```env
 NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
+
+For a local port override (e.g., if port `8000` is already in use and backend is running on port `8010`), create or modify `frontend/.env.local`:
+```env
+NEXT_PUBLIC_DATA_MODE=api
+NEXT_PUBLIC_API_URL=http://localhost:8010/api/v1
+NEXT_PUBLIC_WS_URL=ws://localhost:8010
+```
+
+Do not commit `.env.local`.
 
 Current auth/profile behavior in API mode:
 - `POST /auth/register` returns `accessToken`, `refreshToken`, `user`; frontend starts session immediately.
