@@ -35,3 +35,14 @@ frontend/tsconfig.tsbuildinfo
 /generated/prisma
 
 skills-lock.json
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+*.log
+analyze.out
+analyze.err
