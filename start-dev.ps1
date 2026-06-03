@@ -265,12 +265,12 @@ if ($runBackend) {
     }
 
     if ($Seed) {
-        Write-Step "[backend] Running seed.py"
+        Write-Step "[backend] Running scripts/seed_dev_data.py"
         Push-Location $backendDir
         try {
-            & $venvPython seed.py
+            & $venvPython scripts/seed_dev_data.py
             if ($LASTEXITCODE -ne 0) {
-                throw "[error] seed.py failed"
+                throw "[error] scripts/seed_dev_data.py failed"
             }
         } finally {
             Pop-Location
