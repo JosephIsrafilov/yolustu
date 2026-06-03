@@ -1,0 +1,26 @@
+name: Flutter Mobile CI
+
+on:
+  push:
+    paths:
+      - 'mobile/yolmates_app/**'
+      - '.github/workflows/flutter-mobile.yml'
+  pull_request:
+    paths:
+      - 'mobile/yolmates_app/**'
+      - '.github/workflows/flutter-mobile.yml'
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/yolmates_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
