@@ -5,7 +5,7 @@ import sys
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -216,11 +216,11 @@ def seed_uuid(*parts: str) -> uuid.UUID:
 
 
 def departure_datetime(offset_days: int, departure_at: time) -> datetime:
-    return datetime.combine(date.today() + timedelta(days=offset_days), departure_at, tzinfo=UTC)
+    return datetime.combine(date.today() + timedelta(days=offset_days), departure_at, tzinfo=timezone.utc)
 
 
 def created_datetime(offset_days: int, created_at: time | None = None) -> datetime:
-    return datetime.combine(date.today() + timedelta(days=offset_days), created_at or time(9, 0), tzinfo=UTC)
+    return datetime.combine(date.today() + timedelta(days=offset_days), created_at or time(9, 0), tzinfo=timezone.utc)
 
 
 def city_point(city: str) -> str:
@@ -405,12 +405,12 @@ def reconcile_ride_availability(session: Session) -> None:
     booking_ids = [seed_uuid("booking", booking.key) for booking in BOOKINGS]
     rides = session.query(Ride).filter(Ride.id.in_(ride_ids)).all()
     bookings = session.query(Booking).filter(Booking.id.in_(booking_ids)).all()
-    occupied_by_ride: dict[uuid.UUID, int] = defaultdict(int)
+    occupied_by_ride: dict[Any, int] = defaultdict(int)
     for booking in bookings:
         if booking.status in SEAT_OCCUPYING_BOOKING_STATUSES:
-            occupied_by_ride[booking.ride_id] += booking.seats_booked
+            occupied_by_ride[booking.ride_id] += booking.seats_booked  # type: ignore
     for ride in rides:
-        ride.available_seats = max(ride.total_seats - occupied_by_ride.get(ride.id, 0), 0)
+        ride.available_seats = max(ride.total_seats - occupied_by_ride.get(ride.id, 0), 0)  # type: ignore
 
 
 def reconcile_user_metrics(session: Session, users_by_key: dict[str, User]) -> None:
@@ -420,28 +420,28 @@ def reconcile_user_metrics(session: Session, users_by_key: dict[str, User]) -> N
     bookings = session.query(Booking).filter(Booking.passenger_id.in_(user_ids)).all()
     reviews = session.query(Review).filter(Review.target_id.in_(user_ids)).all()
 
-    completed_rides_by_driver: dict[uuid.UUID, int] = defaultdict(int)
+    completed_rides_by_driver: dict[Any, int] = defaultdict(int)
     for ride in rides:
         if ride.status == RIDE_COMPLETED:
-            completed_rides_by_driver[ride.driver_id] += 1
+            completed_rides_by_driver[ride.driver_id] += 1  # type: ignore
 
-    completed_bookings_by_passenger: dict[uuid.UUID, int] = defaultdict(int)
+    completed_bookings_by_passenger: dict[Any, int] = defaultdict(int)
     for booking in bookings:
         if booking.status in {BOOKING_PAID, BOOKING_COMPLETED}:
-            completed_bookings_by_passenger[booking.passenger_id] += 1
+            completed_bookings_by_passenger[booking.passenger_id] += 1  # type: ignore
 
-    ratings_by_target: dict[uuid.UUID, list[int]] = defaultdict(list)
+    ratings_by_target: dict[Any, list[int]] = defaultdict(list)
     for review in reviews:
-        ratings_by_target[review.target_id].append(review.rating)
+        ratings_by_target[review.target_id].append(review.rating)  # type: ignore
 
-    keys_by_user_id = {user.id: key for key, user in users_by_key.items()}
+    keys_by_user_id: dict[Any, str] = {user.id: key for key, user in users_by_key.items()}
     for user in users:
-        rating_list = ratings_by_target.get(user.id, [])
-        user.rating = round(sum(rating_list) / len(rating_list), 2) if rating_list else BASE_RATINGS.get(keys_by_user_id[user.id], 0.0)
+        rating_list = ratings_by_target.get(user.id, [])  # type: ignore
+        user.rating = round(sum(rating_list) / len(rating_list), 2) if rating_list else BASE_RATINGS.get(keys_by_user_id.get(user.id, ""), 0.0)  # type: ignore
         if user.role == "driver":
-            user.total_rides = completed_rides_by_driver.get(user.id, 0)
+            user.total_rides = completed_rides_by_driver.get(user.id, 0)  # type: ignore
         elif user.role == "passenger":
-            user.total_rides = completed_bookings_by_passenger.get(user.id, 0)
+            user.total_rides = completed_bookings_by_passenger.get(user.id, 0)  # type: ignore
         else:
             user.total_rides = 0
 
@@ -458,40 +458,40 @@ def seed() -> dict[str, dict[str, int]]:
         rides_by_key: dict[str, Ride] = {}
         bookings_by_key: dict[str, Booking] = {}
 
-        for payload in USERS:
-            user, created = upsert_user(session, payload, hashed_password)
-            users_by_key[payload["key"]] = user
+        for u_payload in USERS:
+            user, created = upsert_user(session, u_payload, hashed_password)
+            users_by_key[u_payload["key"]] = user
             summary["users"]["created" if created else "existing"] += 1
 
-        for payload in VEHICLES:
-            vehicle, created = upsert_vehicle(session, payload, users_by_key[payload["user_key"]].id)
-            vehicles_by_key[payload["key"]] = vehicle
+        for v_payload in VEHICLES:
+            vehicle, created = upsert_vehicle(session, v_payload, users_by_key[v_payload["user_key"]].id)  # type: ignore
+            vehicles_by_key[v_payload["key"]] = vehicle
             summary["vehicles"]["created" if created else "existing"] += 1
 
-        for payload in RIDES:
-            ride, created = upsert_ride(session, payload, users_by_key[payload.driver_key].id, vehicles_by_key[payload.vehicle_key].id)
-            rides_by_key[payload.key] = ride
+        for r_payload in RIDES:
+            ride, created = upsert_ride(session, r_payload, users_by_key[r_payload.driver_key].id, vehicles_by_key[r_payload.vehicle_key].id)  # type: ignore
+            rides_by_key[r_payload.key] = ride
             summary["rides"]["created" if created else "existing"] += 1
 
-        for payload in BOOKINGS:
-            ride = rides_by_key[payload.ride_key]
-            passenger = users_by_key[payload.passenger_key]
+        for b_payload in BOOKINGS:
+            ride = rides_by_key[b_payload.ride_key]
+            passenger = users_by_key[b_payload.passenger_key]
             if ride.driver_id == passenger.id:
-                raise RuntimeError(f"Invalid seed data: passenger cannot book own ride ({payload.key})")
-            booking, created = upsert_booking(session, payload, ride.id, passenger.id, ride.price_per_seat * payload.seats_booked)
-            bookings_by_key[payload.key] = booking
+                raise RuntimeError(f"Invalid seed data: passenger cannot book own ride ({b_payload.key})")
+            booking, created = upsert_booking(session, b_payload, ride.id, passenger.id, ride.price_per_seat * b_payload.seats_booked)  # type: ignore
+            bookings_by_key[b_payload.key] = booking
             summary["bookings"]["created" if created else "existing"] += 1
 
-        for payload in REVIEWS:
-            _, created = upsert_review(session, payload, rides_by_key[payload.ride_key].id, users_by_key[payload.author_key].id, users_by_key[payload.target_key].id)
+        for rev_payload in REVIEWS:
+            _, created = upsert_review(session, rev_payload, rides_by_key[rev_payload.ride_key].id, users_by_key[rev_payload.author_key].id, users_by_key[rev_payload.target_key].id)  # type: ignore
             summary["reviews"]["created" if created else "existing"] += 1
 
-        for payload in MESSAGES:
-            _, created = upsert_message(session, payload, rides_by_key[payload.ride_key].id, users_by_key[payload.sender_key].id)
+        for m_payload in MESSAGES:
+            _, created = upsert_message(session, m_payload, rides_by_key[m_payload.ride_key].id, users_by_key[m_payload.sender_key].id)  # type: ignore
             summary["messages"]["created" if created else "existing"] += 1
 
-        for payload in PAYMENTS:
-            _, created = upsert_payment(session, payload, bookings_by_key[payload.booking_key].id)
+        for p_payload in PAYMENTS:
+            _, created = upsert_payment(session, p_payload, bookings_by_key[p_payload.booking_key].id)  # type: ignore
             summary["payments"]["created" if created else "existing"] += 1
 
         reconcile_ride_availability(session)
