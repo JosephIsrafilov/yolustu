@@ -20,7 +20,6 @@ import SpotlightCard from '@/components/ui/SpotlightCard';
 import TiltedCard from '@/components/ui/TiltedCard';
 import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
-import MagneticButton from '@/components/ui/MagneticButton';
 import ConnectingRoutesMap, { type RouteKey } from '@/components/ui/ConnectingRoutesMap';
 import HeroMap from '@/components/ui/HeroMap';
 
@@ -177,22 +176,18 @@ export default function HomePage() {
                 </p>
                 
                 <div className="mt-6 flex flex-col items-center justify-center lg:justify-start gap-4 sm:flex-row z-10 relative">
-                  <MagneticButton>
-                    <Link href={`${ROUTES.trips}?from=${from}&to=${to}&passengers=${passengers}`} className="block">
-                      <Button size="lg" className="h-12 px-8 text-sm bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_25px_rgba(20,184,166,0.35)] cursor-pointer">
-                        <Icon name="search" className="mr-2 h-5 w-5" />
-                        {language === 'en' ? 'Find a Ride' : copy.common.search}
-                      </Button>
-                    </Link>
-                  </MagneticButton>
-                  <MagneticButton>
-                    <Link href={offerRoute} className="block">
-                      <Button size="lg" variant="outline" className="h-12 px-8 text-sm border-white/20! bg-white/5! text-white! hover:bg-white/10! hover:text-white! rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
-                        <Icon name="car" className="mr-2 h-5 w-5" />
-                        {language === 'en' ? 'Offer a Ride' : copy.home.driverCtaButton}
-                      </Button>
-                    </Link>
-                  </MagneticButton>
+                  <Link href={`${ROUTES.trips}?from=${from}&to=${to}&passengers=${passengers}`} className="block">
+                    <Button size="lg" className="h-12 px-8 text-sm bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_25px_rgba(20,184,166,0.35)] cursor-pointer">
+                      <Icon name="search" className="mr-2 h-5 w-5" />
+                      {language === 'en' ? 'Find a Ride' : copy.common.search}
+                    </Button>
+                  </Link>
+                  <Link href={offerRoute} className="block">
+                    <Button size="lg" variant="outline" className="h-12 px-8 text-sm border-white/20! bg-white/5! text-white! hover:bg-white/10! hover:text-white! rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
+                      <Icon name="car" className="mr-2 h-5 w-5" />
+                      {language === 'en' ? 'Offer a Ride' : copy.home.driverCtaButton}
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className="mt-8 rounded-2xl bg-white/5 p-2 backdrop-blur-md border border-white/10 max-w-[672px] mx-auto lg:mx-0 transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
@@ -497,21 +492,17 @@ export default function HomePage() {
               {copy.home.ctaDesc}
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <MagneticButton>
-                <Link href={ROUTES.register} className="w-full sm:w-auto">
-                  <Button size="lg" className="h-14 px-8 text-base bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_8px_20px_rgba(20,184,166,0.25)] w-full cursor-pointer">
-                    <Icon name="user" className="mr-2 h-5 w-5" />
-                    {copy.home.ctaJoin}
-                  </Button>
-                </Link>
-              </MagneticButton>
-              <MagneticButton>
-                <Link href={ROUTES.trips} className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 w-full transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
-                    {copy.home.ctaBrowse}
-                  </Button>
-                </Link>
-              </MagneticButton>
+              <Link href={ROUTES.register} className="w-full sm:w-auto">
+                <Button size="lg" className="h-14 px-8 text-base bg-teal-500 hover:bg-teal-400 text-navy font-bold rounded-xl shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_8px_20px_rgba(20,184,166,0.25)] w-full cursor-pointer">
+                  <Icon name="user" className="mr-2 h-5 w-5" />
+                  {copy.home.ctaJoin}
+                </Button>
+              </Link>
+              <Link href={ROUTES.trips} className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 w-full transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] cursor-pointer">
+                  {copy.home.ctaBrowse}
+                </Button>
+              </Link>
             </div>
           </FadeInOnScroll>
         </section>
