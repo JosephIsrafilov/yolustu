@@ -16,6 +16,24 @@ class User {
     this.bio,
   });
 
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: (json['id'] as String?) ?? '',
+      fullName: (json['full_name'] ?? json['fullName'] ?? '') as String,
+      phoneNumber: (json['phone'] ?? json['phoneNumber'] ?? '') as String,
+      city: (json['city'] as String?) ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      completedTrips:
+          (json['completed_trips'] ?? json['completedTrips'] ?? 0) as int? ?? 0,
+      verificationStatus: _verificationStatusFromJson(
+        (json['verification_status'] ?? json['verificationStatus']) as String?,
+      ),
+      role: _userRoleFromJson((json['role'] as String?) ?? 'passenger'),
+      avatarUrl: json['avatar_url'] as String? ?? json['avatarUrl'] as String?,
+      bio: json['bio'] as String?,
+    );
+  }
+
   final String id;
   final String fullName;
   final String phoneNumber;
@@ -52,24 +70,6 @@ class User {
       role: role ?? this.role,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
-    );
-  }
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: (json['id'] as String?) ?? '',
-      fullName: (json['full_name'] ?? json['fullName'] ?? '') as String,
-      phoneNumber: (json['phone'] ?? json['phoneNumber'] ?? '') as String,
-      city: (json['city'] as String?) ?? '',
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      completedTrips:
-          (json['completed_trips'] ?? json['completedTrips'] ?? 0) as int? ?? 0,
-      verificationStatus: _verificationStatusFromJson(
-        (json['verification_status'] ?? json['verificationStatus']) as String?,
-      ),
-      role: _userRoleFromJson((json['role'] as String?) ?? 'passenger'),
-      avatarUrl: json['avatar_url'] as String? ?? json['avatarUrl'] as String?,
-      bio: json['bio'] as String?,
     );
   }
 

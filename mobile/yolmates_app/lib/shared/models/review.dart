@@ -9,12 +9,6 @@ class Review {
     required this.createdAt,
   });
 
-  final String id;
-  final User author;
-  final double rating;
-  final String comment;
-  final DateTime createdAt;
-
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
       id: (json['id'] as String?) ?? '',
@@ -42,6 +36,11 @@ class Review {
     );
   }
 
+  final String id;
+  final User author;
+  final double rating;
+  final String comment;
+  final DateTime createdAt;
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,

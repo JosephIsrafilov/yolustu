@@ -18,19 +18,6 @@ class Ride {
     this.status = RideStatus.active,
   });
 
-  final String id;
-  final User driver;
-  final String fromCity;
-  final String toCity;
-  final DateTime departureTime;
-  final double priceAzn;
-  final int availableSeats;
-  final int totalSeats;
-  final String meetingPoint;
-  final String dropoffPoint;
-  final String description;
-  final RideStatus status;
-
   factory Ride.fromJson(Map<String, dynamic> json) {
     final driverJson =
         json['driver'] as Map<String, dynamic>? ??
@@ -70,6 +57,18 @@ class Ride {
     );
   }
 
+  final String id;
+  final User driver;
+  final String fromCity;
+  final String toCity;
+  final DateTime departureTime;
+  final double priceAzn;
+  final int availableSeats;
+  final int totalSeats;
+  final String meetingPoint;
+  final String dropoffPoint;
+  final String description;
+  final RideStatus status;
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,

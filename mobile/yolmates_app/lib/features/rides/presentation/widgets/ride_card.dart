@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_card.dart';
-import '../../../../shared/models/booking.dart';
 import '../../../../shared/models/ride.dart';
 import '../../../../shared/widgets/price_text.dart';
 import '../../../../shared/widgets/status_badge.dart';

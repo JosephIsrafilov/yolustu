@@ -18,12 +18,6 @@ class Booking {
     required this.createdAt,
   });
 
-  final String id;
-  final Ride ride;
-  final BookingStatus status;
-  final int seats;
-  final DateTime createdAt;
-
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: (json['id'] as String?) ?? '',
@@ -41,6 +35,11 @@ class Booking {
     );
   }
 
+  final String id;
+  final Ride ride;
+  final BookingStatus status;
+  final int seats;
+  final DateTime createdAt;
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
