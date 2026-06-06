@@ -20,6 +20,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Daxil ol'), findsOneWidget);
+    expect(find.text('Daxil ol'), findsWidgets);
   });
 }

@@ -12,7 +12,15 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+    // Initialize provider and start bootstrap
+    final subscription = container.listen<AuthState>(
+      authControllerProvider,
+      (previous, next) {},
+    );
+    addTearDown(subscription.close);
+    // Wait for bootstrap microtasks
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    
     expect(
       container.read(authControllerProvider).status,
       AuthStatus.unauthenticated,
