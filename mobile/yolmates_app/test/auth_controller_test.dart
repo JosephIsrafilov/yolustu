@@ -12,9 +12,11 @@ import 'package:yolmates_app/shared/models/user.dart';
 import 'test_helpers.dart';
 
 class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({this.user});
+  _FakeAuthRepository({this.user, this.loginResult, this.verifyOtpResult});
 
   final User? user;
+  final ApiResult<User>? loginResult;
+  final ApiResult<User>? verifyOtpResult;
   bool logoutCalled = false;
 
   @override
@@ -24,7 +26,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<ApiResult<User>> login({
     required String phoneNumber,
     required String password,
-  }) async => ApiSuccess<User>(user ?? mockCurrentUser);
+  }) async => loginResult ?? ApiSuccess<User>(user ?? mockCurrentUser);
 
   @override
   Future<void> logout() async {
@@ -39,13 +41,16 @@ class _FakeAuthRepository implements AuthRepository {
   Future<ApiResult<User>> verifyOtp({
     required String phoneNumber,
     required String code,
-  }) async => ApiSuccess<User>(user ?? mockCurrentUser);
+  }) async => verifyOtpResult ?? ApiSuccess<User>(user ?? mockCurrentUser);
 }
 
 void main() {
   test('bootstrap restores authenticated session when token and user exist', () async {
     final storage = SecureStorageService.memory();
     await storage.saveAccessToken('token');
+    await storage.saveCurrentUser(
+      '{"id":"u1","full_name":"Test User","phone":"+994500000001","city":"Baku","rating":5,"completed_trips":2,"verification_status":"verified","role":"passenger"}',
+    );
     final repository = _FakeAuthRepository(user: mockCurrentUser);
 
     final container = ProviderContainer(
@@ -66,9 +71,38 @@ void main() {
     );
   });
 
+  test('bootstrap keeps cached session when user refresh fails', () async {
+    final storage = SecureStorageService.memory();
+    await storage.saveAccessToken('token');
+    await storage.saveCurrentUser(
+      '{"id":"u1","full_name":"Cached User","phone":"+994500000001","city":"Baku","rating":5,"completed_trips":2,"verification_status":"verified","role":"passenger"}',
+    );
+    final repository = _FakeAuthRepository();
+
+    final container = ProviderContainer(
+      overrides: <Override>[
+        inMemoryStorageOverride(storage),
+        authRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(authControllerProvider);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+
+    final state = container.read(authControllerProvider);
+    expect(state.status, AuthStatus.authenticated);
+    expect(state.user?.fullName, 'Cached User');
+  });
+
   test('logout clears stored session and returns unauthenticated state', () async {
     final storage = SecureStorageService.memory();
     await storage.saveAccessToken('token');
+    await storage.saveRefreshToken('refresh');
+    await storage.saveCurrentUser(
+      '{"id":"u1","full_name":"Test User","phone":"+994500000001","city":"Baku","rating":5,"completed_trips":2,"verification_status":"verified","role":"passenger"}',
+    );
     final repository = _FakeAuthRepository(user: mockCurrentUser);
 
     final container = ProviderContainer(
@@ -84,6 +118,8 @@ void main() {
 
     expect(repository.logoutCalled, isTrue);
     expect(await storage.readAccessToken(), isNull);
+    expect(await storage.readRefreshToken(), isNull);
+    expect(await storage.readCurrentUser(), isNull);
     expect(
       container.read(authControllerProvider).status,
       AuthStatus.unauthenticated,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_result.dart';
+import '../../../core/storage/secure_storage_service.dart';
 import '../../../shared/models/user.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_state.dart';
@@ -26,14 +27,34 @@ class AuthController extends Notifier<AuthState> {
       return;
     }
 
+    final cachedUser = await _readCachedUser(storage);
+    if (cachedUser != null) {
+      state = AuthState.authenticated(cachedUser);
+    }
+
     final user = await ref.read(authRepositoryProvider).getCurrentUser();
     if (user == null) {
-      await storage.clearSession();
-      state = const AuthState.unauthenticated();
+      if (cachedUser == null) {
+        await storage.clearSession();
+        state = const AuthState.unauthenticated();
+      }
       return;
     }
 
     state = AuthState.authenticated(user);
+  }
+
+  Future<User?> _readCachedUser(SecureStorageService storage) async {
+    final rawUser = await storage.readCurrentUser();
+    if (rawUser == null || rawUser.isEmpty) {
+      return null;
+    }
+
+    try {
+      return User.fromJson(jsonDecode(rawUser) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<ApiResult<void>> sendOtp(String phoneNumber) async {

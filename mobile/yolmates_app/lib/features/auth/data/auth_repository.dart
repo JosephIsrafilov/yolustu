@@ -111,6 +111,11 @@ class RealAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    try {
+      await _apiClient.dio.post<void>(ApiEndpoints.logout);
+    } catch (_) {
+      // Mobile logout should still succeed locally if backend cookie logout is unavailable.
+    }
     await _storageService.clearSession();
   }
 
