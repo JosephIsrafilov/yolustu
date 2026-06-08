@@ -12,11 +12,9 @@ import 'package:yolmates_app/shared/models/user.dart';
 import 'test_helpers.dart';
 
 class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({this.user, this.loginResult, this.verifyOtpResult});
+  _FakeAuthRepository({this.user});
 
   final User? user;
-  final ApiResult<User>? loginResult;
-  final ApiResult<User>? verifyOtpResult;
   bool logoutCalled = false;
 
   @override
@@ -26,7 +24,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<ApiResult<User>> login({
     required String phoneNumber,
     required String password,
-  }) async => loginResult ?? ApiSuccess<User>(user ?? mockCurrentUser);
+  }) async => ApiSuccess<User>(user ?? mockCurrentUser);
 
   @override
   Future<void> logout() async {
@@ -41,7 +39,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<ApiResult<User>> verifyOtp({
     required String phoneNumber,
     required String code,
-  }) async => verifyOtpResult ?? ApiSuccess<User>(user ?? mockCurrentUser);
+  }) async => ApiSuccess<User>(user ?? mockCurrentUser);
 }
 
 void main() {

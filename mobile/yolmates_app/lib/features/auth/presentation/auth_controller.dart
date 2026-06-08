@@ -41,6 +41,12 @@ class AuthController extends Notifier<AuthState> {
       return;
     }
 
+    final latestToken = await storage.readAccessToken();
+    if (latestToken == null || latestToken.isEmpty) {
+      state = const AuthState.unauthenticated();
+      return;
+    }
+
     state = AuthState.authenticated(user);
   }
 
