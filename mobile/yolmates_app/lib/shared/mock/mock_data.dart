@@ -85,16 +85,22 @@ final List<Ride> mockRides = <Ride>[
 final List<Booking> mockBookings = <Booking>[
   Booking(
     id: 'booking-1',
+    rideId: mockRides[0].id,
+    passengerId: mockCurrentUser.id,
     ride: mockRides[0],
     status: BookingStatus.pending,
     seats: 1,
+    totalPrice: mockRides[0].priceAzn,
     createdAt: DateTime(2026, 6, 3, 10, 15),
   ),
   Booking(
     id: 'booking-2',
+    rideId: mockRides[1].id,
+    passengerId: mockCurrentUser.id,
     ride: mockRides[1],
     status: BookingStatus.accepted,
     seats: 2,
+    totalPrice: mockRides[1].priceAzn * 2,
     createdAt: DateTime(2026, 6, 2, 16, 40),
   ),
 ];
