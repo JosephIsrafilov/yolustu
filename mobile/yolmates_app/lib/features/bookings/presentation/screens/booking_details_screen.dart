@@ -9,7 +9,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../shared/models/booking.dart';
 import '../../../../shared/widgets/price_text.dart';
-import '../../../../shared\widgets/status_badge.dart';
+import '../../../../shared/widgets/status_badge.dart';
 import '../../data/bookings_repository.dart';
 
 class BookingDetailsScreen extends ConsumerStatefulWidget {

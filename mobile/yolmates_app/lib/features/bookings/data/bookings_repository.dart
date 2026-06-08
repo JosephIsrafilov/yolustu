@@ -7,6 +7,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_result.dart';
 import '../../../shared/mock/mock_data.dart';
 import '../../../shared/models/booking.dart';
+import '../../../shared/models/ride.dart';
 import '../domain/booking_repository.dart';
 import '../domain/booking_summary.dart';
 
