@@ -29,8 +29,12 @@ backend/uploads/
 
 # Next.js
 frontend/.next/
+frontend/playwright-report/
+frontend/test-results/
 frontend/out/
 frontend/tsconfig.tsbuildinfo
+backend/test.db
+mobile/yolmates_app/env/dev.json
 
 /generated/prisma
 

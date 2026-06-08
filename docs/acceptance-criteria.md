@@ -28,7 +28,7 @@
 - [x] Filtr düzgün işləyir (yer sayı və axtarış radiusu üzrə)
 - [x] Axtarış nəticəsi boş olduqda müvafiq boş state (Empty State) mesajı göstərilir
 
-###  acceptance.5. Gediş Detalları
+### 5. Gediş Detalları
 - [x] Gediş səhifəsində bütün detallar (marşrut, sürücü ratingi, avtomobil məlumatları, səyahət üstünlükləri) görünür
 - [x] Sürücünün keçmiş rəyləri siyahı şəklində göstərilir
 - [x] Rezervasiya et düyməsi klikləndikdə Stripe ödəniş axını başlanır

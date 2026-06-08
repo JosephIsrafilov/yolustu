@@ -1,3 +1,6 @@
+# Historical note: this document is kept for project history. For current implementation status, use docs/PROJECT_STATE.md and docs/INDEX.md.
+> Current status override: Sprint 0 mock-only notes are historical. Use docs/PROJECT_STATE.md and docs/INDEX.md for current implementation status.
+
 # Sprint 0 Report — Yolmates
 
 ## Sprint Metadata

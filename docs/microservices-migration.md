@@ -1,3 +1,5 @@
+# Historical note: this document is kept for project history. For current implementation status, use docs/PROJECT_STATE.md and docs/INDEX.md.
+
 # Microservices Migration Path
 
 ## Current State

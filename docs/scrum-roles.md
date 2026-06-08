@@ -1,3 +1,6 @@
+# Historical note: this document is kept for project history. For current implementation status, use docs/PROJECT_STATE.md and docs/INDEX.md.
+> Current status override: the project stack is FastAPI + Next.js + Flutter, not Django/React Native. Use docs/PROJECT_STATE.md and docs/INDEX.md.
+
 # Scrum Roles — Yolmates
 
 ## Rol Bölgüsü

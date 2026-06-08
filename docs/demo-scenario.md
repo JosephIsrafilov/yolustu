@@ -1,3 +1,6 @@
+# Historical note: this document is kept for project history. For current implementation status, use docs/PROJECT_STATE.md and docs/INDEX.md.
+> Current status override: web auth now relies on cookie/session restore, and mobile scaffold exists. Use docs/PROJECT_STATE.md and docs/INDEX.md for current behavior.
+
 # Demo Ssenarisi — Yolmates
 
 Bu ssenari diplom müdafiəsi və sprint review zamanı real verilənlər bazası (PostgreSQL), Redis keş yaddaşı, Stripe ödənişləri və WebSocket real-time çatı ilə işləyən sistemi nümayiş etdirmək üçün nəzərdə tutulub.

@@ -1,3 +1,6 @@
+# Historical note: this document is kept for project history. For current implementation status, use docs/PROJECT_STATE.md and docs/INDEX.md.
+> Current status override: mobile scaffold exists in mobile/yolmates_app; treat this as historical prep, not current implementation status. Use docs/PROJECT_STATE.md and docs/INDEX.md.
+
 # Mobile App Readiness (Preparation Only)
 
 ## Current backend status
@@ -117,7 +120,7 @@
 9. Driver booking requests
 10. Profile/verification
 
-## Preparation checklist (no mobile scaffold yet)
+## Preparation checklist (historical)
 - Keep backend auth/cookie flow stable for web.
 - Define and approve mobile token-refresh contract.
 - Finalize staging/prod API domains and TLS/certificate handling.
