@@ -8,6 +8,7 @@ import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/otp_screen.dart';
+import '../features/bookings/presentation/screens/booking_details_screen.dart';
 import '../features/bookings/presentation/screens/bookings_screen.dart';
 import '../features/driver/presentation/screens/create_ride_screen.dart';
 import '../features/driver/presentation/screens/driver_dashboard_screen.dart';
@@ -21,6 +22,7 @@ import '../features/rides/presentation/screens/ride_details_screen.dart';
 import '../features/rides/presentation/screens/ride_results_screen.dart';
 import '../features/rides/presentation/screens/ride_search_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
+import '../shared/models/booking.dart';
 
 final routerInitialLocationProvider = Provider<String>((ref) => '/');
 
@@ -143,6 +145,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               currentIndex: 2,
               title: 'My bookings',
               child: BookingsScreen(),
+            ),
+      ),
+      GoRoute(
+        path: '/bookings/:id',
+        builder: (BuildContext context, GoRouterState state) =>
+            BookingDetailsScreen(
+              bookingId: state.pathParameters['id']!,
+              initialBooking: state.extra is Booking ? state.extra as Booking : null,
             ),
       ),
       GoRoute(

@@ -16,6 +16,20 @@ class MockBookingRepository implements BookingRepository {
   @override
   Future<ApiResult<void>> cancelBooking(String bookingId) async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
+    final index = mockBookings.indexWhere((Booking booking) => booking.id == bookingId);
+    if (index >= 0) {
+      final booking = mockBookings[index];
+      mockBookings[index] = Booking(
+        id: booking.id,
+        rideId: booking.rideId,
+        passengerId: booking.passengerId,
+        ride: booking.ride,
+        status: BookingStatus.cancelled,
+        seats: booking.seats,
+        totalPrice: booking.totalPrice,
+        createdAt: booking.createdAt,
+      );
+    }
     return const ApiSuccess<void>(null);
   }
 
@@ -25,15 +39,22 @@ class MockBookingRepository implements BookingRepository {
     required int seats,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
-    return ApiSuccess<Booking>(
-      Booking(
-        id: 'booking-created',
-        ride: mockRides.first,
-        status: BookingStatus.pending,
-        seats: seats,
-        createdAt: DateTime.now(),
-      ),
+    final ride = mockRides.firstWhere(
+      (Ride item) => item.id == rideId,
+      orElse: () => mockRides.first,
     );
+    final booking = Booking(
+      id: 'booking-${DateTime.now().millisecondsSinceEpoch}',
+      rideId: ride.id,
+      passengerId: mockCurrentUser.id,
+      ride: ride,
+      status: BookingStatus.pending,
+      seats: seats,
+      totalPrice: ride.priceAzn * seats,
+      createdAt: DateTime.now(),
+    );
+    mockBookings.insert(0, booking);
+    return ApiSuccess<Booking>(booking);
   }
 
   @override
@@ -126,6 +147,10 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
 });
 
 final bookingsRepositoryProvider = bookingRepositoryProvider;
+
+final myBookingsProvider = FutureProvider.autoDispose<List<Booking>>((ref) {
+  return ref.watch(bookingsRepositoryProvider).getMyBookings();
+});
 
 final bookingSummaryProvider = FutureProvider<BookingSummary>((ref) async {
   final repository = ref.watch(bookingRepositoryProvider);

@@ -15,13 +15,13 @@ class MockRideRepository implements RideRepository {
   @override
   Future<ApiResult<Ride>> createRide(Map<String, dynamic> payload) async {
     await Future<void>.delayed(const Duration(milliseconds: 160));
-    return ApiSuccess<Ride>(
-      Ride.fromJson(<String, dynamic>{
-        ...mockRides.first.toJson(),
-        ...payload,
-        'id': 'ride-mock-created',
-      }),
-    );
+    final ride = Ride.fromJson(<String, dynamic>{
+      ...mockRides.first.toJson(),
+      ...payload,
+      'id': 'ride-mock-created-${DateTime.now().millisecondsSinceEpoch}',
+    });
+    mockRides.insert(0, ride);
+    return ApiSuccess<Ride>(ride);
   }
 
   @override
