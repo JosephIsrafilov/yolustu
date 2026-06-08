@@ -347,7 +347,7 @@ Response (200):
 
 ## 7. Contract Alignment (2026-05-23)
 
-This section reflects the effective frontend/backend contract used in `NEXT_PUBLIC_DATA_MODE=api`.
+This section reflects the effective frontend/backend contract used by the current web app.
 
 ### POST /api/v1/auth/refresh
 
@@ -416,7 +416,7 @@ Frontend mapping rule:
 
 ### Auth session response (register/login)
 
-In API mode, both endpoints return the same session envelope:
+Both endpoints return the same session envelope:
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
@@ -443,7 +443,7 @@ Response body:
 
 ## 8. Sprint 2 API-Mode Contract (Trips/Search/Bookings)
 
-This is the effective contract used by frontend when `NEXT_PUBLIC_DATA_MODE=api`.
+This is the effective contract used by the current frontend.
 
 ### Trips endpoints
 

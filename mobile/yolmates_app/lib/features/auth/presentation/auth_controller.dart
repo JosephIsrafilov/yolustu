@@ -46,6 +46,25 @@ class AuthController extends Notifier<AuthState> {
     return result;
   }
 
+  Future<ApiResult<void>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    state = state.copyWith(isBusy: true, clearError: true);
+    final result = await ref
+        .read(authRepositoryProvider)
+        .login(phoneNumber: phoneNumber, password: password);
+
+    if (result case ApiSuccess(:final data)) {
+      state = AuthState.authenticated(data);
+      return const ApiSuccess<void>(null);
+    }
+
+    final failure = result as ApiFailure<User>;
+    state = AuthState.unauthenticated(errorMessage: failure.message);
+    return ApiFailure<void>(failure.message);
+  }
+
   Future<ApiResult<void>> verifyOtp({
     required String phoneNumber,
     required String otpCode,

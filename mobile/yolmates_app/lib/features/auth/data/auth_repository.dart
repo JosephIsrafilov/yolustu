@@ -13,6 +13,15 @@ class MockAuthRepository implements AuthRepository {
   const MockAuthRepository();
 
   @override
+  Future<ApiResult<User>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    return const ApiSuccess<User>(mockCurrentUser);
+  }
+
+  @override
   Future<User?> getCurrentUser() async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
     return mockCurrentUser;
@@ -44,6 +53,37 @@ class RealAuthRepository implements AuthRepository {
 
   final ApiClient _apiClient;
   final SecureStorageService _storageService;
+
+  @override
+  Future<ApiResult<User>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        ApiEndpoints.login,
+        data: <String, String>{'phone': phoneNumber, 'password': password},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final userJson =
+          (data['user'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+      final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+
+      if (accessToken == null || accessToken.isEmpty) {
+        return const ApiFailure<User>('Login succeeded without access token.');
+      }
+
+      await _storageService.saveAccessToken(accessToken);
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _storageService.saveRefreshToken(refreshToken);
+      }
+
+      return ApiSuccess<User>(User.fromJson(userJson));
+    } catch (error) {
+      return ApiFailure<User>('Failed to log in: $error');
+    }
+  }
 
   @override
   Future<User?> getCurrentUser() async {
@@ -89,15 +129,12 @@ class RealAuthRepository implements AuthRepository {
         queryParameters: <String, String>{'phone': phoneNumber, 'otp': code},
       );
       final data = response.data ?? <String, dynamic>{};
-      final userJson =
-          (data['user'] as Map<String, dynamic>?) ?? mockCurrentUser.toJson();
-      final accessToken = data['accessToken'] as String?;
-      final refreshToken = data['refreshToken'] as String?;
-      if (accessToken != null && refreshToken != null) {
-        await _storageService.saveAccessToken(accessToken);
-        await _storageService.saveRefreshToken(refreshToken);
+      if (data['message'] == null) {
+        return const ApiFailure<User>('OTP verification response is invalid.');
       }
-      return ApiSuccess<User>(User.fromJson(userJson));
+      return const ApiFailure<User>(
+        'OTP verification does not create a mobile session. Use phone and password login in real mode.',
+      );
     } catch (error) {
       return ApiFailure<User>('Failed to verify OTP: $error');
     }

@@ -5,10 +5,9 @@ import { useAppStore } from '@/store/useAppStore';
 
 interface LoadingStateProps {
   text?: string;
-  count?: number;
 }
 
-export default function LoadingState({ text, count }: LoadingStateProps) {
+export default function LoadingState({ text }: LoadingStateProps) {
   const language = useAppStore((state) => state.language);
 
   const defaultText = {

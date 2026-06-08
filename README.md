@@ -103,34 +103,32 @@ Remove-Item -Recurse -Force .next
 npm run dev:lowmem
 ```
 
-### 4) Frontend API Mode (Sprint 1 Auth/Profile)
+### 4) Frontend API Configuration
 Create `frontend/.env.local`:
 ```env
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 For a local port override (e.g., if port `8000` is already in use and backend is running on port `8010`), create or modify `frontend/.env.local`:
 ```env
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8010/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8010
 ```
 
 Do not commit `.env.local`.
 
-Current auth/profile behavior in API mode:
+Current auth/profile behavior:
 - `POST /auth/register` returns `accessToken`, `refreshToken`, `user`; frontend starts session immediately.
 - `POST /auth/login` returns `accessToken`, `refreshToken`, `user`.
 - `POST /auth/request-otp` returns `{ message, phone }`.
 - `POST /auth/verify-otp` returns `{ message: "Account verified successfully" }` and does not return tokens.
 - `POST /auth/refresh` uses `refresh_token` HttpOnly cookie and returns rotated `accessToken`, `refreshToken`, `user`.
-- Frontend stores tokens in `localStorage` keys: `token` and `refresh_token`.
+- Frontend treats `localStorage` auth keys as legacy only and clears them; session restore relies on cookies plus `GET /users/me`.
 - `GET /users/me` is used on app boot to restore session after reload.
 - `PUT /users/me` powers profile/profile-setup updates.
 
-Sprint 2 (current) in API mode:
+Sprint 2 (current):
 - Driver creates ride via `POST /rides/`.
 - Passenger searches rides via `GET /rides/search` and opens details via `GET /rides/{id}`.
 - Passenger creates booking request via `POST /bookings/`.
@@ -278,11 +276,11 @@ Recommended GitHub Secrets (deploy environments):
 
 ---
 
-## Mobile app preparation (no scaffold yet)
+## Mobile app foundation
 
 - Read the readiness audit and integration contract notes in [docs/mobile-app-readiness.md](docs/mobile-app-readiness.md).
-- Current scope is preparation only: backend/docs/API readiness for future React Native or Flutter client.
-- No mobile app code generation is included in this phase.
+- Flutter scaffold now lives in `mobile/yolmates_app/`.
+- Current mobile status: foundation is real, but real auth/search/booking flows are still being aligned with backend contracts.
 
 ---
 

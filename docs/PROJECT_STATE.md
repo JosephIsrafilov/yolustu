@@ -50,7 +50,6 @@ _Last updated: 2026-06-03_
 ### Frontend env
 Фронтенд считывает настройки из `frontend/.env.local` (не коммитится). Важно: используется переменная `NEXT_PUBLIC_API_URL` (а не `NEXT_PUBLIC_API_BASE_URL`):
 ```env
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
@@ -90,7 +89,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
   - `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/refresh` — авторизация.
   - `/api/v1/rides/search` — поиск поездок.
   - `/api/v1/bookings/` — создание бронирований.
-- **auth**: JWT-токены (хранятся во фронтенде в LocalStorage, рефреш-токен передается через HttpOnly Cookie).
+- **auth**: access-token используется через `Authorization` header или `access_token` cookie; web-сессия восстанавливается через cookie + `GET /users/me`, legacy `localStorage` токены очищаются и не являются текущим source of truth.
 - **rides**: Полностью реализована выдача поездок с фильтрацией по городам Азербайджана (Bakı, Gəncə, Lənkəran, Şəki и др.).
 - **bookings**: Подсчет свободных мест ведется на стороне бэкенда на основе статусов бронирования (`accepted`, `paid` уменьшают количество мест, отмена возвращает места).
 - **known issues**: При отсутствии пакета `firebase_admin` бэкенд предупреждает в логах о переключении на WebSocket-уведомления.
@@ -110,7 +109,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
 - **package scripts**:
   - `dev` — стандартный запуск.
   - `dev:lowmem` — запускает Next.js с помощью `cross-env` и флага `--webpack`, выделяя 4ГБ памяти, что предотвращает падение OOM на слабых Windows-машинах.
-- **API mode**: Включается через `NEXT_PUBLIC_DATA_MODE=api`.
+- **API mode**: фронтенд сейчас всегда использует backend API-сервисы; отдельный `NEXT_PUBLIC_DATA_MODE` для web больше не требуется.
 - **API env variables**: Считывает `NEXT_PUBLIC_API_URL` и `NEXT_PUBLIC_WS_URL`.
 - **pages/routes**:
   - `/` — главная страница.
@@ -118,8 +117,8 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
   - `/trips` — страница результатов поиска поездок.
   - `/trips/[id]` — детали поездки.
   - `/driver/create-trip` — создание поездки (с картой и расчетом AI-цены).
-- **login flow**: Пользователь логинится по номеру телефона и паролю, токены сохраняются в LocalStorage, бэкенд устанавливает куки.
-- **rides/trips result**: Страница `/trips` корректно загружает и отображает все 13 активных поездок из базы данных.
+- **login flow**: Пользователь логинится по номеру телефона и паролю, backend возвращает `accessToken`, `refreshToken`, `user`, а web-клиент опирается на cookie-based session restore и `GET /users/me`.
+- **rides/trips result**: Страница `/trips` должна отображать 12 активных поездок из seed-набора (`ride-01` ... `ride-12`).
 - **known issues**: Нет. Сборка (`npm run build`) и линтинг (`npm run lint`) проходят без ошибок.
 
 ## 9. Mobile Flutter Status
