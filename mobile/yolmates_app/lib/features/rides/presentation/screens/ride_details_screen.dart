@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,11 +12,11 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/loading_view.dart';
-import '../../../auth/presentation/auth_controller.dart';
-import '../../../bookings/data/bookings_repository.dart';
 import '../../../../shared/widgets/price_text.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/user_avatar.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../bookings/data/bookings_repository.dart';
 import '../../data/rides_repository.dart';
 
 class RideDetailsScreen extends ConsumerStatefulWidget {
@@ -33,7 +35,6 @@ class _RideDetailsScreenState extends ConsumerState<RideDetailsScreen> {
   bool _isBooking = false;
 
   Future<void> _handleBooking() async {
-    final context = this.context;
     final l10n = AppLocalizations.of(context);
     final authState = ref.read(authControllerProvider);
 
@@ -41,7 +42,7 @@ class _RideDetailsScreenState extends ConsumerState<RideDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${l10n.login} required before booking.')),
       );
-      context.push('/auth/login');
+      unawaited(context.push('/auth/login'));
       return;
     }
 
