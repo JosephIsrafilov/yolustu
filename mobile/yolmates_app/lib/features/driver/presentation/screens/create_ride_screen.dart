@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_section_title.dart';
 import '../../../rides/data/rides_repository.dart';
+import '../../../rides/presentation/ride_search_date_utils.dart';
 
 class CreateRideScreen extends ConsumerStatefulWidget {
   const CreateRideScreen({super.key});
@@ -50,16 +51,17 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   }
 
   Future<void> _selectDepartureDate() async {
+    final firstDate = rideSearchFirstDate();
     final picked = await showDatePicker(
       context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDate: _departureDate,
+      firstDate: firstDate,
+      lastDate: rideSearchLastDate(days: 365),
+      initialDate: rideSearchInitialDate(_departureDate, now: firstDate),
     );
     if (picked == null || !mounted) {
       return;
     }
-    setState(() => _departureDate = picked);
+    setState(() => _departureDate = rideDateOnly(picked));
   }
 
   Future<void> _selectDepartureTime() async {

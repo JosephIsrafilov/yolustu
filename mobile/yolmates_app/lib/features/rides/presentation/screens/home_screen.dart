@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../shared/widgets/app_list_tile.dart';
 import '../../../../shared/widgets/app_section_title.dart';
+import '../../../../shared/widgets/yolmates_logo.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,30 +26,25 @@ class HomeScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppConstants.screenPadding),
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
-              colors: <Color>[Color(0xFF0F8B8D), Color(0xFF5ED3C4)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+        AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              const YolmatesLogo(
+                title: 'Yolmates',
+                subtitle: 'Yol yoldasi tap',
+                compact: true,
+              ),
+              const SizedBox(height: 20),
               Text(
                 l10n.welcomeTitle,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
               Text(
-                'Search, bookings, driver, and settings are already linked through a mobile shell.',
+                'Search rides, manage bookings, and publish trips from one clean mobile flow.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white70,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 18),
@@ -56,25 +52,24 @@ class HomeScreen extends StatelessWidget {
                 label: l10n.searchRides,
                 onPressed: () => context.go('/rides/search'),
                 icon: Icons.search,
-                isSecondary: true,
               ),
             ],
           ),
         ),
         const SizedBox(height: AppConstants.sectionSpacing),
         const AppSectionTitle(
-          'Foundation status',
-          subtitle: 'Mock-first mobile base aligned to the current Yolmates web logic.',
+          'What is ready',
+          subtitle: 'Core mobile MVP pieces already work across auth, rides, and driver flow.',
         ),
         const SizedBox(height: 12),
         const AppCard(
           child: Column(
             children: <Widget>[
-              AppListTile(title: 'Auth guard', subtitle: 'Protected routes already redirect'),
+              AppListTile(title: 'Auth guard', subtitle: 'Protected routes redirect unauthenticated users safely'),
               Divider(),
               AppListTile(title: 'API mode', subtitle: 'Switch between mock and real via dart-define'),
               Divider(),
-              AppListTile(title: 'Localization', subtitle: 'Azerbaijani, Russian, English prepared'),
+              AppListTile(title: 'Session restore', subtitle: 'Saved auth state returns on app restart'),
             ],
           ),
         ),
@@ -87,7 +82,7 @@ class HomeScreen extends StatelessWidget {
             child: AppCard(
               child: AppListTile(
                 title: route,
-                subtitle: 'Popular mock route placeholder',
+                subtitle: 'Fast entry to seeded intercity routes',
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                 onTap: () => context.go('/rides/search'),
               ),

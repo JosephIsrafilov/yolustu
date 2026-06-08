@@ -17,8 +17,13 @@ class AppSectionTitle extends StatelessWidget {
       children: <Widget>[
         Text(title, style: Theme.of(context).textTheme.titleLarge),
         if (subtitle != null) ...<Widget>[
-          const SizedBox(height: 4),
-          Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 6),
+          Text(
+            subtitle!,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ],
     );

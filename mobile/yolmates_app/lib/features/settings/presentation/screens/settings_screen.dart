@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/language_switcher.dart';
 import '../../../../shared/widgets/app_list_tile.dart';
+import '../../../../shared/widgets/yolmates_logo.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../settings_controller.dart';
 
@@ -23,6 +24,12 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppConstants.screenPadding),
       children: <Widget>[
+        const YolmatesLogo(
+          title: 'Yolmates',
+          subtitle: 'App preferences',
+          compact: true,
+        ),
+        const SizedBox(height: 16),
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +49,7 @@ class SettingsScreen extends ConsumerWidget {
             children: <Widget>[
               AppListTile(
                 title: 'Environment',
-                subtitle: '${AppConfig.appEnv} • ${AppConfig.apiMode.name}',
+                subtitle: '${AppConfig.appEnv} - ${AppConfig.apiMode.name}',
               ),
               const Divider(),
               AppListTile(

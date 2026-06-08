@@ -25,6 +25,7 @@ class AppTheme {
         headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
         titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         bodyLarge: TextStyle(fontSize: 16, height: 1.5),
         bodyMedium: TextStyle(fontSize: 14, height: 1.45),
       ),
@@ -34,16 +35,23 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
+        titleTextStyle: TextStyle(
+          color: scheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
         surfaceTintColor: _surfaceTint,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -61,6 +69,21 @@ class AppTheme {
           vertical: 16,
         ),
       ),
+      chipTheme: ChipThemeData(
+        backgroundColor: scheme.surfaceContainerHighest,
+        selectedColor: _surfaceTint,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        side: BorderSide.none,
+        labelStyle: TextStyle(
+          color: scheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
+      dividerTheme: DividerThemeData(
+        color: scheme.outlineVariant.withValues(alpha: 0.65),
+        space: 1,
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
         indicatorColor: _surfaceTint,
@@ -77,6 +100,22 @@ class AppTheme {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          side: BorderSide(color: scheme.outlineVariant),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF123436),
+        contentTextStyle: const TextStyle(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
     );
   }
 
@@ -90,6 +129,11 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFF081617),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0E1C1D),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        margin: EdgeInsets.zero,
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: const Color(0xFF0E1C1D),
         indicatorColor: scheme.primary.withValues(alpha: 0.22),

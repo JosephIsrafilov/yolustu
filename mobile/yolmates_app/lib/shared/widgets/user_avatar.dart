@@ -23,8 +23,13 @@ class UserAvatar extends StatelessWidget {
 
     return CircleAvatar(
       radius: radius,
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
       child: Text(
         user.firstName.isEmpty ? '?' : user.firstName.substring(0, 1).toUpperCase(),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

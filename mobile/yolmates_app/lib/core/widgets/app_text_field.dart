@@ -8,6 +8,10 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.maxLines = 1,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.readOnly = false,
+    this.onTap,
     super.key,
   });
 
@@ -17,6 +21,10 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final int maxLines;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +33,14 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       obscureText: obscureText,
       maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, hintText: hintText),
+      readOnly: readOnly,
+      onTap: onTap,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hintText,
+        prefixIcon: prefixIcon,
+        suffixIcon: suffixIcon,
+      ),
     );
   }
 }

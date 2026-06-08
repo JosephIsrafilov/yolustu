@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../localization/app_localizations.dart';
+
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     required this.child,
@@ -15,6 +17,7 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: title == null
           ? null
@@ -45,31 +48,31 @@ class AppScaffold extends StatelessWidget {
                   ];
                   context.go(locations[index]);
                 },
-                destinations: const <NavigationDestination>[
+                destinations: <NavigationDestination>[
                   NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Home',
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home_rounded),
+                    label: l10n.home,
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.search_outlined),
-                    selectedIcon: Icon(Icons.search),
-                    label: 'Rides',
+                    icon: const Icon(Icons.search_outlined),
+                    selectedIcon: const Icon(Icons.search),
+                    label: l10n.searchRides,
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.confirmation_num_outlined),
-                    selectedIcon: Icon(Icons.confirmation_num),
-                    label: 'Bookings',
+                    icon: const Icon(Icons.confirmation_num_outlined),
+                    selectedIcon: const Icon(Icons.confirmation_num),
+                    label: l10n.bookings,
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.drive_eta_outlined),
-                    selectedIcon: Icon(Icons.drive_eta),
-                    label: 'Driver',
+                    icon: const Icon(Icons.drive_eta_outlined),
+                    selectedIcon: const Icon(Icons.drive_eta),
+                    label: l10n.driverPanel,
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.settings_outlined),
-                    selectedIcon: Icon(Icons.settings),
-                    label: 'Settings',
+                    icon: const Icon(Icons.settings_outlined),
+                    selectedIcon: const Icon(Icons.settings),
+                    label: l10n.settings,
                   ),
                 ],
               ),

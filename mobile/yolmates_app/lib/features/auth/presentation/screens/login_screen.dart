@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_section_title.dart';
+import '../../../../shared/widgets/yolmates_logo.dart';
 import '../auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -96,11 +97,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           };
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.login)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppConstants.screenPadding),
           children: <Widget>[
+            const SizedBox(height: 12),
+            const YolmatesLogo(
+              title: 'Yolmates',
+              subtitle: 'Yol yoldasi tap',
+              compact: true,
+            ),
+            const SizedBox(height: 20),
             AppSectionTitle(
               l10n.login,
               subtitle: subtitle,
@@ -114,6 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _phoneController,
                     label: l10n.phoneNumber,
                     keyboardType: TextInputType.phone,
+                    prefixIcon: const Icon(Icons.phone_outlined),
                   ),
                   if (!AppConfig.isMockMode) ...<Widget>[
                     const SizedBox(height: 12),
@@ -121,15 +129,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _passwordController,
                       label: passwordLabel,
                       obscureText: true,
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
                     ),
                   ],
                   const SizedBox(height: 12),
-                  Text(helperText),
+                  Text(
+                    helperText,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   if (authState.errorMessage != null) ...<Widget>[
                     const SizedBox(height: 12),
-                    Text(
-                      authState.errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        authState.errorMessage!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                   const SizedBox(height: 18),

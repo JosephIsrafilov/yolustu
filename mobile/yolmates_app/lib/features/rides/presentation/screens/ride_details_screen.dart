@@ -11,7 +11,9 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../shared/widgets/app_section_title.dart';
 import '../../../../shared/widgets/price_text.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -83,42 +85,84 @@ class _RideDetailsScreenState extends ConsumerState<RideDetailsScreen> {
       body: future.when(
         data: (ride) {
           if (ride == null) {
-            return EmptyState(title: l10n.emptyState);
+            return const EmptyState(
+              title: 'Ride not found',
+              subtitle: 'This ride may no longer be active.',
+              icon: Icons.route_outlined,
+            );
           }
+
           return ListView(
             padding: const EdgeInsets.all(AppConstants.screenPadding),
             children: <Widget>[
+              AppSectionTitle(
+                '${ride.fromCity} -> ${ride.toCity}',
+                subtitle: formatDeparture(ride.departureTime),
+              ),
+              const SizedBox(height: 12),
+              AppCard(
+                child: Row(
+                  children: <Widget>[
+                    UserAvatar(user: ride.driver, radius: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            ride.driver.fullName,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Driver rating ${ride.driver.rating.toStringAsFixed(1)} - ${ride.driver.completedTrips} completed trips',
+                          ),
+                        ],
+                      ),
+                    ),
+                    StatusBadge(label: ride.status.name),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        UserAvatar(user: ride.driver),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '${ride.fromCity} -> ${ride.toCity}',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                        StatusBadge(label: ride.status.name),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(formatDeparture(ride.departureTime)),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Driver: ${ride.driver.fullName} • ${ride.driver.rating.toStringAsFixed(1)}',
-                    ),
-                    const SizedBox(height: 12),
+                    Text('Route', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 10),
                     Text('Meeting point: ${ride.meetingPoint}'),
+                    const SizedBox(height: 6),
                     Text('Dropoff: ${ride.dropoffPoint}'),
+                    const SizedBox(height: 14),
+                    Text('Departure', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 10),
+                    Text(formatDeparture(ride.departureTime)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Price and seats',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 12),
                     PriceText(ride.priceAzn),
+                    const SizedBox(height: 6),
                     Text('Seats: ${ride.availableSeats}/${ride.totalSeats}'),
-                    const SizedBox(height: 12),
-                    Text(ride.description),
+                    if (ride.description.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Notes',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(ride.description),
+                    ],
                   ],
                 ),
               ),
@@ -133,8 +177,12 @@ class _RideDetailsScreenState extends ConsumerState<RideDetailsScreen> {
             ],
           );
         },
-        error: (_, _) => EmptyState(title: l10n.commonError),
-        loading: () => const LoadingView(),
+        error: (_, _) => ErrorView(
+          title: 'Unable to load ride',
+          message: l10n.commonError,
+          onRetry: () => ref.invalidate(_rideProvider(widget.rideId)),
+        ),
+        loading: () => const LoadingView(label: 'Loading ride details...'),
       ),
     );
   }

@@ -14,9 +14,10 @@ class StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolvedColor = color ?? Theme.of(context).colorScheme.secondary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: resolvedColor.withValues(alpha: 0.14),
+        border: Border.all(color: resolvedColor.withValues(alpha: 0.16)),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

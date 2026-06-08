@@ -24,10 +24,17 @@ class AppButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (isLoading) ...<Widget>[
-          const SizedBox(
+          SizedBox(
             width: 18,
             height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2.2),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isSecondary
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
         ] else if (icon != null) ...<Widget>[
