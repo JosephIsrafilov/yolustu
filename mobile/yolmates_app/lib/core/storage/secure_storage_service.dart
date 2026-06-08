@@ -12,6 +12,7 @@ class SecureStorageService {
 
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
+  static const String currentUserKey = 'current_user';
 
   Future<void> saveAccessToken(String token) async {
     if (_memoryStore != null) {
@@ -41,6 +42,21 @@ class SecureStorageService {
       return _memoryStore[refreshTokenKey];
     }
     return _storage!.read(key: refreshTokenKey);
+  }
+
+  Future<void> saveCurrentUser(String userJson) async {
+    if (_memoryStore != null) {
+      _memoryStore[currentUserKey] = userJson;
+      return;
+    }
+    await _storage!.write(key: currentUserKey, value: userJson);
+  }
+
+  Future<String?> readCurrentUser() async {
+    if (_memoryStore != null) {
+      return _memoryStore[currentUserKey];
+    }
+    return _storage!.read(key: currentUserKey);
   }
 
   Future<void> clearSession() async {

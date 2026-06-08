@@ -3,7 +3,6 @@
 describe('services exports', () => {
   afterEach(() => {
     jest.resetModules();
-    delete process.env.NEXT_PUBLIC_DATA_MODE;
   });
 
   it('exports api service implementations', () => {

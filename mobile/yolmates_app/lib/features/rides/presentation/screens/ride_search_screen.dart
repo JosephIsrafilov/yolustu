@@ -18,8 +18,8 @@ class RideSearchScreen extends StatefulWidget {
 }
 
 class _RideSearchScreenState extends State<RideSearchScreen> {
-  String _fromCity = 'Bakı';
-  String _toCity = 'Gəncə';
+  String _fromCity = azCities.first;
+  String _toCity = azCities.length > 1 ? azCities[1] : azCities.first;
   int _seats = 1;
   DateTime _date = DateTime(2026, 6, 5);
 
@@ -32,7 +32,7 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
       children: <Widget>[
         AppSectionTitle(
           l10n.searchRides,
-          subtitle: 'Search form is ready for mock mode and future real API mode.',
+          subtitle: 'Search available rides by route, date, and seats.',
         ),
         const SizedBox(height: 12),
         AppCard(
@@ -106,11 +106,12 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
                     toCity: _toCity,
                     seats: _seats,
                     date: _date,
-                  ).toQueryParameters();
+                  );
                   final uri = Uri(path: '/rides/results', queryParameters: <String, String>{
-                    'from': params['origin_city'] as String,
-                    'to': params['dest_city'] as String,
+                    'from': params.fromCity ?? '',
+                    'to': params.toCity ?? '',
                     'seats': '$_seats',
+                    'date': _date.toIso8601String().split('T').first,
                   });
                   context.push(uri.toString());
                 },

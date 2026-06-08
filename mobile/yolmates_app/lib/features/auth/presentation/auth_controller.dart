@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +47,25 @@ class AuthController extends Notifier<AuthState> {
     return result;
   }
 
+  Future<ApiResult<void>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    state = state.copyWith(isBusy: true, clearError: true);
+    final result = await ref
+        .read(authRepositoryProvider)
+        .login(phoneNumber: phoneNumber, password: password);
+
+    if (result case ApiSuccess(:final data)) {
+      state = AuthState.authenticated(data);
+      return const ApiSuccess<void>(null);
+    }
+
+    final failure = result as ApiFailure<User>;
+    state = AuthState.unauthenticated(errorMessage: failure.message);
+    return ApiFailure<void>(failure.message);
+  }
+
   Future<ApiResult<void>> verifyOtp({
     required String phoneNumber,
     required String otpCode,
@@ -60,6 +80,7 @@ class AuthController extends Notifier<AuthState> {
         final storage = ref.read(secureStorageProvider);
         await storage.saveAccessToken('mock-access-token');
         await storage.saveRefreshToken('mock-refresh-token');
+        await storage.saveCurrentUser(jsonEncode(data.toJson()));
       }
       state = AuthState.authenticated(data);
       return const ApiSuccess<void>(null);

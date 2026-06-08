@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
@@ -11,6 +13,15 @@ import '../domain/auth_repository.dart';
 
 class MockAuthRepository implements AuthRepository {
   const MockAuthRepository();
+
+  @override
+  Future<ApiResult<User>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    return const ApiSuccess<User>(mockCurrentUser);
+  }
 
   @override
   Future<User?> getCurrentUser() async {
@@ -46,6 +57,40 @@ class RealAuthRepository implements AuthRepository {
   final SecureStorageService _storageService;
 
   @override
+  Future<ApiResult<User>> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        ApiEndpoints.login,
+        data: <String, String>{'phone': phoneNumber, 'password': password},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final userJson =
+          (data['user'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+      final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+
+      if (accessToken == null || accessToken.isEmpty) {
+        return const ApiFailure<User>('Login succeeded without access token.');
+      }
+
+      await _storageService.saveAccessToken(accessToken);
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _storageService.saveRefreshToken(refreshToken);
+      }
+
+      final user = User.fromJson(userJson);
+      await _storageService.saveCurrentUser(jsonEncode(user.toJson()));
+
+      return ApiSuccess<User>(user);
+    } catch (error) {
+      return ApiFailure<User>('Failed to log in: $error');
+    }
+  }
+
+  @override
   Future<User?> getCurrentUser() async {
     final token = await _storageService.readAccessToken();
     if (token == null || token.isEmpty) {
@@ -56,14 +101,18 @@ class RealAuthRepository implements AuthRepository {
       final response = await _apiClient.dio.get<Map<String, dynamic>>(
         ApiEndpoints.me,
       );
-      return User.fromJson(response.data ?? <String, dynamic>{});
+      final user = User.fromJson(response.data ?? <String, dynamic>{});
+      await _storageService.saveCurrentUser(jsonEncode(user.toJson()));
+      return user;
     } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    await _storageService.clearSession();
+  }
 
   @override
   Future<ApiResult<void>> sendOtp(String phoneNumber) async {
@@ -89,15 +138,12 @@ class RealAuthRepository implements AuthRepository {
         queryParameters: <String, String>{'phone': phoneNumber, 'otp': code},
       );
       final data = response.data ?? <String, dynamic>{};
-      final userJson =
-          (data['user'] as Map<String, dynamic>?) ?? mockCurrentUser.toJson();
-      final accessToken = data['accessToken'] as String?;
-      final refreshToken = data['refreshToken'] as String?;
-      if (accessToken != null && refreshToken != null) {
-        await _storageService.saveAccessToken(accessToken);
-        await _storageService.saveRefreshToken(refreshToken);
+      if (data['message'] == null) {
+        return const ApiFailure<User>('OTP verification response is invalid.');
       }
-      return ApiSuccess<User>(User.fromJson(userJson));
+      return const ApiFailure<User>(
+        'OTP verification does not create a mobile session. Use phone and password login in real mode.',
+      );
     } catch (error) {
       return ApiFailure<User>('Failed to verify OTP: $error');
     }

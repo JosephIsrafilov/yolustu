@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/api_result.dart';
@@ -22,23 +23,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController(
     text: '+994',
   );
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final result = await ref
-        .read(authControllerProvider.notifier)
-        .sendOtp(_phoneController.text.trim());
+    final authController = ref.read(authControllerProvider.notifier);
+    final result = AppConfig.isMockMode
+        ? await authController.sendOtp(_phoneController.text.trim())
+        : await authController.login(
+            phoneNumber: _phoneController.text.trim(),
+            password: _passwordController.text,
+          );
     if (!mounted) {
       return;
     }
 
     if (result is ApiSuccess<void>) {
-      context.go('/auth/otp?phone=${Uri.encodeComponent(_phoneController.text.trim())}');
+      if (AppConfig.isMockMode) {
+        context.go(
+          '/auth/otp?phone=${Uri.encodeComponent(_phoneController.text.trim())}',
+        );
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -46,6 +59,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authControllerProvider);
+    final locale = Localizations.localeOf(context).languageCode;
+    final passwordLabel = switch (locale) {
+      'az' => 'Şifrə',
+      'ru' => 'Пароль',
+      _ => 'Password',
+    };
+    final subtitle = AppConfig.isMockMode
+        ? switch (locale) {
+            'az' => 'Mock OTP axını foundation mərhələsi üçün aktivdir.',
+            'ru' => 'Mock OTP-поток активен для foundation-этапа.',
+            _ => 'Mock OTP flow is active for the current foundation stage.',
+          }
+        : switch (locale) {
+            'az' =>
+              'Real rejim backend `/auth/login` kontraktından istifadə edir.',
+            'ru' =>
+              'В real-режиме используется backend-контракт `/auth/login`.',
+            _ => 'Real mode uses the backend `/auth/login` contract.',
+          };
+    final submitLabel = AppConfig.isMockMode
+        ? l10n.continueLabel
+        : switch (locale) {
+            'az' => 'Daxil ol',
+            'ru' => 'Войти',
+            _ => 'Sign in',
+          };
+    final helperText = AppConfig.isMockMode
+        ? 'Example: +994501234567'
+        : switch (locale) {
+            'az' =>
+              'Demo login üçün backend seed istifadəçi telefonu və şifrəsi tələb olunur.',
+            'ru' =>
+              'Для demo login нужны телефон и пароль seed-пользователя backend.',
+            _ => 'Demo login requires a seeded backend user phone and password.',
+          };
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.login)),
@@ -55,7 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           children: <Widget>[
             AppSectionTitle(
               l10n.login,
-              subtitle: 'Mock OTP flow is active until the backend contract is wired.',
+              subtitle: subtitle,
             ),
             const SizedBox(height: 16),
             AppCard(
@@ -67,8 +115,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     label: l10n.phoneNumber,
                     keyboardType: TextInputType.phone,
                   ),
+                  if (!AppConfig.isMockMode) ...<Widget>[
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: _passwordController,
+                      label: passwordLabel,
+                      obscureText: true,
+                    ),
+                  ],
                   const SizedBox(height: 12),
-                  const Text('Example: +994501234567'),
+                  Text(helperText),
                   if (authState.errorMessage != null) ...<Widget>[
                     const SizedBox(height: 12),
                     Text(
@@ -78,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                   const SizedBox(height: 18),
                   AppButton(
-                    label: l10n.continueLabel,
+                    label: submitLabel,
                     onPressed: _submit,
                     isLoading: authState.isBusy,
                   ),
