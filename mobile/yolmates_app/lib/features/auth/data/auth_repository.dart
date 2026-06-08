@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
@@ -79,7 +81,10 @@ class RealAuthRepository implements AuthRepository {
         await _storageService.saveRefreshToken(refreshToken);
       }
 
-      return ApiSuccess<User>(User.fromJson(userJson));
+      final user = User.fromJson(userJson);
+      await _storageService.saveCurrentUser(jsonEncode(user.toJson()));
+
+      return ApiSuccess<User>(user);
     } catch (error) {
       return ApiFailure<User>('Failed to log in: $error');
     }
@@ -96,14 +101,18 @@ class RealAuthRepository implements AuthRepository {
       final response = await _apiClient.dio.get<Map<String, dynamic>>(
         ApiEndpoints.me,
       );
-      return User.fromJson(response.data ?? <String, dynamic>{});
+      final user = User.fromJson(response.data ?? <String, dynamic>{});
+      await _storageService.saveCurrentUser(jsonEncode(user.toJson()));
+      return user;
     } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    await _storageService.clearSession();
+  }
 
   @override
   Future<ApiResult<void>> sendOtp(String phoneNumber) async {

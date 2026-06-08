@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -79,6 +80,7 @@ class AuthController extends Notifier<AuthState> {
         final storage = ref.read(secureStorageProvider);
         await storage.saveAccessToken('mock-access-token');
         await storage.saveRefreshToken('mock-refresh-token');
+        await storage.saveCurrentUser(jsonEncode(data.toJson()));
       }
       state = AuthState.authenticated(data);
       return const ApiSuccess<void>(null);

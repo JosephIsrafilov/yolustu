@@ -127,6 +127,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (BuildContext context, GoRouterState state) => RideResultsScreen(
           fromCity: state.uri.queryParameters['from'],
           toCity: state.uri.queryParameters['to'],
+          seats: int.tryParse(state.uri.queryParameters['seats'] ?? ''),
+          date: DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
         ),
       ),
       GoRoute(

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
@@ -53,7 +54,9 @@ class RealBookingRepository implements BookingRepository {
       await _apiClient.dio.post<void>('${ApiEndpoints.bookings}/$bookingId/cancel');
       return const ApiSuccess<void>(null);
     } catch (error) {
-      return ApiFailure<void>('Failed to cancel booking: $error');
+      return ApiFailure<void>(
+        _bookingErrorMessage(error, fallback: 'Failed to cancel booking.'),
+      );
     }
   }
 
@@ -72,7 +75,9 @@ class RealBookingRepository implements BookingRepository {
           (response.data ?? <String, dynamic>{});
       return ApiSuccess<Booking>(Booking.fromJson(bookingJson));
     } catch (error) {
-      return ApiFailure<Booking>('Failed to create booking: $error');
+      return ApiFailure<Booking>(
+        _bookingErrorMessage(error, fallback: 'Failed to create booking.'),
+      );
     }
   }
 
@@ -90,6 +95,25 @@ class RealBookingRepository implements BookingRepository {
     } catch (error) {
       throw Exception('Unable to load bookings: $error');
     }
+  }
+
+  String _bookingErrorMessage(Object error, {required String fallback}) {
+    if (error is DioException) {
+      final responseData = error.response?.data;
+      if (responseData is Map<String, dynamic>) {
+        final detail = responseData['detail']?.toString();
+        if (detail != null && detail.isNotEmpty) {
+          return detail;
+        }
+      }
+
+      final message = error.message;
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+    }
+
+    return fallback;
   }
 }
 

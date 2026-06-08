@@ -11,17 +11,30 @@ import '../../domain/ride_search_filters.dart';
 import '../widgets/ride_card.dart';
 
 class RideResultsScreen extends ConsumerWidget {
-  const RideResultsScreen({this.fromCity, this.toCity, super.key});
+  const RideResultsScreen({
+    this.fromCity,
+    this.toCity,
+    this.seats,
+    this.date,
+    super.key,
+  });
 
   final String? fromCity;
   final String? toCity;
+  final int? seats;
+  final DateTime? date;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final future = ref.watch(
       _rideResultsProvider(
-        RideSearchFilters(fromCity: fromCity, toCity: toCity),
+        RideSearchFilters(
+          fromCity: fromCity,
+          toCity: toCity,
+          seats: seats,
+          date: date,
+        ),
       ),
     );
 
