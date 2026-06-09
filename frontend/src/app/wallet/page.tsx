@@ -13,6 +13,7 @@ import type { Wallet, WalletTransaction } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import TopUpModal from './TopUpModal';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const WALLET_COPY = {
   az: {
@@ -57,13 +58,17 @@ function transactionLabel(type: WalletTransaction['type']) {
   return type.replaceAll('_', ' ');
 }
 
-export default function WalletPage() {
+function WalletContent() {
   const language = useAppStore((state) => state.language);
   const copy = WALLET_COPY[language];
   const [wallet, setWallet] = React.useState<Wallet | null>(null);
   const [transactions, setTransactions] = React.useState<WalletTransaction[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isTopUpOpen, setIsTopUpOpen] = React.useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialTopup = searchParams.get('topup') ? Number(searchParams.get('topup')) : undefined;
+  const returnTo = searchParams.get('returnTo');
+  const [isTopUpOpen, setIsTopUpOpen] = React.useState(Boolean(initialTopup));
   const [isTopUpLoading, setIsTopUpLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -98,6 +103,9 @@ export default function WalletPage() {
       ]);
       setWallet(walletResponse);
       setTransactions(txResponse.items);
+      if (returnTo) {
+        router.push(returnTo);
+      }
     } catch (err) {
       alert('Top up failed');
       throw err;
@@ -113,33 +121,34 @@ export default function WalletPage() {
           <LoadingState />
         ) : (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="bg-brand-900 text-white relative">
-                <p className="text-sm text-white/70">{copy.available}</p>
-                <p className="mt-2 text-3xl font-black">{formatPrice(wallet?.availableBalance ?? 0)}</p>
-                <div className="absolute top-4 right-4">
-                  <Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" onClick={() => setIsTopUpOpen(true)}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Card className="bg-brand-900 text-white relative" padding="sm">
+                <p className="text-xs text-white/80">{copy.available}</p>
+                <p className="mt-1 text-2xl font-black">{formatPrice(wallet?.availableBalance ?? 0)}</p>
+                <div className="absolute bottom-3 right-3">
+                  <Button variant="primary" size="sm" className="bg-white text-brand-900 hover:bg-gray-100 shadow-sm border-0 font-bold" onClick={() => setIsTopUpOpen(true)}>
+                    <Icon name="plus" size={14} className="mr-1 inline-block" />
                     {copy.topup}
                   </Button>
                 </div>
               </Card>
-              <Card>
-                <p className="text-sm text-text-muted">{copy.pending}</p>
-                <p className="mt-2 text-3xl font-black text-accent-600">{formatPrice(wallet?.pendingBalance ?? 0)}</p>
+              <Card padding="sm" className="flex flex-col justify-center">
+                <p className="text-xs text-text-muted">{copy.pending}</p>
+                <p className="mt-1 text-xl font-bold text-accent-600">{formatPrice(wallet?.pendingBalance ?? 0)}</p>
               </Card>
-              <Card>
-                <p className="text-sm text-text-muted">{copy.earned}</p>
-                <p className="mt-2 text-3xl font-black text-text">{formatPrice(wallet?.totalEarned ?? 0)}</p>
+              <Card padding="sm" className="flex flex-col justify-center">
+                <p className="text-xs text-text-muted">{copy.earned}</p>
+                <p className="mt-1 text-xl font-bold text-text">{formatPrice(wallet?.totalEarned ?? 0)}</p>
               </Card>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <p className="text-sm text-text-muted">{copy.spent}</p>
-                <p className="mt-2 text-2xl font-black text-text">{formatPrice(wallet?.totalSpent ?? 0)}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card padding="sm" className="bg-surface-muted/30">
+                <p className="text-xs text-text-muted">{copy.spent}</p>
+                <p className="mt-1 text-lg font-bold text-text">{formatPrice(wallet?.totalSpent ?? 0)}</p>
               </Card>
-              <Card>
-                <p className="text-sm text-text-muted">{copy.refunded}</p>
-                <p className="mt-2 text-2xl font-black text-text">{formatPrice(wallet?.totalRefunded ?? 0)}</p>
+              <Card padding="sm" className="bg-surface-muted/30">
+                <p className="text-xs text-text-muted">{copy.refunded}</p>
+                <p className="mt-1 text-lg font-bold text-text">{formatPrice(wallet?.totalRefunded ?? 0)}</p>
               </Card>
             </div>
             <Card>
@@ -149,12 +158,12 @@ export default function WalletPage() {
               ) : (
                 <div className="divide-y divide-border">
                   {transactions.map((tx) => (
-                    <div key={tx.id} className="flex items-center justify-between gap-4 py-3">
+                    <div key={tx.id} className="flex items-center justify-between gap-3 py-2.5">
                       <div>
-                        <p className="font-semibold capitalize text-text">{transactionLabel(tx.type)}</p>
-                        <p className="text-xs text-text-muted">{new Date(tx.createdAt).toLocaleString()}</p>
+                        <p className="font-semibold text-sm capitalize text-text leading-tight">{transactionLabel(tx.type)}</p>
+                        <p className="text-[11px] text-text-muted mt-0.5">{new Date(tx.createdAt).toLocaleString()}</p>
                       </div>
-                      <div className={tx.direction === 'credit' ? 'text-accent-600' : 'text-text'}>
+                      <div className={`font-bold text-sm ${tx.direction === 'credit' ? 'text-accent-600' : 'text-text'}`}>
                         {tx.direction === 'credit' ? '+' : '-'}{formatPrice(tx.amount)}
                       </div>
                     </div>
@@ -164,13 +173,26 @@ export default function WalletPage() {
             </Card>
           </div>
         )}
-        <TopUpModal 
-          isOpen={isTopUpOpen} 
-          onClose={() => setIsTopUpOpen(false)} 
-          onSuccess={handleTopup} 
-          isLoading={isTopUpLoading} 
+        <TopUpModal
+          key={initialTopup ?? 'default-topup'}
+          isOpen={isTopUpOpen}
+          onClose={() => setIsTopUpOpen(false)}
+          onSuccess={handleTopup}
+          isLoading={isTopUpLoading}
+          initialAmount={initialTopup}
         />
       </ProtectedRoute>
     </WebLayout>
+  );
+}
+
+export default function WalletPage() {
+  const language = useAppStore((state) => state.language);
+  const copy = WALLET_COPY[language];
+
+  return (
+    <React.Suspense fallback={<WebLayout title={copy.title}><LoadingState /></WebLayout>}>
+      <WalletContent />
+    </React.Suspense>
   );
 }

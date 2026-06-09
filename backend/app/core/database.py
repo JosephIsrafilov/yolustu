@@ -1,3 +1,4 @@
+import os
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from sqlalchemy import create_engine
@@ -37,10 +38,17 @@ database_url = normalize_database_url(settings.DATABASE_URL)
 if _is_remote_postgres_url(database_url) and not _has_sslmode_query(database_url):
     database_url = _with_sslmode_require(database_url)
 
+pool_size = int(os.getenv("DB_POOL_SIZE", 5))
+max_overflow = int(os.getenv("DB_MAX_OVERFLOW", 10))
+pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", 30))
+
 engine = create_engine(
     database_url,
     pool_pre_ping=True,
     pool_recycle=300,
+    pool_size=pool_size,
+    max_overflow=max_overflow,
+    pool_timeout=pool_timeout,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

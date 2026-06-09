@@ -62,8 +62,8 @@ function buildSearchQuery(filters: TripSearchFilters): string {
 }
 
 export const apiTripsService: TripsService = {
-  async searchTrips(filters) {
-    const response = await apiClient.get<ApiTrip[]>(`/rides/search${buildSearchQuery(filters)}`);
+  async searchTrips(filters, options) {
+    const response = await apiClient.get<ApiTrip[]>(`/rides/search${buildSearchQuery(filters)}`, options);
     const trips = response.map(mapApiTripToTrip);
     return typeof filters.maxPrice === 'number'
       ? trips.filter((trip) => trip.pricePerSeat <= filters.maxPrice!)

@@ -23,7 +23,9 @@ class FakeRide:
     driver_id: UUID
     available_seats: int = 2
     total_seats: int = 3
-    departure_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+    departure_time: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1)
+    )
     status: str = "active"
 
 
@@ -108,16 +110,18 @@ class FakeWalletRepository:
     def list_transactions(
         self, user_id: UUID, skip: int = 0, limit: int = 50
     ) -> list[WalletTransaction]:
-        return [
-            tx for tx in self.transactions.values() if tx.user_id == user_id
-        ][skip : skip + limit]
+        return [tx for tx in self.transactions.values() if tx.user_id == user_id][
+            skip : skip + limit
+        ]
 
     def sum_by_type(self, user_id: UUID, tx_type: str) -> Decimal:
         return sum(
             (
                 tx.amount
                 for tx in self.transactions.values()
-                if tx.user_id == user_id and tx.type == tx_type and tx.status == "posted"
+                if tx.user_id == user_id
+                and tx.type == tx_type
+                and tx.status == "posted"
             ),
             Decimal("0.00"),
         )
@@ -199,7 +203,9 @@ def make_service(booking_status: str = "accepted"):
         total_price=Decimal("25.00"),
         status=booking_status,
     )
-    service = PaymentService(db=cast(Session, SimpleNamespace(commit=lambda: None, refresh=lambda x: x)))
+    service = PaymentService(
+        db=cast(Session, SimpleNamespace(commit=lambda: None, refresh=lambda x: x))
+    )
     payment_repo = FakePaymentRepository()
     wallet_repo = FakeWalletRepository()
     service.payments = cast(PaymentRepository, payment_repo)
@@ -251,7 +257,9 @@ def test_cannot_pay_own_ride():
 def test_cannot_pay_rejected_cancelled_or_unaccepted_booking(status: str):
     service, booking, _, _, _ = make_service(status)
     with pytest.raises(HTTPException) as exc:
-        service.create_payment_session(booking.id, make_current_user(booking.passenger_id))
+        service.create_payment_session(
+            booking.id, make_current_user(booking.passenger_id)
+        )
     assert exc.value.status_code == 400
 
 
@@ -302,7 +310,9 @@ def test_refund_reverses_ledger_correctly():
     )["payment_id"]
     service.mark_payment_succeeded(payment_id)
 
-    response = service.refund_payment(payment_id, make_current_user(uuid4(), role="admin"))
+    response = service.refund_payment(
+        payment_id, make_current_user(uuid4(), role="admin")
+    )
 
     assert response["detail"] == "Payment refunded"
     assert booking.status == "cancelled"

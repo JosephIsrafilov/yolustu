@@ -28,7 +28,9 @@ class PaymentResponse(BaseModel):
     transaction_id: Optional[str] = None
     idempotency_key: Optional[str] = None
     failure_reason: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = Field(default=None, validation_alias="payment_metadata")
+    metadata: Optional[dict[str, Any]] = Field(
+        default=None, validation_alias="payment_metadata"
+    )
     created_at: datetime
     updated_at: Optional[datetime] = None
     paid_at: Optional[datetime] = None

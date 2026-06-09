@@ -26,18 +26,25 @@ def upgrade() -> None:
     )
     op.add_column(
         "payments",
-        sa.Column("driver_amount", sa.Numeric(12, 2), nullable=False, server_default="0"),
+        sa.Column(
+            "driver_amount", sa.Numeric(12, 2), nullable=False, server_default="0"
+        ),
     )
     op.add_column(
         "payments",
-        sa.Column("currency", sa.String(length=3), nullable=False, server_default="AZN"),
+        sa.Column(
+            "currency", sa.String(length=3), nullable=False, server_default="AZN"
+        ),
     )
     op.add_column(
         "payments",
-        sa.Column("provider", sa.String(length=50), nullable=False, server_default="mock"),
+        sa.Column(
+            "provider", sa.String(length=50), nullable=False, server_default="mock"
+        ),
     )
     op.add_column(
-        "payments", sa.Column("provider_payment_id", sa.String(length=255), nullable=True)
+        "payments",
+        sa.Column("provider_payment_id", sa.String(length=255), nullable=True),
     )
     op.add_column(
         "payments",
@@ -50,7 +57,9 @@ def upgrade() -> None:
         "payments", sa.Column("failure_reason", sa.String(length=500), nullable=True)
     )
     op.add_column("payments", sa.Column("metadata", sa.JSON(), nullable=True))
-    op.add_column("payments", sa.Column("paid_at", sa.DateTime(timezone=True), nullable=True))
+    op.add_column(
+        "payments", sa.Column("paid_at", sa.DateTime(timezone=True), nullable=True)
+    )
     op.add_column(
         "payments", sa.Column("refunded_at", sa.DateTime(timezone=True), nullable=True)
     )
@@ -135,7 +144,9 @@ def upgrade() -> None:
         sa.Column(
             "pending_balance", sa.Numeric(12, 2), nullable=False, server_default="0"
         ),
-        sa.Column("currency", sa.String(length=3), nullable=False, server_default="AZN"),
+        sa.Column(
+            "currency", sa.String(length=3), nullable=False, server_default="AZN"
+        ),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -164,8 +175,12 @@ def upgrade() -> None:
         sa.Column("type", sa.String(length=50), nullable=False),
         sa.Column("direction", sa.String(length=10), nullable=False),
         sa.Column("amount", sa.Numeric(12, 2), nullable=False),
-        sa.Column("currency", sa.String(length=3), nullable=False, server_default="AZN"),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="posted"),
+        sa.Column(
+            "currency", sa.String(length=3), nullable=False, server_default="AZN"
+        ),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="posted"
+        ),
         sa.Column("description", sa.String(length=500), nullable=True),
         sa.Column("idempotency_key", sa.String(length=255), nullable=False),
         sa.Column(
@@ -197,8 +212,12 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("amount", sa.Numeric(12, 2), nullable=False),
-        sa.Column("currency", sa.String(length=3), nullable=False, server_default="AZN"),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="pending"),
+        sa.Column(
+            "currency", sa.String(length=3), nullable=False, server_default="AZN"
+        ),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="pending"
+        ),
         sa.Column("method", sa.String(length=50), nullable=True),
         sa.Column("metadata", sa.JSON(), nullable=True),
         sa.Column(
@@ -215,8 +234,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("payout_requests")
-    op.drop_index("ix_wallet_transactions_idempotency_key", table_name="wallet_transactions")
-    op.drop_index("ix_wallet_transactions_user_created", table_name="wallet_transactions")
+    op.drop_index(
+        "ix_wallet_transactions_idempotency_key", table_name="wallet_transactions"
+    )
+    op.drop_index(
+        "ix_wallet_transactions_user_created", table_name="wallet_transactions"
+    )
     op.drop_table("wallet_transactions")
     op.drop_table("wallets")
 

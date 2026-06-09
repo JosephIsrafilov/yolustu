@@ -3,7 +3,7 @@ import type { CreateTripData, Trip, TripSearchFilters } from '@/types';
 export type CreateTripInput = CreateTripData;
 
 export interface TripsService {
-  searchTrips(filters: TripSearchFilters): Promise<Trip[]>;
+  searchTrips(filters: TripSearchFilters, options?: RequestInit): Promise<Trip[]>;
   getTripById(tripId: string): Promise<Trip>;
   createTrip(input: CreateTripInput): Promise<Trip>;
   getMyTrips(): Promise<Trip[]>;

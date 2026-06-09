@@ -61,6 +61,7 @@ export interface ApiBooking {
   passenger_id: string;
   status: Booking['status'];
   seats_booked: number;
+  total_price?: number | string;
   created_at: string;
   payment_deadline?: string | null;
   ride?: ApiTrip | null;
@@ -125,7 +126,7 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     time: departureDate.toTimeString().split(' ')[0].substring(0, 5),
     seatsTotal: apiTrip.total_seats,
     seatsAvailable: apiTrip.available_seats,
-    pricePerSeat: apiTrip.price_per_seat,
+    pricePerSeat: Number(apiTrip.price_per_seat || 0),
     carModel: vehicle ? `${vehicle.brand} ${vehicle.model}`.trim() : '', 
     comment: apiTrip.description ?? undefined,
     status: apiTrip.status,
@@ -173,6 +174,7 @@ export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
     passengerId: apiBooking.passenger_id,
     status: apiBooking.status,
     seatsRequested: apiBooking.seats_booked,
+    totalPrice: apiBooking.total_price ? Number(apiBooking.total_price) : undefined,
     createdAt: apiBooking.created_at,
     paymentDeadline: apiBooking.payment_deadline ?? undefined,
     trip: apiBooking.ride ? mapApiTripToTrip(apiBooking.ride) : undefined,

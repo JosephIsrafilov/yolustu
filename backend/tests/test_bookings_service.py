@@ -16,18 +16,6 @@ from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 
 
-import pytest
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
-from app.domains.bookings.services import BookingsService
-from app.domains.bookings.repositories import BookingRepository
-from app.domains.bookings.schemas import BookingCreate
-from app.domains.identity.dependencies import CurrentUser
-from app.domains.trips.ports import RideLookupPort
-from app.core.notifications import NotificationService
-
-
 @dataclass
 class FakeRide:
     id: UUID
@@ -35,7 +23,9 @@ class FakeRide:
     available_seats: int
     total_seats: int
     price_per_seat: Decimal
-    departure_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+    departure_time: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1)
+    )
     status: str = "active"
 
 
@@ -165,7 +155,7 @@ def test_passenger_cannot_book_own_ride():
     assert "own ride" in str(exc.value.detail)
 
 
-def test_create_pending_booking_does_not_decrement_seats():
+def test_create_booking_decrements_seats():
     service, ride, _, passenger = make_service()
 
     response = service.create_booking(
@@ -173,10 +163,10 @@ def test_create_pending_booking_does_not_decrement_seats():
     )
 
     assert response.status == "pending"
-    assert ride.available_seats == 3
+    assert ride.available_seats == 1
 
 
-def test_confirm_booking_decrements_seats():
+def test_confirm_booking_does_not_change_seats():
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
@@ -188,7 +178,7 @@ def test_confirm_booking_decrements_seats():
     assert ride.available_seats == 1
 
 
-def test_reject_booking_does_not_decrement_seats():
+def test_reject_booking_restores_seats():
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=1), passenger
@@ -213,26 +203,21 @@ def test_cancel_accepted_booking_restores_seats():
     assert ride.available_seats == 3
 
 
-def test_cannot_confirm_booking_when_seats_are_insufficient():
+def test_cannot_create_booking_when_seats_are_insufficient():
     service, _, driver, passenger = make_service(ride_available_seats=1)
-    booking = service.create_booking(
+    service.create_booking(
         BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), passenger
     )
 
     other_passenger = make_current_user(uuid4(), role="passenger")
-    service.create_booking(
-        BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), other_passenger
-    )
-    service.confirm_booking(booking.id, driver)
-
-    second_booking = service.bookings.get_active_for_ride_and_passenger(
-        service.rides.ride.id, other_passenger.id
-    )
     with pytest.raises(HTTPException) as exc:
-        service.confirm_booking(second_booking.id, driver)
+        service.create_booking(
+            BookingCreate(ride_id=service.rides.ride.id, seats_booked=1),
+            other_passenger,
+        )
 
     assert exc.value.status_code == 400
-    assert "Not enough seats" in str(exc.value.detail)
+    assert "Not enough available seats" in str(exc.value.detail)
 
 
 def test_duplicate_booking_is_forbidden():
@@ -261,4 +246,36 @@ def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
     cancelled = service.cancel_booking(booking.id, passenger)
 
     assert cancelled.status == "cancelled"
+    assert ride.available_seats == 3
+
+
+def test_double_reject_booking_fails():
+    service, ride, driver, passenger = make_service()
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
+
+    service.reject_booking(booking.id, driver)
+
+    with pytest.raises(HTTPException) as exc:
+        service.reject_booking(booking.id, driver)
+
+    assert exc.value.status_code == 400
+    assert "Booking is not pending" in str(exc.value.detail)
+    assert ride.available_seats == 3
+
+
+def test_double_cancel_booking_fails():
+    service, ride, driver, passenger = make_service()
+    booking = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
+
+    service.cancel_booking(booking.id, passenger)
+
+    with pytest.raises(HTTPException) as exc:
+        service.cancel_booking(booking.id, passenger)
+
+    assert exc.value.status_code == 400
+    assert "Booking cannot be cancelled in current status" in str(exc.value.detail)
     assert ride.available_seats == 3

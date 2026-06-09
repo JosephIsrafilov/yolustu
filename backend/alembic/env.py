@@ -5,11 +5,12 @@ from sqlalchemy import pool
 
 from app.core.config import normalize_database_url, settings
 from app.core.database import Base
+import app.domains.models as _models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-import app.domains.models
+
 target_metadata = Base.metadata
 
 

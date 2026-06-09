@@ -62,7 +62,10 @@ class PaymentService:
                 status_code=400, detail="Booking must be accepted before payment"
             )
         if ride.departure_time <= datetime.now(timezone.utc):
-            raise HTTPException(status_code=400, detail="Cannot pay for a ride that has already departed")
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot pay for a ride that has already departed",
+            )
         if ride.available_seats < 0:
             raise HTTPException(status_code=400, detail="Booking has no reserved seats")
 
@@ -74,7 +77,9 @@ class PaymentService:
 
         amount = money(booking.total_price or 0)
         if amount <= 0:
-            raise HTTPException(status_code=400, detail="Payment amount must be positive")
+            raise HTTPException(
+                status_code=400, detail="Payment amount must be positive"
+            )
         fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
         service_fee = money(amount * fee_percent / Decimal("100"))
         driver_amount = money(amount - service_fee)
@@ -118,7 +123,9 @@ class PaymentService:
             raise HTTPException(status_code=403, detail="Not authorized")
         return payment
 
-    def handle_webhook(self, provider_name: str, headers: dict[str, str], body: bytes) -> dict:
+    def handle_webhook(
+        self, provider_name: str, headers: dict[str, str], body: bytes
+    ) -> dict:
         provider = get_payment_provider(provider_name)
         if not provider.verify_webhook_signature(headers, body):
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
@@ -225,7 +232,9 @@ class PaymentService:
         if payment.status == PAYMENT_REFUNDED:
             return {"detail": "Payment already refunded"}
         if payment.status != PAYMENT_SUCCEEDED:
-            raise HTTPException(status_code=400, detail="Only succeeded payments can refund")
+            raise HTTPException(
+                status_code=400, detail="Only succeeded payments can refund"
+            )
 
         booking = self.bookings.get_for_update(payment.booking_id)
         if not booking:
@@ -309,13 +318,14 @@ class PaymentService:
 
     def topup_wallet(self, current_user: CurrentUser, amount: Decimal) -> dict:
         import uuid
+
         amount = money(amount)
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Topup amount must be positive")
-        
+
         wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
         wallet.available_balance = money(wallet.available_balance + amount)
-        
+
         tx = WalletTransaction(
             user_id=current_user.id,
             type="topup",
@@ -330,33 +340,39 @@ class PaymentService:
         self.db.commit()
         return {"detail": "Topup successful", "new_balance": wallet.available_balance}
 
-    def pay_booking_from_wallet(self, booking_id: UUID, current_user: CurrentUser) -> dict:
+    def pay_booking_from_wallet(
+        self, booking_id: UUID, current_user: CurrentUser
+    ) -> dict:
         import uuid
+
         booking = self.bookings.get_for_update(booking_id)
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
         ride = self.rides.get_ride_for_update(booking.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
-            
+
         if booking.passenger_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized")
         if booking.status != BOOKING_ACCEPTED:
             raise HTTPException(status_code=400, detail="Booking must be accepted")
         if ride.departure_time <= datetime.now(timezone.utc):
-            raise HTTPException(status_code=400, detail="Cannot pay for a ride that has already departed")
-        
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot pay for a ride that has already departed",
+            )
+
         amount = money(booking.total_price or 0)
         wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
         if wallet.available_balance < amount:
             raise HTTPException(status_code=400, detail="Insufficient wallet balance")
-            
+
         wallet.available_balance = money(wallet.available_balance - amount)
-        
+
         fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
         service_fee = money(amount * fee_percent / Decimal("100"))
         driver_amount = money(amount - service_fee)
-        
+
         payment = Payment(
             booking_id=booking.id,
             passenger_id=booking.passenger_id,
@@ -372,9 +388,9 @@ class PaymentService:
         )
         self.payments.add(payment)
         self.db.flush()
-        
+
         booking.status = BOOKING_PAID
-        
+
         self._ledger(
             user_id=payment.passenger_id,
             payment=payment,
@@ -387,7 +403,7 @@ class PaymentService:
             description="Passenger payment from wallet",
             idempotency_key=f"payment:{payment.id}:passenger_payment",
         )
-        
+
         self._ledger(
             user_id=payment.driver_id,
             payment=payment,
@@ -413,7 +429,7 @@ class PaymentService:
             description="Platform service fee",
             idempotency_key=f"payment:{payment.id}:platform_fee",
         )
-        
+
         self.db.commit()
         self.notifications.send_push_notification(
             user_id=payment.driver_id,
@@ -433,7 +449,9 @@ class PaymentService:
             "total_earned": self.wallets.sum_by_type(
                 current_user.id, "driver_available_earning"
             ),
-            "total_spent": self.wallets.sum_by_type(current_user.id, "passenger_payment"),
+            "total_spent": self.wallets.sum_by_type(
+                current_user.id, "passenger_payment"
+            ),
             "total_refunded": self.wallets.sum_by_type(current_user.id, "refund"),
         }
 
@@ -442,7 +460,9 @@ class PaymentService:
     ):
         skip = (page - 1) * limit
         items = self.wallets.list_transactions(current_user.id, skip=skip, limit=limit)
-        total = len(self.wallets.list_transactions(current_user.id, skip=0, limit=10000))
+        total = len(
+            self.wallets.list_transactions(current_user.id, skip=0, limit=10000)
+        )
         return create_paginated_response(items, total, page, limit)
 
     def list_admin_payments(

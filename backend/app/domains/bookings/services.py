@@ -49,7 +49,9 @@ class BookingsService:
         if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
         if ride.departure_time <= datetime.now(timezone.utc):
-            raise HTTPException(status_code=400, detail="Cannot book a ride that has already departed")
+            raise HTTPException(
+                status_code=400, detail="Cannot book a ride that has already departed"
+            )
         if ride.available_seats < booking_in.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough available seats")
         if current_user.role == "admin":
@@ -67,6 +69,10 @@ class BookingsService:
             seats_booked=booking_in.seats_booked,
             total_price=ride.price_per_seat * booking_in.seats_booked,
         )
+        ride.available_seats -= booking_in.seats_booked
+        if self.db is not None:
+            self.db.commit()
+            self.db.refresh(booking)
         self.notifications.send_push_notification(
             user_id=ride.driver_id,
             title="New Booking Request",
@@ -78,18 +84,12 @@ class BookingsService:
     def get_my_bookings(self, current_user: CurrentUser) -> list[BookingResponse]:
         bookings = self.bookings.list_for_passenger(current_user.id)
         self._lazy_expire_bookings(bookings)
-        return [
-            booking_to_response(booking)
-            for booking in bookings
-        ]
+        return [booking_to_response(booking) for booking in bookings]
 
     def get_booking_requests(self, current_user: CurrentUser) -> list[BookingResponse]:
         bookings = self.bookings.list_requests_for_driver(current_user.id)
         self._lazy_expire_bookings(bookings)
-        return [
-            booking_to_response(booking)
-            for booking in bookings
-        ]
+        return [booking_to_response(booking) for booking in bookings]
 
     def confirm_booking(
         self, booking_id: UUID, current_user: CurrentUser
@@ -104,14 +104,11 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Booking is not pending")
         if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
-        if ride.available_seats < booking.seats_booked:
-            raise HTTPException(status_code=400, detail="Not enough seats left")
         if not can_transition_booking(booking.status, BOOKING_ACCEPTED):
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         booking.status = BOOKING_ACCEPTED
         booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=24)
-        ride.available_seats -= booking.seats_booked
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
@@ -127,7 +124,7 @@ class BookingsService:
         self, booking_id: UUID, current_user: CurrentUser
     ) -> BookingResponse:
         booking = self._get_booking_for_update(booking_id)
-        ride = self._get_booking_ride(booking)
+        ride = self._get_booking_ride_for_update(booking)
         if ride.driver_id != current_user.id:
             raise HTTPException(
                 status_code=403, detail="Only the driver can reject this booking"
@@ -138,6 +135,10 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         booking.status = BOOKING_REJECTED
+        if ride.status != RIDE_COMPLETED:
+            ride.available_seats = min(
+                ride.total_seats, ride.available_seats + booking.seats_booked
+            )
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
@@ -158,7 +159,12 @@ class BookingsService:
                 status_code=403, detail="Only the passenger can cancel this booking"
             )
 
-        if booking.status in [BOOKING_CANCELLED, BOOKING_REJECTED, BOOKING_COMPLETED, BOOKING_EXPIRED]:
+        if booking.status in [
+            BOOKING_CANCELLED,
+            BOOKING_REJECTED,
+            BOOKING_COMPLETED,
+            BOOKING_EXPIRED,
+        ]:
             raise HTTPException(
                 status_code=400, detail="Booking cannot be cancelled in current status"
             )
@@ -175,7 +181,7 @@ class BookingsService:
                 PaymentService(self.db).refund_payment(payment.id, None)
                 return booking_to_response(self._get_booking(booking_id))
 
-        if booking.status in [BOOKING_ACCEPTED, BOOKING_PAID]:
+        if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)
             if ride.status != RIDE_COMPLETED:
                 ride.available_seats = min(
@@ -225,14 +231,20 @@ class BookingsService:
         now = datetime.now(timezone.utc)
         expired = []
         for booking in bookings:
-            if booking.status == BOOKING_ACCEPTED and booking.payment_deadline and booking.payment_deadline < now:
+            if (
+                booking.status == BOOKING_ACCEPTED
+                and booking.payment_deadline
+                and booking.payment_deadline < now
+            ):
                 expired.append(booking)
-        
+
         for booking in expired:
             booking.status = BOOKING_EXPIRED
             ride = self.rides.get_ride_for_update(booking.ride_id)
             if ride and ride.status != RIDE_COMPLETED:
-                ride.available_seats = min(ride.total_seats, ride.available_seats + booking.seats_booked)
+                ride.available_seats = min(
+                    ride.total_seats, ride.available_seats + booking.seats_booked
+                )
             self.bookings.save(booking)
             self.notifications.send_push_notification(
                 user_id=booking.passenger_id,

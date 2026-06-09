@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -18,6 +19,10 @@ from app.domains.payments.services import PaymentService
 router = APIRouter()
 
 
+class WalletPaymentRequest(BaseModel):
+    booking_id: UUID
+
+
 @router.post("/create", response_model=PaymentSessionResponse)
 def create_payment(
     request: PaymentCreateRequest,
@@ -26,9 +31,6 @@ def create_payment(
 ):
     return PaymentService(db).create_payment_session(request.booking_id, current_user)
 
-from pydantic import BaseModel
-class WalletPaymentRequest(BaseModel):
-    booking_id: UUID
 
 @router.post("/wallet-pay")
 def pay_from_wallet(

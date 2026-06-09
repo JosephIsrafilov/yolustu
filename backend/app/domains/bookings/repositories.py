@@ -29,7 +29,7 @@ class BookingRepository:
             status=BOOKING_PENDING,
         )
         self.db.add(booking)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(booking)
         return booking
 

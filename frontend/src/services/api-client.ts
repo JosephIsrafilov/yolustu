@@ -146,7 +146,7 @@ class ApiClient {
     this.baseUrl = normalizeApiBaseUrl(baseUrl);
   }
 
-  private async request<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
+  private async request<T>(method: RequestMethod, path: string, body?: unknown, options?: RequestInit): Promise<T> {
     try {
       const headers: Record<string, string> = {
         Accept: 'application/json',
@@ -175,12 +175,13 @@ class ApiClient {
         headers,
         body: requestBody,
         credentials: 'include',
+        ...options,
       });
 
       const responseBody = await parseResponseBody(response);
 
       if (response.status === 401 && typeof window !== 'undefined' && shouldAttemptRefresh(path)) {
-        return this.handleUnauthorized<T>(method, path, body);
+        return this.handleUnauthorized<T>(method, path, body, options);
       }
 
       if (!response.ok) {
@@ -199,7 +200,7 @@ class ApiClient {
     }
   }
 
-  private async handleUnauthorized<T>(method: RequestMethod, path: string, body?: unknown): Promise<T> {
+  private async handleUnauthorized<T>(method: RequestMethod, path: string, body?: unknown, options?: RequestInit): Promise<T> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       try {
@@ -207,7 +208,7 @@ class ApiClient {
 
         this.onTokenRefreshed(accessToken);
         this.isRefreshing = false;
-        return this.request<T>(method, path, body);
+        return this.request<T>(method, path, body, options);
       } catch (error) {
         this.isRefreshing = false;
         this.onTokenRefreshFailed(error);
@@ -225,7 +226,7 @@ class ApiClient {
     return new Promise<T>((resolve, reject) => {
       this.subscribeTokenRefresh(
         () => {
-          this.request<T>(method, path, body).then(resolve).catch(reject);
+          this.request<T>(method, path, body, options).then(resolve).catch(reject);
         },
         (error: unknown) => {
           reject(error);
@@ -252,8 +253,8 @@ class ApiClient {
     this.refreshSubscribers = [];
   }
 
-  get<T>(path: string): Promise<T> {
-    return this.request<T>('GET', path);
+  get<T>(path: string, options?: RequestInit): Promise<T> {
+    return this.request<T>('GET', path, undefined, options);
   }
 
   post<T>(path: string, body?: unknown): Promise<T> {

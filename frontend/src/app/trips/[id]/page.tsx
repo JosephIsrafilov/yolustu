@@ -20,6 +20,7 @@ import type { Trip } from '@/types';
 import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
 import UserAvatar from '@/components/ui/UserAvatar';
+import WalletPaymentModal from '@/components/bookings/WalletPaymentModal';
 
 const TRIP_DETAILS_I18N = {
   az: {
@@ -48,6 +49,7 @@ const TRIP_DETAILS_I18N = {
     driverModeTitle: 'Sərnişin rejimi tələb olunur',
     driverModeDesc: 'Gediş rezerv etmək üçün sərnişin rejiminə keçin.',
     switchToPassengerBtn: 'Rejimi dəyiş',
+    waitingApproval: 'Sürücü təsdiqi gözlənilir',
   },
   ru: {
     tripTitle: 'Поездка',
@@ -75,6 +77,7 @@ const TRIP_DETAILS_I18N = {
     driverModeTitle: 'Требуется режим пассажира',
     driverModeDesc: 'Переключитесь в режим пассажира, чтобы бронировать поездки.',
     switchToPassengerBtn: 'Сменить режим',
+    waitingApproval: 'Ожидание подтверждения водителя',
   },
   en: {
     tripTitle: 'Trip',
@@ -102,6 +105,7 @@ const TRIP_DETAILS_I18N = {
     driverModeTitle: 'Passenger mode required',
     driverModeDesc: 'Switch to passenger mode to book rides.',
     switchToPassengerBtn: 'Switch mode',
+    waitingApproval: 'Waiting for driver approval',
   },
 };
 
@@ -165,6 +169,7 @@ export default function TripDetailsPage() {
   } = useAppStore();
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
   const [tripLoadError, setTripLoadError] = useState(false);
   const tripId = Array.isArray(id) ? id[0] : id;
@@ -404,11 +409,82 @@ export default function TripDetailsPage() {
                 <Button fullWidth size="lg" onClick={handleBook}>{copy.submitRequestBtn}</Button>
               </div></Card>
             )}
-            {existingBooking && (<Card padding="sm" className="bg-brand-50 border-brand-200"><p className="text-sm text-brand-700 font-medium">{copy.alreadyBooked}</p></Card>)}
+            {existingBooking && (
+              <Card className="border-brand-200 shadow-card-hover border-2">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-base font-bold text-text">Sizin Rezerviniz</p>
+                    <StatusBadge status={existingBooking.status} />
+                  </div>
+                  <div className="rounded-xl bg-surface-muted p-3 text-sm">
+                    <div className="flex items-center justify-between"><span className="text-text-muted">{copy.selectedSeats}</span><span className="font-semibold">{existingBooking.seatsRequested}</span></div>
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">{copy.totalLabel}</span><span className="text-lg font-bold text-brand-600">{formatPrice(existingBooking.totalPrice || (trip.pricePerSeat * existingBooking.seatsRequested))}</span></div>
+                  </div>
+                  
+                  {existingBooking.status === 'pending' && (
+                    <div className="text-sm font-semibold text-brand-600 text-center py-2 bg-brand-50 rounded-lg">
+                      {copy.waitingApproval}
+                    </div>
+                  )}
+                  {existingBooking.status === 'accepted' && (
+                    <div className="flex gap-2">
+                      <Button variant="primary" size="sm" onClick={async () => {
+                        try {
+                          const service = await import('@/services').then(m => m.paymentsService);
+                          const res = await service.createPaymentSession(existingBooking.id);
+                          if (res.provider === 'mock') {
+                            await service.mockSucceed(res.paymentId);
+                            await fetchBookings();
+                            return;
+                          }
+                          window.location.href = res.checkoutUrl;
+                        } catch (error) {
+                          console.error('Payment start failed', error);
+                        }
+                      }} className="flex-1">
+                        <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
+                        <span className="truncate">{I18N[language].bookings.payBtn}</span>
+                      </Button>
+                      <Button variant="secondary" size="sm" onClick={() => setIsWalletModalOpen(true)} className="flex-1">
+                        <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
+                        <span className="truncate">Cüzdanla ödə</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
             {booked && (<Card padding="sm" className="bg-green-50 border-green-200"><p className="text-sm text-green-700 font-medium">{copy.bookedSuccess}</p></Card>)}
           </div>
         </div>
       </div>
+
+      {existingBooking && (
+        <WalletPaymentModal
+          isOpen={isWalletModalOpen}
+          onClose={() => setIsWalletModalOpen(false)}
+          booking={existingBooking}
+          onPayDirect={async () => {
+            setIsWalletModalOpen(false);
+            try {
+              const service = await import('@/services').then(m => m.paymentsService);
+              const res = await service.createPaymentSession(existingBooking.id);
+              if (res.provider === 'mock') {
+                await service.mockSucceed(res.paymentId);
+                await fetchBookings();
+                return;
+              }
+              window.location.href = res.checkoutUrl;
+            } catch (error) {
+              console.error('Payment start failed', error);
+            }
+          }}
+          onPaymentSuccess={() => {
+            setIsWalletModalOpen(false);
+            fetchBookings();
+          }}
+        />
+      )}
     </WebLayout>
   );
 }

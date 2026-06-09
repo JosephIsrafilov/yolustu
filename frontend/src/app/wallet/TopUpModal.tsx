@@ -49,15 +49,16 @@ interface TopUpModalProps {
   onClose: () => void;
   onSuccess: (amount: number) => Promise<void>;
   isLoading?: boolean;
+  initialAmount?: number;
 }
 
-export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading }: TopUpModalProps) {
+export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, initialAmount }: TopUpModalProps) {
   const language = useAppStore((state) => state.language);
   const copy = TOPUP_COPY[language];
 
   const [step, setStep] = useState<'amount' | 'fake_payment' | 'success'>('amount');
-  const [amount, setAmount] = useState<number | ''>('');
-  
+  const [amount, setAmount] = useState<number | ''>(initialAmount || '');
+
   if (!isOpen) return null;
 
   const handleAmountSelect = (val: number) => setAmount(val);
@@ -87,7 +88,7 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading }: To
         <Card className="relative w-full">
           {/* Close Button */}
           {step !== 'success' && !isLoading && (
-            <button 
+            <button
               onClick={resetAndClose}
               className="absolute top-4 right-4 p-2 text-text-muted hover:text-text rounded-full hover:bg-surface-hover transition-colors"
             >
@@ -98,14 +99,14 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading }: To
           {step === 'amount' && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-text">{copy.title}</h2>
-              
+
               <div className="space-y-3">
                 <p className="text-sm font-medium text-text-muted">{copy.presets}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {[5, 10, 20, 50, 100].map((val) => (
-                    <Button 
-                      key={val} 
-                      variant={amount === val ? 'primary' : 'outline'} 
+                    <Button
+                      key={val}
+                      variant={amount === val ? 'primary' : 'outline'}
                       onClick={() => handleAmountSelect(val)}
                       className="w-full"
                     >
@@ -117,19 +118,19 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading }: To
 
               <div className="space-y-3">
                 <p className="text-sm font-medium text-text-muted">{copy.custom}</p>
-                <Input 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={amount} 
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={amount}
                   onChange={(e) => setAmount(Number(e.target.value) || '')}
                   min={1}
                   icon={<Icon name="credit-card" size={18} />}
                 />
               </div>
 
-              <Button 
-                onClick={handleContinue} 
-                disabled={!amount || amount <= 0} 
+              <Button
+                onClick={handleContinue}
+                disabled={!amount || amount <= 0}
                 className="w-full"
               >
                 {copy.continue} {amount ? `(${amount} ₼)` : ''}
@@ -144,7 +145,7 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading }: To
               </div>
               <h2 className="text-xl font-bold text-text">{copy.fakePayment}</h2>
               <p className="text-text-muted">{copy.fakePaymentDesc}</p>
-              
+
               <div className="bg-surface-hover rounded-lg p-4 text-left border border-border">
                 <div className="flex justify-between items-center mb-2">
                   <Icon name="credit-card" size={20} className="text-brand-500 mb-2" />

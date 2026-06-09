@@ -29,18 +29,21 @@ const BOOKING_CARD_I18N = {
     seatsUnit: 'yer',
     walletPay: 'Cüzdanla ödə',
     expiresIn: 'Son tarix:',
+    waitingApproval: 'Sürücü təsdiqi gözlənilir',
   },
   ru: {
     chat: 'Чат',
     seatsUnit: 'мест',
     walletPay: 'Оплатить с кошелька',
     expiresIn: 'Срок:',
+    waitingApproval: 'Ожидание подтверждения водителя',
   },
   en: {
     chat: 'Chat',
     seatsUnit: 'seats',
     walletPay: 'Pay from wallet',
     expiresIn: 'Expires:',
+    waitingApproval: 'Waiting for driver approval',
   },
 } as const;
 
@@ -88,7 +91,7 @@ export default function BookingCard({
       <div className="flex items-center gap-4 text-sm text-text-secondary mb-3 h-5">
         <span className="font-semibold text-brand-600 shrink-0 flex-none">{formatPrice(trip.pricePerSeat)}</span>
         <span className="truncate block">{booking.seatsRequested} {localCopy.seatsUnit}</span>
-        {booking.status === 'accepted' && booking.paymentDeadline && (
+        {['pending', 'accepted'].includes(booking.status) && booking.paymentDeadline && (
           <span className="truncate block ml-auto text-xs text-red-500 font-medium">
             {localCopy.expiresIn} {new Date(booking.paymentDeadline).toLocaleString()}
           </span>
@@ -112,8 +115,13 @@ export default function BookingCard({
       )}
 
       {/* Actions */}
-      {(canCancel || canReview || (booking.status === 'accepted' && (onPay || onWalletPaySuccess)) || ['accepted', 'paid'].includes(booking.status)) && (
+      {(canCancel || canReview || (booking.status === 'accepted' && (onPay || onWalletPaySuccess)) || ['pending', 'accepted', 'paid'].includes(booking.status)) && (
         <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border w-full">
+          {booking.status === 'pending' && (
+            <div className="text-sm font-semibold text-brand-600 text-center py-1 bg-brand-50 rounded-lg">
+              {localCopy.waitingApproval}
+            </div>
+          )}
           {booking.status === 'accepted' && (onPay || onWalletPaySuccess) && (
             <div className="flex gap-2 w-full">
               {onPay && (

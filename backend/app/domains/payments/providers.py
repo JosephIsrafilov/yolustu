@@ -76,7 +76,9 @@ class MockPaymentProvider(BasePaymentProvider):
         try:
             data = json.loads(body or b"{}")
         except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=400, detail="Invalid webhook payload") from exc
+            raise HTTPException(
+                status_code=400, detail="Invalid webhook payload"
+            ) from exc
 
         transaction_id = data.get("transaction_id") or data.get("provider_payment_id")
         status = data.get("status")
@@ -154,4 +156,6 @@ def get_payment_provider(provider: str | None = None) -> BasePaymentProvider:
         return PayriffPaymentProvider()
     if selected == "kapital":
         return KapitalPaymentProvider()
-    raise HTTPException(status_code=400, detail=f"Unsupported payment provider: {selected}")
+    raise HTTPException(
+        status_code=400, detail=f"Unsupported payment provider: {selected}"
+    )

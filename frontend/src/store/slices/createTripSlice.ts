@@ -4,6 +4,22 @@ import { tripsService } from '@/services';
 
 import { toApiError } from '@/services/api-error';
 
+let searchAbortController: AbortController | null = null;
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  const maybeAbortError = error as { name?: string; message?: string };
+  return (
+    maybeAbortError.name === 'AbortError'
+    || maybeAbortError.message?.toLowerCase().includes('aborted') === true
+  );
+}
+
 export const createTripSlice: StateCreator<
   AppState,
   [],
@@ -14,9 +30,14 @@ export const createTripSlice: StateCreator<
   isLoadingTrips: false,
 
   fetchTrips: async (filters) => {
+    if (searchAbortController) {
+      searchAbortController.abort();
+    }
+    searchAbortController = new AbortController();
+
     set({ isLoadingTrips: true });
     try {
-      const trips = await tripsService.searchTrips(filters || {});
+      const trips = await tripsService.searchTrips(filters || {}, { signal: searchAbortController.signal });
       set((state) => {
         const drivers = trips
           .map((trip) => trip.driver)
@@ -30,7 +51,10 @@ export const createTripSlice: StateCreator<
           lastError: null,
         };
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      if (isAbortError(error)) {
+        return; // ignore aborted request errors
+      }
       const apiError = toApiError(error);
       set({ isLoadingTrips: false, lastError: apiError.message || 'Failed to load trips.' });
     }
@@ -93,7 +117,7 @@ export const createTripSlice: StateCreator<
 
   deleteTrip: async (tripId) => {
     try {
-      
+
       set((state) => ({
         trips: state.trips.filter((t) => t.id !== tripId),
       }));
