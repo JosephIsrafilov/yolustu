@@ -489,7 +489,11 @@ export default function CreateTripPage() {
                     </div>
                     
                     <div className="overflow-hidden rounded-xl border border-slate-200 h-64">
-                      <MapContainer center={mapCenter} zoom={mapZoom}>
+                      <MapContainer 
+                        center={mapCenter} 
+                        zoom={mapZoom} 
+                        markers={[{ position: mapCenter, type: 'origin' }]}
+                      >
                         <LocationPicker 
                           mode={pickerMode}
                           origin={formValues.origin}

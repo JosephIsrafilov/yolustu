@@ -1,23 +1,75 @@
-/**
- * Generates a quadratic bezier curve between two points to simulate a natural flight/driving route path on the map.
- */
-export function getCurvedPath(origin: [number, number], dest: [number, number], numPoints: number = 40): [number, number][] {
-  const [lat1, lon1] = origin;
-  const [lat2, lon2] = dest;
+import { useState, useEffect } from 'react';
 
-  // Create an offset perpendicular to the line to serve as the control point
-  const latOffset = (lat2 - lat1) * 0.15;
-  const lonOffset = -(lon2 - lon1) * 0.15;
+export function getCurvedPath(origin: [number, number], destination: [number, number]) {
+  // basic straight line for fallback
+  return [origin, destination];
+}
 
-  const controlLat = (lat1 + lat2) / 2 + lonOffset;
-  const controlLon = (lon1 + lon2) / 2 + latOffset;
+interface OsrmRouteResponse {
+  routes?: Array<{
+    geometry?: {
+      coordinates?: [number, number][];
+    };
+  }>;
+}
 
-  const curve: [number, number][] = [];
-  for (let i = 0; i <= numPoints; i++) {
-    const t = i / numPoints;
-    const currentLat = Math.pow(1 - t, 2) * lat1 + 2 * (1 - t) * t * controlLat + Math.pow(t, 2) * lat2;
-    const currentLon = Math.pow(1 - t, 2) * lon1 + 2 * (1 - t) * t * controlLon + Math.pow(t, 2) * lon2;
-    curve.push([currentLat, currentLon]);
+export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?: { lat: number; lng: number }) {
+  const [routeData, setRouteData] = useState<{
+    originLat?: number;
+    originLng?: number;
+    destLat?: number;
+    destLng?: number;
+    path: [number, number][];
+  }>({ path: [] });
+
+  useEffect(() => {
+    if (!origin || !destination) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      overview: 'full',
+      geometries: 'geojson',
+    });
+    const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?${params.toString()}`;
+
+    fetch(url, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`OSRM route failed with ${response.status}`);
+        return response.json() as Promise<OsrmRouteResponse>;
+      })
+      .then((data) => {
+        const coordinates = data.routes?.[0]?.geometry?.coordinates ?? [];
+        setRouteData({
+          originLat: origin.lat,
+          originLng: origin.lng,
+          destLat: destination.lat,
+          destLng: destination.lng,
+          path: coordinates.map(([lng, lat]) => [lat, lng]),
+        });
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        console.error('Route geometry error:', error);
+      });
+
+    return () => controller.abort();
+  }, [origin, destination]);
+
+  if (!origin || !destination) {
+    return [];
   }
-  return curve;
+
+  if (
+    routeData.path.length > 0 &&
+    routeData.originLat === origin.lat &&
+    routeData.originLng === origin.lng &&
+    routeData.destLat === destination.lat &&
+    routeData.destLng === destination.lng
+  ) {
+    return routeData.path;
+  }
+
+  return getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
 }

@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, formatRating } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
-import { MapContainer, TripRoute } from '@/components/ui/Map';
+import { MapContainer } from '@/components/ui/Map';
 import { tripsService } from '@/services';
 import type { Trip } from '@/types';
 import { I18N } from '@/lib/i18n';
@@ -242,14 +242,19 @@ export default function TripDetailsPage() {
           {trip.origin && trip.destination && (
             <Card className="overflow-hidden p-0">
               <div className="h-[320px] w-full">
-                <MapContainer className="min-h-[320px]">
-                  <TripRoute
-                    origin={trip.origin}
-                    destination={trip.destination}
-                    departureCity={trip.departureCity}
-                    arrivalCity={trip.arrivalCity}
-                  />
-                </MapContainer>
+                <MapContainer 
+                  className="h-full w-full"
+                  origin={trip.origin}
+                  destination={trip.destination}
+                  markers={[
+                    { position: [trip.origin.lat, trip.origin.lng], type: 'origin', popup: trip.departureCity },
+                    { position: [trip.destination.lat, trip.destination.lng], type: 'destination', popup: trip.arrivalCity }
+                  ]}
+                  fitBounds={[
+                    [trip.origin.lat, trip.origin.lng],
+                    [trip.destination.lat, trip.destination.lng]
+                  ]}
+                />
               </div>
             </Card>
           )}

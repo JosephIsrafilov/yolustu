@@ -10,7 +10,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { AZ_CITIES, formatPrice } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
-import { MapContainer, RideMarkers } from '@/components/ui/Map';
+import { MapContainer } from '@/components/ui/Map';
+import type { MapMarkerData } from '@/components/ui/Map/types';
 import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
@@ -494,9 +495,35 @@ function TripsContent() {
                   </div>
 
                   <div className="lg:col-span-7 xl:col-span-8 h-[500px] lg:h-[700px] lg:sticky lg:top-28 rounded-[32px] overflow-hidden border border-gray-100 shadow-[0_4px_30px_rgb(0,0,0,0.05)] w-full relative z-0">
-                    <MapContainer className="h-full w-full">
-                      <RideMarkers trips={filteredTrips} users={users} />
-                    </MapContainer>
+                    <MapContainer 
+                      className="h-full w-full"
+                      markers={(() => {
+                        const m: MapMarkerData[] = [];
+                        filteredTrips.forEach(trip => {
+                          if (trip.origin && trip.destination) {
+                            m.push({
+                              position: [trip.origin.lat, trip.origin.lng],
+                              type: 'origin',
+                              popup: <div className="p-1"><div className="font-bold">{trip.departureCity} → {trip.arrivalCity}</div><div className="text-xs">{trip.time} · {formatPrice(trip.pricePerSeat)}</div></div>
+                            });
+                            m.push({
+                              position: [trip.destination.lat, trip.destination.lng],
+                              type: 'destination',
+                              popup: <div className="p-1"><div className="font-bold">{trip.arrivalCity}</div></div>
+                            });
+                          }
+                        });
+                        return m;
+                      })()}
+                      polylines={filteredTrips.filter(t => t.origin && t.destination).map(t => [
+                        [t.origin!.lat, t.origin!.lng],
+                        [t.destination!.lat, t.destination!.lng]
+                      ])}
+                      fitBounds={filteredTrips.filter(t => t.origin && t.destination).flatMap(t => [
+                        [t.origin!.lat, t.origin!.lng],
+                        [t.destination!.lat, t.destination!.lng]
+                      ]) as [number, number][]}
+                    />
                   </div>
                 </div>
               ) : (
