@@ -166,7 +166,7 @@ def make_ride_create(vehicle_id: UUID) -> RideCreate:
         departure_time=datetime.now(timezone.utc),
         total_seats=4,
         available_seats=3,
-        price_per_seat=12,
+        price_per_seat=Decimal("12.00"),
         origin_city="Baku",
         destination_city="Ganja",
         vehicle_id=vehicle_id,

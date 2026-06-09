@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.payments.models import Payment, WalletTransaction
-from app.domains.payments.providers import BasePaymentProvider, PaymentSession
 from app.domains.payments.repositories import PaymentRepository, WalletRepository
 from app.domains.payments.services import PaymentService, money
 
@@ -40,28 +39,145 @@ class FakeBooking:
     payment_deadline: datetime | None = None
 
 
+class FakePayment:
+    def __init__(self, payment: Payment):
+        self._payment = payment
+
+    @property
+    def id(self) -> UUID:
+        return cast(UUID, self._payment.id)
+
+    @id.setter
+    def id(self, value: UUID) -> None:
+        self._payment.id = value
+
+    @property
+    def booking_id(self) -> UUID:
+        return cast(UUID, self._payment.booking_id)
+
+    @property
+    def passenger_id(self) -> UUID | None:
+        return cast(UUID | None, self._payment.passenger_id)
+
+    @property
+    def driver_id(self) -> UUID | None:
+        return cast(UUID | None, self._payment.driver_id)
+
+    @property
+    def amount(self) -> Decimal:
+        return Decimal(str(self._payment.amount))
+
+    @property
+    def service_fee(self) -> Decimal:
+        return Decimal(str(self._payment.service_fee))
+
+    @property
+    def driver_amount(self) -> Decimal:
+        return Decimal(str(self._payment.driver_amount))
+
+    @property
+    def currency(self) -> str:
+        return cast(str, self._payment.currency)
+
+    @property
+    def provider(self) -> str:
+        return cast(str, self._payment.provider)
+
+    @property
+    def status(self) -> str:
+        return cast(str, self._payment.status)
+
+    @status.setter
+    def status(self, value: str) -> None:
+        self._payment.status = value
+
+    @property
+    def transaction_id(self) -> str | None:
+        return cast(str | None, self._payment.transaction_id)
+
+    @property
+    def provider_payment_id(self) -> str | None:
+        return cast(str | None, self._payment.provider_payment_id)
+
+    @property
+    def provider_checkout_url(self) -> str | None:
+        return cast(str | None, self._payment.provider_checkout_url)
+
+    @property
+    def paid_at(self) -> datetime | None:
+        return cast(datetime | None, self._payment.paid_at)
+
+    @paid_at.setter
+    def paid_at(self, value: datetime | None) -> None:
+        self._payment.paid_at = value
+
+    @property
+    def payment_metadata(self) -> dict[str, Any] | None:
+        return cast(dict[str, Any] | None, self._payment.payment_metadata)
+
+    @payment_metadata.setter
+    def payment_metadata(self, value: dict[str, Any] | None) -> None:
+        self._payment.payment_metadata = value
+
+    @property
+    def refunded_at(self) -> datetime | None:
+        return cast(datetime | None, self._payment.refunded_at)
+
+    @refunded_at.setter
+    def refunded_at(self, value: datetime | None) -> None:
+        self._payment.refunded_at = value
+
+
+@dataclass
+class FakeWallet:
+    user_id: UUID
+    available_balance: Decimal
+    pending_balance: Decimal
+    currency: str
+
+
+@dataclass
+class FakeWalletTransaction:
+    id: UUID
+    user_id: UUID
+    payment_id: UUID | None
+    booking_id: UUID | None
+    ride_id: UUID | None
+    transaction_type: str
+    direction: str
+    amount: Decimal
+    currency: str
+    status: str
+    description: str | None
+    idempotency_key: str
+
+    @property
+    def type(self) -> str:
+        return self.transaction_type
+
+
 class FakePaymentRepository:
     def __init__(self):
-        self.payments: dict[UUID, Payment] = {}
+        self.payments: dict[UUID, FakePayment] = {}
 
     def add(self, payment: Payment) -> Payment:
         payment.id = uuid4()
-        self.payments[payment.id] = payment
+        self.payments[payment.id] = FakePayment(payment)
         return payment
 
-    def get(self, payment_id: UUID) -> Payment | None:
+    def get(self, payment_id: UUID) -> FakePayment | None:
         return self.payments.get(payment_id)
 
-    def get_for_update(self, payment_id: UUID) -> Payment | None:
+    def get_for_update(self, payment_id: UUID) -> FakePayment | None:
         return self.get(payment_id)
 
-    def get_by_transaction_id(self, transaction_id: str) -> Payment | None:
+    def get_by_transaction_id(self, transaction_id: str) -> FakePayment | None:
         return next(
             (p for p in self.payments.values() if p.transaction_id == transaction_id),
             None,
         )
 
-    def get_active_for_booking(self, booking_id: UUID) -> Payment | None:
+    def get_active_for_booking(self, booking_id: UUID) -> FakePayment | None:
         return next(
             (
                 p
@@ -71,7 +187,7 @@ class FakePaymentRepository:
             None,
         )
 
-    def get_succeeded_for_booking(self, booking_id: UUID) -> Payment | None:
+    def get_succeeded_for_booking(self, booking_id: UUID) -> FakePayment | None:
         return next(
             (
                 p
@@ -84,12 +200,12 @@ class FakePaymentRepository:
 
 class FakeWalletRepository:
     def __init__(self):
-        self.wallets: dict[UUID, SimpleNamespace] = {}
-        self.transactions: dict[str, WalletTransaction] = {}
+        self.wallets: dict[UUID, FakeWallet] = {}
+        self.transactions: dict[str, FakeWalletTransaction] = {}
 
-    def get_or_create(self, user_id: UUID, currency: str = "AZN"):
+    def get_or_create(self, user_id: UUID, currency: str = "AZN") -> FakeWallet:
         if user_id not in self.wallets:
-            self.wallets[user_id] = SimpleNamespace(
+            self.wallets[user_id] = FakeWallet(
                 user_id=user_id,
                 available_balance=Decimal("0.00"),
                 pending_balance=Decimal("0.00"),
@@ -99,17 +215,30 @@ class FakeWalletRepository:
 
     def get_transaction_by_idempotency_key(
         self, idempotency_key: str
-    ) -> WalletTransaction | None:
+    ) -> FakeWalletTransaction | None:
         return self.transactions.get(idempotency_key)
 
-    def add_transaction(self, transaction: WalletTransaction) -> WalletTransaction:
-        transaction.id = uuid4()
-        self.transactions[transaction.idempotency_key] = transaction
-        return transaction
+    def add_transaction(self, transaction: WalletTransaction) -> FakeWalletTransaction:
+        stored = FakeWalletTransaction(
+            id=uuid4(),
+            user_id=cast(UUID, transaction.user_id),
+            payment_id=cast(UUID | None, transaction.payment_id),
+            booking_id=cast(UUID | None, transaction.booking_id),
+            ride_id=cast(UUID | None, transaction.ride_id),
+            transaction_type=cast(str, transaction.type),
+            direction=cast(str, transaction.direction),
+            amount=Decimal(str(transaction.amount)),
+            currency=cast(str, transaction.currency),
+            status=cast(str, transaction.status),
+            description=cast(str | None, transaction.description),
+            idempotency_key=cast(str, transaction.idempotency_key),
+        )
+        self.transactions[stored.idempotency_key] = stored
+        return stored
 
     def list_transactions(
         self, user_id: UUID, skip: int = 0, limit: int = 50
-    ) -> list[WalletTransaction]:
+    ) -> list[FakeWalletTransaction]:
         return [tx for tx in self.transactions.values() if tx.user_id == user_id][
             skip : skip + limit
         ]
@@ -152,28 +281,6 @@ class FakeRideLookup:
         return self.get_ride_for_update(ride_id)
 
 
-class FakeProvider:
-    provider_name = "mock"
-
-    def create_payment_session(
-        self, payment: Payment, return_url: str, cancel_url: str
-    ) -> PaymentSession:
-        return PaymentSession(
-            transaction_id="tx-123",
-            checkout_url="http://localhost/mock",
-            provider_payment_id="tx-123",
-        )
-
-    def verify_webhook_signature(self, headers, body) -> bool:
-        return True
-
-    def parse_webhook_event(self, headers, body):
-        raise NotImplementedError
-
-    def refund(self, payment: Payment, amount: Decimal):
-        return {"refund_id": "refund-1", "amount": str(amount)}
-
-
 class FakeNotificationService:
     def send_push_notification(self, **kwargs) -> None:
         return None
@@ -191,7 +298,15 @@ def make_current_user(user_id: UUID, role: str = "passenger") -> CurrentUser:
     )
 
 
-def make_service(booking_status: str = "accepted"):
+def make_service(
+    booking_status: str = "accepted",
+) -> tuple[
+    PaymentService,
+    FakeBooking,
+    FakeRide,
+    FakePaymentRepository,
+    FakeWalletRepository,
+]:
     driver_id = uuid4()
     passenger_id = uuid4()
     ride = FakeRide(id=uuid4(), driver_id=driver_id)
@@ -204,16 +319,23 @@ def make_service(booking_status: str = "accepted"):
         status=booking_status,
     )
     service = PaymentService(
-        db=cast(Session, SimpleNamespace(commit=lambda: None, refresh=lambda x: x))
+        db=cast(
+            Session,
+            SimpleNamespace(
+                commit=lambda: None,
+                refresh=lambda x: x,
+                flush=lambda: None,
+            ),
+        )
     )
     payment_repo = FakePaymentRepository()
     wallet_repo = FakeWalletRepository()
-    service.payments = cast(PaymentRepository, payment_repo)
-    service.wallets = cast(WalletRepository, wallet_repo)
-    service.bookings = cast(object, FakeBookingRepository(booking))
-    service.rides = cast(object, FakeRideLookup(ride))
-    service.provider = cast(BasePaymentProvider, FakeProvider())
-    service.notifications = cast(object, FakeNotificationService())
+    service_any = cast(Any, service)
+    service_any.payments = cast(PaymentRepository, payment_repo)
+    service_any.wallets = cast(WalletRepository, wallet_repo)
+    service_any.bookings = FakeBookingRepository(booking)
+    service_any.rides = FakeRideLookup(ride)
+    service_any.notifications = FakeNotificationService()
     return service, booking, ride, payment_repo, wallet_repo
 
 
