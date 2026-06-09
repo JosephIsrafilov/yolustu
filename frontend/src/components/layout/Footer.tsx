@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { I18N, LANGUAGES } from '@/lib/i18n';
-import { CURRENCY_CODE, CURRENCY_SYMBOL } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import YolmatesLogo from '@/components/brand/YolmatesLogo';
 
@@ -28,13 +25,12 @@ export default function Footer() {
         </div>
         <nav className="flex min-w-0 flex-wrap justify-center gap-x-5 gap-y-2 md:flex-nowrap">
           {links.map((l) => (
-            <Link key={l.label} href={l.href}
-              className="ui-action-text whitespace-nowrap text-[#40484a] underline underline-offset-2 transition-colors hover:text-[#054752]">
+            <span key={l.label} className="ui-action-text whitespace-nowrap text-[#40484a] opacity-70">
               {l.label}
-            </Link>
+            </span>
           ))}
         </nav>
-        <div className="ui-action-text grid grid-cols-[120px_auto_70px] items-center gap-3 justify-self-center text-[#40484a] md:justify-self-end shrink-0 flex-none h-6">
+        <div className="ui-action-text flex items-center justify-self-center text-[#40484a] md:justify-self-end shrink-0 flex-none h-6">
           <div className="flex w-[120px] items-center justify-between shrink-0 flex-none" aria-label={copy.footer.languageLabel}>
             {LANGUAGES.map((item, index) => (
               <React.Fragment key={item.code}>
@@ -52,11 +48,6 @@ export default function Footer() {
               </React.Fragment>
             ))}
           </div>
-          <span className="text-[#c0c8ca] shrink-0 flex-none">|</span>
-          <button className="ui-action-text flex items-center justify-between w-[70px] shrink-0 flex-none transition-colors hover:text-[#054752]" aria-label={copy.footer.currencyLabel}>
-            <span className="truncate">{CURRENCY_CODE} {CURRENCY_SYMBOL}</span>
-            <Icon name="chevron-right" size={12} className="rotate-90 shrink-0" />
-          </button>
         </div>
       </div>
     </footer>

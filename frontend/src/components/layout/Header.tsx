@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -43,6 +43,12 @@ export default function Header() {
   const offerRoute = capabilities.canOfferRide ? ROUTES.createTrip : ROUTES.driverApply;
   const showDriverDashboardLink = capabilities.canAccessDriverDashboard && activeMode === 'passenger';
   const showPassengerSwitch = capabilities.canAccessDriverDashboard && activeMode === 'driver';
+
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsHydrated(true);
+  }, []);
 
   const handleSwitchToPassenger = () => {
     switchRole('passenger');
@@ -90,7 +96,9 @@ export default function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-3 justify-self-end">
-          {isAuthenticated && currentUser ? (
+          {!isHydrated ? (
+            <div className="h-9 w-24 animate-pulse rounded-md bg-accent/50 hidden md:block" />
+          ) : isAuthenticated && currentUser ? (
             <>
               {!isAdmin && capabilities.canBookRide && (
                 <Link

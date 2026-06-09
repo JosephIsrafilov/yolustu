@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
@@ -17,8 +17,15 @@ export default function RouteAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
   const { currentUser, isAuthenticated, activeMode } = useAppStore();
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
     if (!pathname) return;
 
     const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
@@ -55,7 +62,7 @@ export default function RouteAccessGuard() {
     if (isAuthRoute) {
       router.replace(ROUTES.search);
     }
-  }, [pathname, router, currentUser, isAuthenticated, activeMode]);
+  }, [pathname, router, currentUser, isAuthenticated, activeMode, isHydrated]);
 
   return null;
 }
