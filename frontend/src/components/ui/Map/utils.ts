@@ -73,3 +73,47 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
 
   return getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
 }
+
+export function useOsrmMultipleRoutes(
+  trips: Array<{ id: string; origin?: { lat: number; lng: number }; destination?: { lat: number; lng: number } }>
+) {
+  const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
+
+  useEffect(() => {
+    let active = true;
+    const fetchAll = async () => {
+      const validTrips = trips.filter((t) => t.origin && t.destination).slice(0, 20);
+      const newRoutes: Record<string, [number, number][]> = {};
+
+      for (const trip of validTrips) {
+        if (!active) break;
+        const origin = trip.origin!;
+        const destination = trip.destination!;
+        try {
+          const params = new URLSearchParams({ overview: 'full', geometries: 'geojson' });
+          const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?${params.toString()}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = (await res.json()) as OsrmRouteResponse;
+            const coords = data.routes?.[0]?.geometry?.coordinates ?? [];
+            newRoutes[trip.id] = coords.map(([lng, lat]) => [lat, lng]);
+          } else {
+            newRoutes[trip.id] = getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
+          }
+        } catch {
+          newRoutes[trip.id] = getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
+        }
+      }
+      if (active) {
+        setRoutes((prev) => ({ ...prev, ...newRoutes }));
+      }
+    };
+
+    fetchAll();
+    return () => {
+      active = false;
+    };
+  }, [trips]);
+
+  return routes;
+}

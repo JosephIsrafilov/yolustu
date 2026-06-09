@@ -75,6 +75,7 @@ const CREATE_TRIP_PAGE_I18N = {
     standardVehicle: 'Standart avtomobil',
     seatsUnit: 'yer',
     saving: 'Yadda saxlanılır...',
+    calcRecommendedPrice: 'Tövsiyə olunan qiyməti hesabla',
   },
   ru: {
     addVehicleToProfile: 'Добавить автомобиль в профиль',
@@ -91,6 +92,7 @@ const CREATE_TRIP_PAGE_I18N = {
     standardVehicle: 'Стандартный автомобиль',
     seatsUnit: 'мест',
     saving: 'Сохранение...',
+    calcRecommendedPrice: 'Рассчитать рекомендуемую цену',
   },
   en: {
     addVehicleToProfile: 'Add vehicle to profile',
@@ -107,6 +109,7 @@ const CREATE_TRIP_PAGE_I18N = {
     standardVehicle: 'Standard vehicle',
     seatsUnit: 'seats',
     saving: 'Saving...',
+    calcRecommendedPrice: 'Calculate recommended price',
   },
 } as const;
 
@@ -125,6 +128,9 @@ export default function CreateTripPage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [carLayout, setCarLayout] = useState<'5-seater' | '7-seater'>('5-seater');
   const [isDrafting, setIsDrafting] = useState(false);
+  const [showPriceRecommendation, setShowPriceRecommendation] = useState(false);
+  const [prevCities, setPrevCities] = useState({ dep: '', arr: '' });
+
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
@@ -172,6 +178,11 @@ export default function CreateTripPage() {
   });
 
   const formValues = useWatch({ control }) as FormValues;
+
+  if (formValues.departureCity !== prevCities.dep || formValues.arrivalCity !== prevCities.arr) {
+    setPrevCities({ dep: formValues.departureCity || '', arr: formValues.arrivalCity || '' });
+    setShowPriceRecommendation(false);
+  }
 
   useEffect(() => {
     if (vehicles.length > 0 && !formValues.vehicleId) {
@@ -601,7 +612,12 @@ export default function CreateTripPage() {
                     </div>
                     {errors.pricePerSeat && <p className="text-xs font-semibold text-red-500">{errors.pricePerSeat.message}</p>}
 
-                    {recommendedPrice && formValues.pricePerSeat !== recommendedPrice && (
+                    {!showPriceRecommendation && recommendedPrice ? (
+                      <button type="button" onClick={() => setShowPriceRecommendation(true)} className="mt-2 text-xs font-bold text-teal-600 self-start flex items-center gap-1 hover:underline">
+                        <Icon name="sparkles" size={12} />
+                        {pageCopy.calcRecommendedPrice}
+                      </button>
+                    ) : showPriceRecommendation && recommendedPrice && formValues.pricePerSeat !== recommendedPrice ? (
                       <div className="mt-2 p-3 rounded-xl bg-teal-50 border border-teal-100 shadow-sm transition-all flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
@@ -613,7 +629,7 @@ export default function CreateTripPage() {
                           {pageCopy.applySuggestion || "Tövsiyə olunan qiyməti istifadə et"}
                         </button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Preferences Grid */}

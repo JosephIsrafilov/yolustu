@@ -18,10 +18,17 @@ const APPLY_I18N = {
     rejectedTitle: 'Təsdiqləmə yenilənməlidir',
     rejectedDesc: 'Davam etmək üçün profildən sənədləri yenidən göndərin.',
     noneTitle: 'Sürücü olun',
-    noneDesc: 'Gediş yaratmazdan əvvəl təsdiqləməni tamamlayın və avtomobil məlumatlarını əlavə edin.',
+    noneDesc: 'Sürücü olmaq üçün verifikasiyadan keçməlisiniz:',
+    rules: [
+      'Profilinizi və şəxsiyyətinizi təsdiqləyin',
+      'Təsdiqdən sonra avtomobil məlumatlarını əlavə edin',
+      'Təhlükəsizlik qaydalarına riayət edin',
+      'Platformadan kənar ödənişlər etməyin',
+      'Gedişlər real olmalı və düzgün qiymət göstərilməlidir',
+    ],
     approvedTitle: 'Sürücü girişi hazırdır',
     approvedDesc: 'İndi sürücü rejiminə keçib gediş yarada bilərsiniz.',
-    toProfile: 'Profil təsdiqləməsinə keç',
+    toProfile: 'Verifikasiyadan keç',
     toDashboard: 'Sürücü panelini aç',
     switchMode: 'Sürücü rejiminə keç',
   },
@@ -32,10 +39,17 @@ const APPLY_I18N = {
     rejectedTitle: 'Верификацию нужно обновить',
     rejectedDesc: 'Чтобы продолжить, повторно отправьте документы из профиля.',
     noneTitle: 'Станьте водителем',
-    noneDesc: 'Перед созданием поездок завершите верификацию и добавьте данные автомобиля.',
+    noneDesc: 'Чтобы стать водителем, нужно пройти верификацию:',
+    rules: [
+      'Подтвердить профиль и личность',
+      'Добавить данные автомобиля после одобрения',
+      'Соблюдать правила безопасности',
+      'Не проводить оплаты вне платформы',
+      'Поездки должны быть реальными и с корректной ценой',
+    ],
     approvedTitle: 'Доступ водителя готов',
     approvedDesc: 'Теперь можно переключиться в режим водителя и создавать поездки.',
-    toProfile: 'Открыть верификацию в профиле',
+    toProfile: 'Пройти верификацию',
     toDashboard: 'Открыть панель водителя',
     switchMode: 'Перейти в режим водителя',
   },
@@ -46,10 +60,17 @@ const APPLY_I18N = {
     rejectedTitle: 'Verification requires update',
     rejectedDesc: 'Please re-submit your documents from profile to continue.',
     noneTitle: 'Become a driver',
-    noneDesc: 'Complete verification and add vehicle info before creating trips.',
+    noneDesc: 'To become a driver, you need to pass verification:',
+    rules: [
+      'Verify your profile and identity',
+      'Add vehicle details after approval',
+      'Follow safety rules',
+      'Do not process payments outside the platform',
+      'Trips must be real and correctly priced',
+    ],
     approvedTitle: 'Driver access is ready',
     approvedDesc: 'You can now switch to driver mode and start creating trips.',
-    toProfile: 'Open profile verification',
+    toProfile: 'Start verification',
     toDashboard: 'Open driver dashboard',
     switchMode: 'Switch to driver mode',
   },
@@ -80,6 +101,13 @@ export default function DriverApplyPage() {
             <div>
               <h2 className="text-lg font-bold text-text">{state.title}</h2>
               <p className="mt-1 text-sm text-text-secondary">{state.desc}</p>
+              {capabilities.driverStatus === 'none' && t.rules && (
+                <ul className="mt-4 space-y-2 text-sm text-text-secondary list-disc pl-5">
+                  {t.rules.map((rule: string, i: number) => (
+                    <li key={i}>{rule}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 

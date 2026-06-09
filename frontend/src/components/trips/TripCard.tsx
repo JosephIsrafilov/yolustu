@@ -5,7 +5,8 @@ import Icon from '@/components/ui/Icon';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { formatPrice, formatRating, cn } from '@/lib/utils';
+import { formatPrice, formatRating, cn, estimateDurationMinutes, formatDuration } from '@/lib/utils';
+import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import type { Trip, User } from '@/types';
 
@@ -17,6 +18,8 @@ interface TripCardProps {
 
 export default function TripCard({ trip, driver, compact = false }: TripCardProps) {
   const router = useRouter();
+  const language = useAppStore(state => state.language);
+  const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
 
   return (
     <Card
@@ -48,7 +51,7 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
 
       {/* Middle Section - Date, time, seats */}
       <div className="grid grid-cols-3 gap-2 text-xs text-text-secondary mb-3 items-center h-5">
-        <span className="flex items-center gap-1 min-w-0">
+        <span className="flex items-center gap-1 min-w-0" title={formatDuration(durationMin, language)}>
           <Icon name="clock" size={13} className="shrink-0 flex-none" />
           <span className="truncate block w-full">{trip.date} • {trip.time}</span>
         </span>

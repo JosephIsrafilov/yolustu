@@ -1,6 +1,6 @@
 # Yolmates / Yolüstü Project State
 
-_Last updated: 2026-06-03_
+_Last updated: 2026-06-10_
 
 ## 1. Executive Summary
 Проект **Yolmates** (Yolüstü) представляет собой платформу совместных поездок (carpooling), адаптированную для Азербайджана.
@@ -57,6 +57,8 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8010/api/v1
 NEXT_PUBLIC_WS_URL=ws://localhost:8010
+NEXT_PUBLIC_MAP_PROVIDER=auto
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 ```
 
 ### Mobile Flutter env
@@ -118,7 +120,11 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
   - `/trips/[id]` — детали поездки.
   - `/driver/create-trip` — создание поездки (с картой и расчетом AI-цены).
 - **login flow**: Пользователь логинится по номеру телефона и паролю, backend возвращает `accessToken`, `refreshToken`, `user`, а web-клиент опирается на cookie-based session restore и `GET /users/me`.
-- **rides/trips result**: Страница `/trips` должна отображать 12 активных поездок из seed-набора (`ride-01` ... `ride-12`).
+- **rides/trips result**: Страница `/trips` должна отображать 12 активных поездок из seed-набора (`ride-01` ... `ride-12`). В карточках отображается расчетное время (estimated duration) на базе OSRM или расстояния.
+- **driver onboarding**: Простая страница правил `/driver/apply` для тех, кто хочет стать водителем. В профиле пассажира скрыты блоки призыва стать водителем.
+- **pricing**: При создании поездки добавлена кнопка рекомендаций цены (local heuristics) в зависимости от маршрута.
+- **wallet**: В Navbar отображается баланс кошелька, подтягивающийся при успешной авторизации.
+- **images**: Загруженные аватары локально используют атрибут `unoptimized` для избежания ошибок Next.js Image Optimization 400.
 - **known issues**: Нет. Сборка (`npm run build`) и линтинг (`npm run lint`) проходят без ошибок.
 
 ## 9. Mobile Flutter Status

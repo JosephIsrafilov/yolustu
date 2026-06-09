@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
+import { paymentsService } from '@/services';
+import { formatPrice } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
 import { I18N } from '@/lib/i18n';
@@ -44,6 +47,15 @@ export default function Header() {
   const showDriverDashboardLink = capabilities.canAccessDriverDashboard && activeMode === 'passenger';
   const showPassengerSwitch = capabilities.canAccessDriverDashboard && activeMode === 'driver';
 
+  const { data: walletBalance, isLoading: isWalletLoading } = useQuery({
+    queryKey: ['wallet-balance', currentUser?.id],
+    queryFn: async () => {
+      const w = await paymentsService.getWallet();
+      return w.availableBalance;
+    },
+    enabled: !!isAuthenticated && !!currentUser && !isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -60,10 +72,20 @@ export default function Header() {
     router.push(ROUTES.driverDashboard);
   };
 
+  const getBecomeDriverText = (lang: string) => {
+    if (lang === 'az') return 'Sürücü olmaq';
+    if (lang === 'ru') return 'Как стать водителем';
+    return 'Become a driver';
+  };
+
+  const offerLabel = capabilities.canAccessDriverDashboard
+    ? (language === 'en' ? 'Offer Ride' : copy.header.offerRide)
+    : getBecomeDriverText(language);
+
   const navLinks = !isAdmin
     ? [
         { label: language === 'en' ? 'Find Ride' : copy.header.findRide, href: ROUTES.trips, match: '/trips' },
-        { label: language === 'en' ? 'Offer Ride' : copy.header.offerRide, href: offerRoute, match: '/driver' },
+        { label: offerLabel, href: offerRoute, match: '/driver' },
       ]
     : [];
 
@@ -121,7 +143,11 @@ export default function Header() {
                       : 'text-foreground/80 hover:text-foreground'
                   }`}
                 >
-                  {language === 'az' ? 'Balans' : language === 'ru' ? 'Баланс' : 'Wallet'}
+                  {isWalletLoading || walletBalance === undefined ? (
+                    <span className="inline-block h-4 w-12 animate-pulse bg-accent/60 rounded" />
+                  ) : (
+                    <span className="font-bold">{formatPrice(walletBalance)}</span>
+                  )}
                 </Link>
               )}
               {showPassengerSwitch && (

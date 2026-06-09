@@ -12,7 +12,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { formatPrice, formatRating } from '@/lib/utils';
+import { formatPrice, formatRating, estimateDurationMinutes, formatDuration } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import { MapContainer } from '@/components/ui/Map';
 import { tripsService } from '@/services';
@@ -216,6 +216,7 @@ export default function TripDetailsPage() {
   const isOwnTrip = currentUser?.id === trip.driverId;
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
   const existingBooking = bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser?.id && b.status !== 'cancelled' && b.status !== 'rejected');
+  const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
 
   const handleBook = async () => {
     if (!isAuthenticated) {
@@ -259,8 +260,8 @@ export default function TripDetailsPage() {
             </Card>
           )}
           <Card>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.dateLabel}</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p></div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+              <div><Icon name="clock" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.dateLabel}</p><p className="text-sm font-semibold">{trip.date}</p><p className="text-xs text-text-muted">{trip.time}</p><p className="text-[11px] text-text-muted mt-1 bg-surface-muted inline-block px-2 py-0.5 rounded-full">{formatDuration(durationMin, language)}</p></div>
               <div><Icon name="users" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.seatsLabel}</p><p className="text-sm font-semibold">{trip.seatsAvailable}/{trip.seatsTotal}</p><p className="text-xs text-text-muted">{copy.availableLabel}</p></div>
               <div><Icon name="car" size={20} className="mx-auto text-brand-500 mb-1" /><p className="text-xs text-text-muted">{copy.vehicleLabel}</p><p className="text-sm font-semibold">{trip.carModel}</p></div>
             </div>

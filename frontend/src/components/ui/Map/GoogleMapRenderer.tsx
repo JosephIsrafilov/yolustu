@@ -78,8 +78,13 @@ export default function GoogleMapRenderer({
           <MarkerF
             key={i}
             position={{ lat: m.position[0], lng: m.position[1] }}
-            // We could add custom icons based on m.type here
-            // icon={{ url: m.type === 'origin' ? '...' : '...' }}
+            icon={
+              m.type === 'origin'
+                ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                : m.type === 'destination'
+                ? 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                : undefined
+            }
           />
         ))}
         {children}

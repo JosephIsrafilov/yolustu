@@ -88,6 +88,40 @@ export function getCityCoordinates(city: string): Coordinates | undefined {
   return AZ_CITY_COORDINATES[city as AZCity];
 }
 
+export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+export function estimateDurationMinutes(origin?: Coordinates, destination?: Coordinates, depCity?: string, arrCity?: string): number | null {
+  const o = origin || (depCity ? getCityCoordinates(depCity) : undefined);
+  const d = destination || (arrCity ? getCityCoordinates(arrCity) : undefined);
+  if (!o || !d) return null;
+  const dist = getDistanceKm(o.lat, o.lng, d.lat, d.lng);
+  const speed = 75; // average speed km/h
+  // Add 20 minutes fixed overhead (getting out of city etc)
+  return Math.round((dist / speed) * 60) + 20;
+}
+
+export function formatDuration(minutes: number | null, lang: string): string {
+  if (minutes === null) {
+    if (lang === 'az') return 'Təxmini vaxt məlum deyil';
+    if (lang === 'ru') return 'Примерное время неизвестно';
+    return 'Estimated duration unavailable';
+  }
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  
+  if (lang === 'az') return `Təxmini vaxt: ${h > 0 ? `${h} saat ` : ''}${m} dəq`;
+  if (lang === 'ru') return `Примерное время: ${h > 0 ? `${h} ч ` : ''}${m} мин`;
+  return `Estimated duration: ${h > 0 ? `${h}h ` : ''}${m}m`;
+}
+
 export function isWithinAzerbaijan(lat: number, lng: number): boolean {
   // Mainland Azerbaijan bounding box
   const inMainland = lat >= 38.38 && lat <= 41.95 && lng >= 45.0 && lng <= 50.9;

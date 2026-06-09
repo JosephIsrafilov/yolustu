@@ -23,6 +23,7 @@ export default function UserAvatar({
         alt={name}
         width={size}
         height={size}
+        unoptimized={avatarUrl.includes('localhost') || avatarUrl.includes('127.0.0.1')}
         className={cn(
           "rounded-full object-cover border border-border shrink-0 flex-none",
           className

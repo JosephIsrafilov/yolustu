@@ -11,6 +11,7 @@ import { AZ_CITIES, formatPrice } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer } from '@/components/ui/Map';
+import { useOsrmMultipleRoutes } from '@/components/ui/Map/utils';
 import type { MapMarkerData } from '@/components/ui/Map/types';
 import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
@@ -22,6 +23,7 @@ function TripsContent() {
   const router = useRouter();
   const { trips, users, fetchTrips, isLoadingTrips, lastError, clearError, language } = useAppStore();
   const copy = I18N[language];
+  const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const [filters, setFilters] = useState<TripSearchFilters>({
@@ -48,6 +50,9 @@ function TripsContent() {
       return true;
     });
   }, [trips, filters.femaleOnly, filters.smokingAllowed, filters.petsAllowed, filters.musicAllowed]);
+
+  // Fetch routes for visible trips
+  const routePolylinesMap = useOsrmMultipleRoutes(filteredTrips);
 
   const handleSearch = () => {
     setFilters((p) => ({
@@ -515,10 +520,12 @@ function TripsContent() {
                         });
                         return m;
                       })()}
-                      polylines={filteredTrips.filter(t => t.origin && t.destination).map(t => [
-                        [t.origin!.lat, t.origin!.lng],
-                        [t.destination!.lat, t.destination!.lng]
-                      ])}
+                      polylines={filteredTrips.filter(t => t.origin && t.destination).map(t => {
+                        return routePolylinesMap[t.id] || [
+                          [t.origin!.lat, t.origin!.lng],
+                          [t.destination!.lat, t.destination!.lng]
+                        ];
+                      })}
                       fitBounds={filteredTrips.filter(t => t.origin && t.destination).flatMap(t => [
                         [t.origin!.lat, t.origin!.lng],
                         [t.destination!.lat, t.destination!.lng]
