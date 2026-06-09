@@ -6,6 +6,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -74,7 +75,7 @@ class RideSeed:
     departure_offset_days: int
     departure_at: time
     total_seats: int
-    price_per_seat: float
+    price_per_seat: Decimal
     status: str
     description: str
     intermediate_cities: str | None = None
@@ -118,7 +119,7 @@ class MessageSeed:
 class PaymentSeed:
     key: str
     booking_key: str
-    amount: float
+    amount: Decimal
     status: str
 
 
@@ -324,7 +325,7 @@ def upsert_ride(session: Session, payload: RideSeed, driver_id: uuid.UUID, vehic
     ride.departure_time = departure_datetime(payload.departure_offset_days, payload.departure_at)
     ride.total_seats = payload.total_seats
     ride.available_seats = payload.total_seats
-    ride.price_per_seat = payload.price_per_seat
+    ride.price_per_seat = Decimal(str(payload.price_per_seat)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     ride.status = payload.status
     ride.description = payload.description
     ride.smoking_allowed = payload.smoking_allowed
@@ -335,7 +336,7 @@ def upsert_ride(session: Session, payload: RideSeed, driver_id: uuid.UUID, vehic
     return ride, created
 
 
-def upsert_booking(session: Session, payload: BookingSeed, ride_id: uuid.UUID, passenger_id: uuid.UUID, total_price: float) -> tuple[Booking, bool]:
+def upsert_booking(session: Session, payload: BookingSeed, ride_id: uuid.UUID, passenger_id: uuid.UUID, total_price: Decimal) -> tuple[Booking, bool]:
     booking_id = seed_uuid("booking", payload.key)
     booking = session.get(Booking, booking_id)
     created = booking is None
@@ -345,7 +346,7 @@ def upsert_booking(session: Session, payload: BookingSeed, ride_id: uuid.UUID, p
     booking.ride_id = ride_id
     booking.passenger_id = passenger_id
     booking.seats_booked = payload.seats_booked
-    booking.total_price = total_price
+    booking.total_price = Decimal(str(total_price)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     booking.status = payload.status
     booking.created_at = created_datetime(payload.created_offset_days)
     session.flush()
@@ -387,14 +388,28 @@ def upsert_message(session: Session, payload: MessageSeed, ride_id: uuid.UUID, s
 def upsert_payment(session: Session, payload: PaymentSeed, booking_id: uuid.UUID) -> tuple[Payment, bool]:
     payment_id = seed_uuid("payment", payload.key)
     payment = session.get(Payment, payment_id) or find_by_unique(session, Payment, transaction_id=f"dev-seed-{payload.key}")
+    booking = session.get(Booking, booking_id)
+    ride = session.get(Ride, booking.ride_id) if booking else None
     created = payment is None
     if payment is None:
         payment = Payment(id=payment_id)
         session.add(payment)
+    amount = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    service_fee = (amount * Decimal("0.10")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     payment.booking_id = booking_id
-    payment.amount = payload.amount
+    payment.passenger_id = booking.passenger_id if booking else None
+    payment.driver_id = ride.driver_id if ride else None
+    payment.amount = amount
+    payment.service_fee = service_fee
+    payment.driver_amount = amount - service_fee
+    payment.currency = "AZN"
+    payment.provider = "mock"
+    payment.provider_payment_id = f"dev-seed-{payload.key}"
+    payment.provider_checkout_url = None
     payment.status = payload.status
     payment.transaction_id = f"dev-seed-{payload.key}"
+    payment.idempotency_key = f"dev-seed-payment-{payload.key}"
+    payment.payment_metadata = {"seed": True}
     payment.updated_at = created_datetime(0)
     session.flush()
     return payment, created

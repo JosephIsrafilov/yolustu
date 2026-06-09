@@ -104,6 +104,18 @@ export default function Header() {
                   {copy.header.bookings}
                 </Link>
               )}
+              {!isAdmin && (
+                <Link
+                  href={ROUTES.wallet}
+                  className={`hidden text-sm font-medium transition-colors hover-underline-expand pb-1 sm:block ${
+                    isActive(ROUTES.wallet)
+                      ? 'text-foreground font-semibold after:scale-x-100 after:origin-bottom-left'
+                      : 'text-foreground/80 hover:text-foreground'
+                  }`}
+                >
+                  {language === 'az' ? 'Balans' : language === 'ru' ? 'Баланс' : 'Wallet'}
+                </Link>
+              )}
               {showPassengerSwitch && (
                 <button
                   type="button"
@@ -196,6 +208,17 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            {!isAdmin && isAuthenticated && (
+              <Link
+                href={ROUTES.wallet}
+                onClick={() => setMobileOpen(false)}
+                className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
+                  isActive(ROUTES.wallet) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
+                }`}
+              >
+                {language === 'az' ? 'Balans' : language === 'ru' ? 'Баланс' : 'Wallet'}
+              </Link>
+            )}
             {showPassengerSwitch && (
               <button
                 type="button"

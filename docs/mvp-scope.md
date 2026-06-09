@@ -11,7 +11,7 @@
 - Seçilmiş koordinatların avtomatik olaraq "Meeting Point" və "Dropoff Point" sahələri ilə sinxronizasiyası.
 - Gedişlərin PostGIS vasitəsilə axtarışı və filtrlənməsi (tarix, yer sayı, axtarış radiusu).
 - Gedişin ətraflı məlumat səhifəsi, sürücü profili, avtomobil məlumatları və rəylər.
-- Rezervasiya (Booking) və Stripe vasitəsilə ödəniş axını.
+- Rezervasiya (Booking) və provider abstraction üzərindən ödəniş axını.
 - Gözləyən (Pending), təsdiqlənmiş (Confirmed / Paid), rədd edilmiş (Rejected), ləğv edilmiş (Cancelled) və tamamlanmış (Completed) rezerv statusları.
 - Hər gediş üzrə real-time WebSocket qrup çatı.
 - Sürücü sənədinin yüklənilməsi və Admin Panel vasitəsilə sürücülük statusunun idarə edilməsi.
@@ -22,7 +22,7 @@
 - Profilin oxunması, yenilənməsi, sənədlərin yüklənilməsi.
 - Rides CRUD və axtarış/süzgəc endpointləri (PostGIS).
 - Bookings CRUD (yaradılması, təsdiqi, rəddi, ləğvi).
-- Stripe Checkout sessiyalarının yaradılması və asinxron Stripe Webhooks idarəedilməsi.
+- Mock checkout sessiyalarının yaradılması, provider webhooks və wallet ledger idarəedilməsi.
 - AI Smart Pricing (NVIDIA NIM LLaMA-3.1-8b-instruct) vasitəsilə marşrut və vaxta uyğun optimal qiymət məsləhətləri.
 - WebSocket əlaqələri üçün FastAPI Lifespan idarəetməsi.
 
@@ -47,6 +47,6 @@
 
 ## Ödəniş Modeli
 
-Ödəniş tam şəkildə Stripe sandboks (test rejimi) e-ticarət sistemi vasitəsilə inteqrasiya edilib. 
-- Ödəniş zamanı sərnişin Stripe ödəniş səhifəsinə yönləndirilir.
-- Uğurlu ödənişdən sonra Stripe backend-ə webhook göndərir və rezerv statusu `confirmed` (ödənildi) olaraq qeyd edilir, yerlər balansdan avtomatik silinir.
+Ödəniş axını provider abstraction üzərindən qurulub.
+- Dev/test mühitində sərnişin mock checkout axını ilə ödənişi tamamlayır.
+- Uğurlu ödənişdən sonra webhook/callback emalı booking statusunu `paid` edir, ledger yazıları yaradır və driver earning-i `pending_balance`-a keçirir.

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -34,7 +35,7 @@ class FakeRide:
     departure_time: datetime
     total_seats: int
     available_seats: int
-    price_per_seat: float
+    price_per_seat: Decimal
     origin_city: str
     destination_city: str
     intermediate_cities: str | None = None

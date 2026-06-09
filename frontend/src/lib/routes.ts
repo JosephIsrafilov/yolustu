@@ -7,6 +7,7 @@ export const ROUTES = {
   passwordReset: '/auth/forgot-password',
   profileSetup: '/profile/setup',
   profile: '/profile',
+  wallet: '/wallet',
   search: '/trips',
   trips: '/trips',
   tripDetails: (id: string) => `/trips/${id}`,
@@ -24,5 +25,6 @@ export const ROUTES = {
   adminUsers: '/admin/users',
   adminTrips: '/admin/trips',
   adminBookings: '/admin/bookings',
+  adminPayments: '/admin/payments',
   adminVerifications: '/admin/verifications',
 } as const;

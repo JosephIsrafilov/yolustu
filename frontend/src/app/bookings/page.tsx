@@ -70,8 +70,14 @@ export default function BookingsPage() {
                   onReview={() => router.push(`${ROUTES.createReview}?tripId=${booking.tripId}&targetUserId=${trip?.driverId}`)}
                   onPay={async () => {
                     try {
-                      const res = await import('@/services').then(m => m.paymentsService.createPaymentSession(booking.id));
-                      window.location.href = res.checkout_url;
+                      const service = await import('@/services').then(m => m.paymentsService);
+                      const res = await service.createPaymentSession(booking.id);
+                      if (res.provider === 'mock') {
+                        await service.mockSucceed(res.paymentId);
+                        await fetchBookings();
+                        return;
+                      }
+                      window.location.href = res.checkoutUrl;
                     } catch (error) {
                       console.error('Payment start failed', error);
                       alert(copy.paymentFail);

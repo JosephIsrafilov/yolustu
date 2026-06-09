@@ -57,7 +57,7 @@ erDiagram
         timestamp departure_time
         int total_seats
         int available_seats
-        float price_per_seat
+        numeric price_per_seat
         varchar status
         text description
         boolean smoking_allowed
@@ -72,7 +72,7 @@ erDiagram
         uuid ride_id FK
         uuid passenger_id FK
         int seats_booked
-        float total_price
+        numeric total_price
         varchar status
         timestamp created_at
     }
@@ -80,7 +80,7 @@ erDiagram
     payments {
         uuid id PK
         uuid booking_id FK
-        float amount
+        numeric amount
         varchar status
         varchar transaction_id
         timestamp created_at
@@ -140,6 +140,95 @@ erDiagram
 | total_rides | INTEGER | DEFAULT 0 |
 | created_at | TIMESTAMP | DEFAULT NOW() |
 
+---
+
+## 2026-06-09 Payment/Wallet Schema Update
+
+The live schema now extends the old minimal `payments` table and adds wallet-backed ledger accounting.
+
+### payments
+
+Important columns:
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| booking_id | UUID | FK to bookings |
+| passenger_id | UUID | FK to users |
+| driver_id | UUID | FK to users |
+| amount | NUMERIC(12,2) | Gross passenger payment |
+| service_fee | NUMERIC(12,2) | Platform fee |
+| driver_amount | NUMERIC(12,2) | Amount credited to driver pending balance |
+| currency | VARCHAR(3) | Always `AZN` |
+| provider | VARCHAR(50) | `mock`, `payriff`, `kapital` |
+| provider_payment_id | VARCHAR(255) | Unique provider-side ID |
+| provider_checkout_url | VARCHAR(1024) | Checkout URL when provider supports it |
+| status | VARCHAR(50) | `pending`, `succeeded`, `failed`, `cancelled`, `refunded` |
+| transaction_id | VARCHAR(255) | Unique transaction/session ID |
+| idempotency_key | VARCHAR(255) | Unique payment creation key |
+| failure_reason | VARCHAR(500) | Optional failure detail |
+| metadata | JSON | Provider/raw metadata |
+| paid_at | TIMESTAMPTZ | Set on success |
+| refunded_at | TIMESTAMPTZ | Set on refund |
+
+Indexes:
+- `ix_payments_booking_id`
+- unique `ix_payments_provider_payment_id`
+- unique `ix_payments_transaction_id`
+- unique `ix_payments_idempotency_key`
+- partial unique `uq_payments_active_booking` for `pending`/`succeeded` payments per booking
+
+### wallets
+
+| Column | Type | Notes |
+|---|---|---|
+| user_id | UUID | PK, FK to users |
+| available_balance | NUMERIC(12,2) | Withdrawable/settled balance |
+| pending_balance | NUMERIC(12,2) | Driver earnings before ride completion |
+| currency | VARCHAR(3) | Always `AZN` |
+| created_at | TIMESTAMPTZ | Creation time |
+| updated_at | TIMESTAMPTZ | Update time |
+
+### wallet_transactions
+
+Ledger entries are mandatory for every balance mutation.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| user_id | UUID | FK to users |
+| payment_id | UUID | Nullable FK to payments |
+| booking_id | UUID | Nullable FK to bookings |
+| ride_id | UUID | Nullable FK to rides |
+| type | VARCHAR(50) | `passenger_payment`, `platform_fee`, `driver_pending_earning`, `driver_available_earning`, `refund`, `payout`, `adjustment` |
+| direction | VARCHAR(10) | `credit` or `debit` |
+| amount | NUMERIC(12,2) | Ledger amount |
+| currency | VARCHAR(3) | Always `AZN` |
+| status | VARCHAR(20) | `pending`, `posted`, `reversed` |
+| description | VARCHAR(500) | Human-readable detail |
+| idempotency_key | VARCHAR(255) | Unique event key |
+| created_at | TIMESTAMPTZ | Creation time |
+
+Indexes:
+- `ix_wallet_transactions_user_created`
+- unique `ix_wallet_transactions_idempotency_key`
+
+### payout_requests
+
+Scaffold table for later manual/bank/card payouts:
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| user_id | UUID | FK to users |
+| amount | NUMERIC(12,2) | Requested payout amount |
+| currency | VARCHAR(3) | Always `AZN` |
+| status | VARCHAR(20) | `pending`, `approved`, `rejected`, `paid`, `cancelled` |
+| method | VARCHAR(50) | Payout method label |
+| metadata | JSON | Provider/admin metadata |
+| created_at | TIMESTAMPTZ | Creation time |
+| processed_at | TIMESTAMPTZ | Processing time |
+
 **İndekslər:**
 - `idx_users_phone` ON users (phone) UNIQUE
 
@@ -177,7 +266,7 @@ Sürücülər tərəfindən elan edilən gedişlər. Koordinatlar üçün PostGI
 | departure_time | TIMESTAMP | NOT NULL |
 | total_seats | INTEGER | NOT NULL |
 | available_seats | INTEGER | NOT NULL |
-| price_per_seat | FLOAT | NOT NULL |
+| price_per_seat | NUMERIC(12,2) | NOT NULL |
 | status | VARCHAR(20) | DEFAULT 'active' (active, cancelled, completed) |
 | description | TEXT | |
 | smoking_allowed | BOOLEAN | DEFAULT FALSE |
@@ -201,21 +290,21 @@ Sərnişinlərin gedişlərə göndərdikləri rezervasiya sorğuları.
 | ride_id | UUID | NOT NULL, FOREIGN KEY (rides.id) |
 | passenger_id | UUID | NOT NULL, FOREIGN KEY (users.id) |
 | seats_booked | INTEGER | NOT NULL |
-| total_price | FLOAT | |
+| total_price | NUMERIC(12,2) | |
 | status | VARCHAR(20) | DEFAULT 'pending' (pending, accepted, rejected, cancelled, completed) |
 | created_at | TIMESTAMP | DEFAULT NOW() |
 
 ---
 
 ### 5. payments
-Stripe ödəmə tranzaksiyaları.
+Booking-lə bağlı ödəniş tranzaksiyaları və provider metadata.
 
 | Sütun | Tip | Məhdudiyyətlər (Constraints) |
 |---|---|---|
 | id | UUID | PRIMARY KEY |
 | booking_id | UUID | NOT NULL, FOREIGN KEY (bookings.id) |
-| amount | FLOAT | NOT NULL |
-| status | VARCHAR(50) | DEFAULT 'pending' (pending, completed, failed) |
+| amount | NUMERIC(12,2) | NOT NULL |
+| status | VARCHAR(50) | DEFAULT 'pending' (pending, succeeded, failed, cancelled, refunded) |
 | transaction_id | VARCHAR(255) | |
 | created_at | TIMESTAMP | DEFAULT NOW() |
 | updated_at | TIMESTAMP | |

@@ -28,8 +28,8 @@
 ### Epic 5: Booking & Payment System
 | # | User Story | Prioritet | Status | Sprint |
 |---|---|---|---|---|
-| US-08 | Sərnişin rezerv sorğusu göndərir və Stripe ödənişi edir | Yüksək | ✅ Tamamlandı | Sprint 3, 4 |
-| US-09 | Sürücü sorğunu qəbul/rədd edir (Stripe təsdiqli) | Yüksək | ✅ Tamamlandı | Sprint 3, 4 |
+| US-08 | Sərnişin rezerv sorğusu göndərir və booking-linked ödəniş edir | Yüksək | ✅ Tamamlandı | Sprint 3, 4 |
+| US-09 | Sürücü sorğunu qəbul/rədd edir, sonra sərnişin ödəniş edir | Yüksək | ✅ Tamamlandı | Sprint 3, 4 |
 | US-10 | Sərnişin rezervi ləğv edir (yerlər geri qaytarılır) | Orta | ✅ Tamamlandı | Sprint 3 |
 
 ### Epic 6: Rating & Reviews
@@ -74,5 +74,5 @@
 | Sprint 1 | FastAPI + PostgreSQL/Redis backend, telefon OTP auth, profillər | ✅ Tamamlandı |
 | Sprint 2 | Gediş və nəqliyyat vasitələri CRUD, PostGIS coğrafi axtarış | ✅ Tamamlandı |
 | Sprint 3 | Rezervasiya (Booking) sistemi, real-time WebSocket qrup çatı | ✅ Tamamlandı |
-| Sprint 4 | Stripe Sandbox ödənişləri, NVIDIA NIM İİ qiymət tövsiyələri | ✅ Tamamlandı |
+| Sprint 4 | Mock/provider ödəniş axını, NVIDIA NIM İİ qiymət tövsiyələri | ✅ Tamamlandı |
 | Sprint 5 | React 19 typings, Leaflet maps z-index bug-fix, sənədlərin yenilənməsi | ✅ Tamamlandı |

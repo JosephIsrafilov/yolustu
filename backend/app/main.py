@@ -29,6 +29,7 @@ from app.domains.identity.users_router import router as users_router
 from app.domains.trips.rides_router import router as rides_router
 from app.domains.trips.vehicles_router import router as vehicles_router
 from app.domains.payments.router import router as payments_router
+from app.domains.payments.wallet_router import router as wallet_router
 from app.domains.ai.router import router as ai_router
 from app.domains.gamification.router import router as gamification_router
 
@@ -126,6 +127,7 @@ v1_router.include_router(
 )
 v1_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 v1_router.include_router(payments_router, prefix="/payments", tags=["payments"])
+v1_router.include_router(wallet_router, prefix="/wallet", tags=["wallet"])
 v1_router.include_router(ai_router, prefix="/ai", tags=["ai"])
 v1_router.include_router(
     gamification_router, prefix="/gamification", tags=["gamification"]

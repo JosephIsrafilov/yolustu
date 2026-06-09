@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | R-01 | Mobil tətbiq inkişafı gözləniləndən çox vaxt alır | Yüksək | Yüksək | UI-ı sadə saxlamaq, Next.js ilə responsiv mobil interfeys hazırlamaq |
 | R-02 | Backend/mobil inteqrasiya problemləri | Orta | Yüksək | API-ı erkən müəyyən etmək, əvvəlcədən hazırlanmış API kontraktına əsasən yazmaq |
-| R-03 | Rezerv logikasının mürəkkəbliyi | Orta | Orta | Sadə statuslar istifadə etmək, Stripe webhookları ilə avtomatlaşdırmaq |
+| R-03 | Rezerv logikasının mürəkkəbliyi | Orta | Orta | Sadə statuslar istifadə etmək, idempotent payment callbacks ilə avtomatlaşdırmaq |
 | R-04 | Çox çox xüsusiyyət əlavə edilməsi | Yüksək | Yüksək | MVP hüdudlarını qorumaq, scope creep-dən qaçmaq |
 | R-05 | Müdafiə əvvəl bug-lar | Orta | Yüksək | Son sprinti QA və re-refactor üçün ayırmaq, React 19 typings və map z-index məsələlərini tam həll etmək |
 | R-06 | Zəif sənədləşdirmə | Aşağı | Orta | Hər sprintdə və hər mühüm dəyişiklikdə sənədləri yeniləmək |
@@ -56,5 +56,5 @@
 | Sprint 1 | Backend qurulması, DB sxemi və auth | ✅ Həll edildi |
 | Sprint 2 | Gediş CRUD mürəkkəbliyi, PostGIS axtarış | ✅ Həll edildi |
 | Sprint 3 | Rezerv logikası və WebSockets real-time çat | ✅ Həll edildi |
-| Sprint 4 | Stripe ödənişləri və İİ Smart Pricing | ✅ Həll edildi |
+| Sprint 4 | Provider abstraction ödənişləri və İİ Smart Pricing | ✅ Həll edildi |
 | Sprint 5 | React 19 / Leaflet z-index bugları və sənədləşmə | ✅ Həll edildi |

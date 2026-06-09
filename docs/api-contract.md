@@ -278,7 +278,7 @@ Response (200):
 
 ### POST /api/v1/bookings/
 
-**Məqsəd:** Sərnişin tərəfindən gedişdə yer rezerv etmək üçün müraciət göndərilməsi. Həmçinin Stripe ödəmə sessiyasını yaradır.
+**Məqsəd:** Sərnişin tərəfindən gedişdə yer rezerv etmək üçün müraciət göndərilməsi. Ödəniş ayrıca `/api/v1/payments/create` endpoint-i ilə başlanır.
 
 **Request Body:**
 ```json
@@ -291,24 +291,49 @@ Response (200):
 **Response (200):**
 ```json
 {
-  "booking": {
-    "id": "d50a232f-bc3f-4e0a-b28e-5b12ee9c7821",
-    "ride_id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
-    "passenger_id": "e81d774a-1a22-491c-99d8-910ee2ba8e22",
-    "seats_booked": 1,
-    "total_price": 15.0,
-    "status": "pending"
-  },
-  "stripe_session_id": "cs_test_a1b2c3d...",
-  "stripe_session_url": "https://checkout.stripe.com/c/pay/cs_test_..."
+  "id": "d50a232f-bc3f-4e0a-b28e-5b12ee9c7821",
+  "ride_id": "c138d21a-ef1a-4712-9c3f-c6ef8481eb08",
+  "passenger_id": "e81d774a-1a22-491c-99d8-910ee2ba8e22",
+  "seats_booked": 1,
+  "total_price": 15.0,
+  "status": "pending"
 }
 ```
 
 ---
 
-### POST /api/v1/payments/webhook
+### POST /api/v1/payments/create
 
-**Məqsəd:** Stripe ödəmə statusunun dəyişməsi barədə bildirişlərin (webhooks) qəbulu. Uğurlu ödənişdən sonra müvafiq Booking `confirmed` statusuna keçir, gedişdəki yer sayı azaldılır.
+**Məqsəd:** Mövcud booking üçün payment yaradır və aktiv `pending` payment varsa onu qaytarır.
+
+**Request Body:**
+```json
+{
+  "booking_id": "d50a232f-bc3f-4e0a-b28e-5b12ee9c7821"
+}
+```
+
+**Response (200):**
+```json
+{
+  "payment_id": "4adf6e5d-7d87-4b6e-a1f6-13b4f688f6ae",
+  "booking_id": "d50a232f-bc3f-4e0a-b28e-5b12ee9c7821",
+  "amount": 15.0,
+  "service_fee": 1.5,
+  "driver_amount": 13.5,
+  "currency": "AZN",
+  "provider": "mock",
+  "status": "pending",
+  "checkout_url": "http://localhost:3000/mock-payments/4adf6e5d-7d87-4b6e-a1f6-13b4f688f6ae",
+  "transaction_id": "mock_4adf6e5d7d874b6ea1f613b4f688f6ae"
+}
+```
+
+---
+
+### POST /api/v1/payments/webhook/{provider}
+
+**Məqsəd:** Provider webhook/callback qəbulu. Uğurlu ödənişdən sonra payment `succeeded`, booking isə `paid` olur; təkrar webhook balansı və ledger-i dublikat etmir.
 
 ---
 
@@ -518,3 +543,118 @@ active -> completed
 - Confirm is forbidden when `available_seats < seats_booked`.
 - Passenger cannot book own ride.
 - Duplicate active booking for same passenger+ride is forbidden.
+
+---
+
+## 9. Payment and Wallet Contract (2026-06-09)
+
+The current payment flow is booking-first and wallet-backed:
+
+```text
+passenger creates booking -> pending
+driver confirms booking -> accepted
+passenger creates payment -> payment pending
+mock/provider success -> payment succeeded, booking paid, wallet ledger posted
+driver completes ride -> driver pending earning becomes available
+refund -> payment refunded, booking cancelled, ledger reversal posted
+```
+
+Payment statuses:
+
+```text
+pending | succeeded | failed | cancelled | refunded
+```
+
+Wallet transaction types:
+
+```text
+passenger_payment | platform_fee | driver_pending_earning | driver_available_earning | refund | payout | adjustment
+```
+
+### POST /api/v1/payments/create
+
+Request:
+
+```json
+{
+  "booking_id": "uuid"
+}
+```
+
+Response:
+
+```json
+{
+  "payment_id": "uuid",
+  "booking_id": "uuid",
+  "amount": "25.00",
+  "service_fee": "2.50",
+  "driver_amount": "22.50",
+  "currency": "AZN",
+  "provider": "mock",
+  "status": "pending",
+  "checkout_url": "http://localhost:3000/bookings?mock_payment=...",
+  "transaction_id": "mock_tx_..."
+}
+```
+
+Rules:
+- Only the booking passenger can create payment.
+- Booking must be `accepted`.
+- Own ride, rejected/cancelled booking, and already paid booking are rejected.
+- Existing pending payment for the same booking is returned instead of creating a duplicate.
+
+### GET /api/v1/payments/{payment_id}
+
+Returns payment details. Accessible to passenger, driver, or admin.
+
+### POST /api/v1/payments/mock/{payment_id}/succeed
+
+Development/mock flow endpoint. Marks payment `succeeded`, booking `paid`, and creates idempotent ledger entries:
+
+- passenger `passenger_payment` debit
+- driver `driver_pending_earning` credit
+- driver-visible `platform_fee` debit ledger record
+
+### POST /api/v1/payments/mock/{payment_id}/fail
+
+Marks pending mock payment as `failed`.
+
+### POST /api/v1/payments/webhook/{provider}
+
+Processes provider webhook. `mock` accepts JSON payload:
+
+```json
+{
+  "transaction_id": "mock_tx_...",
+  "status": "succeeded"
+}
+```
+
+Webhook processing is idempotent by payment status and ledger idempotency keys.
+
+### POST /api/v1/payments/{payment_id}/refund
+
+Admin-only refund endpoint for `succeeded` payments. It marks payment `refunded`, cancels the booking, restores seats when the ride is not completed, credits passenger refund ledger, and reverses driver pending earning.
+
+### GET /api/v1/wallet/me
+
+Returns current user's balance:
+
+```json
+{
+  "user_id": "uuid",
+  "available_balance": "0.00",
+  "pending_balance": "22.50",
+  "currency": "AZN",
+  "total_earned": "0.00",
+  "total_spent": "25.00",
+  "total_refunded": "0.00"
+}
+```
+
+### GET /api/v1/wallet/me/transactions
+
+Query: `page`, `limit`.
+
+Returns paginated ledger history. Balances must only change through `wallet_transactions`; direct numeric balance changes without a ledger entry are invalid.

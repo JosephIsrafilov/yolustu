@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -18,7 +19,7 @@ class BookingRepository:
         self.db = db
 
     def create(
-        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: float
+        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: Decimal
     ) -> Booking:
         booking = Booking(
             ride_id=ride_id,

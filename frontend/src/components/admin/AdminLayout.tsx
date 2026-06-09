@@ -54,6 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { language, logout, currentUser } = useAppStore();
   const t = ADMIN_LAYOUT_I18N[language];
+  const paymentsLabel = language === 'az' ? 'Ödənişlər' : language === 'ru' ? 'Платежи' : 'Payments';
   const adminName = currentUser?.fullName || t.adminTitle;
   const adminInitial = adminName.charAt(0).toUpperCase();
 
@@ -62,6 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: ROUTES.adminUsers, label: t.tabs.users, icon: 'users' },
     { href: ROUTES.adminTrips, label: t.tabs.trips, icon: 'map' },
     { href: ROUTES.adminBookings, label: t.tabs.bookings, icon: 'calendar-check' },
+    { href: ROUTES.adminPayments, label: paymentsLabel, icon: 'credit-card' },
     { href: ROUTES.adminVerifications, label: t.tabs.verifications, icon: 'shield-check' },
   ];
 

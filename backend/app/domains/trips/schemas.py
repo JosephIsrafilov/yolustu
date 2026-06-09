@@ -1,6 +1,7 @@
 import re
 import struct
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
@@ -53,7 +54,7 @@ class RideBase(BaseModel):
     departure_time: datetime
     total_seats: int
     available_seats: int
-    price_per_seat: float
+    price_per_seat: Decimal
     origin_city: str
     destination_city: str
     intermediate_cities: Optional[str] = None

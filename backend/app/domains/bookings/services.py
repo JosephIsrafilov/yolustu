@@ -28,6 +28,7 @@ from app.core.notifications import NotificationService
 
 class BookingsService:
     def __init__(self, db: Session):
+        self.db = db
         self.bookings = BookingRepository(db)
         self.rides = RideLookupPort(db)
         self.notifications = NotificationService(db)
@@ -154,6 +155,16 @@ class BookingsService:
             )
         if not can_transition_booking(booking.status, BOOKING_CANCELLED):
             raise HTTPException(status_code=400, detail="Invalid booking transition")
+
+        if booking.status == BOOKING_PAID and self.db is not None:
+            from app.domains.payments.services import PaymentService
+
+            payment = PaymentService(self.db).payments.get_succeeded_for_booking(
+                booking.id
+            )
+            if payment:
+                PaymentService(self.db).refund_payment(payment.id, None)
+                return booking_to_response(self._get_booking(booking_id))
 
         if booking.status in [BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)

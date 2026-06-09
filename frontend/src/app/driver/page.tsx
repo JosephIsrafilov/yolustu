@@ -9,6 +9,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { paymentsService } from '@/services';
+import type { Wallet } from '@/types';
 
 const DASHBOARD_I18N = {
   az: {
@@ -67,6 +69,7 @@ const DASHBOARD_I18N = {
 export default function DriverDashboardPage() {
   const router = useRouter();
   const { trips, bookings, currentUser, fetchTrips, fetchBookingRequests, language } = useAppStore();
+  const [wallet, setWallet] = React.useState<Wallet | null>(null);
   const myTrips = trips.filter((t) => t.driverId === currentUser?.id);
   const activeTrips = myTrips.filter((t) => t.status === 'active');
   const pendingBookings = bookings.filter((b) => {
@@ -80,11 +83,27 @@ export default function DriverDashboardPage() {
   const nextRequestTrip = nextRequest ? myTrips.find((t) => t.id === nextRequest.tripId) : undefined;
 
   const copy = DASHBOARD_I18N[language] || DASHBOARD_I18N.en;
+  const pendingBalanceLabel = language === 'az' ? 'Gözləyən gəlir' : language === 'ru' ? 'Ожидающий доход' : 'Pending earnings';
+  const availableBalanceLabel = language === 'az' ? 'Mövcud balans' : language === 'ru' ? 'Доступный баланс' : 'Available balance';
 
   React.useEffect(() => {
     fetchTrips();
     fetchBookingRequests();
   }, [fetchTrips, fetchBookingRequests]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    paymentsService.getWallet()
+      .then((response) => {
+        if (!cancelled) setWallet(response);
+      })
+      .catch(() => {
+        if (!cancelled) setWallet(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <DriverLayout>
@@ -117,6 +136,16 @@ export default function DriverDashboardPage() {
                 <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.totalRides}</p>
                 <p className="text-lg sm:text-2xl font-black text-text mt-0.5 leading-none">{myTrips.length}</p>
               </div>
+            </Card>
+          </div>
+          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+            <Card padding="md">
+              <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{pendingBalanceLabel}</p>
+              <p className="mt-1 text-2xl font-black text-accent-600">₼{(wallet?.pendingBalance ?? 0).toFixed(2)}</p>
+            </Card>
+            <Card padding="md">
+              <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{availableBalanceLabel}</p>
+              <p className="mt-1 text-2xl font-black text-brand-600">₼{(wallet?.availableBalance ?? 0).toFixed(2)}</p>
             </Card>
           </div>
           <div className="grid sm:grid-cols-3 gap-3">

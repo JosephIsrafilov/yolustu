@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -21,7 +22,7 @@ class FakeRide:
     driver_id: UUID
     available_seats: int
     total_seats: int
-    price_per_seat: float
+    price_per_seat: Decimal
     status: str = "active"
 
 
@@ -31,7 +32,7 @@ class FakeBooking:
     ride_id: UUID
     passenger_id: UUID
     seats_booked: int
-    total_price: float
+    total_price: Decimal
     status: str = "pending"
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
@@ -43,7 +44,7 @@ class FakeBookingRepository:
         self.bookings: dict[UUID, FakeBooking] = {}
 
     def create(
-        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: float
+        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: Decimal
     ) -> FakeBooking:
         booking = FakeBooking(
             id=uuid4(),
@@ -126,7 +127,7 @@ def make_service(
         driver_id=driver_id,
         available_seats=ride_available_seats,
         total_seats=4,
-        price_per_seat=10.0,
+        price_per_seat=Decimal("10.00"),
         status="active",
     )
 

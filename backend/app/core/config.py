@@ -28,6 +28,17 @@ class Settings(BaseSettings):
 
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    PAYMENT_PROVIDER: str = "mock"
+    PAYMENT_CURRENCY: str = "AZN"
+    PLATFORM_FEE_PERCENT: int = 10
+    PAYMENT_SUCCESS_URL: str = ""
+    PAYMENT_CANCEL_URL: str = ""
+    PAYRIFF_BASE_URL: str = ""
+    PAYRIFF_MERCHANT_ID: str = ""
+    PAYRIFF_SECRET_KEY: str = ""
+    KAPITAL_BASE_URL: str = ""
+    KAPITAL_MERCHANT_ID: str = ""
+    KAPITAL_SECRET_KEY: str = ""
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_URL: str = "http://localhost:8000"
     NVIDIA_API_KEY: str = ""

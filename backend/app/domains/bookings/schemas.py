@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
@@ -23,7 +24,7 @@ class BookingResponse(BookingBase):
     ride_id: UUID
     passenger_id: UUID
     status: str
-    total_price: Optional[float] = None
+    total_price: Optional[Decimal] = None
     created_at: datetime
     ride: Optional[RideResponse] = None
     passenger: Optional[UserResponse] = None

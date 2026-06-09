@@ -20,14 +20,14 @@ graph TB
     end
 
     subgraph "External Integration"
-        Stripe["💰 Stripe Gateway"]
+        Payments["💰 Payment Providers / Mock Checkout"]
         NIM["🤖 NVIDIA NIM AI Pricing"]
     end
     
     WA -->|REST / WebSockets| API
     API -->|SQLAlchemy 2.0| DB
     API -->|Redis-py| RD
-    API -->|Stripe Client| Stripe
+    API -->|Provider Abstraction| Payments
     API -->|OpenAI Client| NIM
 ```
 
@@ -39,7 +39,7 @@ graph TB
 | **Frontend** | **Next.js 16 (App Router)** | Превосходная производительность рендеринга, адаптивная верстка под мобильные устройства и SEO. |
 | **База данных** | **PostgreSQL 15 + PostGIS** | Поддержка геопространственных типов данных (Geometry Point) для поиска попутных поездок. |
 | **Кэширование** | **Redis** | Быстрое кэширование OTP кодов (TTL 5 мин), сессий, а также оптимизация работы WebSockets. |
-| **Эквайринг** | **Stripe API** | Безопасная обработка платежей и автоподтверждение бронирований через Webhooks. |
+| **Эквайринг** | **Mock / Payriff / Kapital abstraction** | Идемпотентная обработка платежей, возвратов и wallet ledger через единый payment service. |
 | **Интеграция ИИ**| **NVIDIA NIM** | Получение интеллектуальных рекомендаций стоимости поездок в реальном времени. |
 | **Картография** | **Leaflet.js** | Интерактивные карты без использования платных ключей Google Maps. |
 
@@ -63,7 +63,7 @@ backend/app/
 │   ├── trips/        # Поездки (Rides), транспорт (Vehicles), геозапросы
 │   ├── bookings/     # Бронирование свободных мест
 │   ├── engagement/   # Отзывы (Reviews) и чат (Messages)
-│   ├── payments/     # Создание сессий Stripe и обработка Webhooks
+│   ├── payments/     # Payment provider abstraction, webhooks, refunds, wallet ledger
 │   ├── ai/           # Расчет цены с помощью NVIDIA NIM
 │   └── admin/        # Управление пользователями, блокировки, модерация
 │

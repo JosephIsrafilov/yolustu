@@ -37,7 +37,7 @@ _Last updated: 2026-06-03_
 ## 5. Environment Configuration
 
 ### Root `.env.example`
-Является основным каноничным шаблоном для запуска всего стэка (Docker, бэкенд, фронтенд). Содержит настройки подключения к PostgreSQL, Redis, Stripe, Nvidia API и почтовому серверу SMTP.
+Является основным каноничным шаблоном для запуска всего стэка (Docker, бэкенд, фронтенд). Содержит настройки подключения к PostgreSQL, Redis, payment providers, Nvidia API и почтовому серверу SMTP.
 
 ### Backend env
 Локальный файл `backend/.env` содержит минимальный набор переменных для запуска API отдельно от Docker-контейнеров:
@@ -73,7 +73,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
 - Любые `.env` файлы
 - `frontend/.env.local`
 - `mobile/yolmates_app/env/dev.json`
-- Конфиденциальные ключи доступа к Stripe, Supabase и SMTP.
+- Конфиденциальные ключи доступа к payment providers, Supabase и SMTP.
 
 ## 6. Backend Status
 - **stack**: FastAPI, Python 3.11, Uvicorn, SQLAlchemy 2.0, Alembic, Docker.
@@ -141,7 +141,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8010
   - `flutter-mobile.yml` — запуск сборки, линтинга и тестов Flutter-приложения при изменениях в каталоге `mobile/yolmates_app/**`.
 - **checks**: Ruff linter, Mypy type checker, Pytest, Alembic upgrade, Docker build, ESLint, Next build, Flutter pub get, Flutter analyze, Flutter test.
 - **what is verified**: Синтаксис кода, отсутствие ошибок типизации TypeScript/Dart, прохождение тестов бэкенда и Flutter, успешность миграций БД и сборки Next.js.
-- **what is not verified**: Интеграционные тесты со сторонними платежными шлюзами (Stripe) и NVIDIA API (используются моки).
+- **what is not verified**: Интеграционные тесты со сторонними платежными шлюзами (Payriff/Kapital) и NVIDIA API (используются моки).
 
 ## 11. Local Development Commands
 
@@ -250,7 +250,7 @@ flutter run --dart-define-from-file=env/dev.json
 
 ### Later
 - Настройка карт Leaflet на мобильном приложении.
-- Интеграция платежного шлюза Stripe на мобильных экранах.
+- Интеграция реального платежного шлюза на мобильных экранах.
 - Настройка отправки Push-уведомлений через FCM (Firebase Cloud Messaging).
 - Подготовка продуктового деплоя бэкенда и фронтенда.
 - Настройка подписи релизных сборок (.apk / .aab).

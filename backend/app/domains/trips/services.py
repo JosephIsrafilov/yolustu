@@ -143,6 +143,9 @@ class TripsService:
         ride.status = RIDE_COMPLETED
         self.users.increment_total_rides(ride.driver_id)
         saved_ride = self.rides.save(ride)
+        from app.domains.payments.services import PaymentService
+
+        PaymentService(self.db).release_driver_earnings_for_ride(ride.id)
 
         # Gamification: check rides count for driver
         driver = self.users.get_by_id(ride.driver_id)

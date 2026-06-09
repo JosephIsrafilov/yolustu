@@ -3,7 +3,7 @@
 **Yolmates** is a modern car-pooling prototype tailored for Azerbaijan. It includes:
 - **Real-time chat and notifications** via WebSockets
 - **AI Smart Pricing** powered by NVIDIA NIM (LLaMA-3.1) that suggests optimal seat prices based on route and time
-- Full Stripe integration for secure sandbox payments
+- Payment provider abstraction with mock checkout, wallet ledger, and refund flow
 - Secure JWT authentication with simulated SMS OTP verification
 - Interactive Leaflet Maps on OpenStreetMap tiles (no Google Maps API key required)
 
@@ -22,7 +22,7 @@ yolustu/
 |   |   |   |-- trips/     # Rides & Vehicles CRUD, PostGIS geo-queries
 |   |   |   |-- bookings/  # Seat reservations
 |   |   |   |-- engagement/# Chat messages & ratings
-|   |   |   |-- payments/  # Stripe sessions & Webhooks
+|   |   |   |-- payments/  # payment sessions, webhooks, wallet ledger
 |   |   |   `-- ai/        # AI pricing suggestion
 |   |   `-- main.py        # FastAPI entry point & lifespan manager
 |   |-- requirements.txt   # Python deps
@@ -59,7 +59,7 @@ yolustu/
 | **Database** | PostgreSQL + PostGIS (via Docker) |
 | **Cache/Queue** | Redis (via Docker) |
 | **Realtime Layers** | WebSockets (FastAPI + React hooks) |
-| **Payments** | Stripe Checkout & Webhooks |
+| **Payments** | Mock provider abstraction for dev/test, Payriff/Kapital stubs, wallet ledger |
 
 ---
 
@@ -265,8 +265,8 @@ Recommended GitHub Secrets (deploy environments):
 - `REDIS_URL` (if remote Redis is used)
 - `FRONTEND_URL`
 - `BACKEND_URL`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
+- `PAYMENT_PROVIDER`
+- `PAYRIFF_MERCHANT_ID` / `PAYRIFF_SECRET_KEY` or Kapital credentials when real acquiring is enabled
 
 ### 6) Security notes
 - Do not commit real secrets to git.

@@ -31,13 +31,13 @@
 ### 5. Gediş Detalları
 - [x] Gediş səhifəsində bütün detallar (marşrut, sürücü ratingi, avtomobil məlumatları, səyahət üstünlükləri) görünür
 - [x] Sürücünün keçmiş rəyləri siyahı şəklində göstərilir
-- [x] Rezervasiya et düyməsi klikləndikdə Stripe ödəniş axını başlanır
+- [x] Rezervasiya et düyməsi klikləndikdə payment creation axını başlanır
 
-### 6. Rezerv Sorğusu və Stripe Ödənişi
-- [x] Sərnişin yer sayı seçib Stripe Checkout vasitəsilə ödəniş edə bilir
+### 6. Rezerv Sorğusu və Ödəniş
+- [x] Sərnişin yer sayı seçib mock/provider checkout axını ilə ödəniş edə bilir
 - [x] İstifadəçi öz gedişinə rezervasiya sorğusu göndərə bilmir (xəta mesajı göstərilir)
 - [x] Artıq rezerv edilmiş gediş üçün təkrarlanan sorğu göndərilmir
-- [x] Uğurlu ödənişdən sonra Stripe Webhook vasitəsilə status avtomatik `confirmed` (paid) olaraq bazada yenilənir
+- [x] Uğurlu ödənişdən sonra payment callback/webhook vasitəsilə status avtomatik `paid` olaraq bazada yenilənir
 
 ### 7. Rezerv Qəbul/Rədd
 - [x] Sürücü öz gedişlərinə gələn sorğuları qəbul edə bilir

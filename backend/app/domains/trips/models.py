@@ -5,9 +5,9 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     func,
@@ -50,7 +50,7 @@ class Ride(Base):
     departure_time = Column(DateTime(timezone=True), nullable=False)
     total_seats = Column(Integer, nullable=False)
     available_seats = Column(Integer, nullable=False)
-    price_per_seat = Column(Float, nullable=False)
+    price_per_seat = Column(Numeric(12, 2), nullable=False)
     status = Column(String(20), default="active")
     description = Column(Text, nullable=True)
     smoking_allowed = Column(Boolean, default=False)

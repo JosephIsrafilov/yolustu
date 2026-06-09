@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -14,7 +14,7 @@ class Booking(Base):
     ride_id = Column(UUID(as_uuid=True), ForeignKey("rides.id"), nullable=False)
     passenger_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     seats_booked = Column(Integer, nullable=False)
-    total_price = Column(Float, nullable=True)
+    total_price = Column(Numeric(12, 2), nullable=True)
     status = Column(String(20), default="pending")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

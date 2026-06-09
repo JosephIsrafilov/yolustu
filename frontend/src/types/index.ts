@@ -70,6 +70,60 @@ export interface Trip {
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed';
+export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'refunded';
+export type WalletTransactionType =
+  | 'passenger_payment'
+  | 'platform_fee'
+  | 'driver_pending_earning'
+  | 'driver_available_earning'
+  | 'refund'
+  | 'payout'
+  | 'adjustment';
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  passengerId?: string;
+  driverId?: string;
+  amount: number;
+  serviceFee: number;
+  driverAmount: number;
+  currency: string;
+  provider: string;
+  providerPaymentId?: string;
+  checkoutUrl?: string;
+  status: PaymentStatus;
+  transactionId?: string;
+  failureReason?: string;
+  createdAt: string;
+  paidAt?: string;
+  refundedAt?: string;
+}
+
+export interface Wallet {
+  userId: string;
+  availableBalance: number;
+  pendingBalance: number;
+  currency: string;
+  totalEarned: number;
+  totalSpent: number;
+  totalRefunded: number;
+}
+
+export interface WalletTransaction {
+  id: string;
+  userId: string;
+  paymentId?: string;
+  bookingId?: string;
+  rideId?: string;
+  type: WalletTransactionType;
+  direction: 'credit' | 'debit';
+  amount: number;
+  currency: string;
+  status: 'pending' | 'posted' | 'reversed';
+  description?: string;
+  createdAt: string;
+}
 
 export interface Booking {
   id: string;
