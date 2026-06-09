@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -18,6 +19,7 @@ from app.domains.lifecycle import (
     BOOKING_PAID,
     BOOKING_PENDING,
     BOOKING_REJECTED,
+    BOOKING_EXPIRED,
     RIDE_ACTIVE,
     RIDE_COMPLETED,
     can_transition_booking,
@@ -46,6 +48,8 @@ class BookingsService:
             raise HTTPException(status_code=404, detail="Ride not found")
         if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
+        if ride.departure_time <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot book a ride that has already departed")
         if ride.available_seats < booking_in.seats_booked:
             raise HTTPException(status_code=400, detail="Not enough available seats")
         if current_user.role == "admin":
@@ -72,15 +76,19 @@ class BookingsService:
         return booking_to_response(booking)
 
     def get_my_bookings(self, current_user: CurrentUser) -> list[BookingResponse]:
+        bookings = self.bookings.list_for_passenger(current_user.id)
+        self._lazy_expire_bookings(bookings)
         return [
             booking_to_response(booking)
-            for booking in self.bookings.list_for_passenger(current_user.id)
+            for booking in bookings
         ]
 
     def get_booking_requests(self, current_user: CurrentUser) -> list[BookingResponse]:
+        bookings = self.bookings.list_requests_for_driver(current_user.id)
+        self._lazy_expire_bookings(bookings)
         return [
             booking_to_response(booking)
-            for booking in self.bookings.list_requests_for_driver(current_user.id)
+            for booking in bookings
         ]
 
     def confirm_booking(
@@ -102,6 +110,7 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         booking.status = BOOKING_ACCEPTED
+        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=24)
         ride.available_seats -= booking.seats_booked
         self.bookings.save(booking)
 
@@ -149,7 +158,7 @@ class BookingsService:
                 status_code=403, detail="Only the passenger can cancel this booking"
             )
 
-        if booking.status in [BOOKING_CANCELLED, BOOKING_REJECTED, BOOKING_COMPLETED]:
+        if booking.status in [BOOKING_CANCELLED, BOOKING_REJECTED, BOOKING_COMPLETED, BOOKING_EXPIRED]:
             raise HTTPException(
                 status_code=400, detail="Booking cannot be cancelled in current status"
             )
@@ -190,12 +199,14 @@ class BookingsService:
         booking = self.bookings.get(booking_id)
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
+        self._lazy_expire_bookings([booking])
         return booking
 
     def _get_booking_for_update(self, booking_id: UUID) -> Booking:
         booking = self.bookings.get_for_update(booking_id)
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
+        self._lazy_expire_bookings([booking])
         return booking
 
     def _get_booking_ride(self, booking: Booking):
@@ -209,3 +220,23 @@ class BookingsService:
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         return ride
+
+    def _lazy_expire_bookings(self, bookings: list[Booking]) -> None:
+        now = datetime.now(timezone.utc)
+        expired = []
+        for booking in bookings:
+            if booking.status == BOOKING_ACCEPTED and booking.payment_deadline and booking.payment_deadline < now:
+                expired.append(booking)
+        
+        for booking in expired:
+            booking.status = BOOKING_EXPIRED
+            ride = self.rides.get_ride_for_update(booking.ride_id)
+            if ride and ride.status != RIDE_COMPLETED:
+                ride.available_seats = min(ride.total_seats, ride.available_seats + booking.seats_booked)
+            self.bookings.save(booking)
+            self.notifications.send_push_notification(
+                user_id=booking.passenger_id,
+                title="Rezerv vaxtı bitdi",
+                body="Ödəniş edilmədiyi üçün rezerviniz ləğv edildi.",
+                data={"booking_id": str(booking.id), "type": "booking_expired"},
+            )

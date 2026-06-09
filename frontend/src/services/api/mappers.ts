@@ -62,6 +62,7 @@ export interface ApiBooking {
   status: Booking['status'];
   seats_booked: number;
   created_at: string;
+  payment_deadline?: string | null;
   ride?: ApiTrip | null;
   passenger?: ApiUser | null;
 }
@@ -173,6 +174,7 @@ export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
     status: apiBooking.status,
     seatsRequested: apiBooking.seats_booked,
     createdAt: apiBooking.created_at,
+    paymentDeadline: apiBooking.payment_deadline ?? undefined,
     trip: apiBooking.ride ? mapApiTripToTrip(apiBooking.ride) : undefined,
     passenger: apiBooking.passenger ? mapApiUserToUser(apiBooking.passenger) : undefined,
   };

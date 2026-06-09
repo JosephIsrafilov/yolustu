@@ -28,6 +28,8 @@ export interface PaymentsService {
   simulateWebhook(payload: WebhookPayload): Promise<void>;
   getWallet(): Promise<Wallet>;
   getWalletTransactions(page?: number, limit?: number): Promise<Paginated<WalletTransaction>>;
+  topupWallet(amount: number): Promise<{ detail: string; new_balance: number }>;
+  payFromWallet(bookingId: string): Promise<{ detail: string }>;
   listAdminPayments(params?: {
     page?: number;
     limit?: number;

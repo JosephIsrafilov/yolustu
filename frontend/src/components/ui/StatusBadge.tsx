@@ -11,6 +11,7 @@ const bookingStatusConfig: Record<BookingStatus, { variant: 'warning' | 'success
   cancelled: { variant: 'muted' },
   paid: { variant: 'success' },
   completed: { variant: 'brand' },
+  expired: { variant: 'muted' },
 };
 
 const tripStatusConfig: Record<TripStatus, { variant: 'success' | 'muted' | 'brand' }> = {
@@ -27,6 +28,7 @@ const bookingStatusLabels = {
     cancelled: 'Ləğv edildi',
     paid: 'Ödənildi',
     completed: 'Tamamlandı',
+    expired: 'Vaxtı bitdi',
   },
   ru: {
     pending: 'В ожидании',
@@ -35,6 +37,7 @@ const bookingStatusLabels = {
     cancelled: 'Отменено',
     paid: 'Оплачено',
     completed: 'Завершено',
+    expired: 'Просрочено',
   },
   en: {
     pending: 'Pending',
@@ -43,6 +46,7 @@ const bookingStatusLabels = {
     cancelled: 'Cancelled',
     paid: 'Paid',
     completed: 'Completed',
+    expired: 'Expired',
   }
 } as const;
 

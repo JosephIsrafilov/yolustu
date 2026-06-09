@@ -61,6 +61,8 @@ class PaymentService:
             raise HTTPException(
                 status_code=400, detail="Booking must be accepted before payment"
             )
+        if ride.departure_time <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot pay for a ride that has already departed")
         if ride.available_seats < 0:
             raise HTTPException(status_code=400, detail="Booking has no reserved seats")
 
@@ -304,6 +306,122 @@ class PaymentService:
             )
             booking.status = "completed"
         self.db.commit()
+
+    def topup_wallet(self, current_user: CurrentUser, amount: Decimal) -> dict:
+        import uuid
+        amount = money(amount)
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Topup amount must be positive")
+        
+        wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
+        wallet.available_balance = money(wallet.available_balance + amount)
+        
+        tx = WalletTransaction(
+            user_id=current_user.id,
+            type="topup",
+            direction="credit",
+            amount=amount,
+            currency=settings.PAYMENT_CURRENCY,
+            status="posted",
+            description="Wallet top-up (Fake Payment)",
+            idempotency_key=f"topup:{uuid.uuid4()}",
+        )
+        self.wallets.add_transaction(tx)
+        self.db.commit()
+        return {"detail": "Topup successful", "new_balance": wallet.available_balance}
+
+    def pay_booking_from_wallet(self, booking_id: UUID, current_user: CurrentUser) -> dict:
+        import uuid
+        booking = self.bookings.get_for_update(booking_id)
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        ride = self.rides.get_ride_for_update(booking.ride_id)
+        if not ride:
+            raise HTTPException(status_code=404, detail="Ride not found")
+            
+        if booking.passenger_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if booking.status != BOOKING_ACCEPTED:
+            raise HTTPException(status_code=400, detail="Booking must be accepted")
+        if ride.departure_time <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot pay for a ride that has already departed")
+        
+        amount = money(booking.total_price or 0)
+        wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
+        if wallet.available_balance < amount:
+            raise HTTPException(status_code=400, detail="Insufficient wallet balance")
+            
+        wallet.available_balance = money(wallet.available_balance - amount)
+        
+        fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
+        service_fee = money(amount * fee_percent / Decimal("100"))
+        driver_amount = money(amount - service_fee)
+        
+        payment = Payment(
+            booking_id=booking.id,
+            passenger_id=booking.passenger_id,
+            driver_id=ride.driver_id,
+            amount=amount,
+            service_fee=service_fee,
+            driver_amount=driver_amount,
+            currency=settings.PAYMENT_CURRENCY,
+            provider="wallet",
+            status=PAYMENT_SUCCEEDED,
+            idempotency_key=f"wallet_payment:{booking.id}:{uuid.uuid4()}",
+            paid_at=datetime.now(timezone.utc),
+        )
+        self.payments.add(payment)
+        self.db.flush()
+        
+        booking.status = BOOKING_PAID
+        
+        self._ledger(
+            user_id=payment.passenger_id,
+            payment=payment,
+            booking_id=booking.id,
+            ride_id=ride.id,
+            tx_type="passenger_payment",
+            direction="debit",
+            amount=payment.amount,
+            status="posted",
+            description="Passenger payment from wallet",
+            idempotency_key=f"payment:{payment.id}:passenger_payment",
+        )
+        
+        self._ledger(
+            user_id=payment.driver_id,
+            payment=payment,
+            booking_id=booking.id,
+            ride_id=ride.id,
+            tx_type="driver_pending_earning",
+            direction="credit",
+            amount=payment.driver_amount,
+            status="pending",
+            description="Driver pending earning",
+            idempotency_key=f"payment:{payment.id}:driver_pending_earning",
+            balance_bucket="pending",
+        )
+        self._ledger(
+            user_id=payment.driver_id,
+            payment=payment,
+            booking_id=booking.id,
+            ride_id=ride.id,
+            tx_type="platform_fee",
+            direction="debit",
+            amount=payment.service_fee,
+            status="posted",
+            description="Platform service fee",
+            idempotency_key=f"payment:{payment.id}:platform_fee",
+        )
+        
+        self.db.commit()
+        self.notifications.send_push_notification(
+            user_id=payment.driver_id,
+            title="Ödəniş qəbul edildi",
+            body=f"Rezerv {booking.id} üçün {payment.amount} AZN ödəniş alındı (Cüzdanla).",
+            data={"booking_id": str(booking.id), "type": "payment_received"},
+        )
+        return {"detail": "Payment succeeded"}
 
     def wallet_for_user(self, current_user: CurrentUser) -> dict:
         wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)

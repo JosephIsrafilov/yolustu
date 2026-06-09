@@ -83,6 +83,7 @@ class RideSeed:
     pets_allowed: bool = False
     music_allowed: bool = True
     female_only: bool = False
+    departure_offset_hours: int | None = None
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,7 @@ class BookingSeed:
     seats_booked: int
     status: str
     created_offset_days: int
+    payment_deadline_offset_hours: int | None = None
 
 
 @dataclass(frozen=True)
@@ -166,17 +168,18 @@ RIDES: list[RideSeed] = [
     RideSeed("ride-16", "driver.leyla", "vehicle.leyla.cclass", "Bakı", "Lənkəran", -3, time(12, 15), 3, 19, RIDE_COMPLETED, "Completed women-only southbound ride.", female_only=True),
     RideSeed("ride-17", "driver.elvin", "vehicle.elvin.passat", "Bakı", "Mingəçevir", 3, time(6, 50), 4, 21, RIDE_CANCELLED, "Cancelled due to vehicle maintenance."),
     RideSeed("ride-18", "driver.murad", "vehicle.murad.elantra", "Bakı", "Quba", 4, time(13, 35), 3, 13, RIDE_CANCELLED, "Cancelled after weather warning."),
+    RideSeed("ride-19", "driver.kamran", "vehicle.kamran.rio", "Bakı", "Quba", 0, time(0, 0), 4, 15, RIDE_ACTIVE, "Active but expired ride for negative tests.", departure_offset_hours=-5),
 ]
 
 BOOKINGS: list[BookingSeed] = [
     BookingSeed("booking-01", "ride-01", "passenger.aysel", 1, BOOKING_PENDING, -1),
-    BookingSeed("booking-02", "ride-01", "passenger.farid", 1, BOOKING_ACCEPTED, -1),
-    BookingSeed("booking-03", "ride-02", "passenger.nigar", 2, BOOKING_ACCEPTED, -1),
+    BookingSeed("booking-02", "ride-01", "passenger.farid", 1, BOOKING_ACCEPTED, -1, payment_deadline_offset_hours=-2),
+    BookingSeed("booking-03", "ride-02", "passenger.nigar", 2, BOOKING_ACCEPTED, -1, payment_deadline_offset_hours=12),
     BookingSeed("booking-04", "ride-03", "passenger.reshad", 1, BOOKING_PAID, -1),
     BookingSeed("booking-05", "ride-04", "passenger.fidan", 1, BOOKING_PENDING, -1),
     BookingSeed("booking-06", "ride-05", "passenger.orxan", 1, BOOKING_REJECTED, -2),
     BookingSeed("booking-07", "ride-06", "passenger.aysel", 1, BOOKING_CANCELLED, -2),
-    BookingSeed("booking-08", "ride-07", "passenger.farid", 1, BOOKING_ACCEPTED, -1),
+    BookingSeed("booking-08", "ride-07", "passenger.farid", 1, BOOKING_ACCEPTED, -1, payment_deadline_offset_hours=20),
     BookingSeed("booking-09", "ride-13", "passenger.aysel", 1, BOOKING_COMPLETED, -3),
     BookingSeed("booking-10", "ride-13", "passenger.nigar", 1, BOOKING_COMPLETED, -3),
     BookingSeed("booking-11", "ride-14", "passenger.reshad", 1, BOOKING_COMPLETED, -2),
@@ -216,7 +219,9 @@ def seed_uuid(*parts: str) -> uuid.UUID:
     return uuid.uuid5(SEED_NAMESPACE, ":".join(parts))
 
 
-def departure_datetime(offset_days: int, departure_at: time) -> datetime:
+def departure_datetime(offset_days: int, departure_at: time, offset_hours: int | None = None) -> datetime:
+    if offset_hours is not None:
+        return datetime.now(timezone.utc) + timedelta(hours=offset_hours)
     return datetime.combine(date.today() + timedelta(days=offset_days), departure_at, tzinfo=timezone.utc)
 
 
@@ -322,7 +327,7 @@ def upsert_ride(session: Session, payload: RideSeed, driver_id: uuid.UUID, vehic
     ride.destination_location = city_point(payload.destination_city)
     ride.destination_city = payload.destination_city
     ride.intermediate_cities = payload.intermediate_cities
-    ride.departure_time = departure_datetime(payload.departure_offset_days, payload.departure_at)
+    ride.departure_time = departure_datetime(payload.departure_offset_days, payload.departure_at, payload.departure_offset_hours)
     ride.total_seats = payload.total_seats
     ride.available_seats = payload.total_seats
     ride.price_per_seat = Decimal(str(payload.price_per_seat)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -349,6 +354,10 @@ def upsert_booking(session: Session, payload: BookingSeed, ride_id: uuid.UUID, p
     booking.total_price = Decimal(str(total_price)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     booking.status = payload.status
     booking.created_at = created_datetime(payload.created_offset_days)
+    if payload.payment_deadline_offset_hours is not None:
+        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=payload.payment_deadline_offset_hours)
+    else:
+        booking.payment_deadline = None
     session.flush()
     return booking, created
 

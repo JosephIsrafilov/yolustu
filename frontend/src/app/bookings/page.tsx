@@ -83,6 +83,9 @@ export default function BookingsPage() {
                       alert(copy.paymentFail);
                     }
                   }}
+                  onWalletPaySuccess={async () => {
+                    await fetchBookings();
+                  }}
                 />
               );
             })}

@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from typing import cast
@@ -22,6 +23,7 @@ class FakeRide:
     driver_id: UUID
     available_seats: int = 2
     total_seats: int = 3
+    departure_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1))
     status: str = "active"
 
 
@@ -33,6 +35,7 @@ class FakeBooking:
     seats_booked: int
     total_price: Decimal
     status: str
+    payment_deadline: datetime | None = None
 
 
 class FakePaymentRepository:

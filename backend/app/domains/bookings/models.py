@@ -16,6 +16,7 @@ class Booking(Base):
     seats_booked = Column(Integer, nullable=False)
     total_price = Column(Numeric(12, 2), nullable=True)
     status = Column(String(20), default="pending")
+    payment_deadline = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     ride = relationship("Ride", back_populates="bookings")

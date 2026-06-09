@@ -1,10 +1,12 @@
 'use client';
 
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
+import WalletPaymentModal from './WalletPaymentModal';
 import { formatPrice } from '@/lib/utils';
 import type { Booking, Trip, User } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,20 +20,27 @@ interface BookingCardProps {
   onCancel?: () => void;
   onReview?: () => void;
   onPay?: () => void;
+  onWalletPaySuccess?: () => void;
 }
 
 const BOOKING_CARD_I18N = {
   az: {
     chat: 'Söhbət',
     seatsUnit: 'yer',
+    walletPay: 'Cüzdanla ödə',
+    expiresIn: 'Son tarix:',
   },
   ru: {
     chat: 'Чат',
     seatsUnit: 'мест',
+    walletPay: 'Оплатить с кошелька',
+    expiresIn: 'Срок:',
   },
   en: {
     chat: 'Chat',
     seatsUnit: 'seats',
+    walletPay: 'Pay from wallet',
+    expiresIn: 'Expires:',
   },
 } as const;
 
@@ -42,8 +51,10 @@ export default function BookingCard({
   onCancel,
   onReview,
   onPay,
+  onWalletPaySuccess,
 }: BookingCardProps) {
   const router = useRouter();
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const language = useAppStore((state) => state.language);
   const unreadRides = useAppStore((state) => state.unreadRides) || {};
   const copy = I18N[language].bookings;
@@ -55,7 +66,8 @@ export default function BookingCard({
   const canReview = booking.status === 'completed';
 
   return (
-    <Card className="animate-fade-in min-h-[160px] flex flex-col justify-between">
+    <>
+      <Card className="animate-fade-in min-h-[160px] flex flex-col justify-between">
       {/* Top info */}
       <div className="grid grid-cols-[1fr_auto] gap-4 mb-3 items-start h-12">
         <div className="min-w-0">
@@ -75,7 +87,12 @@ export default function BookingCard({
       {/* Booking info */}
       <div className="flex items-center gap-4 text-sm text-text-secondary mb-3 h-5">
         <span className="font-semibold text-brand-600 shrink-0 flex-none">{formatPrice(trip.pricePerSeat)}</span>
-        <span className="truncate block w-full">{booking.seatsRequested} {localCopy.seatsUnit}</span>
+        <span className="truncate block">{booking.seatsRequested} {localCopy.seatsUnit}</span>
+        {booking.status === 'accepted' && booking.paymentDeadline && (
+          <span className="truncate block ml-auto text-xs text-red-500 font-medium">
+            {localCopy.expiresIn} {new Date(booking.paymentDeadline).toLocaleString()}
+          </span>
+        )}
       </div>
 
       {/* Driver info */}
@@ -95,14 +112,25 @@ export default function BookingCard({
       )}
 
       {/* Actions */}
-      {(canCancel || canReview || (booking.status === 'accepted' && onPay) || ['accepted', 'paid'].includes(booking.status)) && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-border flex-nowrap items-center h-12 w-full">
-          {booking.status === 'accepted' && onPay && (
-            <Button variant="primary" size="sm" onClick={onPay} className="flex-1 w-full">
-              <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
-              <span className="truncate">{copy.payBtn}</span>
-            </Button>
+      {(canCancel || canReview || (booking.status === 'accepted' && (onPay || onWalletPaySuccess)) || ['accepted', 'paid'].includes(booking.status)) && (
+        <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border w-full">
+          {booking.status === 'accepted' && (onPay || onWalletPaySuccess) && (
+            <div className="flex gap-2 w-full">
+              {onPay && (
+                <Button variant="primary" size="sm" onClick={onPay} className="flex-1">
+                  <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
+                  <span className="truncate">{copy.payBtn}</span>
+                </Button>
+              )}
+              {onWalletPaySuccess && (
+                <Button variant="secondary" size="sm" onClick={() => setIsWalletModalOpen(true)} className="flex-1">
+                  <Icon name="credit-card" size={14} className="shrink-0 flex-none" />
+                  <span className="truncate">{localCopy.walletPay}</span>
+                </Button>
+              )}
+            </div>
           )}
+          <div className="flex gap-2 flex-nowrap items-center h-12 w-full">
           {['accepted', 'paid'].includes(booking.status) && (
             <Button
               variant="outline"
@@ -131,8 +159,24 @@ export default function BookingCard({
               <span className="truncate">{copy.reviewBtn}</span>
             </Button>
           )}
+          </div>
         </div>
       )}
-    </Card>
+      </Card>
+
+      <WalletPaymentModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        booking={booking}
+        onPayDirect={() => {
+          setIsWalletModalOpen(false);
+          if (onPay) onPay();
+        }}
+        onPaymentSuccess={() => {
+          setIsWalletModalOpen(false);
+          if (onWalletPaySuccess) onWalletPaySuccess();
+        }}
+      />
+    </>
   );
 }

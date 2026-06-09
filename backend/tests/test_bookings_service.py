@@ -1,8 +1,20 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import cast
 from uuid import UUID, uuid4
+
+import pytest
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.domains.bookings.services import BookingsService
+from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.schemas import BookingCreate
+from app.domains.identity.dependencies import CurrentUser
+from app.domains.trips.ports import RideLookupPort
+from app.core.notifications import NotificationService
+
 
 import pytest
 from fastapi import HTTPException
@@ -23,6 +35,7 @@ class FakeRide:
     available_seats: int
     total_seats: int
     price_per_seat: Decimal
+    departure_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1))
     status: str = "active"
 
 
@@ -34,6 +47,7 @@ class FakeBooking:
     seats_booked: int
     total_price: Decimal
     status: str = "pending"
+    payment_deadline: datetime | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
     passenger: object | None = None

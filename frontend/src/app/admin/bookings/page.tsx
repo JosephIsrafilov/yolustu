@@ -34,6 +34,7 @@ const BOOKINGS_I18N = {
       cancelled: 'Ləğv edildi',
       paid: 'Ödənildi',
       completed: 'Tamamlandı',
+      expired: 'Vaxtı bitdi',
     },
     table: {
       passenger: 'Sərnişin',
@@ -68,6 +69,7 @@ const BOOKINGS_I18N = {
       cancelled: 'Отменено',
       paid: 'Оплачено',
       completed: 'Завершено',
+      expired: 'Просрочено',
     },
     table: {
       passenger: 'Пассажир',
@@ -102,6 +104,7 @@ const BOOKINGS_I18N = {
       cancelled: 'Cancelled',
       paid: 'Paid',
       completed: 'Completed',
+      expired: 'Expired',
     },
     table: {
       passenger: 'Passenger',

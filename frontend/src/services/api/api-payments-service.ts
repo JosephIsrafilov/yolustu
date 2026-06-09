@@ -178,6 +178,15 @@ export const apiPaymentsService: PaymentsService = {
     };
   },
 
+  async topupWallet(amount: number) {
+    const res = await apiClient.post<{ detail: string; new_balance: number | string }>('/wallet/me/topup', { amount });
+    return { detail: res.detail, new_balance: Number(res.new_balance) };
+  },
+
+  async payFromWallet(bookingId: string) {
+    return await apiClient.post<{ detail: string }>('/payments/wallet-pay', { booking_id: bookingId });
+  },
+
   async listAdminPayments(params = {}) {
     const query = new URLSearchParams();
     query.set('page', String(params.page ?? 1));

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { getCurvedPath } from './utils';
 
 interface TripRouteProps {
   origin: { lat: number; lng: number };
@@ -61,7 +62,7 @@ export default function TripRoute({ origin, destination, departureCity, arrivalC
       .catch((error) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         console.error('Route geometry error:', error);
-        setRoutePositions([]);
+        setRoutePositions(getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]));
       });
 
     return () => controller.abort();

@@ -69,7 +69,7 @@ export interface Trip {
   availableSpots?: string[];
 }
 
-export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed';
+export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed' | 'expired';
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'refunded';
 export type WalletTransactionType =
   | 'passenger_payment'
@@ -131,7 +131,9 @@ export interface Booking {
   passengerId: string;
   status: BookingStatus;
   seatsRequested: number;
+  totalPrice?: number;
   createdAt: string;
+  paymentDeadline?: string;
   trip?: Trip;
   passenger?: User;
 }

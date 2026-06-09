@@ -26,3 +26,16 @@ def get_my_wallet_transactions(
     db: Session = Depends(get_db),
 ):
     return PaymentService(db).wallet_transactions(current_user, page=page, limit=limit)
+
+from pydantic import BaseModel
+class TopupRequest(BaseModel):
+    amount: float
+
+@router.post("/me/topup")
+def topup_wallet(
+    request: TopupRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from decimal import Decimal
+    return PaymentService(db).topup_wallet(current_user, Decimal(str(request.amount)))

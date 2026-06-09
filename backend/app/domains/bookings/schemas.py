@@ -25,6 +25,7 @@ class BookingResponse(BookingBase):
     passenger_id: UUID
     status: str
     total_price: Optional[Decimal] = None
+    payment_deadline: Optional[datetime] = None
     created_at: datetime
     ride: Optional[RideResponse] = None
     passenger: Optional[UserResponse] = None
@@ -38,6 +39,7 @@ def booking_to_response(booking: Any) -> BookingResponse:
         seats_booked=booking.seats_booked,
         status=booking.status,
         total_price=booking.total_price,
+        payment_deadline=booking.payment_deadline,
         created_at=booking.created_at,
         ride=ride_to_response(booking.ride) if booking.ride else None,
         passenger=booking.passenger,

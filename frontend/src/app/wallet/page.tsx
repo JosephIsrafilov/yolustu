@@ -4,6 +4,7 @@ import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import WebLayout from '@/components/layout/WebLayout';
 import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Icon from '@/components/ui/Icon';
 import LoadingState from '@/components/ui/LoadingState';
@@ -11,6 +12,7 @@ import { paymentsService } from '@/services';
 import type { Wallet, WalletTransaction } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
+import TopUpModal from './TopUpModal';
 
 const WALLET_COPY = {
   az: {
@@ -22,6 +24,8 @@ const WALLET_COPY = {
     refunded: 'Qaytarılıb',
     history: 'Əməliyyat tarixçəsi',
     empty: 'Balans əməliyyatı yoxdur',
+    topup: 'Balansı artır',
+    topupPrompt: 'Məbləği daxil edin (AZN):',
   },
   ru: {
     title: 'Баланс',
@@ -32,6 +36,8 @@ const WALLET_COPY = {
     refunded: 'Возвраты',
     history: 'История операций',
     empty: 'Операций по балансу пока нет',
+    topup: 'Пополнить',
+    topupPrompt: 'Введите сумму (AZN):',
   },
   en: {
     title: 'Wallet',
@@ -42,6 +48,8 @@ const WALLET_COPY = {
     refunded: 'Refunded',
     history: 'Transaction history',
     empty: 'No wallet transactions yet',
+    topup: 'Top up',
+    topupPrompt: 'Enter amount (AZN):',
   },
 } as const;
 
@@ -55,6 +63,8 @@ export default function WalletPage() {
   const [wallet, setWallet] = React.useState<Wallet | null>(null);
   const [transactions, setTransactions] = React.useState<WalletTransaction[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isTopUpOpen, setIsTopUpOpen] = React.useState(false);
+  const [isTopUpLoading, setIsTopUpLoading] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -78,6 +88,24 @@ export default function WalletPage() {
     };
   }, []);
 
+  const handleTopup = async (amount: number) => {
+    try {
+      setIsTopUpLoading(true);
+      await paymentsService.topupWallet(amount);
+      const [walletResponse, txResponse] = await Promise.all([
+        paymentsService.getWallet(),
+        paymentsService.getWalletTransactions(1, 50),
+      ]);
+      setWallet(walletResponse);
+      setTransactions(txResponse.items);
+    } catch (err) {
+      alert('Top up failed');
+      throw err;
+    } finally {
+      setIsTopUpLoading(false);
+    }
+  };
+
   return (
     <WebLayout title={copy.title}>
       <ProtectedRoute>
@@ -86,9 +114,14 @@ export default function WalletPage() {
         ) : (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
-              <Card className="bg-brand-900 text-white">
+              <Card className="bg-brand-900 text-white relative">
                 <p className="text-sm text-white/70">{copy.available}</p>
                 <p className="mt-2 text-3xl font-black">{formatPrice(wallet?.availableBalance ?? 0)}</p>
+                <div className="absolute top-4 right-4">
+                  <Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" onClick={() => setIsTopUpOpen(true)}>
+                    {copy.topup}
+                  </Button>
+                </div>
               </Card>
               <Card>
                 <p className="text-sm text-text-muted">{copy.pending}</p>
@@ -131,6 +164,12 @@ export default function WalletPage() {
             </Card>
           </div>
         )}
+        <TopUpModal 
+          isOpen={isTopUpOpen} 
+          onClose={() => setIsTopUpOpen(false)} 
+          onSuccess={handleTopup} 
+          isLoading={isTopUpLoading} 
+        />
       </ProtectedRoute>
     </WebLayout>
   );

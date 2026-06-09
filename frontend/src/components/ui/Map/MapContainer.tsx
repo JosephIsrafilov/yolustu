@@ -1,4 +1,4 @@
-import { MapContainer as LeafletMap, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, useMap, AttributionControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import React, { useEffect } from 'react';
@@ -54,14 +54,17 @@ const MapContainer = ({ center = [40.4093, 49.8671], zoom = 12, children, classN
   const hasHeight = className && (className.includes('h-') || className.includes('min-h-'));
 
   return (
-    <div className={cn(!hasHeight && 'h-[400px]', 'w-full relative flex flex-col', className)}>
+    <div className={cn(!hasHeight && 'h-[400px]', 'w-full relative flex flex-col rounded-2xl overflow-hidden shadow-sm border border-border z-0', className)}>
       <LeafletMap 
         center={center} 
         zoom={zoom} 
+        scrollWheelZoom={false}
+        attributionControl={false}
         style={{ height: '100%', width: '100%', minHeight: '100%', flexGrow: 1 }}
       >
         <ResizeMap />
         <ChangeView center={center} zoom={zoom} />
+        <AttributionControl prefix={false} position="bottomright" />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

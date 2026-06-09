@@ -26,6 +26,18 @@ def create_payment(
 ):
     return PaymentService(db).create_payment_session(request.booking_id, current_user)
 
+from pydantic import BaseModel
+class WalletPaymentRequest(BaseModel):
+    booking_id: UUID
+
+@router.post("/wallet-pay")
+def pay_from_wallet(
+    request: WalletPaymentRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return PaymentService(db).pay_booking_from_wallet(request.booking_id, current_user)
+
 
 @router.get("/admin", response_model=PaginatedResponse[PaymentResponse])
 def list_payments_admin(
