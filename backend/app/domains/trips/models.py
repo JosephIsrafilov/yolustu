@@ -64,3 +64,11 @@ class Ride(Base):
     bookings = relationship("Booking", back_populates="ride")
     reviews = relationship("Review", back_populates="ride")
     messages = relationship("Message", back_populates="ride")
+
+
+from sqlalchemy import Index
+
+Index("ix_rides_departure_time", Ride.departure_time)
+Index("ix_rides_status", Ride.status)
+Index("ix_rides_driver_id", Ride.driver_id)
+Index("ix_vehicles_user_id", Vehicle.user_id)

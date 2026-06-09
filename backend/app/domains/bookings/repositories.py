@@ -81,13 +81,25 @@ class BookingRepository:
         return [b.passenger_id for b in bookings]
 
     def list_for_passenger(self, passenger_id: UUID) -> list[Booking]:
-        return self.db.query(Booking).filter(Booking.passenger_id == passenger_id).all()
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Booking)
+            .options(joinedload(Booking.ride), joinedload(Booking.passenger))
+            .filter(Booking.passenger_id == passenger_id)
+            .all()
+        )
 
     def list_requests_for_driver(self, driver_id: UUID):
         from app.domains.trips.models import Ride
+        from sqlalchemy.orm import joinedload
 
         return (
-            self.db.query(Booking).join(Ride).filter(Ride.driver_id == driver_id).all()
+            self.db.query(Booking)
+            .join(Ride)
+            .filter(Ride.driver_id == driver_id)
+            .options(joinedload(Booking.ride), joinedload(Booking.passenger))
+            .all()
         )
 
     def count_all(self) -> int:

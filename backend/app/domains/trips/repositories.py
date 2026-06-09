@@ -91,14 +91,24 @@ class RideRepository:
         return self.db.query(Ride).filter(Ride.id == ride_id).with_for_update().first()
 
     def list_for_driver(self, driver_id: UUID) -> list[Ride]:
-        return self.db.query(Ride).filter(Ride.driver_id == driver_id).all()
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
+            .filter(Ride.driver_id == driver_id)
+            .all()
+        )
 
     def count_all(self) -> int:
         return self.db.query(Ride).count()
 
     def list_all(self, skip: int = 0, limit: int = 100) -> list[Ride]:
+        from sqlalchemy.orm import joinedload
+
         return (
             self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
             .order_by(Ride.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -106,10 +116,16 @@ class RideRepository:
         )
 
     def search(self, criteria: RideSearch) -> list[Ride]:
-        query = self.db.query(Ride).filter(
-            Ride.status == RIDE_ACTIVE,
-            Ride.available_seats >= criteria.min_seats,
-            Ride.departure_time > datetime.now(timezone.utc),
+        from sqlalchemy.orm import joinedload
+
+        query = (
+            self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
+            .filter(
+                Ride.status == RIDE_ACTIVE,
+                Ride.available_seats >= criteria.min_seats,
+                Ride.departure_time > datetime.now(timezone.utc),
+            )
         )
 
         if criteria.departure_date:

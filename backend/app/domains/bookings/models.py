@@ -21,3 +21,9 @@ class Booking(Base):
 
     ride = relationship("Ride", back_populates="bookings")
     passenger = relationship("User", back_populates="bookings")
+
+
+from sqlalchemy import Index
+
+Index("ix_bookings_passenger_id", Booking.passenger_id)
+Index("ix_bookings_ride_id", Booking.ride_id)
