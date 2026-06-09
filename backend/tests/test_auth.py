@@ -217,3 +217,32 @@ def test_verify_otp_rate_limit():
 
     status_codes = [r.status_code for r in responses]
     assert 429 in status_codes
+
+
+def test_request_password_reset_unknown_email():
+    response = client.post(
+        "/api/v1/auth/request-password-reset", json={"email": "unknown@example.com"}
+    )
+    assert response.status_code == 404
+    assert response.json()["error"]["message"] == "No account found with this email."
+
+
+def test_request_password_reset_invalid_email_format():
+    response = client.post(
+        "/api/v1/auth/request-password-reset", json={"email": "invalid-email"}
+    )
+    assert response.status_code == 422
+    assert "Invalid email format" in response.json()["error"]["message"]
+
+
+def test_request_password_reset_success(db):
+    user = db.query(User).filter(User.phone == SEED_PHONE).one()
+    # Ensure seed user has an email
+    user.email = "seed@example.com"
+    db.commit()
+
+    response = client.post(
+        "/api/v1/auth/request-password-reset", json={"email": " Seed@Example.com "}
+    )
+    assert response.status_code == 200
+    assert "reset code" in response.json()["message"]

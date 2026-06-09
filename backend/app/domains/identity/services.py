@@ -181,12 +181,17 @@ class IdentityService:
     def request_password_reset(
         self, email: str, redis_client, background_tasks: BackgroundTasks
     ):
+        import re
+
+        email = email.strip().lower()
+        if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
+            raise HTTPException(status_code=422, detail="Invalid email format")
+
         user = self.users.get_by_email(email)
         if not user:
-            # Do not reveal that user doesn't exist for security reasons
-            return {
-                "message": "If this email is registered, you will receive a reset code."
-            }
+            raise HTTPException(
+                status_code=404, detail="No account found with this email."
+            )
 
         background_tasks.add_task(self._send_email_code, email, redis_client)
         return {
