@@ -108,6 +108,26 @@ class WalletRepository:
         self.db.flush()
         return wallet
 
+    def get_or_create_for_update(self, user_id: UUID, currency: str = "AZN") -> Wallet:
+        wallet = (
+            self.db.query(Wallet)
+            .filter(Wallet.user_id == user_id)
+            .with_for_update()
+            .first()
+        )
+        if wallet:
+            return wallet
+        # If not found, create without lock. The calling service will commit.
+        wallet = Wallet(
+            user_id=user_id,
+            available_balance=Decimal("0.00"),
+            pending_balance=Decimal("0.00"),
+            currency=currency,
+        )
+        self.db.add(wallet)
+        self.db.flush()
+        return wallet
+
     def list_transactions(
         self, user_id: UUID, skip: int = 0, limit: int = 50
     ) -> list[WalletTransaction]:

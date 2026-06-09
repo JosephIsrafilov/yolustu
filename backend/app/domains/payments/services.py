@@ -323,7 +323,9 @@ class PaymentService:
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Topup amount must be positive")
 
-        wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
+        wallet = self.wallets.get_or_create_for_update(
+            current_user.id, settings.PAYMENT_CURRENCY
+        )
         wallet.available_balance = money(wallet.available_balance + amount)
 
         tx = WalletTransaction(
@@ -363,7 +365,9 @@ class PaymentService:
             )
 
         amount = money(booking.total_price or 0)
-        wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
+        wallet = self.wallets.get_or_create_for_update(
+            current_user.id, settings.PAYMENT_CURRENCY
+        )
         if wallet.available_balance < amount:
             raise HTTPException(status_code=400, detail="Insufficient wallet balance")
 
@@ -502,7 +506,7 @@ class PaymentService:
         if self.wallets.get_transaction_by_idempotency_key(idempotency_key):
             return
         amount = money(amount)
-        wallet = self.wallets.get_or_create(user_id, payment.currency)
+        wallet = self.wallets.get_or_create_for_update(user_id, payment.currency)
         sign = Decimal("1") if direction == "credit" else Decimal("-1")
         if balance_bucket == "pending":
             wallet.pending_balance = money(wallet.pending_balance + amount * sign)

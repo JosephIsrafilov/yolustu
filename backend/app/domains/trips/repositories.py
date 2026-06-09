@@ -191,7 +191,7 @@ class RideRepository:
         if criteria.music_allowed is not None:
             query = query.filter(Ride.music_allowed == criteria.music_allowed)
 
-        return query.all()
+        return query.offset(criteria.offset).limit(criteria.limit).all()
 
     def save(self, ride: Ride) -> Ride:
         self.db.commit()

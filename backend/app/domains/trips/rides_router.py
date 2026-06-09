@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
@@ -41,6 +41,8 @@ def search_rides(
     smoking_allowed: Optional[bool] = None,
     pets_allowed: Optional[bool] = None,
     music_allowed: Optional[bool] = None,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     return TripsService(db).search_rides(
@@ -57,6 +59,8 @@ def search_rides(
         smoking_allowed=smoking_allowed,
         pets_allowed=pets_allowed,
         music_allowed=music_allowed,
+        limit=limit,
+        offset=offset,
     )
 
 

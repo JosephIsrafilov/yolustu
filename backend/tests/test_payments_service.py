@@ -144,6 +144,12 @@ class FakeWalletRepository:
             )
         return self.wallets[user_id]
 
+    def get_or_create_for_update(
+        self, user_id: UUID, currency: str = "AZN"
+    ) -> FakeWallet:
+        # In memory fake doesn't need to lock
+        return self.get_or_create(user_id, currency)
+
     def get_transaction_by_idempotency_key(
         self, idempotency_key: str
     ) -> FakeWalletTransaction | None:

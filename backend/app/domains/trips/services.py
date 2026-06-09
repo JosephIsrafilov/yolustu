@@ -86,24 +86,27 @@ class TripsService:
         smoking_allowed: Optional[bool] = None,
         pets_allowed: Optional[bool] = None,
         music_allowed: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[RideResponse]:
-        rides = self.rides.search(
-            RideSearch(
-                origin_lat=origin_lat,
-                origin_lon=origin_lon,
-                dest_lat=dest_lat,
-                dest_lon=dest_lon,
-                origin_city=origin_city,
-                dest_city=dest_city,
-                departure_date=departure_date,
-                min_seats=min_seats,
-                radius_meters=radius_meters,
-                female_only=female_only,
-                smoking_allowed=smoking_allowed,
-                pets_allowed=pets_allowed,
-                music_allowed=music_allowed,
-            )
+        criteria = RideSearch(
+            origin_lat=origin_lat,
+            origin_lon=origin_lon,
+            dest_lat=dest_lat,
+            dest_lon=dest_lon,
+            origin_city=origin_city,
+            dest_city=dest_city,
+            departure_date=departure_date,
+            min_seats=min_seats,
+            radius_meters=radius_meters,
+            female_only=female_only,
+            smoking_allowed=smoking_allowed,
+            pets_allowed=pets_allowed,
+            music_allowed=music_allowed,
+            limit=limit,
+            offset=offset,
         )
+        rides = self.rides.search(criteria)
         return [ride_to_response(ride) for ride in rides]
 
     def get_my_rides(self, current_user: CurrentUser) -> list[RideResponse]:
@@ -161,7 +164,9 @@ class TripsService:
         self, vehicle_in: VehicleCreate, current_user: CurrentUser
     ) -> Vehicle:
         if current_user.role not in ["driver", "admin"]:
-            raise HTTPException(status_code=403, detail="Only drivers can create vehicles")
+            raise HTTPException(
+                status_code=403, detail="Only drivers can create vehicles"
+            )
         return self.vehicles.create(current_user.id, vehicle_in)
 
     def get_my_vehicles(self, current_user: CurrentUser) -> list[Vehicle]:
@@ -175,7 +180,9 @@ class TripsService:
 
     def delete_vehicle(self, vehicle_id: UUID, current_user: CurrentUser):
         if current_user.role not in ["driver", "admin"]:
-            raise HTTPException(status_code=403, detail="Only drivers can delete vehicles")
+            raise HTTPException(
+                status_code=403, detail="Only drivers can delete vehicles"
+            )
         vehicle = self.get_vehicle(vehicle_id)
         if vehicle.user_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")

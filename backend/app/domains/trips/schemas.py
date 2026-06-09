@@ -87,6 +87,8 @@ class RideSearch(BaseModel):
     smoking_allowed: Optional[bool] = None
     pets_allowed: Optional[bool] = None
     music_allowed: Optional[bool] = None
+    limit: int = 50
+    offset: int = 0
 
 
 class RideResponse(RideBase):
