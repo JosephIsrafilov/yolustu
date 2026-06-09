@@ -6,6 +6,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -65,8 +66,6 @@ class Ride(Base):
     reviews = relationship("Review", back_populates="ride")
     messages = relationship("Message", back_populates="ride")
 
-
-from sqlalchemy import Index
 
 Index("ix_rides_departure_time", Ride.departure_time)
 Index("ix_rides_status", Ride.status)

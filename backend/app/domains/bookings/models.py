@@ -1,6 +1,15 @@
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -22,8 +31,6 @@ class Booking(Base):
     ride = relationship("Ride", back_populates="bookings")
     passenger = relationship("User", back_populates="bookings")
 
-
-from sqlalchemy import Index
 
 Index("ix_bookings_passenger_id", Booking.passenger_id)
 Index("ix_bookings_ride_id", Booking.ride_id)
