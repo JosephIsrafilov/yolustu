@@ -160,6 +160,8 @@ class TripsService:
     def create_vehicle(
         self, vehicle_in: VehicleCreate, current_user: CurrentUser
     ) -> Vehicle:
+        if current_user.role not in ["driver", "admin"]:
+            raise HTTPException(status_code=403, detail="Only drivers can create vehicles")
         return self.vehicles.create(current_user.id, vehicle_in)
 
     def get_my_vehicles(self, current_user: CurrentUser) -> list[Vehicle]:
@@ -172,8 +174,10 @@ class TripsService:
         return vehicle
 
     def delete_vehicle(self, vehicle_id: UUID, current_user: CurrentUser):
+        if current_user.role not in ["driver", "admin"]:
+            raise HTTPException(status_code=403, detail="Only drivers can delete vehicles")
         vehicle = self.get_vehicle(vehicle_id)
-        if vehicle.user_id != current_user.id:
+        if vehicle.user_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
         self.vehicles.delete(vehicle)
         return {"message": "Vehicle deleted"}

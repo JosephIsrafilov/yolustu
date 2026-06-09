@@ -124,6 +124,7 @@ export default function CreateTripPage() {
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [isRecurring, setIsRecurring] = useState(false);
   const [carLayout, setCarLayout] = useState<'5-seater' | '7-seater'>('5-seater');
+  const [isDrafting, setIsDrafting] = useState(false);
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
@@ -204,43 +205,21 @@ export default function CreateTripPage() {
     return 12;
   }, [pickerMode, formValues.origin, formValues.destination, formValues.departureCity, formValues.arrivalCity]);
 
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiReasoning, setAiReasoning] = useState('');
-  const [aiSuggestedPrice, setAiSuggestedPrice] = useState<number | null>(null);
-  const [isDrafting, setIsDrafting] = useState(false);
-
-  const getAiSuggestion = async () => {
-    const values = getValues();
-    if (!values.departureCity || !values.arrivalCity || !values.time) return;
-    setIsAiLoading(true);
-    setAiSuggestedPrice(null);
-    setAiReasoning('');
-    const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
-    const carModel = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Standard Vehicle';
-
-    try {
-      const response = await apiAiService.getSmartPricingSuggestion({
-        origin: values.departureCity,
-        destination: values.arrivalCity,
-        departure_time: values.time,
-        departure_date: values.date,
-        language: language,
-        car_model: carModel,
-        seats_total: values.seatsTotal || 4,
-        origin_coords: values.origin ? { lat: values.origin.lat, lng: values.origin.lng } : undefined,
-        destination_coords: values.destination ? { lat: values.destination.lat, lng: values.destination.lng } : undefined,
-      });
-      if (response?.suggested_price) {
-        setAiSuggestedPrice(response.suggested_price);
-        setAiReasoning(response.reasoning);
-      }
-    } catch (error) {
-      console.error('AI Suggestion Error:', error);
-      setAiReasoning(copy.aiError);
-    } finally {
-      setIsAiLoading(false);
-    }
+  const getRecommendedPrice = (origin: string, dest: string): number | null => {
+    if (!origin || !dest) return null;
+    const o = origin.toLowerCase();
+    const d = dest.toLowerCase();
+    
+    if ((o === 'bakı' && d === 'şəki') || (o === 'şəki' && d === 'bakı')) return 24;
+    if ((o === 'bakı' && d === 'gəncə') || (o === 'gəncə' && d === 'bakı')) return 22;
+    if ((o === 'bakı' && d === 'quba') || (o === 'quba' && d === 'bakı')) return 15;
+    if ((o === 'bakı' && d === 'lənkəran') || (o === 'lənkəran' && d === 'bakı')) return 20;
+    if ((o === 'bakı' && d === 'şamaxı') || (o === 'şamaxı' && d === 'bakı')) return 10;
+    
+    return 15;
   };
+
+  const recommendedPrice = getRecommendedPrice(formValues.departureCity, formValues.arrivalCity);
 
   const handleGenerateDescription = async () => {
     const values = getValues();
@@ -566,7 +545,7 @@ export default function CreateTripPage() {
                 <div className="flex flex-col gap-6">
                   {vehicles.length > 0 && (
                     <Controller name="vehicleId" control={control} render={({ field }) => (
-                      <Select value={field.value || ''} onChange={(val) => { field.onChange(val); setAiSuggestedPrice(null); }} options={vehicles.map(v => ({ value: v.id, label: `${v.brand} ${v.model} (${v.plateNumber})` }))} placeholder="Select vehicle" />
+                      <Select value={field.value || ''} onChange={(val) => { field.onChange(val); }} options={vehicles.map(v => ({ value: v.id, label: `${v.brand} ${v.model} (${v.plateNumber})` }))} placeholder="Select vehicle" />
                     )} />
                   )}
 
@@ -607,14 +586,10 @@ export default function CreateTripPage() {
                     {errors.seatsTotal && <p className="text-xs font-semibold text-red-500 mt-2">{errors.seatsTotal.message}</p>}
                   </div>
 
-                  {/* Tactical Price Input */}
+                    {/* Tactical Price Input */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500">{copy.pricePerSeat}</label>
-                      <button type="button" onClick={getAiSuggestion} disabled={isAiLoading || !formValues.departureCity || !formValues.arrivalCity || !formValues.time} className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-md border border-teal-200 hover:bg-teal-100 transition-colors flex items-center gap-1 disabled:opacity-50">
-                        {isAiLoading ? <Icon name="loader-2" size={12} className="animate-spin" /> : <Icon name="sparkles" size={12} />}
-                        {copy.aiSuggestBtn}
-                      </button>
                     </div>
                     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-between focus-within:border-teal-500 transition-colors">
                       <span className="text-2xl font-black text-slate-400">₼</span>
@@ -622,46 +597,19 @@ export default function CreateTripPage() {
                     </div>
                     {errors.pricePerSeat && <p className="text-xs font-semibold text-red-500">{errors.pricePerSeat.message}</p>}
 
-                    {aiSuggestedPrice && (() => {
-                      const ratio = formValues.pricePerSeat / aiSuggestedPrice;
-                      let statusColor = '#14b8a6';
-                      let statusText = 'Fair Price';
-                      let textColor = 'text-teal-600';
-
-                      if (ratio <= 0.8) {
-                        statusColor = '#3b82f6';
-                        statusText = 'Low Price';
-                        textColor = 'text-blue-600';
-                      } else if (ratio >= 1.2) {
-                        statusColor = '#f59e0b';
-                        statusText = 'High Price';
-                        textColor = 'text-amber-600';
-                      }
-
-                      return (
-                      <div className="mt-2 p-4 rounded-xl bg-slate-50 border border-slate-200 shadow-sm transition-all">
-                        <div className="flex items-center justify-between text-xs mb-3">
-                          <span className="font-bold text-slate-500 flex items-center gap-1"><Icon name="sparkles" size={12} className="text-teal-500" /> AI Suggested: {aiSuggestedPrice} ₼</span>
-                          <span className={`font-bold uppercase tracking-wider text-[10px] bg-white px-2 py-1 rounded shadow-sm border border-slate-100 ${textColor}`}>{statusText}</span>
+                    {recommendedPrice && formValues.pricePerSeat !== recommendedPrice && (
+                      <div className="mt-2 p-3 rounded-xl bg-teal-50 border border-teal-100 shadow-sm transition-all flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
+                            <Icon name="sparkles" size={12} className="text-teal-500" /> 
+                            {pageCopy.aiPriceSuggestion || "Tövsiyə olunan qiymət"}: {recommendedPrice} ₼
+                          </span>
                         </div>
-                        <div className="relative h-2.5 w-full rounded-full bg-slate-200 overflow-hidden shadow-inner">
-                          <div className="absolute h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (formValues.pricePerSeat / (aiSuggestedPrice * 2)) * 100)}%`, backgroundColor: statusColor }} />
-                          {/* Suggested Price Marker tick */}
-                          <div className="absolute left-1/2 top-0 h-full w-0.5 bg-slate-400 z-10" />
-                        </div>
-                        <div className="flex justify-between mt-1 text-[9px] font-bold text-slate-400">
-                          <span>0 ₼</span>
-                          <span>{aiSuggestedPrice * 2} ₼</span>
-                        </div>
-                        {aiReasoning && <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">{aiReasoning}</p>}
-                        {formValues.pricePerSeat !== aiSuggestedPrice && (
-                          <button type="button" onClick={() => setValue('pricePerSeat', aiSuggestedPrice)} className="mt-4 w-full rounded-lg bg-white border border-slate-200 text-teal-600 font-bold text-xs py-2.5 hover:bg-slate-50 hover:border-teal-300 transition-all active:scale-95">
-                            Apply Recommended Price ({aiSuggestedPrice} ₼)
-                          </button>
-                        )}
+                        <button type="button" onClick={() => setValue('pricePerSeat', recommendedPrice)} className="w-full rounded-lg bg-white border border-teal-200 text-teal-700 font-bold text-xs py-2 hover:bg-teal-50 transition-all active:scale-95">
+                          {pageCopy.applySuggestion || "Tövsiyə olunan qiyməti istifadə et"}
+                        </button>
                       </div>
-                      );
-                    })()}
+                    )}
                   </div>
 
                   {/* Preferences Grid */}

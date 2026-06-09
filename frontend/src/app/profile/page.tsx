@@ -860,7 +860,24 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-vehicles'] })
   });
 
-  if (!isDriver) return null;
+  if (!isDriver) {
+    return (
+      <Card className="mb-6 bg-slate-50 border-dashed">
+        <div className="text-center py-6">
+          <div className="mx-auto w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center mb-3">
+            <Icon name="car" size={24} className="text-slate-500" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Sürücü olmaq istəyirsiniz?</h3>
+          <p className="text-sm text-slate-500 mb-4">
+            Avtomobil əlavə etmək və gedişlər yaratmaq üçün sürücü kimi davam edin.
+          </p>
+          <Button onClick={() => useAppStore.getState().switchRole('driver')}>
+            Sürücü kimi davam et
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-6">
