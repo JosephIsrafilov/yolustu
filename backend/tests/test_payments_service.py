@@ -39,93 +39,24 @@ class FakeBooking:
     payment_deadline: datetime | None = None
 
 
+@dataclass
 class FakePayment:
-    def __init__(self, payment: Payment):
-        self._payment = payment
-
-    @property
-    def id(self) -> UUID:
-        return cast(UUID, self._payment.id)
-
-    @id.setter
-    def id(self, value: UUID) -> None:
-        self._payment.id = value
-
-    @property
-    def booking_id(self) -> UUID:
-        return cast(UUID, self._payment.booking_id)
-
-    @property
-    def passenger_id(self) -> UUID | None:
-        return cast(UUID | None, self._payment.passenger_id)
-
-    @property
-    def driver_id(self) -> UUID | None:
-        return cast(UUID | None, self._payment.driver_id)
-
-    @property
-    def amount(self) -> Decimal:
-        return Decimal(str(self._payment.amount))
-
-    @property
-    def service_fee(self) -> Decimal:
-        return Decimal(str(self._payment.service_fee))
-
-    @property
-    def driver_amount(self) -> Decimal:
-        return Decimal(str(self._payment.driver_amount))
-
-    @property
-    def currency(self) -> str:
-        return cast(str, self._payment.currency)
-
-    @property
-    def provider(self) -> str:
-        return cast(str, self._payment.provider)
-
-    @property
-    def status(self) -> str:
-        return cast(str, self._payment.status)
-
-    @status.setter
-    def status(self, value: str) -> None:
-        self._payment.status = value
-
-    @property
-    def transaction_id(self) -> str | None:
-        return cast(str | None, self._payment.transaction_id)
-
-    @property
-    def provider_payment_id(self) -> str | None:
-        return cast(str | None, self._payment.provider_payment_id)
-
-    @property
-    def provider_checkout_url(self) -> str | None:
-        return cast(str | None, self._payment.provider_checkout_url)
-
-    @property
-    def paid_at(self) -> datetime | None:
-        return cast(datetime | None, self._payment.paid_at)
-
-    @paid_at.setter
-    def paid_at(self, value: datetime | None) -> None:
-        self._payment.paid_at = value
-
-    @property
-    def payment_metadata(self) -> dict[str, Any] | None:
-        return cast(dict[str, Any] | None, self._payment.payment_metadata)
-
-    @payment_metadata.setter
-    def payment_metadata(self, value: dict[str, Any] | None) -> None:
-        self._payment.payment_metadata = value
-
-    @property
-    def refunded_at(self) -> datetime | None:
-        return cast(datetime | None, self._payment.refunded_at)
-
-    @refunded_at.setter
-    def refunded_at(self, value: datetime | None) -> None:
-        self._payment.refunded_at = value
+    id: UUID
+    booking_id: UUID
+    passenger_id: UUID | None
+    driver_id: UUID | None
+    amount: Decimal
+    service_fee: Decimal
+    driver_amount: Decimal
+    currency: str
+    provider: str
+    status: str
+    transaction_id: str | None = None
+    provider_payment_id: str | None = None
+    provider_checkout_url: str | None = None
+    paid_at: datetime | None = None
+    payment_metadata: dict[str, Any] | None = None
+    refunded_at: datetime | None = None
 
 
 @dataclass
@@ -157,12 +88,12 @@ class FakeWalletTransaction:
 
 
 class FakePaymentRepository:
-    def __init__(self):
+    def __init__(self) -> None:
         self.payments: dict[UUID, FakePayment] = {}
 
     def add(self, payment: Payment) -> Payment:
-        payment.id = uuid4()
-        self.payments[payment.id] = FakePayment(payment)
+        cast(Any, payment).id = uuid4()
+        self.payments[cast(Any, payment).id] = cast(Any, payment)
         return payment
 
     def get(self, payment_id: UUID) -> FakePayment | None:
