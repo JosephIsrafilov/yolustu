@@ -13,19 +13,22 @@ const COPY = {
   az: {
     support: 'Dəstək',
     contact: 'Dəstəklə əlaqə',
-    login: 'Dəstəklə əlaqə üçün daxil olun',
+    loginMessage: 'Dəstək komandası ilə yazışmaq üçün hesabınıza daxil olun.',
+    loginAction: 'Daxil ol',
     failed: 'Dəstək söhbətini açmaq olmadı',
   },
   ru: {
     support: 'Поддержка',
     contact: 'Связаться с поддержкой',
-    login: 'Войдите, чтобы связаться с поддержкой',
+    loginMessage: 'Чтобы написать в поддержку, войдите в аккаунт.',
+    loginAction: 'Войти',
     failed: 'Не удалось открыть чат поддержки',
   },
   en: {
     support: 'Support',
     contact: 'Contact support',
-    login: 'Log in to contact support',
+    loginMessage: 'Sign in to message the support team.',
+    loginAction: 'Sign in',
     failed: 'Failed to open support chat',
   },
 } as const;
@@ -41,20 +44,29 @@ export default function SupportWidget() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const buttonLabel = isAuthenticated ? t.contact : t.support;
 
-  if (pathname?.startsWith('/admin') || currentUser?.role === 'admin') {
+  const [prevPathname, setPrevPathname] = React.useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+  }
+
+  if (pathname !== '/' || currentUser?.role === 'admin') {
     return null;
   }
 
-  const openSupport = async () => {
-    if (!isAuthenticated) {
-      const redirect = encodeURIComponent(pathname || ROUTES.home);
-      router.push(`${ROUTES.login}?redirect_to=${redirect}`);
+  const toggleSupport = async () => {
+    if (open) {
+      setOpen(false);
       return;
     }
 
     setOpen(true);
+    
+    if (!isAuthenticated) {
+      return;
+    }
+
     if (conversationId) return;
 
     setLoading(true);
@@ -70,7 +82,7 @@ export default function SupportWidget() {
   };
 
   return (
-    <div className="group fixed right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(5rem,calc(env(safe-area-inset-bottom,0px)+5rem))] z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-3 sm:bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1.5rem))]">
+    <div className="fixed right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(5rem,calc(env(safe-area-inset-bottom,0px)+5rem))] z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-3 sm:bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1.5rem))]">
       {open && (
         <div className="h-[min(620px,calc(100vh-7rem))] w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-white shadow-2xl">
           <div className="flex h-full flex-col">
@@ -78,16 +90,35 @@ export default function SupportWidget() {
               <div className="font-semibold text-text">{t.support}</div>
               <button
                 type="button"
-                className="rounded-lg p-2 text-text-muted hover:bg-surface-muted"
+                className="rounded-lg p-2 text-text-muted hover:bg-surface-muted cursor-pointer"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
               >
                 <Icon name="x" size={18} />
               </button>
             </div>
-            {loading ? (
+            
+            {!isAuthenticated ? (
+              <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+                <div className="mb-4 rounded-full bg-slate-100 p-4 text-slate-500">
+                  <Icon name="message-square" size={32} />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-navy">{t.support}</h3>
+                <p className="mb-6 text-sm text-slate-500">{t.loginMessage}</p>
+                <Button 
+                  onClick={() => {
+                    setOpen(false);
+                    const redirect = encodeURIComponent(pathname || ROUTES.home);
+                    router.push(`${ROUTES.login}?redirect_to=${redirect}`);
+                  }}
+                  className="w-full bg-teal-500 hover:bg-teal-400 text-navy font-bold cursor-pointer"
+                >
+                  {t.loginAction}
+                </Button>
+              </div>
+            ) : loading ? (
               <div className="flex flex-1 items-center justify-center text-sm text-text-muted">
-                {t.support}
+                {t.support}...
               </div>
             ) : error ? (
               <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-danger-600">
@@ -100,21 +131,14 @@ export default function SupportWidget() {
         </div>
       )}
 
-      <Button
+      <button
         type="button"
-        onClick={openSupport}
-        aria-label={isAuthenticated ? t.contact : t.login}
-        className="h-12 overflow-hidden rounded-full shadow-lg transition-all duration-300 ease-in-out w-12 hover:w-[14rem] focus-visible:w-[14rem] sm:group-focus-within:w-[14rem] p-0 flex items-center bg-teal-500 hover:bg-teal-400 text-navy"
+        onClick={toggleSupport}
+        aria-label={t.support}
+        className="h-[52px] w-[52px] flex items-center justify-center rounded-full bg-teal-500 text-navy shadow-lg transition-transform hover:scale-105 hover:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 active:scale-95 cursor-pointer border-none p-0"
       >
-        <div className="flex items-center w-[14rem] h-full">
-          <div className="w-12 h-12 flex shrink-0 items-center justify-center">
-            <Icon name="message-square" size={18} />
-          </div>
-          <span className="whitespace-nowrap text-sm font-semibold opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-            {buttonLabel}
-          </span>
-        </div>
-      </Button>
+        <Icon name="message-square" size={24} />
+      </button>
     </div>
   );
 }
