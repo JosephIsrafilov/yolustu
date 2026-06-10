@@ -96,7 +96,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-md">
-      <div className="mx-auto grid h-[54px] w-full max-w-[1088px] grid-cols-[1fr_auto_1fr] items-center px-4">
+      <div className="mx-auto flex h-[54px] w-full max-w-[1088px] items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr]">
         <div className="min-w-0 justify-self-start">
           <YolmatesLogo size="md" />
         </div>
@@ -196,7 +196,7 @@ export default function Header() {
               <button
                 onClick={() => logout()}
                 aria-label={copy.header.logout}
-                className="rounded-full p-2 text-foreground/70 transition-colors hover:bg-accent hover:text-foreground active:scale-[0.96]"
+                className="hidden rounded-full p-2 text-foreground/70 transition-colors hover:bg-accent hover:text-foreground active:scale-[0.96] sm:block"
               >
                 <Icon name="log-out" size={18} />
               </button>
@@ -242,6 +242,17 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            {!isAdmin && isAuthenticated && capabilities.canBookRide && (
+              <Link
+                href={ROUTES.bookings}
+                onClick={() => setMobileOpen(false)}
+                className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
+                  isActive(ROUTES.bookings) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
+                }`}
+              >
+                {copy.header.bookings}
+              </Link>
+            )}
             {!isAdmin && isAuthenticated && (
               <Link
                 href={ROUTES.wallet}
@@ -251,6 +262,17 @@ export default function Header() {
                 }`}
               >
                 {language === 'az' ? 'Balans' : language === 'ru' ? 'Баланс' : 'Wallet'}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                href={isAdmin ? ROUTES.admin : ROUTES.profile}
+                onClick={() => setMobileOpen(false)}
+                className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
+                  isActive(isAdmin ? ROUTES.admin : ROUTES.profile) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
+                }`}
+              >
+                {copy.profile?.title || 'Profile'}
               </Link>
             )}
             {showPassengerSwitch && (
@@ -275,6 +297,41 @@ export default function Header() {
                 className="ui-nav-text text-left rounded-lg px-2 py-2 text-[#002f37] hover:bg-[#edfcff] transition-all"
               >
                 {modeCopy.toDriver}
+              </button>
+            )}
+            {!isAuthenticated && (
+              <>
+                <Link
+                  href={ROUTES.login}
+                  onClick={() => setMobileOpen(false)}
+                  className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
+                    isActive(ROUTES.login) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
+                  }`}
+                >
+                  {copy.header.login}
+                </Link>
+                <Link
+                  href={ROUTES.register}
+                  onClick={() => setMobileOpen(false)}
+                  className={`ui-nav-text rounded-lg px-2 py-2 transition-all duration-200 ease-out active:scale-[0.98] ${
+                    isActive(ROUTES.register) ? 'bg-[#edfcff] text-[#054752]' : 'text-[#40484a] hover:bg-[#edfcff] hover:text-[#054752]'
+                  }`}
+                >
+                  {copy.header.register}
+                </Link>
+              </>
+            )}
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout();
+                }}
+                className="ui-nav-text text-left rounded-lg px-2 py-2 text-red-600 hover:bg-red-50 transition-all flex items-center gap-2 mt-2"
+              >
+                <Icon name="log-out" size={18} />
+                <span>{copy.header.logout}</span>
               </button>
             )}
           </nav>
