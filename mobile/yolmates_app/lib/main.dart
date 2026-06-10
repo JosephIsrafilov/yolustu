@@ -1,9 +1,22 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'app/app.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'core/routes.dart';
+import 'core/theme.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: YolmatesApp()));
+  runApp(const YolmatesApp());
+}
+
+class YolmatesApp extends StatelessWidget {
+  const YolmatesApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'Yolmates',
+      theme: AppTheme.lightTheme,
+      routerConfig: router,
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }

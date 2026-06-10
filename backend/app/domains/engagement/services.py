@@ -171,6 +171,14 @@ class EngagementService:
     def _can_access_conversation(
         self, conv: Conversation, current_user: CurrentUser
     ) -> bool:
+        # Block check - blocked users cannot access conversations
+        if current_user.is_blocked:
+            return False
+
+        # Check conversation status - don't allow access to closed conversations for regular users
+        if conv.status == "closed" and current_user.role != "admin":
+            return False
+
         if current_user.role == "admin" and conv.type == "support":
             return True
         for p in conv.participants:

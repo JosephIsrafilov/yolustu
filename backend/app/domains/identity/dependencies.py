@@ -115,3 +115,15 @@ def get_current_user_from_websocket(
         websocket_token = websocket_token.split(" ", 1)[1]
 
     return get_current_user_from_token(websocket_token, db)
+
+
+def get_current_admin(
+    current_user: CurrentUser = Depends(get_current_user),
+) -> CurrentUser:
+    """Dependency that ensures the current user has admin role."""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

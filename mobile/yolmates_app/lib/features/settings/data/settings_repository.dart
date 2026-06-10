@@ -1,3 +1,0 @@
-class SettingsRepository {
-  const SettingsRepository();
-}

@@ -13,6 +13,7 @@ export default function Footer() {
   const links = [
     { label: copy.footer.about, href: '/about' },
     { label: copy.footer.help, href: '/help' },
+    // TODO: Create actual Terms and Privacy pages with legal content
     { label: copy.footer.terms, href: '/terms' },
     { label: copy.footer.privacy, href: '/privacy' },
   ];
