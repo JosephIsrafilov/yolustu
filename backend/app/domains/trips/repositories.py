@@ -1,13 +1,28 @@
 from uuid import UUID
 
 from geoalchemy2 import Geography
-from sqlalchemy import Date, cast, func
+from sqlalchemy import cast, func
 from sqlalchemy.orm import Session
 
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.schemas import RideCreate, RideSearch, VehicleCreate
 from app.domains.lifecycle import RIDE_ACTIVE
-from datetime import datetime, timezone
+from datetime import date as date_type, datetime, time, timezone
+
+
+def ride_search_window_start(departure_date: "date_type | None") -> "datetime | None":
+    """Return the inclusive lower bound for ``departure_time`` implied by a search
+    date, or ``None`` when no date is supplied.
+
+    A supplied ``departure_date`` is treated as the start of a forward window
+    (rides on that calendar day *or later*), not an exact same-day match. This
+    keeps real-mode search useful: clients that always send "today" still see
+    every upcoming ride instead of only the handful departing in the remaining
+    hours of the current day.
+    """
+    if departure_date is None:
+        return None
+    return datetime.combine(departure_date, time.min, tzinfo=timezone.utc)
 
 
 class VehicleRepository:
@@ -128,10 +143,9 @@ class RideRepository:
             )
         )
 
-        if criteria.departure_date:
-            query = query.filter(
-                cast(Ride.departure_time, Date) == criteria.departure_date
-            )
+        window_start = ride_search_window_start(criteria.departure_date)
+        if window_start is not None:
+            query = query.filter(Ride.departure_time >= window_start)
 
         dist_origin = None
         dist_dest = None

@@ -10,7 +10,6 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_list_tile.dart';
 import '../../../../shared/widgets/app_section_title.dart';
 import '../../../../shared/widgets/yolmates_logo.dart';
-import '../../domain/ride_search_filters.dart';
 import '../ride_search_date_utils.dart';
 
 class RideSearchScreen extends StatefulWidget {
@@ -25,14 +24,9 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
   String _fromCity = azCities.first;
   String _toCity = azCities.length > 1 ? azCities[1] : azCities.first;
   int _seats = 1;
-  late DateTime _date;
-
-  @override
-  void initState() {
-    super.initState();
-    _date = rideSearchInitialDate(null);
-    _syncDateLabel();
-  }
+  // Optional: when null, search returns all upcoming rides instead of being
+  // constrained to a single day. Only set when the user explicitly picks a date.
+  DateTime? _date;
 
   @override
   void dispose() {
@@ -41,8 +35,17 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
   }
 
   void _syncDateLabel() {
-    _dateController.text =
-        '${_date.day.toString().padLeft(2, '0')}.${_date.month.toString().padLeft(2, '0')}.${_date.year}';
+    final date = _date;
+    _dateController.text = date == null
+        ? ''
+        : '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+  }
+
+  void _clearDate() {
+    setState(() {
+      _date = null;
+      _syncDateLabel();
+    });
   }
 
   Future<void> _selectDate() async {
@@ -144,28 +147,34 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
               const SizedBox(height: 12),
               AppTextField(
                 controller: _dateController,
-                label: 'Departure date',
+                label: 'Departure date (optional)',
+                hintText: 'Any upcoming date',
                 readOnly: true,
                 prefixIcon: const Icon(Icons.calendar_today_outlined),
-                suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+                suffixIcon: _date == null
+                    ? const Icon(Icons.keyboard_arrow_down_rounded)
+                    : IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        tooltip: 'Clear date',
+                        onPressed: _clearDate,
+                      ),
                 onTap: _selectDate,
               ),
               const SizedBox(height: 12),
               AppButton(
                 label: l10n.continueLabel,
                 onPressed: () {
-                  final params = RideSearchFilters(
-                    fromCity: _fromCity,
-                    toCity: _toCity,
-                    seats: _seats,
-                    date: _date,
+                  final date = _date;
+                  final uri = Uri(
+                    path: '/rides/results',
+                    queryParameters: <String, String>{
+                      'from': _fromCity,
+                      'to': _toCity,
+                      'seats': '$_seats',
+                      if (date != null)
+                        'date': date.toIso8601String().split('T').first,
+                    },
                   );
-                  final uri = Uri(path: '/rides/results', queryParameters: <String, String>{
-                    'from': params.fromCity ?? '',
-                    'to': params.toCity ?? '',
-                    'seats': '$_seats',
-                    'date': _date.toIso8601String().split('T').first,
-                  });
                   context.push(uri.toString());
                 },
               ),
