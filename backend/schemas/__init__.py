@@ -1,1 +1,0 @@
-"""Legacy schema compatibility package."""

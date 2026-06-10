@@ -2,7 +2,7 @@ import importlib
 
 from fastapi.testclient import TestClient
 
-from main import app
+from app.main import app
 
 app_main = importlib.import_module("app.main")
 

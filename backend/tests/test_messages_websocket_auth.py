@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from main import app
+from app.main import app
 from app.domains.engagement.services import EngagementService
 from app.domains.identity.dependencies import CurrentUser
 

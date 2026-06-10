@@ -82,7 +82,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 # Copy backend/.env.example -> backend/.env and configure required keys
 alembic upgrade head   # apply migrations
-uvicorn main:app --reload   # API at http://localhost:8000
+uvicorn app.main:app --reload   # API at http://localhost:8000
 ```
 Visit `http://localhost:8000/docs` for the Swagger UI.
 

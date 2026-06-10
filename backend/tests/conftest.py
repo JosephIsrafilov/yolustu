@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
-from main import app
+from app.main import app
 from app.core.database import Base, get_db
 from app.core.redis import get_redis
 from app.core.security import get_password_hash

@@ -1,1 +1,0 @@
-"""Legacy API compatibility package."""

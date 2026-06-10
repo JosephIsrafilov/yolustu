@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.domains.ai import router as ai_router
-from main import app
+from app.main import app
 
 client = TestClient(app)
 
