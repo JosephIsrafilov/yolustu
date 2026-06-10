@@ -658,3 +658,72 @@ Returns current user's balance:
 Query: `page`, `limit`.
 
 Returns paginated ledger history. Balances must only change through `wallet_transactions`; direct numeric balance changes without a ledger entry are invalid.
+
+## Chats
+
+Conversation chat replaces shared ride chat for new flows.
+
+### Data model
+
+- `Conversation`: `type` is `ride` or `support`; ride chats are scoped by `booking_id`.
+- `ConversationParticipant`: unique `(conversation_id, user_id)`.
+- `Message`: uses `conversation_id`; legacy `ride_id` remains nullable for backward compatibility.
+
+### GET /api/v1/chats
+
+Returns conversations visible to the current user. Admin users see all support conversations and their own participant conversations.
+
+### POST /api/v1/chats/support
+
+Returns the current user's open support conversation or creates one.
+
+### POST /api/v1/chats/ride
+
+Request:
+
+```json
+{
+  "booking_id": "uuid"
+}
+```
+
+Returns an existing or new passenger-driver conversation for that booking.
+
+Access:
+- passenger must own the booking;
+- driver must own the ride for that booking;
+- other users are rejected.
+
+### GET /api/v1/chats/{conversation_id}
+
+Returns a single authorized conversation.
+
+### GET /api/v1/chats/{conversation_id}/messages
+
+Query: `limit` up to 100, optional `before` datetime.
+
+### POST /api/v1/chats/{conversation_id}/messages
+
+Request:
+
+```json
+{
+  "content": "Message text"
+}
+```
+
+`content` must be non-empty and no longer than 2000 characters.
+
+### PATCH /api/v1/chats/{conversation_id}/read
+
+Marks messages from other participants as read for the current user.
+
+### WebSocket /api/v1/chats/ws/{conversation_id}
+
+Authenticated users can subscribe only to conversations they can access. Broadcast scope is `conversation_id`.
+
+### Limitations
+
+- No attachments.
+- Admin users act as support agents for MVP.
+- Existing `/api/v1/messages/*` ride chat endpoints remain for backward compatibility.

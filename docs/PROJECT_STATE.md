@@ -271,3 +271,12 @@ flutter run --dart-define-from-file=env/dev.json
 - **Не делайте force push** в ветку `main`.
 
 > Note: после коммита этого файла состояние репозитория должно снова стать clean.
+## 17. Conversation Chat Update
+
+- Backend now supports conversation-based chat through `/api/v1/chats`.
+- Passenger-driver ride chats are one-to-one by `booking_id`.
+- Support conversations are user-owned; any `admin` can list/read/reply to support conversations for the MVP.
+- New websocket channel is `/api/v1/chats/ws/{conversation_id}` and authorizes by conversation access before accepting.
+- Frontend adds `/chats`, `/chats/[id]`, a support widget, and booking-card ride chat entry.
+- Legacy `/api/v1/messages/*` ride chat remains for backward compatibility.
+- Limitations: no attachments; admin users are support agents for MVP.
