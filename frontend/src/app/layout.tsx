@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="az" data-scroll-behavior="smooth">
-      <body className="antialiased">
+    <html lang="az" data-scroll-behavior="smooth" className="overflow-x-hidden">
+      <body className="antialiased overflow-x-hidden">
         <QueryProvider>
           <AuthProvider>
             <LanguageSync />

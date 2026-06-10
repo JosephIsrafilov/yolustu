@@ -134,12 +134,17 @@
     font-family: var(--font-sans);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -183,10 +188,10 @@
 .shadow-card      { box-shadow: 0 4px 12px rgba(5,71,82,0.05); }
 .shadow-card-hover{ box-shadow: 0 8px 24px rgba(5,71,82,0.10); }
 
-::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar       { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 9999px; }
-
+::-webkit-scrollbar-thumb { background: var(--color-teal-500); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-teal-400); }
 .bg-brand-50  { background-color: var(--color-brand-50); }
 .bg-brand-100 { background-color: var(--color-brand-100); }
 .bg-brand-200 { background-color: var(--color-brand-200); }

@@ -147,14 +147,14 @@ export default function HomePage() {
 
       <main className="grow flex flex-col">
         {/* Hero */}
-        <section className="relative w-full overflow-x-hidden overflow-y-visible bg-navy text-white py-24 sm:py-32 lg:py-[140px] animate-fade-in">
+        <section className="relative w-full overflow-hidden bg-navy text-white py-20 sm:py-24 lg:py-0 animate-fade-in">
           {/* Animated Background Gradients */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 pointer-events-none" />
           
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-              <div className="text-center lg:text-left max-w-3xl mx-auto lg:mx-0">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:flex lg:min-h-[calc(100dvh-54px)] lg:items-center lg:px-8">
+            <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="mx-auto max-w-3xl min-w-0 text-center lg:mx-0 lg:text-left">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-teal-300 backdrop-blur-sm hover:scale-105 active:scale-95 transition-transform duration-300 cursor-default shadow-md select-none border border-white/5">
                   <Icon name="zap" className="h-4 w-4" />
                   <ShinyText text={copy.home.zapBadge} className="font-semibold text-teal-300" speed={3} />
@@ -228,7 +228,7 @@ export default function HomePage() {
               </div>
 
               {/* Right column: Beautiful animated route map with 3D tilt effect */}
-              <div className="hidden lg:block relative w-full h-[450px]">
+              <div className="relative hidden h-[450px] w-full min-w-0 overflow-hidden rounded-3xl lg:block">
                 <TiltedCard maxRotation={5} scale={1.02} className="w-full h-full">
                   <HeroMap />
                 </TiltedCard>
