@@ -55,6 +55,7 @@ describe('api trips/bookings services', () => {
 
     expect(mockedApiClient.get).toHaveBeenCalledWith(
       '/rides/search?origin_city=Baku&dest_city=Ganja&departure_date=2026-05-24&min_seats=2',
+      undefined,
     );
   });
 
