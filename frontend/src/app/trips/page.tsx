@@ -7,7 +7,8 @@ import WebLayout from '@/components/layout/WebLayout';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
-import { AZ_CITIES, formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
+import { getLocalizedCityName, getLocalizedCityOptions } from '@/lib/cities';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer } from '@/components/ui/Map';
@@ -23,8 +24,8 @@ function TripsContent() {
   const router = useRouter();
   const { trips, users, fetchTrips, isLoadingTrips, lastError, clearError, language } = useAppStore();
   const copy = I18N[language];
-  const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const cityOptions = getLocalizedCityOptions(language);
 
   const [filters, setFilters] = useState<TripSearchFilters>({
     departureCity: searchParams.get('from') || undefined,
@@ -75,8 +76,8 @@ function TripsContent() {
   };
 
   const activeFilters = [
-    filters.departureCity && `${copy.tripsPage.filterFrom}: ${filters.departureCity}`,
-    filters.arrivalCity && `${copy.tripsPage.filterTo}: ${filters.arrivalCity}`,
+    filters.departureCity && `${copy.tripsPage.filterFrom}: ${getLocalizedCityName(filters.departureCity, language)}`,
+    filters.arrivalCity && `${copy.tripsPage.filterTo}: ${getLocalizedCityName(filters.arrivalCity, language)}`,
     filters.date && `${copy.tripsPage.filterDate}: ${filters.date}`,
     filters.minSeats && `${copy.common.passenger}: ${filters.minSeats}+`,
     filters.femaleOnly && copy.createTrip.femaleOnlyLabel,
@@ -88,6 +89,8 @@ function TripsContent() {
   const renderTripCard = (trip: typeof trips[number], index: number) => {
     const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
     const isFull = trip.seatsAvailable === 0;
+    const departureCity = getLocalizedCityName(trip.departureCity, language);
+    const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
 
     return (
       <FadeInOnScroll key={trip.id} delay={index * 100}>
@@ -99,7 +102,7 @@ function TripsContent() {
         >
           {/* Main Content Area */}
           <div className="flex-1 min-w-0 flex flex-col">
-            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-navy">
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-navy">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-navy/5 px-3 py-1.5 border border-navy/10">
                 <Icon name="calendar" size={14} className="text-navy/70" />
                 {trip.date}
@@ -124,12 +127,12 @@ function TripsContent() {
               </div>
               <div className="min-w-0 space-y-5">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">{copy.common.from}</p>
-                  <p className="truncate font-heading text-[22px] font-extrabold text-navy leading-tight">{trip.departureCity}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">{copy.common.from}</p>
+                  <p className="truncate font-heading text-[22px] font-semibold text-navy leading-tight">{departureCity}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">{copy.common.to}</p>
-                  <p className="truncate font-heading text-[22px] font-extrabold text-navy leading-tight">{trip.arrivalCity}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">{copy.common.to}</p>
+                  <p className="truncate font-heading text-[22px] font-semibold text-navy leading-tight">{arrivalCity}</p>
                 </div>
               </div>
             </div>
@@ -145,15 +148,15 @@ function TripsContent() {
                     className="h-11 w-11 rounded-full object-cover shadow-sm"
                   />
                 ) : (
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-navy">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-navy">
                     {driver?.fullName.charAt(0) || '?'}
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-bold text-navy">{driver?.fullName || copy.common.unknown}</p>
+                  <p className="text-sm font-semibold text-navy">{driver?.fullName || copy.common.unknown}</p>
                   <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                     <Icon name="star" size={12} className="text-navy" />
-                    <span className="font-bold text-navy">{driver?.rating.toFixed(1)}</span>
+                    <span className="font-semibold text-navy">{driver?.rating.toFixed(1)}</span>
                     <span className="text-gray-300">•</span>
                     <span className="font-medium">{driver?.totalTrips ?? 0} trips</span>
                     {driver?.verificationStatus === 'approved' && (
@@ -178,11 +181,11 @@ function TripsContent() {
           {/* Pricing & CTA Area */}
           <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 sm:w-48 sm:border-l sm:border-gray-100 sm:pl-6">
             <div className="text-left sm:text-right">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">{copy.createTrip.summaryPrice}</p>
-              <p className="font-heading text-3xl sm:text-4xl font-extrabold text-navy tracking-tight">{formatPrice(trip.pricePerSeat)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">{copy.createTrip.summaryPrice}</p>
+              <p className="font-heading text-3xl sm:text-[2.25rem] font-semibold text-navy tracking-tight">{formatPrice(trip.pricePerSeat)}</p>
             </div>
             
-            <div className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold w-full sm:w-auto justify-center ${
+            <div className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold w-full sm:w-auto justify-center ${
               isFull ? 'bg-gray-100 text-gray-500' : 'bg-slate-50 text-navy'
             }`}>
               {isFull ? <Icon name="ban" size={16} /> : <Icon name="users" size={16} />}
@@ -191,7 +194,7 @@ function TripsContent() {
 
             {!isFull && (
                <div className="hidden sm:block w-full">
-                 <button className="w-full rounded-xl bg-teal-600 px-4 py-3 text-center text-sm font-bold text-white transition-all hover:bg-teal-700 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                 <button className="w-full rounded-xl bg-teal-600 px-4 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-teal-700 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
                    {copy.common.details}
                  </button>
                </div>
@@ -205,6 +208,8 @@ function TripsContent() {
   const renderMapTripCard = (trip: typeof trips[number], index: number) => {
     const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
     const isFull = trip.seatsAvailable === 0;
+    const departureCity = getLocalizedCityName(trip.departureCity, language);
+    const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
 
     return (
       <FadeInOnScroll key={trip.id} delay={index * 50}>
@@ -216,7 +221,7 @@ function TripsContent() {
         >
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex flex-wrap gap-1.5 text-[11px] font-bold text-navy">
+              <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-navy">
                 <span className="inline-flex items-center gap-1 rounded-full bg-navy/5 px-2.5 py-1 border border-navy/10">
                   <Icon name="calendar" size={12} className="text-navy/70" />
                   {trip.date}
@@ -228,7 +233,7 @@ function TripsContent() {
               </div>
             </div>
             <div className="shrink-0 text-right">
-              <p className="font-heading text-xl font-extrabold text-navy">{formatPrice(trip.pricePerSeat)}</p>
+              <p className="font-heading text-xl font-semibold text-navy">{formatPrice(trip.pricePerSeat)}</p>
             </div>
           </div>
 
@@ -239,8 +244,8 @@ function TripsContent() {
               <span className="h-2.5 w-2.5 rounded-full bg-navy" />
             </div>
             <div className="min-w-0 space-y-2.5">
-              <p className="truncate text-sm font-bold text-navy leading-none mt-0.5">{trip.departureCity}</p>
-              <p className="truncate text-sm font-bold text-navy leading-none pt-1">{trip.arrivalCity}</p>
+              <p className="truncate text-sm font-semibold text-navy leading-none mt-0.5">{departureCity}</p>
+              <p className="truncate text-sm font-semibold text-navy leading-none pt-1">{arrivalCity}</p>
             </div>
           </div>
 
@@ -255,20 +260,20 @@ function TripsContent() {
                   className="h-7 w-7 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-navy">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-navy">
                   {driver?.fullName.charAt(0) || '?'}
                 </div>
               )}
               <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-navy">{driver?.fullName || copy.common.unknown}</p>
-                <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-500">
+                <p className="truncate text-xs font-semibold text-navy">{driver?.fullName || copy.common.unknown}</p>
+                <div className="flex items-center gap-1 text-[10px] font-medium text-slate-500">
                   <Icon name="star" size={10} className="text-navy" />
-                  <span className="text-navy font-bold">{driver?.rating.toFixed(1)}</span>
+                  <span className="text-navy font-semibold">{driver?.rating.toFixed(1)}</span>
                 </div>
               </div>
             </div>
 
-            <div className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold ${
+            <div className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold ${
               isFull ? 'bg-gray-100 text-gray-500' : 'bg-slate-50 text-navy'
             }`}>
               {isFull ? copy.common.noSeats : `${trip.seatsAvailable} ${copy.common.seatsLeft}`}
@@ -292,7 +297,7 @@ function TripsContent() {
             <section className="mb-8 w-full relative overflow-hidden rounded-[32px] bg-white p-6 sm:p-8 shadow-[0_4px_25px_rgb(0,0,0,0.03)] border border-white/50">
               <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h1 className="font-heading text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+                  <h1 className="font-heading text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
                     {copy.tripsPage.title}
                   </h1>
                   <p className="mt-2 text-sm font-medium text-slate-500">{copy.searchPage.routeDesc}</p>
@@ -305,7 +310,7 @@ function TripsContent() {
                   onChange={(value) => setSearchFrom(String(value))}
                   options={[
                     { value: '', label: copy.common.allCities },
-                    ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+                    ...cityOptions,
                   ]}
                   label={copy.common.from}
                   placeholder={copy.common.from}
@@ -318,7 +323,7 @@ function TripsContent() {
                   onChange={(value) => setSearchTo(String(value))}
                   options={[
                     { value: '', label: copy.common.allCities },
-                    ...AZ_CITIES.map((city) => ({ value: city, label: city })),
+                    ...cityOptions,
                   ]}
                   label={copy.common.to}
                   placeholder={copy.common.to}
@@ -340,7 +345,7 @@ function TripsContent() {
                   aria-label={copy.common.search}
                 >
                   <Icon name="search" size={20} />
-                  <span className="ml-2 font-bold md:hidden">{copy.common.search}</span>
+                  <span className="ml-2 font-semibold md:hidden">{copy.common.search}</span>
                 </button>
               </div>
             </section>
@@ -353,7 +358,7 @@ function TripsContent() {
               <FadeInOnScroll delay={100}>
                 <div className="flex flex-col gap-6 rounded-[24px] border border-white/50 bg-white p-6 shadow-[0_4px_25px_rgb(0,0,0,0.03)]">
                   <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                    <h2 className="font-heading font-extrabold text-lg text-navy">{copy.tripsPage.filters}</h2>
+                    <h2 className="font-heading font-semibold text-lg text-navy">{copy.tripsPage.filters}</h2>
                     <button
                       onClick={() => {
                         setFilters({
@@ -367,7 +372,7 @@ function TripsContent() {
                         setSearchTo('');
                         setSearchDate('');
                       }}
-                      className="text-xs font-bold text-slate-400 hover:text-navy transition-colors cursor-pointer uppercase tracking-wider"
+                      className="text-xs font-semibold text-slate-400 hover:text-navy transition-colors cursor-pointer uppercase tracking-wider"
                     >
                       {copy.tripsPage.reset}
                     </button>
@@ -375,7 +380,7 @@ function TripsContent() {
 
                   {/* Passenger Count Filter */}
                   <div className="flex flex-col gap-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">{copy.tripsPage.passengerCount}</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">{copy.tripsPage.passengerCount}</label>
                     <div className="flex items-center justify-between rounded-xl bg-slate-50 p-1.5 border border-gray-100">
                       <button
                         type="button"
@@ -384,7 +389,7 @@ function TripsContent() {
                       >
                         <Icon name="minus" size={16} />
                       </button>
-                      <span className="font-heading text-lg font-extrabold text-navy">{filters.minSeats || 1}</span>
+                      <span className="font-heading text-lg font-semibold text-navy">{filters.minSeats || 1}</span>
                       <button
                         type="button"
                         onClick={() => updateMinSeats(Math.min(4, (filters.minSeats || 1) + 1))}
@@ -397,7 +402,7 @@ function TripsContent() {
 
                   {/* Preference Checkboxes */}
                   <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">{copy.createTrip.preferencesTitle}</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">{copy.createTrip.preferencesTitle}</label>
                     <div className="flex flex-col gap-4">
                       {[
                         { key: 'femaleOnly', label: copy.createTrip.femaleOnlyLabel, icon: 'venus' as const },
@@ -410,7 +415,7 @@ function TripsContent() {
                             <div className={`p-2 rounded-lg transition-colors ${filters[pref.key as keyof TripSearchFilters] ? 'bg-navy text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
                               <Icon name={pref.icon} size={16} />
                             </div>
-                            <span className={`text-sm font-bold transition-colors ${filters[pref.key as keyof TripSearchFilters] ? 'text-navy' : 'text-slate-500 group-hover:text-navy'}`}>{pref.label}</span>
+                            <span className={`text-sm font-semibold transition-colors ${filters[pref.key as keyof TripSearchFilters] ? 'text-navy' : 'text-slate-500 group-hover:text-navy'}`}>{pref.label}</span>
                           </div>
                           <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${filters[pref.key as keyof TripSearchFilters] ? 'bg-navy' : 'bg-gray-200'}`}>
                             <input
@@ -435,15 +440,15 @@ function TripsContent() {
               <FadeInOnScroll delay={200}>
                 <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center px-2">
                   <div className="flex flex-col gap-1">
-                    <div className="text-xl font-heading font-extrabold text-navy flex flex-wrap items-center gap-2">
-                      <span>{filters.departureCity || copy.common.all}</span>
+                    <div className="text-xl font-heading font-semibold text-navy flex flex-wrap items-center gap-2">
+                      <span>{filters.departureCity ? getLocalizedCityName(filters.departureCity, language) : copy.common.all}</span>
                       <Icon name="arrow-right" size={18} className="text-gray-300" />
-                      <span>{filters.arrivalCity || copy.common.all}</span>
+                      <span>{filters.arrivalCity ? getLocalizedCityName(filters.arrivalCity, language) : copy.common.all}</span>
                     </div>
                     <div className="text-sm font-medium text-slate-500 flex items-center gap-2">
                       <span>{filters.date || copy.common.allDates}</span>
                       <span className="text-gray-300">•</span>
-                      <span className="font-bold text-navy">
+                      <span className="font-semibold text-navy">
                         {filteredTrips.length} {copy.tripsPage.resultsFound}
                       </span>
                     </div>
@@ -453,7 +458,7 @@ function TripsContent() {
                   <div className="flex rounded-xl bg-white p-1 shadow-sm border border-gray-100">
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`px-5 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-bold cursor-pointer ${
+                      className={`px-5 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-semibold cursor-pointer ${
                         viewMode === 'list' ? 'bg-slate-100 text-navy' : 'text-slate-400 hover:text-navy'
                       }`}
                     >
@@ -462,7 +467,7 @@ function TripsContent() {
                     </button>
                     <button
                       onClick={() => setViewMode('map')}
-                      className={`px-5 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-bold cursor-pointer ${
+                      className={`px-5 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-semibold cursor-pointer ${
                         viewMode === 'map' ? 'bg-slate-100 text-navy' : 'text-slate-400 hover:text-navy'
                       }`}
                     >
@@ -477,7 +482,7 @@ function TripsContent() {
               {activeFilters.length > 0 && (
                 <div className="flex flex-wrap gap-2 px-2">
                   {activeFilters.map((filter) => (
-                    <span key={filter} className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-bold text-navy flex items-center shadow-sm">
+                    <span key={filter} className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-semibold text-navy flex items-center shadow-sm">
                       {filter}
                     </span>
                   ))}
@@ -491,7 +496,7 @@ function TripsContent() {
                     {isLoadingTrips ? (
                       <LoadingState />
                     ) : lastError ? (
-                      <EmptyState title={copy.tripsPage.emptyTitle} description={lastError} action={<button onClick={clearError} className="font-bold text-navy underline">Close</button>} />
+                      <EmptyState title={copy.tripsPage.emptyTitle} description={lastError} action={<button onClick={clearError} className="font-semibold text-navy underline">Close</button>} />
                     ) : filteredTrips.length > 0 ? (
                       filteredTrips.map((trip, idx) => renderMapTripCard(trip, idx))
                     ) : (
@@ -509,12 +514,12 @@ function TripsContent() {
                             m.push({
                               position: [trip.origin.lat, trip.origin.lng],
                               type: 'origin',
-                              popup: <div className="p-1"><div className="font-bold">{trip.departureCity} → {trip.arrivalCity}</div><div className="text-xs">{trip.time} · {formatPrice(trip.pricePerSeat)}</div></div>
+                              popup: <div className="p-1"><div className="font-semibold">{getLocalizedCityName(trip.departureCity, language)} → {getLocalizedCityName(trip.arrivalCity, language)}</div><div className="text-xs">{trip.time} · {formatPrice(trip.pricePerSeat)}</div></div>
                             });
                             m.push({
                               position: [trip.destination.lat, trip.destination.lng],
                               type: 'destination',
-                              popup: <div className="p-1"><div className="font-bold">{trip.arrivalCity}</div></div>
+                              popup: <div className="p-1"><div className="font-semibold">{getLocalizedCityName(trip.arrivalCity, language)}</div></div>
                             });
                           }
                         });
@@ -537,7 +542,7 @@ function TripsContent() {
                 isLoadingTrips ? (
                   <LoadingState />
                 ) : lastError ? (
-                  <EmptyState title={copy.tripsPage.emptyTitle} description={lastError} action={<button onClick={clearError} className="font-bold text-navy underline">Close</button>} />
+                  <EmptyState title={copy.tripsPage.emptyTitle} description={lastError} action={<button onClick={clearError} className="font-semibold text-navy underline">Close</button>} />
                 ) : filteredTrips.length > 0 ? (
                   <div className="flex w-full flex-col gap-5">
                     {filteredTrips.map((trip, idx) => renderTripCard(trip, idx))}

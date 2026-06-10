@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, AZ_CITIES } from '@/lib/utils';
+import { getLocalizedCityName } from '@/lib/cities';
 import { I18N } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import Header from '@/components/layout/Header';
@@ -55,6 +56,7 @@ const TOP_ROUTES: Array<{
 ];
 
 function HeroSelect({ label, value, onChange, options, icon }: { label: string, value: string, onChange: (val: string) => void, options: readonly string[], icon: IconName }) {
+  const language = useAppStore((state) => state.language);
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -80,7 +82,7 @@ function HeroSelect({ label, value, onChange, options, icon }: { label: string, 
         <Icon name={icon} className="h-5 w-5 shrink-0 text-teal-400" />
         <div className="min-w-0 flex-1">
           <p className="mb-0.5 text-xs text-teal-200/50">{label}</p>
-          <p className="truncate text-sm font-medium text-white">{value}</p>
+          <p className="truncate text-sm font-medium text-white">{getLocalizedCityName(value, language)}</p>
         </div>
         <Icon name="chevron-down" className={`h-4 w-4 shrink-0 text-teal-200/50 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -104,7 +106,7 @@ function HeroSelect({ label, value, onChange, options, icon }: { label: string, 
               value === option ? 'font-semibold text-teal-400 bg-white/5' : 'text-teal-50/80'
             }`}
           >
-            {option}
+            {getLocalizedCityName(option, language)}
           </button>
         ))}
       </div>
@@ -145,7 +147,7 @@ export default function HomePage() {
 
       <main className="grow flex flex-col">
         {/* Hero */}
-        <section className="relative w-full overflow-hidden bg-navy text-white py-24 sm:py-32 lg:py-[140px] animate-fade-in">
+        <section className="relative w-full overflow-x-hidden overflow-y-visible bg-navy text-white py-24 sm:py-32 lg:py-[140px] animate-fade-in">
           {/* Animated Background Gradients */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 pointer-events-none" />
@@ -157,13 +159,13 @@ export default function HomePage() {
                   <Icon name="zap" className="h-4 w-4" />
                   <ShinyText text={copy.home.zapBadge} className="font-semibold text-teal-300" speed={3} />
                 </div>
-                <h1 className="mt-5 font-heading text-4xl font-extrabold tracking-tight leading-[1.05] sm:text-5xl sm:leading-none lg:text-[56px] lg:leading-[0.92]">
+                <h1 className="mt-5 font-heading text-4xl font-semibold tracking-tight leading-[1.04] sm:text-5xl sm:leading-[1.02] lg:text-[56px] lg:leading-[0.96]">
                   <SplitText
                     text={language === 'az' ? 'Azərbaycan daxilində' : language === 'ru' ? 'Делитесь поездками' : 'Share the road across'}
                     delay={60}
                     animationDuration={800}
                   />{' '}
-                  <span className="block text-teal-400 mt-2">
+                  <span className="block text-teal-300 mt-2">
                     <SplitText
                       text={language === 'az' ? 'yolu paylaşın' : language === 'ru' ? 'по Азербайджану' : 'Azerbaijan'}
                       delay={60}
@@ -190,7 +192,7 @@ export default function HomePage() {
                   </Link>
                 </div>
 
-                <div className="mt-8 rounded-2xl bg-white/5 p-2 backdrop-blur-md border border-white/10 max-w-[672px] mx-auto lg:mx-0 transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                <div className="relative z-20 mt-8 max-w-[672px] mx-auto rounded-2xl bg-white/5 p-2 backdrop-blur-md border border-white/10 transition-all duration-300 hover:border-white/20 hover:bg-white/8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] lg:mx-0">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <HeroSelect
                       label={copy.common.from}
@@ -268,16 +270,13 @@ export default function HomePage() {
               ] satisfies Array<{ icon: IconName; title: string; desc: string }>).map((step, i) => (
                 <FadeInOnScroll key={i} delay={i * 150} className="h-full">
                   <SpotlightCard 
-                    className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-teal-100 h-full"
+                    className="group relative flex h-full flex-col items-center justify-center rounded-2xl bg-white border border-slate-100 p-8 text-center shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-teal-100 hover:shadow-xl"
                     spotlightColor="rgba(20, 184, 166, 0.15)"
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 transition-all duration-300 group-hover:bg-teal-500 group-hover:text-white group-hover:scale-110 shadow-xs">
+                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 transition-all duration-300 group-hover:bg-teal-500 group-hover:text-white group-hover:scale-110 shadow-xs">
                       <Icon name={step.icon} className="h-7 w-7" />
                     </div>
-                    <div className="mt-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
-                      {i + 1}
-                    </div>
-                    <h3 className="mt-4 font-heading text-lg font-semibold text-navy transition-colors duration-300 group-hover:text-teal-600">{step.title}</h3>
+                    <h3 className="font-heading text-lg font-semibold text-navy transition-colors duration-300 group-hover:text-teal-600">{step.title}</h3>
                     <p className="mt-2 text-sm text-slate-500 leading-relaxed">{step.desc}</p>
                   </SpotlightCard>
                 </FadeInOnScroll>
@@ -321,7 +320,7 @@ export default function HomePage() {
                 <div className="relative overflow-hidden bg-navy p-6 text-white">
                   <div className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-linear-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-teal-300">Baku &rarr; Ganja</span>
+                    <span className="text-sm font-medium text-teal-300">{getLocalizedCityName('Bakı', language)} &rarr; {getLocalizedCityName('Gəncə', language)}</span>
                     <span className="rounded-full bg-teal-400/20 px-2 py-0.5 text-xs font-medium text-teal-300 transition-all duration-300 group-hover:bg-teal-300/25 group-hover:text-teal-100 group-hover:shadow-[0_0_18px_rgba(94,234,212,0.20)]">
                       <ShinyText text={copy.home.aiRecommended} className="font-semibold text-teal-300" speed={3} />
                     </span>
@@ -425,9 +424,9 @@ export default function HomePage() {
                     <div className="flex items-end justify-between">
                       <div style={{ transform: 'translateZ(30px)' }}>
                         <h3 className="mb-1 font-heading text-2xl font-bold text-white drop-shadow-md flex items-center">
-                          {r.from} 
+                          {getLocalizedCityName(r.from, language)} 
                           <Icon name="arrow-right" size={16} className="inline mx-1.5 opacity-70 transition-transform duration-300 group-hover:translate-x-1" /> 
-                          {r.to}
+                          {getLocalizedCityName(r.to, language)}
                         </h3>
                         <p className="flex items-center gap-1.5 text-sm font-medium text-teal-200">
                           <Icon name="car" size={14} /> {copy.home.dailyTrips[r.tripsKey]}

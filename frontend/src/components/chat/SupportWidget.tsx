@@ -11,10 +11,10 @@ import { useAppStore } from '@/store/useAppStore';
 
 const COPY = {
   az: {
-    support: 'Destek',
-    contact: 'Destekle elaqe',
-    login: 'Destekle elaqe ucun daxil olun',
-    failed: 'Destek sohbetini acmaq olmadi',
+    support: 'Dəstək',
+    contact: 'Dəstəklə əlaqə',
+    login: 'Dəstəklə əlaqə üçün daxil olun',
+    failed: 'Dəstək söhbətini açmaq olmadı',
   },
   ru: {
     support: 'Поддержка',
@@ -41,6 +41,7 @@ export default function SupportWidget() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const buttonLabel = isAuthenticated ? t.contact : t.support;
 
   if (pathname?.startsWith('/admin') || currentUser?.role === 'admin') {
     return null;
@@ -69,7 +70,7 @@ export default function SupportWidget() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-3">
+    <div className="group fixed right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(5rem,calc(env(safe-area-inset-bottom,0px)+5rem))] z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-3 sm:bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1.5rem))]">
       {open && (
         <div className="h-[min(620px,calc(100vh-7rem))] w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-white shadow-2xl">
           <div className="flex h-full flex-col">
@@ -99,9 +100,18 @@ export default function SupportWidget() {
         </div>
       )}
 
-      <Button type="button" onClick={openSupport} aria-label={isAuthenticated ? t.contact : t.login}>
-        <Icon name="message-square" size={18} />
-        <span>{isAuthenticated ? t.contact : t.support}</span>
+      <Button
+        type="button"
+        onClick={openSupport}
+        aria-label={isAuthenticated ? t.contact : t.login}
+        className="h-12 w-12 overflow-hidden rounded-full px-0 shadow-lg transition-all duration-300 ease-out hover:w-auto hover:min-w-[12rem] hover:rounded-full hover:px-4 focus-visible:w-auto focus-visible:min-w-[12rem] focus-visible:px-4 sm:group-focus-within:w-auto sm:group-focus-within:min-w-[12rem] sm:group-focus-within:px-4"
+      >
+        <span className="flex w-full items-center justify-center gap-2 sm:justify-start">
+          <Icon name="message-square" size={18} />
+          <span className="hidden whitespace-nowrap text-sm font-semibold sm:group-hover:inline sm:group-focus-within:inline">
+            {buttonLabel}
+          </span>
+        </span>
       </Button>
     </div>
   );

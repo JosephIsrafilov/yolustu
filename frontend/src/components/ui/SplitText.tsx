@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
 interface SplitTextProps extends React.HTMLAttributes<HTMLSpanElement> {
   text: string;
@@ -9,67 +9,21 @@ interface SplitTextProps extends React.HTMLAttributes<HTMLSpanElement> {
   animationDuration?: number;
 }
 
-export default function SplitText({
-  text,
-  className = '',
-  delay = 30,
-  animationDuration = 600,
-  ...props
-}: SplitTextProps) {
-  const [animated, setAnimated] = useState(false);
-  const containerRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setAnimated(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const words = text.split(' ');
-  let charIndex = 0;
+export default function SplitText({ text, className = '', delay: _delay, animationDuration: _animationDuration, ...props }: SplitTextProps) {
+  void _delay;
+  void _animationDuration;
 
   return (
-    <span
-      ref={containerRef}
-      className={`inline-block select-none ${className}`}
-      {...props}
-    >
-      {words.map((word, wordIdx) => {
-        const letters = word.split('');
-        return (
-          <span key={wordIdx} className="inline-block whitespace-nowrap mr-[0.25em]">
-            {letters.map((char, charIdx) => {
-              const currentIdx = charIndex++;
-              return (
-                <span
-                  key={charIdx}
-                  className={`inline-block transition-all ease-out`}
-                  style={{
-                    opacity: animated ? 1 : 0,
-                    transform: animated ? 'translate3d(0,0,0)' : 'translate3d(0,25px,0)',
-                    transitionDuration: `${animationDuration}ms`,
-                    transitionDelay: `${currentIdx * delay}ms`,
-                  }}
-                >
-                  {char}
-                </span>
-              );
-            })}
-          </span>
-        );
-      })}
+    <span className={`inline-block ${className}`} {...props}>
+      {text.split(' ').map((word, wordIdx) => (
+        <span key={`${word}-${wordIdx}`} className="mr-[0.25em] inline-block whitespace-nowrap">
+          {word.split('').map((char, charIdx) => (
+            <span key={`${char}-${charIdx}`} className="inline-block">
+              {char}
+            </span>
+          ))}
+        </span>
+      ))}
     </span>
   );
 }

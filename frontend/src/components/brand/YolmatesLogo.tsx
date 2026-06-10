@@ -57,7 +57,7 @@ function LogoContent({ size = 'md', showText = true }: Pick<YolmatesLogoProps, '
     <>
       <Mark size={size} />
       {showText && (
-        <span className={cn('font-heading font-extrabold uppercase tracking-widest text-[#007c78] ml-2', sizeClass[size].text)}>
+        <span className={cn('font-heading font-semibold uppercase tracking-[0.22em] text-[#007c78] ml-2', sizeClass[size].text)}>
           Yolmates
         </span>
       )}
