@@ -12,6 +12,7 @@ import type { Booking, Trip, User } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
 import { ROUTES } from '@/lib/routes';
+import { messagesService } from '@/services';
 
 interface BookingCardProps {
   booking: Booking;
@@ -58,6 +59,7 @@ export default function BookingCard({
 }: BookingCardProps) {
   const router = useRouter();
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
   const language = useAppStore((state) => state.language);
   const unreadRides = useAppStore((state) => state.unreadRides) || {};
   const copy = I18N[language].bookings;
@@ -67,6 +69,16 @@ export default function BookingCard({
 
   const canCancel = booking.status === 'pending' || booking.status === 'accepted';
   const canReview = booking.status === 'completed';
+  const openRideChat = async () => {
+    if (isOpeningChat) return;
+    setIsOpeningChat(true);
+    try {
+      const conversation = await messagesService.createRideChat(booking.id);
+      router.push(ROUTES.chatDetails(conversation.id));
+    } finally {
+      setIsOpeningChat(false);
+    }
+  };
 
   return (
     <>
@@ -143,7 +155,8 @@ export default function BookingCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
+              onClick={openRideChat}
+              loading={isOpeningChat}
               className="flex-1 w-full flex items-center justify-center gap-1.5 relative animate-fade-in"
             >
               <Icon name="message-square" size={14} className="shrink-0 flex-none" />

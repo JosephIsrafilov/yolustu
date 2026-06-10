@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AuthProvider from "@/components/auth/AuthProvider";
 import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
+import SupportWidget from "@/components/chat/SupportWidget";
 import LanguageSync from "@/components/layout/LanguageSync";
 import QueryProvider from "@/providers/QueryProvider";
 import "./globals.css";
@@ -27,6 +28,7 @@ export default function RootLayout({
             <LanguageSync />
             <RouteAccessGuard />
             {children}
+            <SupportWidget />
           </AuthProvider>
         </QueryProvider>
       </body>

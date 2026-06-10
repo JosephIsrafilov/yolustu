@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { buildApiWebSocketUrl } from '@/lib/env';
 import { Message } from '@/types';
 
-export function useChat(rideId: string) {
+type ChatSocketMode = 'ride' | 'conversation';
+
+export function useChat(id: string, mode: ChatSocketMode = 'ride') {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
@@ -13,14 +15,15 @@ export function useChat(rideId: string) {
   const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
-    if (!rideId) return;
+    if (!id) return;
 
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
 
-    const wsUrl = buildApiWebSocketUrl(`/messages/ws/${rideId}`);
+    const wsPath = mode === 'conversation' ? `/chats/ws/${id}` : `/messages/ws/${id}`;
+    const wsUrl = buildApiWebSocketUrl(wsPath);
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
@@ -55,7 +58,7 @@ export function useChat(rideId: string) {
     socket.onerror = () => {
       socket.close();
     };
-  }, [rideId]);
+  }, [id, mode]);
 
   useEffect(() => {
     shouldReconnectRef.current = true;
@@ -86,6 +89,6 @@ export function useChat(rideId: string) {
     messages,
     setMessages,
     isConnected,
-    addMessage
+    addMessage,
   };
 }

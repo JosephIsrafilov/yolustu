@@ -12,6 +12,8 @@ export const ROUTES = {
   trips: '/trips',
   tripDetails: (id: string) => `/trips/${id}`,
   bookings: '/bookings',
+  chats: '/chats',
+  chatDetails: (id: string) => `/chats/${id}`,
   bookingRequests: '/bookings/requests',
   driverDashboard: '/driver',
   driverApply: '/driver/apply',

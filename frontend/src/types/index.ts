@@ -150,11 +150,29 @@ export interface Review {
 
 export interface Message {
   id: string;
-  ride_id: string;
+  conversation_id?: string;
+  ride_id?: string;
   sender_id: string;
   content: string;
   created_at: string;
+  read_at?: string;
   sender_name?: string;
+}
+
+export interface ConversationParticipant {
+  user_id: string;
+  role: string;
+}
+
+export interface Conversation {
+  id: string;
+  type: 'ride' | 'support';
+  ride_id?: string;
+  booking_id?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  participants: ConversationParticipant[];
 }
 
 export type ModerationItemType = 'user' | 'trip' | 'booking';
