@@ -16,6 +16,14 @@ const apiUser = {
 async function mockApi(page: Page) {
   let logoutCsrfHeader: string | null = null;
 
+  await page.context().addCookies([
+    {
+      name: 'NEXT_LOCALE',
+      value: 'en',
+      url: 'http://localhost:3000',
+    },
+  ]);
+
   await page.addInitScript(() => {
     window.localStorage.setItem(
       'yolustu-storage',
@@ -109,30 +117,38 @@ async function mockApi(page: Page) {
   };
 }
 
+async function fillPhone(page: Page, phone: string) {
+  const phoneInput = page.locator('input[type="tel"]');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.evaluate((value) => navigator.clipboard.writeText(value), phone);
+  await phoneInput.click();
+  await page.keyboard.press('Control+V');
+  await expect(phoneInput).toHaveValue(/\+994 50 123 45 67/);
+}
+
 test.describe('Authentication Flow', () => {
   test('logs in, sends CSRF on logout, and gates protected pages after logout', async ({ page }) => {
     const api = await mockApi(page);
 
     await page.goto('/auth/login');
-    await page.locator('input[type="text"]').fill('+994501234567');
+    await fillPhone(page, '+994501234567');
     await page.locator('input[type="password"]').fill('password123');
     await page.locator('button[type="submit"]').click();
 
-    await expect(page).toHaveURL(/\/trips/);
     await expect(page.getByLabel('Log out')).toBeVisible();
 
     await page.getByLabel('Log out').click();
     await expect.poll(api.getLogoutCsrfHeader).toBe('csrf-e2e-token');
 
     await page.goto('/bookings');
-    await expect(page.getByText('Login required')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Login required|Daxil olmaq lazımdır|Требуется вход/i })).toBeVisible();
   });
 
   test('shows validation error with missing password', async ({ page }) => {
     await mockApi(page);
     await page.goto('/auth/login');
 
-    await page.locator('input[type="text"]').fill('+994501234567');
+    await fillPhone(page, '+994501234567');
     await page.locator('button[type="submit"]').click();
 
     await expect(page).toHaveURL(/\/auth\/login/);

@@ -22,6 +22,7 @@ import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
 import UserAvatar from '@/components/ui/UserAvatar';
 import WalletPaymentModal from '@/components/bookings/WalletPaymentModal';
+import SuccessModal from '@/components/ui/SuccessModal';
 
 const TRIP_DETAILS_I18N = {
   az: {
@@ -169,7 +170,9 @@ export default function TripDetailsPage() {
     switchRole,
   } = useAppStore();
   const [seats, setSeats] = useState(1);
-  const [booked, setBooked] = useState(false);
+  const [isBookingLoading, setIsBookingLoading] = useState(false);
+  const [hasBookingSucceeded, setHasBookingSucceeded] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
   const [tripLoadError, setTripLoadError] = useState(false);
@@ -226,16 +229,20 @@ export default function TripDetailsPage() {
       router.push(ROUTES.login);
       return;
     }
-    if (isOwnTrip || existingBooking) return;
+    if (isOwnTrip || existingBooking || isBookingLoading) return;
+    setIsBookingLoading(true);
     let bookingId = '';
     try {
       bookingId = await createBooking(trip.id, seats);
-    } catch {
+    } catch (err) {
+      console.error('Booking failed:', err);
       bookingId = '';
+    } finally {
+      setIsBookingLoading(false);
     }
     if (!bookingId) return;
-    setBooked(true);
-    setTimeout(() => router.push(ROUTES.bookings), 1000);
+    setHasBookingSucceeded(true);
+    setShowSuccessModal(true);
   };
 
   return (
@@ -390,7 +397,7 @@ export default function TripDetailsPage() {
                 </div>
               </Card>
             )}
-            {!isOwnTrip && (!isAuthenticated || capabilities.canBookRide) && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !booked && (
+            {!isOwnTrip && (!isAuthenticated || capabilities.canBookRide) && trip.status === 'active' && trip.seatsAvailable > 0 && !existingBooking && !hasBookingSucceeded && (
               <Card className="border-brand-200 shadow-card-hover"><div className="flex flex-col gap-4">
                 <div>
                   <p className="text-base font-bold text-text">{copy.bookingRequestTitle}</p>
@@ -415,7 +422,15 @@ export default function TripDetailsPage() {
                   <Icon name="shield-check" size={16} className="mt-0.5 shrink-0" />
                   <span>{copy.warningOffline}</span>
                 </div>
-                <Button fullWidth size="lg" onClick={handleBook}>{copy.submitRequestBtn}</Button>
+                <Button 
+                  fullWidth 
+                  size="lg" 
+                  onClick={handleBook}
+                  loading={isBookingLoading}
+                  disabled={isBookingLoading}
+                >
+                  {copy.submitRequestBtn}
+                </Button>
               </div></Card>
             )}
             {existingBooking && (
@@ -463,7 +478,6 @@ export default function TripDetailsPage() {
                 </div>
               </Card>
             )}
-            {booked && (<Card padding="sm" className="bg-green-50 border-green-200"><p className="text-sm text-green-700 font-medium">{copy.bookedSuccess}</p></Card>)}
           </div>
         </div>
       </div>
@@ -494,6 +508,23 @@ export default function TripDetailsPage() {
           }}
         />
       )}
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.push(ROUTES.bookings);
+        }}
+        title={language === 'az' ? 'Rezerv Sorğusu Göndərildi!' : language === 'ru' ? 'Запрос отправлен!' : 'Booking Request Sent!'}
+        description={
+          language === 'az'
+            ? 'Rezerv sorğunuz uğurla sürücüyə göndərildi. Sürücü təsdiqlədikdən sonra ödəniş edə bilərsiniz.'
+            : language === 'ru'
+            ? 'Ваш запрос на бронирование успешно отправлен водителю. Вы сможете оплатить после подтверждения.'
+            : 'Your booking request has been successfully sent to the driver. You can pay after confirmation.'
+        }
+        buttonLabel={language === 'az' ? 'Tamam' : language === 'ru' ? 'ОК' : 'OK'}
+      />
     </WebLayout>
   );
 }

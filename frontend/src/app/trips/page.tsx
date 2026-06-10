@@ -8,7 +8,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { formatPrice } from '@/lib/utils';
-import { getLocalizedCityName, getLocalizedCityOptions } from '@/lib/cities';
+import { getLocalizedCityName, getLocalizedCityOptions, PUBLIC_CITY_KEYS, CITY_COORDINATES, CITY_LABELS, getCityCoordinatesByName } from '@/lib/cities';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
 import { MapContainer } from '@/components/ui/Map';
@@ -66,6 +66,40 @@ function TripsContent() {
     const params = new URLSearchParams();
     if (searchFrom) params.set('from', searchFrom);
     if (searchTo) params.set('to', searchTo);
+    if (searchDate) params.set('date', searchDate);
+    if (filters.minSeats) params.set('passengers', String(filters.minSeats));
+    router.replace(`/trips?${params.toString()}`);
+  };
+
+  const handleMapMarkerClick = (cityCanonicalName: string) => {
+    let nextFrom = searchFrom;
+    let nextTo = searchTo;
+
+    if (searchFrom === cityCanonicalName) {
+      nextFrom = '';
+    } else if (searchTo === cityCanonicalName) {
+      nextTo = '';
+    } else if (!searchFrom) {
+      nextFrom = cityCanonicalName;
+    } else if (!searchTo) {
+      nextTo = cityCanonicalName;
+    } else {
+      nextFrom = cityCanonicalName;
+      nextTo = '';
+    }
+
+    setSearchFrom(nextFrom);
+    setSearchTo(nextTo);
+
+    setFilters((p) => ({
+      ...p,
+      departureCity: nextFrom || undefined,
+      arrivalCity: nextTo || undefined,
+    }));
+
+    const params = new URLSearchParams();
+    if (nextFrom) params.set('from', nextFrom);
+    if (nextTo) params.set('to', nextTo);
     if (searchDate) params.set('date', searchDate);
     if (filters.minSeats) params.set('passengers', String(filters.minSeats));
     router.replace(`/trips?${params.toString()}`);
@@ -492,7 +526,7 @@ function TripsContent() {
               {/* Main Content Area */}
               {viewMode === 'map' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
-                  <div className="lg:col-span-5 xl:col-span-4 flex max-h-[700px] flex-col gap-4 overflow-y-auto pr-2 pb-10 scrollbar-hide">
+                  <div className="lg:col-span-5 flex max-h-[700px] flex-col gap-4 overflow-y-auto pr-2 pb-10 scrollbar-hide">
                     {isLoadingTrips ? (
                       <LoadingState />
                     ) : lastError ? (
@@ -504,38 +538,126 @@ function TripsContent() {
                     )}
                   </div>
 
-                  <div className="lg:col-span-7 xl:col-span-8 h-[500px] lg:h-[700px] lg:sticky lg:top-28 rounded-[32px] overflow-hidden border border-gray-100 shadow-[0_4px_30px_rgb(0,0,0,0.05)] w-full relative z-0">
-                    <MapContainer 
-                      className="h-full w-full"
-                      markers={(() => {
-                        const m: MapMarkerData[] = [];
-                        filteredTrips.forEach(trip => {
-                          if (trip.origin && trip.destination) {
-                            m.push({
-                              position: [trip.origin.lat, trip.origin.lng],
-                              type: 'origin',
-                              popup: <div className="p-1"><div className="font-semibold">{getLocalizedCityName(trip.departureCity, language)} → {getLocalizedCityName(trip.arrivalCity, language)}</div><div className="text-xs">{trip.time} · {formatPrice(trip.pricePerSeat)}</div></div>
-                            });
-                            m.push({
-                              position: [trip.destination.lat, trip.destination.lng],
-                              type: 'destination',
-                              popup: <div className="p-1"><div className="font-semibold">{getLocalizedCityName(trip.arrivalCity, language)}</div></div>
+                  <div className="lg:col-span-7 lg:sticky lg:top-28 flex flex-col gap-4 w-full">
+                    {/* Visual Map Selection Indicators */}
+                    {(searchFrom || searchTo) && (
+                      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-teal-50/70 border border-teal-100 rounded-2xl shadow-sm">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-teal-800">
+                            {language === 'az' ? 'Xəritə Seçimi:' : language === 'ru' ? 'Выбор на карте:' : 'Map Selection:'}
+                          </span>
+                          {searchFrom && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                              <span>{getLocalizedCityName(searchFrom, language)}</span>
+                              <button 
+                                onClick={() => handleMapMarkerClick(searchFrom)}
+                                className="text-emerald-500 hover:text-emerald-700 font-bold ml-1 focus:outline-none"
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          )}
+                          {searchTo && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                              <span>{getLocalizedCityName(searchTo, language)}</span>
+                              <button 
+                                onClick={() => handleMapMarkerClick(searchTo)}
+                                className="text-red-500 hover:text-red-700 font-bold ml-1 focus:outline-none"
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSearchFrom('');
+                            setSearchTo('');
+                            setFilters((p) => ({
+                              ...p,
+                              departureCity: undefined,
+                              arrivalCity: undefined,
+                            }));
+                            const params = new URLSearchParams();
+                            if (searchDate) params.set('date', searchDate);
+                            if (filters.minSeats) params.set('passengers', String(filters.minSeats));
+                            const query = params.toString();
+                            router.replace(query ? `/trips?${query}` : '/trips');
+                          }}
+                          className="text-xs font-semibold text-teal-700 hover:text-teal-900 underline focus:outline-none cursor-pointer"
+                        >
+                          {language === 'az' ? 'Sıfırla' : language === 'ru' ? 'Сбросить' : 'Reset'}
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div className="h-[500px] lg:h-[630px] rounded-[32px] overflow-hidden border border-gray-100 shadow-[0_4px_30px_rgb(0,0,0,0.05)] w-full relative z-0">
+                      <MapContainer 
+                        className="h-full w-full"
+                        markers={(() => {
+                          const m: MapMarkerData[] = [];
+                          
+                          PUBLIC_CITY_KEYS.forEach(key => {
+                            const coords = CITY_COORDINATES[key];
+                            if (coords) {
+                              const canonicalName = CITY_LABELS[key].az;
+                              const isOrigin = searchFrom === canonicalName;
+                              const isDestination = searchTo === canonicalName;
+                              
+                              m.push({
+                                position: [coords.lat, coords.lng],
+                                type: isOrigin ? 'origin' : isDestination ? 'destination' : undefined,
+                                popup: (
+                                  <div className="p-1 text-center">
+                                    <div className="font-semibold text-sm text-navy">{CITY_LABELS[key][language]}</div>
+                                    <div className="text-[10px] text-teal-600 font-medium mt-1">
+                                      {isOrigin ? copy.tripsPage.filterFrom : isDestination ? copy.tripsPage.filterTo : (language === 'az' ? 'Seçmək üçün klikləyin' : language === 'ru' ? 'Нажмите для выбора' : 'Click to select')}
+                                    </div>
+                                  </div>
+                                ),
+                                onClick: () => handleMapMarkerClick(canonicalName),
+                              });
+                            }
+                          });
+                          
+                          return m;
+                        })()}
+                        polylines={filteredTrips.filter(t => t.origin && t.destination).map(t => {
+                          return routePolylinesMap[t.id] || [
+                            [t.origin!.lat, t.origin!.lng],
+                            [t.destination!.lat, t.destination!.lng]
+                          ];
+                        })}
+                        fitBounds={(() => {
+                          const bounds: [number, number][] = [];
+                          const fromCoords = getCityCoordinatesByName(searchFrom);
+                          const toCoords = getCityCoordinatesByName(searchTo);
+                          
+                          if (fromCoords && toCoords) {
+                            bounds.push([fromCoords.lat, fromCoords.lng]);
+                            bounds.push([toCoords.lat, toCoords.lng]);
+                          }
+                          
+                          if (bounds.length === 0) {
+                            filteredTrips.forEach(t => {
+                              if (t.origin) bounds.push([t.origin.lat, t.origin.lng]);
+                              if (t.destination) bounds.push([t.destination.lat, t.destination.lng]);
                             });
                           }
-                        });
-                        return m;
-                      })()}
-                      polylines={filteredTrips.filter(t => t.origin && t.destination).map(t => {
-                        return routePolylinesMap[t.id] || [
-                          [t.origin!.lat, t.origin!.lng],
-                          [t.destination!.lat, t.destination!.lng]
-                        ];
-                      })}
-                      fitBounds={filteredTrips.filter(t => t.origin && t.destination).flatMap(t => [
-                        [t.origin!.lat, t.origin!.lng],
-                        [t.destination!.lat, t.destination!.lng]
-                      ]) as [number, number][]}
-                    />
+                          
+                          if (bounds.length === 0) {
+                            PUBLIC_CITY_KEYS.forEach((key) => {
+                              const coords = CITY_COORDINATES[key];
+                              if (coords) bounds.push([coords.lat, coords.lng]);
+                            });
+                          }
+                          
+                          return bounds;
+                        })()}
+                      />
+                    </div>
                   </div>
                 </div>
               ) : (

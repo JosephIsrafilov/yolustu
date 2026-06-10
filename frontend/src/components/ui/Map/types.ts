@@ -4,6 +4,7 @@ export interface MapMarkerData {
   position: [number, number]; // [lat, lng]
   popup?: React.ReactNode;
   type?: 'origin' | 'destination' | 'ride';
+  onClick?: () => void;
 }
 
 export interface SmartMapProps {

@@ -23,6 +23,13 @@ const BASE_USER = {
 const PHASE = process.env.QA_PHASE ?? 'before';
 
 async function seedStore(page: Page, language: 'az' | 'ru' | 'en', authenticated = false) {
+  await page.context().addCookies([
+    {
+      name: 'NEXT_LOCALE',
+      value: language,
+      url: 'http://localhost:3000',
+    },
+  ]);
   await page.addInitScript(
     ({ language, authenticated, user }) => {
       window.localStorage.setItem(

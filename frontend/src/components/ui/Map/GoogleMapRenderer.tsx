@@ -58,7 +58,7 @@ export default function GoogleMapRenderer({
         options={{
           disableDefaultUI: true,
           zoomControl: true,
-          scrollwheel: false,
+          scrollwheel: true,
         }}
       >
         {routePath.length > 0 && (
@@ -78,6 +78,7 @@ export default function GoogleMapRenderer({
           <MarkerF
             key={i}
             position={{ lat: m.position[0], lng: m.position[1] }}
+            onClick={m.onClick}
             icon={
               m.type === 'origin'
                 ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'

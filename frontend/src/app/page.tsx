@@ -23,6 +23,7 @@ import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import ConnectingRoutesMap, { type RouteKey } from '@/components/ui/ConnectingRoutesMap';
 import HeroMap from '@/components/ui/HeroMap';
+import DatePicker from '@/components/ui/DatePicker';
 
 
 const TOP_ROUTES: Array<{
@@ -124,15 +125,10 @@ export default function HomePage() {
 
   const [from, setFrom] = React.useState('Bakı');
   const [to, setTo] = React.useState('Gəncə');
+  const [date, setDate] = React.useState('');
   const [hoveredRoute, setHoveredRoute] = React.useState<RouteKey>(null);
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    params.set('from', from);
-    params.set('to', to);
-    params.set('passengers', String(passengers));
-    router.push(`${ROUTES.trips}?${params.toString()}`);
-  };
+
 
   const formatRoutePrice = (price: number) => {
     const formatted = formatPrice(price);
@@ -211,17 +207,31 @@ export default function HomePage() {
                     />
 
                     <div className="relative w-full">
-                      <button 
-                        type="button" 
-                        onClick={handleSearch} 
-                        className="flex h-full w-full min-w-0 items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 text-left border border-transparent transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
-                      >
-                        <Icon name="calendar" className="h-5 w-5 shrink-0 text-teal-400" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs text-teal-200/50 mb-0.5">{copy.home.searchWhen}</p>
-                          <p className="truncate text-sm font-medium text-white">{copy.home.searchToday}</p>
-                        </div>
-                      </button>
+                      <DatePicker
+                        value={date}
+                        onChange={(newDate) => {
+                          setDate(newDate);
+                          const params = new URLSearchParams();
+                          params.set('from', from);
+                          params.set('to', to);
+                          params.set('date', newDate);
+                          params.set('passengers', String(passengers));
+                          router.push(`${ROUTES.trips}?${params.toString()}`);
+                        }}
+                        customTrigger={(openPicker, selectedLabel) => (
+                          <button 
+                            type="button" 
+                            onClick={openPicker} 
+                            className="flex h-full w-full min-w-0 items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 text-left border border-transparent transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
+                          >
+                            <Icon name="calendar" className="h-5 w-5 shrink-0 text-teal-400" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs text-teal-200/50 mb-0.5">{copy.home.searchWhen}</p>
+                              <p className="truncate text-sm font-medium text-white">{selectedLabel || copy.home.searchToday}</p>
+                            </div>
+                          </button>
+                        )}
+                      />
                     </div>
                   </div>
                 </div>

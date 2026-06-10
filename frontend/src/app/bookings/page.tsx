@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { I18N } from '@/lib/i18n';
+import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 
 export default function BookingsPage() {
   const router = useRouter();
   const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, fetchTrips, lastError, clearError, language } = useAppStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [cancelDialogBookingId, setCancelDialogBookingId] = useState<string | null>(null);
 
   const copy = I18N[language].bookings;
   const common = I18N[language].common;
@@ -66,7 +68,7 @@ export default function BookingsPage() {
                   booking={booking}
                   trip={trip}
                   driver={driver}
-                  onCancel={() => cancelBooking(booking.id)}
+                  onCancel={() => setCancelDialogBookingId(booking.id)}
                   onReview={() => router.push(`${ROUTES.createReview}?tripId=${booking.tripId}&targetUserId=${trip?.driverId}`)}
                   onPay={async () => {
                     try {
@@ -97,6 +99,45 @@ export default function BookingsPage() {
             description={copy.searchAction}
           />
         )}
+
+        <ConfirmationDialog
+          isOpen={cancelDialogBookingId !== null}
+          onClose={() => setCancelDialogBookingId(null)}
+          onConfirm={async () => {
+            if (cancelDialogBookingId) {
+              await cancelBooking(cancelDialogBookingId);
+            }
+          }}
+          title={
+            language === 'az'
+              ? 'Rezervasiyanı ləğv etmək istəyirsiniz?'
+              : language === 'ru'
+              ? 'Отменить бронирование?'
+              : 'Cancel Booking?'
+          }
+          description={
+            language === 'az'
+              ? 'Bu rezervasiyanı ləğv etmək istədiyinizdən əminsiniz? Bu addım geri qaytarıla bilməz.'
+              : language === 'ru'
+              ? 'Вы уверены, что хотите отменить это бронирование? Это действие нельзя отменить.'
+              : 'Are you sure you want to cancel this booking? This action cannot be undone.'
+          }
+          confirmLabel={
+            language === 'az'
+              ? 'Bəli, ləğv et'
+              : language === 'ru'
+              ? 'Да, отменить'
+              : 'Yes, cancel'
+          }
+          cancelLabel={
+            language === 'az'
+              ? 'Xeyr, saxla'
+              : language === 'ru'
+              ? 'Нет, оставить'
+              : 'No, keep'
+          }
+          variant="danger"
+        />
       </ProtectedRoute>
     </WebLayout>
   );

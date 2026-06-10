@@ -26,6 +26,7 @@ import { apiClient } from '@/services/api-client';
 import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
 import { apiAiService } from '@/services/api/api-ai-service';
 import { I18N } from '@/lib/i18n';
+import SuccessModal from '@/components/ui/SuccessModal';
 
 const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string) => {
   return z.object({
@@ -130,6 +131,7 @@ export default function CreateTripPage() {
   const [isDrafting, setIsDrafting] = useState(false);
   const [showPriceRecommendation, setShowPriceRecommendation] = useState(false);
   const [prevCities, setPrevCities] = useState({ dep: '', arr: '' });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
@@ -326,7 +328,7 @@ export default function CreateTripPage() {
       }
     },
     onSuccess: (id) => {
-      if (id) router.push(ROUTES.myTrips);
+      if (id) setShowSuccessModal(true);
     }
   });
 
@@ -734,6 +736,29 @@ export default function CreateTripPage() {
                 )}
               </div>
             </Card>
+
+            <SuccessModal
+              isOpen={showSuccessModal}
+              onClose={() => {
+                setShowSuccessModal(false);
+                router.push(ROUTES.myTrips);
+              }}
+              title={
+                language === 'az'
+                  ? 'Səfər yaradıldı!'
+                  : language === 'ru'
+                  ? 'Поездка создана!'
+                  : 'Trip Created!'
+              }
+              description={
+                language === 'az'
+                  ? 'Yeni səfəriniz uğurla dərc olundu. Sərnişinlər tezliklə sorğu göndərə biləcəklər.'
+                  : language === 'ru'
+                  ? 'Ваша новая поездка успешно опубликована. Пассажиры скоро смогут отправлять запросы.'
+                  : 'Your new trip has been successfully published. Passengers will soon be able to send requests.'
+              }
+              buttonLabel={language === 'az' ? 'Tamam' : language === 'ru' ? 'ОК' : 'OK'}
+            />
           </ProtectedRoute>
         </div>
       </div>

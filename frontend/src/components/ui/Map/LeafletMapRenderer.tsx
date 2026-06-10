@@ -86,7 +86,7 @@ export default function LeafletMapRenderer({
       <LeafletMap 
         center={center} 
         zoom={zoom} 
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
         attributionControl={false}
         style={{ height: '100%', width: '100%', minHeight: '100%', flexGrow: 1 }}
       >
@@ -114,7 +114,12 @@ export default function LeafletMapRenderer({
         ))}
         
         {markers.map((m, i) => (
-          <Marker key={i} position={m.position} icon={getIcon(m.type)}>
+          <Marker 
+            key={i} 
+            position={m.position} 
+            icon={getIcon(m.type)}
+            eventHandlers={m.onClick ? { click: m.onClick } : undefined}
+          >
             {m.popup && <Popup>{m.popup}</Popup>}
           </Marker>
         ))}

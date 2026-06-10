@@ -14,6 +14,7 @@ type DatePickerProps = {
   placeholder?: string;
   minDate?: Date;
   className?: string;
+  customTrigger?: (openPicker: () => void, selectedLabel: string) => React.ReactNode;
 };
 
 type DatePickerLocale = {
@@ -115,6 +116,7 @@ export default function DatePicker({
   placeholder,
   minDate,
   className,
+  customTrigger,
 }: DatePickerProps) {
   const { language } = useAppStore();
   const copy = I18N[language];
@@ -264,18 +266,22 @@ export default function DatePicker({
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      {resolvedLabel && <label className="text-sm font-medium text-text-secondary">{resolvedLabel}</label>}
+      {resolvedLabel && !customTrigger && <label className="text-sm font-medium text-text-secondary">{resolvedLabel}</label>}
 
-      <button
-        type="button"
-        onClick={openPicker}
-        className="relative flex h-12 w-full items-center rounded-2xl border border-border bg-white pl-10 pr-4 text-left text-sm text-text shadow-sm transition-all duration-200 ease-out hover:border-border-strong hover:bg-surface-muted/40 focus:outline-none focus:ring-2 focus:ring-brand-500 active:scale-[0.99]"
-      >
-        <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-        <span className={selectedLabel ? 'text-text' : 'text-text-muted'}>
-          {selectedLabel || resolvedPlaceholder}
-        </span>
-      </button>
+      {customTrigger ? (
+        customTrigger(openPicker, selectedLabel)
+      ) : (
+        <button
+          type="button"
+          onClick={openPicker}
+          className="relative flex h-12 w-full items-center rounded-2xl border border-border bg-white pl-10 pr-4 text-left text-sm text-text shadow-sm transition-all duration-200 ease-out hover:border-border-strong hover:bg-surface-muted/40 focus:outline-none focus:ring-2 focus:ring-brand-500 active:scale-[0.99]"
+        >
+          <Icon name="calendar" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <span className={selectedLabel ? 'text-text' : 'text-text-muted'}>
+            {selectedLabel || resolvedPlaceholder}
+          </span>
+        </button>
+      )}
 
       {open && typeof document !== 'undefined' && createPortal(calendarDialog, document.body)}
     </div>

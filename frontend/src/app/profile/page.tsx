@@ -17,6 +17,7 @@ import { ROUTES } from '@/lib/routes';
 import { AZ_CITIES } from '@/lib/utils';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import SuccessModal from '@/components/ui/SuccessModal';
 import { apiClient } from '@/services/api-client';
 import { mapApiVehicleToVehicle, type ApiVehicle } from "@/services/api/mappers";
 import type { Vehicle } from '@/types';
@@ -183,6 +184,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [showProfileSuccess, setShowProfileSuccess] = useState(false);
   const [form, setForm] = useState({ fullName: '', phone: '', email: '', city: '', bio: '', avatarUrl: '' });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -240,6 +242,7 @@ export default function ProfilePage() {
       await updateProfile(form);
       setEditing(false);
       setAvatarFile(null);
+      setShowProfileSuccess(true);
     } catch {
       setProfileError(useAppStore.getState().lastError || copy.updateError);
     } finally {
@@ -304,6 +307,20 @@ export default function ProfilePage() {
         <DriverVehiclesSection copy={copy} isDriver={activeMode === 'driver'} />
         {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.reviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><Icon name="log-out" size={16} /> {copy.logoutBtn}</Button>
+        
+        <SuccessModal
+          isOpen={showProfileSuccess}
+          onClose={() => setShowProfileSuccess(false)}
+          title={language === 'az' ? 'Profil Yeniləndi!' : language === 'ru' ? 'Профиль обновлен!' : 'Profile Updated!'}
+          description={
+            language === 'az'
+              ? 'Profil məlumatlarınız uğurla yadda saxlanıldı.'
+              : language === 'ru'
+              ? 'Данные вашего профиля успешно сохранены.'
+              : 'Your profile details have been successfully saved.'
+          }
+          buttonLabel={language === 'az' ? 'Tamam' : language === 'ru' ? 'ОК' : 'OK'}
+        />
       </div>
     </WebLayout>
   );

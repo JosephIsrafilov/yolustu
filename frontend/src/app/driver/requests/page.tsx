@@ -8,6 +8,7 @@ import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
+import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 
 const REQUESTS_I18N = {
   az: {
@@ -45,6 +46,8 @@ export default function DriverRequestsPage() {
     language,
   } = useAppStore();
 
+  const [rejectBookingId, setRejectBookingId] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     fetchBookingRequests();
     fetchTrips();
@@ -70,7 +73,7 @@ export default function DriverRequestsPage() {
         passenger={passenger}
         trip={trip}
         onAccept={readonly ? () => {} : () => acceptBooking(booking.id)}
-        onReject={readonly ? () => {} : () => rejectBooking(booking.id)}
+        onReject={readonly ? () => {} : () => setRejectBookingId(booking.id)}
       />
     );
   };
@@ -104,6 +107,45 @@ export default function DriverRequestsPage() {
           {requests.length === 0 && (
             <EmptyState icon={<Icon name="inbox" size={28} />} title={localCopy.noRequestsTitle} description={localCopy.noRequestsDesc} />
           )}
+
+          <ConfirmationDialog
+            isOpen={rejectBookingId !== null}
+            onClose={() => setRejectBookingId(null)}
+            onConfirm={async () => {
+              if (rejectBookingId) {
+                await rejectBooking(rejectBookingId);
+              }
+            }}
+            title={
+              language === 'az'
+                ? 'Sorğunu rədd etmək istəyirsiniz?'
+                : language === 'ru'
+                ? 'Отклонить запрос?'
+                : 'Reject Request?'
+            }
+            description={
+              language === 'az'
+                ? 'Sərnişinin rezervasiya sorğusunu rədd etmək istədiyinizdən əminsiniz?'
+                : language === 'ru'
+                ? 'Вы уверены, что хотите отклонить запрос на бронирование пассажира?'
+                : 'Are you sure you want to reject the passenger\'s booking request?'
+            }
+            confirmLabel={
+              language === 'az'
+                ? 'Bəli, rədd et'
+                : language === 'ru'
+                ? 'Да, отклонить'
+                : 'Yes, reject'
+            }
+            cancelLabel={
+              language === 'az'
+                ? 'Xeyr'
+                : language === 'ru'
+                ? 'Нет'
+                : 'No'
+            }
+            variant="danger"
+          />
         </div>
       </ProtectedRoute>
     </DriverLayout>

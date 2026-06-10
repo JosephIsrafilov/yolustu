@@ -9,9 +9,11 @@ interface AnimatedCounterProps {
 }
 
 export default function AnimatedCounter({ value, duration = 2000, className = '' }: AnimatedCounterProps) {
-  const numericMatch = value.match(/\d+/g);
-  const numericString = numericMatch ? numericMatch.join('') : '';
-  const targetValue = parseInt(numericString, 10);
+  const match = value.match(/(\d+(?:\.\d+)?)/);
+  const numericString = match ? match[0] : '';
+  const isDecimal = numericString.includes('.');
+  const decimalPlaces = isDecimal ? numericString.split('.')[1].length : 0;
+  const targetValue = isDecimal ? parseFloat(numericString) : parseInt(numericString, 10);
   
   let prefix = '';
   let suffix = '';
@@ -53,7 +55,7 @@ export default function AnimatedCounter({ value, duration = 2000, className = ''
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       
       const easeOut = 1 - Math.pow(1 - progress, 4);
-      const currentCount = Math.floor(easeOut * targetValue);
+      const currentCount = easeOut * targetValue;
       
       setCount(currentCount);
 
@@ -70,7 +72,9 @@ export default function AnimatedCounter({ value, duration = 2000, className = ''
   }, [isVisible, targetValue, duration]);
 
   const hasComma = value.includes(',');
-  const formattedCount = hasComma ? count.toLocaleString('en-US') : count.toString();
+  const formattedCount = isDecimal
+    ? count.toFixed(decimalPlaces)
+    : (hasComma ? Math.floor(count).toLocaleString('en-US') : Math.floor(count).toString());
 
   return (
     <span ref={ref} className={className}>
