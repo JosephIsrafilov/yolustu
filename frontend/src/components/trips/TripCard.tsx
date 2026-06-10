@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { formatPrice, formatRating, cn, estimateDurationMinutes, formatDuration } from '@/lib/utils';
+import { getLocalizedCityName } from '@/lib/cities';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import type { Trip, User } from '@/types';
@@ -20,6 +21,8 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
   const router = useRouter();
   const language = useAppStore(state => state.language);
   const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
+  const departureCity = getLocalizedCityName(trip.departureCity, language);
+  const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
 
   return (
     <Card
@@ -39,8 +42,8 @@ export default function TripCard({ trip, driver, compact = false }: TripCardProp
             <div className="w-2.5 h-2.5 rounded-full bg-brand-700 ring-2 ring-brand-100 shrink-0 flex-none" />
           </div>
           <div className="grid grid-rows-2 gap-1 min-w-0">
-            <span className="text-sm font-semibold text-text truncate block w-full leading-5 h-5">{trip.departureCity}</span>
-            <span className="text-sm font-semibold text-text truncate block w-full leading-5 h-5">{trip.arrivalCity}</span>
+            <span className="text-sm font-semibold text-text truncate block w-full leading-5 h-5">{departureCity}</span>
+            <span className="text-sm font-semibold text-text truncate block w-full leading-5 h-5">{arrivalCity}</span>
           </div>
         </div>
         <div className="text-right shrink-0 flex-none w-24">

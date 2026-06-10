@@ -44,7 +44,7 @@ describe('apiAuthService', () => {
     });
 
     const user = await apiAuthService.login({
-      phone: apiUser.phone,
+      phone: '+994 50 123 45 67',
       password: 'password123',
     });
 
@@ -68,7 +68,7 @@ describe('apiAuthService', () => {
 
     const user = await apiAuthService.register({
       fullName: 'Elvin Mammadov',
-      phone: apiUser.phone,
+      phone: '0501234567',
       email: 'elvin@example.com',
       password: 'password123',
     });
@@ -152,5 +152,21 @@ describe('apiAuthService', () => {
     expect(mockedApiClient.post).toHaveBeenCalledWith('/users/me/verify', expect.any(FormData));
     expect(user.verificationStatus).toBe('pending');
     expect(user.documentUrl).toBe('/uploads/doc.pdf');
+  });
+
+  it('normalizes phone for otp endpoints', async () => {
+    mockedApiClient.post.mockResolvedValue({});
+
+    await apiAuthService.requestOtp('50 123 45 67');
+    await apiAuthService.verifyOtp({ phone: '0501234567', otp: '123456' });
+
+    expect(mockedApiClient.post).toHaveBeenNthCalledWith(
+      1,
+      '/auth/request-otp?phone=%2B994501234567',
+    );
+    expect(mockedApiClient.post).toHaveBeenNthCalledWith(
+      2,
+      '/auth/verify-otp?phone=%2B994501234567&otp=123456',
+    );
   });
 });

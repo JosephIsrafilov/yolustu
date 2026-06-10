@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { I18N, LANGUAGES } from '@/lib/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import YolmatesLogo from '@/components/brand/YolmatesLogo';
@@ -10,10 +11,10 @@ export default function Footer() {
   const { language, setLanguage } = useAppStore();
   const copy = I18N[language];
   const links = [
-    { label: copy.footer.about, href: '/' },
-    { label: copy.footer.help, href: '/' },
-    { label: copy.footer.terms, href: '/' },
-    { label: copy.footer.privacy, href: '/' },
+    { label: copy.footer.about, href: '/about' },
+    { label: copy.footer.help, href: '/help' },
+    { label: copy.footer.terms, href: '/terms' },
+    { label: copy.footer.privacy, href: '/privacy' },
   ];
 
   return (
@@ -24,21 +25,25 @@ export default function Footer() {
           <span className="ui-meta-text text-[#40484a]">© {currentYear} Yolmates. {copy.footer.rights}</span>
         </div>
         <nav className="flex min-w-0 flex-wrap justify-center gap-x-5 gap-y-2 md:flex-nowrap">
-          {links.map((l) => (
-            <span key={l.label} className="ui-action-text whitespace-nowrap text-[#40484a] opacity-70">
-              {l.label}
-            </span>
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="ui-action-text whitespace-nowrap rounded-sm text-[#40484a] opacity-80 transition-colors hover:text-[#054752] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#054752]/30 focus-visible:ring-offset-2"
+            >
+              {link.label}
+            </Link>
           ))}
         </nav>
-        <div className="ui-action-text flex items-center justify-self-center text-[#40484a] md:justify-self-end shrink-0 flex-none h-6">
-          <div className="flex w-[120px] items-center justify-between shrink-0 flex-none" aria-label={copy.footer.languageLabel}>
+        <div className="ui-action-text flex h-6 flex-none shrink-0 items-center justify-self-center text-[#40484a] md:justify-self-end">
+          <div className="flex w-[120px] flex-none items-center justify-between shrink-0" aria-label={copy.footer.languageLabel}>
             {LANGUAGES.map((item, index) => (
               <React.Fragment key={item.code}>
-                {index > 0 && <span className="text-[#c0c8ca] flex-none">|</span>}
+                {index > 0 && <span className="flex-none text-[#c0c8ca]">|</span>}
                 <button
                   type="button"
                   onClick={() => setLanguage(item.code)}
-                  className={`transition-colors hover:text-[#054752] flex-none text-center min-w-[24px] ${
+                  className={`min-w-[24px] flex-none rounded-sm text-center transition-colors hover:text-[#054752] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#054752]/30 focus-visible:ring-offset-2 ${
                     language === item.code ? 'text-[#002f37]' : 'text-[#40484a]'
                   }`}
                   aria-pressed={language === item.code}

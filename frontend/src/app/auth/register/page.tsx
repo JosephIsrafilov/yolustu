@@ -11,6 +11,12 @@ import Icon, { type IconName } from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
 import { I18N } from '@/lib/i18n';
 import YolmatesLogo from '@/components/brand/YolmatesLogo';
+import PhoneInput from '@/components/auth/PhoneInput';
+import {
+  AZERBAIJAN_PHONE_PREFIX,
+  isValidAzerbaijaniPhone,
+  normalizeAzerbaijaniPhone,
+} from '@/lib/azerbaijani-phone';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,45 +24,63 @@ export default function RegisterPage() {
   const language = useAppStore((s) => s.language);
   const copy = I18N[language];
 
-  const [form, setForm] = useState({ fullName: '', phone: '', email: '', password: '', confirm: '' });
+  const [form, setForm] = useState({
+    fullName: '',
+    phone: AZERBAIJAN_PHONE_PREFIX,
+    email: '',
+    password: '',
+    confirm: '',
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const phoneErrorText = language === 'az'
+    ? 'Mobil nömrə düzgün deyil'
+    : language === 'ru'
+      ? 'Номер телефона указан неверно'
+      : 'Phone number is invalid';
 
   const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.fullName.trim()) e.fullName = copy.auth.fullNameError;
-    if (!form.phone.trim()) {
-      e.phone = copy.auth.phoneError;
-    } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ''))) {
-      e.phone = language === 'az' ? 'Düzgün telefon nömrəsi daxil edin' : language === 'ru' ? 'Введите правильный номер телефона' : 'Enter a valid phone number';
-    }
+    const nextErrors: Record<string, string> = {};
+
+    if (!form.fullName.trim()) nextErrors.fullName = copy.auth.fullNameError;
+    if (!isValidAzerbaijaniPhone(form.phone)) nextErrors.phone = phoneErrorText;
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) {
-      e.email = language === 'az' ? 'Düzgün email daxil edin' : language === 'ru' ? 'Введите правильный email' : 'Enter a valid email';
+      nextErrors.email = language === 'az' ? 'Düzgün email daxil edin' : language === 'ru' ? 'Введите правильный email' : 'Enter a valid email';
     }
-    if (form.password.length < 6) e.password = language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters';
-    if (form.password !== form.confirm) e.confirm = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    if (form.password.length < 6) {
+      nextErrors.password = language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters';
+    }
+    if (form.password !== form.confirm) {
+      nextErrors.confirm = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (ev: React.FormEvent) => {
-    ev.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!validate()) return;
+
+    const normalizedPhone = normalizeAzerbaijaniPhone(form.phone);
+
     setLoading(true);
     setSubmitError('');
+
     try {
-      const ok = await register({ 
-        fullName: form.fullName, 
-        phone: form.phone, 
+      const ok = await register({
+        fullName: form.fullName,
+        phone: normalizedPhone,
         email: form.email,
-        password: form.password 
+        password: form.password,
       });
       setLoading(false);
+
       if (ok) {
-        router.push(`/auth/verify?phone=${encodeURIComponent(form.phone)}&from=register`);
+        router.push(`/auth/verify?phone=${encodeURIComponent(normalizedPhone)}&from=register`);
       } else {
         setSubmitError(useAppStore.getState().lastError || copy.common.error);
       }
@@ -67,8 +91,8 @@ export default function RegisterPage() {
   };
 
   const update = (key: string, value: string) => {
-    setForm((p) => ({ ...p, [key]: value }));
-    if (errors[key]) setErrors((p) => { const n = { ...p }; delete n[key]; return n; });
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
   };
 
   const fields: { key: string; label: string; icon: IconName; placeholder: string; type: string }[] = [
@@ -91,34 +115,45 @@ export default function RegisterPage() {
           <p className="text-[14px] text-[#40484a] text-center mb-6">{language === 'az' ? 'Hesab yaradın və gedişlərə qoşulun' : language === 'ru' ? 'Создайте аккаунт и присоединяйтесь к поездкам' : 'Create an account and join rides'}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {fields.map((f) => {
-              const isPassword = f.key === 'password' || f.key === 'confirm';
-              const show = f.key === 'password' ? showPassword : showConfirm;
-              const inputType = isPassword ? (show ? 'text' : 'password') : f.type;
-              
+            {fields.map((field) => {
+              const isPassword = field.key === 'password' || field.key === 'confirm';
+              const show = field.key === 'password' ? showPassword : showConfirm;
+              const inputType = isPassword ? (show ? 'text' : 'password') : field.type;
+
               return (
-                <div key={f.key} className="flex flex-col gap-1.5">
-                  <label className="text-[14px] font-semibold text-[#011f23]">{f.label}</label>
-                  <div className="relative">
-                    <Icon name={f.icon} size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                    <input 
-                      type={inputType} 
-                      placeholder={f.placeholder}
-                      value={(form as Record<string, string>)[f.key]}
-                      onChange={(e) => update(f.key, e.target.value)}
-                      className={`w-full pl-11 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all ${isPassword ? 'pr-12' : 'pr-4'}`} 
+                <div key={field.key} className="flex flex-col gap-1.5">
+                  {field.key === 'phone' ? (
+                    <PhoneInput
+                      label={field.label}
+                      value={form.phone}
+                      onChange={(nextPhone) => update('phone', nextPhone)}
+                      error={errors.phone}
                     />
-                    {isPassword && (
-                      <button
-                        type="button"
-                        onClick={() => f.key === 'password' ? setShowPassword(!showPassword) : setShowConfirm(!showConfirm)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#70787b] hover:text-[#054752] transition-colors"
-                      >
-                        <Icon name={show ? 'eye-off' : 'eye'} size={18} />
-                      </button>
-                    )}
-                  </div>
-                  {errors[f.key] && <p className="text-[12px] text-[#ba1a1a]">{errors[f.key]}</p>}
+                  ) : (
+                    <>
+                      <label className="text-[14px] font-semibold text-[#011f23]">{field.label}</label>
+                      <div className="relative">
+                        <Icon name={field.icon} size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
+                        <input
+                          type={inputType}
+                          placeholder={field.placeholder}
+                          value={(form as Record<string, string>)[field.key]}
+                          onChange={(event) => update(field.key, event.target.value)}
+                          className={`w-full pl-11 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all ${isPassword ? 'pr-12' : 'pr-4'}`}
+                        />
+                        {isPassword && (
+                          <button
+                            type="button"
+                            onClick={() => field.key === 'password' ? setShowPassword(!showPassword) : setShowConfirm(!showConfirm)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#70787b] hover:text-[#054752] transition-colors"
+                          >
+                            <Icon name={show ? 'eye-off' : 'eye'} size={18} />
+                          </button>
+                        )}
+                      </div>
+                      {errors[field.key] && <p className="text-[12px] text-[#ba1a1a]">{errors[field.key]}</p>}
+                    </>
+                  )}
                 </div>
               );
             })}

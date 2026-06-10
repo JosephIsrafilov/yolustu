@@ -1,6 +1,8 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { useAppStore } from '@/store/useAppStore';
+import { getLocalizedCityName } from '@/lib/cities';
 
 interface RouteTimelineProps {
   departure: string;
@@ -15,8 +17,9 @@ export default function RouteTimeline({
   meetingPoint,
   dropoffPoint,
 }: RouteTimelineProps) {
-  const normalizedDepartureCity = departure.trim();
-  const normalizedArrivalCity = arrival.trim();
+  const language = useAppStore((state) => state.language);
+  const normalizedDepartureCity = getLocalizedCityName(departure.trim(), language);
+  const normalizedArrivalCity = getLocalizedCityName(arrival.trim(), language);
   const normalizedMeetingPoint = meetingPoint?.trim() || '';
   const normalizedDropoffPoint = dropoffPoint?.trim() || '';
 

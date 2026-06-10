@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useAppStore } from '@/store/useAppStore';
+import { getLocalizedCityName } from '@/lib/cities';
 
 export type RouteKey = 'ganca' | 'quba' | 'lankaran' | null;
 
@@ -10,11 +12,12 @@ interface ConnectingRoutesMapProps {
 }
 
 export default function ConnectingRoutesMap({ activeRoute, className = '' }: ConnectingRoutesMapProps) {
+  const language = useAppStore((state) => state.language);
   const nodes = {
-    baku: { x: 320, y: 150, label: 'Bakı' },
-    ganca: { x: 100, y: 120, label: 'Gəncə' },
-    quba: { x: 260, y: 60, label: 'Quba' },
-    lankaran: { x: 280, y: 240, label: 'Lənkəran' },
+    baku: { x: 320, y: 150, label: getLocalizedCityName('Bakı', language) },
+    ganca: { x: 100, y: 120, label: getLocalizedCityName('Gəncə', language) },
+    quba: { x: 260, y: 60, label: getLocalizedCityName('Quba', language) },
+    lankaran: { x: 280, y: 240, label: getLocalizedCityName('Lənkəran', language) },
   };
 
   const routes = {
@@ -68,7 +71,7 @@ export default function ConnectingRoutesMap({ activeRoute, className = '' }: Con
                 cx={node.x}
                 cy={node.y}
                 r="6"
-                fill={isActive ? '#5eead4' : '#1e293b'} 
+                fill={isActive ? '#5eead4' : '#1e293b'}
                 stroke={isActive ? '#14b8a6' : 'rgba(255,255,255,0.2)'}
                 strokeWidth="2"
                 className="transition-colors duration-500"
@@ -78,7 +81,7 @@ export default function ConnectingRoutesMap({ activeRoute, className = '' }: Con
                 y={node.y - 14}
                 fill={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
                 fontSize="14"
-                fontWeight={isActive ? "700" : "500"}
+                fontWeight={isActive ? '700' : '500'}
                 textAnchor="middle"
                 className="font-sans transition-colors duration-500"
                 style={{ filter: isActive ? 'drop-shadow(0 0 6px rgba(0,0,0,0.8))' : 'none' }}

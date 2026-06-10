@@ -4,6 +4,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Icon from '@/components/ui/Icon';
+import { useAppStore } from '@/store/useAppStore';
+import { getLocalizedCityName } from '@/lib/cities';
 import type { Booking, Trip, User } from '@/types';
 
 interface BookingRequestCardProps {
@@ -21,10 +23,14 @@ export default function BookingRequestCard({
   onAccept,
   onReject,
 }: BookingRequestCardProps) {
+  const language = useAppStore((state) => state.language);
+
   if (!passenger || !trip) return null;
 
   const isPending = booking.status === 'pending';
   const noSeats = trip.seatsAvailable < booking.seatsRequested;
+  const departureCity = getLocalizedCityName(trip.departureCity, language);
+  const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
 
   return (
     <Card className="animate-fade-in min-h-[160px] flex flex-col justify-between">
@@ -49,7 +55,7 @@ export default function BookingRequestCard({
           <span className="truncate block w-full">{booking.seatsRequested} yer istəyir</span>
         </span>
         <span className="truncate block w-full text-right">
-          {trip.departureCity} → {trip.arrivalCity}
+          {departureCity} → {arrivalCity}
         </span>
       </div>
 

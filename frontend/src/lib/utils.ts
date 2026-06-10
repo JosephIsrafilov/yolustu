@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
+import { getCityCoordinatesByName } from '@/lib/cities';
 
 export const CURRENCY_CODE = 'AZN';
 export const CURRENCY_SYMBOL = '₼';
@@ -85,7 +86,7 @@ export const AZ_CITY_COORDINATES: Record<AZCity, Coordinates> = {
 };
 
 export function getCityCoordinates(city: string): Coordinates | undefined {
-  return AZ_CITY_COORDINATES[city as AZCity];
+  return getCityCoordinatesByName(city) ?? AZ_CITY_COORDINATES[city as AZCity];
 }
 
 export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {

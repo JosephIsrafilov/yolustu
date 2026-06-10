@@ -7,6 +7,7 @@ import type {
   VerifyOtpInput,
 } from '@/services/contracts/auth-service';
 import { mapApiUserToUser, type ApiUser } from './mappers';
+import { normalizeAzerbaijaniPhone } from '@/lib/azerbaijani-phone';
 
 interface AuthSessionResponse {
   accessToken: string;
@@ -21,7 +22,10 @@ function clearLegacyAuthTokens() {
 
 export const apiAuthService: AuthService = {
   async login(input: LoginInput) {
-    const session = await apiClient.post<AuthSessionResponse>('/auth/login', input);
+    const session = await apiClient.post<AuthSessionResponse>('/auth/login', {
+      ...input,
+      phone: normalizeAzerbaijaniPhone(input.phone),
+    });
     clearLegacyAuthTokens();
     return mapApiUserToUser(session.user);
   },
@@ -31,7 +35,7 @@ export const apiAuthService: AuthService = {
     const firstName = names[0];
     const lastName = names.slice(1).join(' ') || ' ';
     const payload = {
-      phone: input.phone,
+      phone: normalizeAzerbaijaniPhone(input.phone),
       email: input.email,
       first_name: firstName,
       last_name: lastName,
@@ -43,12 +47,12 @@ export const apiAuthService: AuthService = {
   },
 
   async requestOtp(phone: string) {
-    await apiClient.post<unknown>(`/auth/request-otp?phone=${encodeURIComponent(phone)}`);
+    await apiClient.post<unknown>(`/auth/request-otp?phone=${encodeURIComponent(normalizeAzerbaijaniPhone(phone))}`);
   },
 
   async verifyOtp(input: VerifyOtpInput) {
     await apiClient.post<unknown>(
-      `/auth/verify-otp?phone=${encodeURIComponent(input.phone)}&otp=${encodeURIComponent(input.otp)}`
+      `/auth/verify-otp?phone=${encodeURIComponent(normalizeAzerbaijaniPhone(input.phone))}&otp=${encodeURIComponent(input.otp)}`
     );
   },
 

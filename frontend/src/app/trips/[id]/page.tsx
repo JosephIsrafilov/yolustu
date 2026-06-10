@@ -13,6 +13,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { formatPrice, formatRating, estimateDurationMinutes, formatDuration } from '@/lib/utils';
+import { getLocalizedCityName } from '@/lib/cities';
 import Icon from '@/components/ui/Icon';
 import { MapContainer } from '@/components/ui/Map';
 import { tripsService } from '@/services';
@@ -217,6 +218,8 @@ export default function TripDetailsPage() {
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
   const existingBooking = bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser?.id && b.status !== 'cancelled' && b.status !== 'rejected');
   const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
+  const departureCity = getLocalizedCityName(trip.departureCity, language);
+  const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
 
   const handleBook = async () => {
     if (!isAuthenticated) {
@@ -248,8 +251,8 @@ export default function TripDetailsPage() {
                   origin={trip.origin}
                   destination={trip.destination}
                   markers={[
-                    { position: [trip.origin.lat, trip.origin.lng], type: 'origin', popup: trip.departureCity },
-                    { position: [trip.destination.lat, trip.destination.lng], type: 'destination', popup: trip.arrivalCity }
+                    { position: [trip.origin.lat, trip.origin.lng], type: 'origin', popup: departureCity },
+                    { position: [trip.destination.lat, trip.destination.lng], type: 'destination', popup: arrivalCity }
                   ]}
                   fitBounds={[
                     [trip.origin.lat, trip.origin.lng],
@@ -330,7 +333,7 @@ export default function TripDetailsPage() {
                         {formatRating(driver.rating)}
                       </span>
                       <span>{copy.ridesLabel(driver.totalTrips)}</span>
-                      <span>{driver.city}</span>
+                      <span>{getLocalizedCityName(driver.city, language)}</span>
                     </div>
                   </div>
                 </div>
