@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReviewBase(BaseModel):
@@ -26,18 +26,48 @@ class ReviewResponse(ReviewBase):
 
 
 class MessageBase(BaseModel):
-    content: str
+    content: str = Field(min_length=1, max_length=2000)
 
 
 class MessageCreate(MessageBase):
-    ride_id: UUID
+    conversation_id: Optional[UUID] = None
+    ride_id: Optional[UUID] = None
 
 
 class MessageResponse(MessageBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    ride_id: UUID
+    conversation_id: Optional[UUID] = None
+    ride_id: Optional[UUID] = None
     sender_id: UUID
     created_at: datetime
+    read_at: Optional[datetime] = None
     sender_name: str
+
+
+class ConversationParticipantResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    user_id: UUID
+    role: str
+
+
+class ConversationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    type: str
+    ride_id: Optional[UUID] = None
+    booking_id: Optional[UUID] = None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    participants: list[ConversationParticipantResponse] = []
+
+
+class RideConversationCreate(BaseModel):
+    booking_id: UUID
+
+
+class ChatMessageCreate(MessageBase):
+    pass

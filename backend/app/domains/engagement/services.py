@@ -3,24 +3,34 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.domains.bookings.ports import BookingParticipantPort
-from app.domains.engagement.models import Message, Review
-from app.domains.engagement.repositories import MessageRepository, ReviewRepository
-from app.domains.engagement.schemas import MessageCreate, ReviewCreate
-from app.domains.identity.dependencies import CurrentUser
-from app.domains.identity.ports import UserLookupPort
-from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
+from app.domains.bookings.ports import BookingParticipantPort
+from app.domains.bookings.models import Booking
+from app.domains.engagement.models import Conversation, Message, Review
+from app.domains.engagement.repositories import (
+    ConversationRepository,
+    MessageRepository,
+    ReviewRepository,
+)
+from app.domains.engagement.schemas import (
+    ChatMessageCreate,
+    MessageCreate,
+    ReviewCreate,
+)
 from app.domains.gamification.services import (
     check_and_award_badge,
     check_and_award_badge_async,
 )
+from app.domains.identity.dependencies import CurrentUser
+from app.domains.identity.ports import UserLookupPort
+from app.domains.trips.ports import RideLookupPort
 
 
 class EngagementService:
     def __init__(self, db: Session):
         self.reviews = ReviewRepository(db)
         self.messages = MessageRepository(db)
+        self.conversations = ConversationRepository(db)
         self.rides = RideLookupPort(db)
         self.bookings = BookingParticipantPort(db)
         self.users = UserLookupPort(db)
@@ -83,43 +93,163 @@ class EngagementService:
     def get_user_reviews(self, user_id: UUID) -> list[Review]:
         return self.reviews.list_for_target(user_id)
 
-    async def send_message(
-        self, message_in: MessageCreate, current_user: CurrentUser, manager
-    ) -> Message:
-        ride = self.rides.get_ride(message_in.ride_id)
+    def get_user_conversations(self, current_user: CurrentUser) -> list[Conversation]:
+        return self.conversations.list_visible_conversations(
+            current_user.id, current_user.role
+        )
+
+    def get_or_create_support_conversation(
+        self, current_user: CurrentUser
+    ) -> Conversation:
+        existing = self.conversations.get_open_support_conversation(current_user.id)
+        if existing:
+            return existing
+
+        conv = Conversation(
+            type="support",
+            created_by_user_id=current_user.id,
+            status="open",
+        )
+        self.conversations.create(conv)
+        self.db.flush()
+        self.conversations.add_participant(conv.id, current_user.id, "user")
+        self.db.commit()
+        self.db.refresh(conv)
+        created = self.conversations.get(conv.id)
+        if created is None:
+            raise HTTPException(status_code=500, detail="Conversation was not created")
+        return created
+
+    def get_or_create_ride_conversation(
+        self, booking_id: UUID, current_user: CurrentUser
+    ) -> Conversation:
+        booking = self.db.query(Booking).filter(Booking.id == booking_id).first()
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+
+        ride = self.rides.get_ride(booking.ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
-        if not self._is_participant(ride, current_user.id):
+
+        if current_user.id not in (booking.passenger_id, ride.driver_id):
             raise HTTPException(
-                status_code=403, detail="Only participants can send messages"
+                status_code=403, detail="Not authorized to access this booking chat"
             )
 
-        message = self.messages.create(current_user.id, message_in)
-        message_data = {
+        existing = self.conversations.get_ride_conversation(booking_id)
+        if existing:
+            return existing
+
+        conv = Conversation(
+            type="ride",
+            ride_id=ride.id,
+            booking_id=booking.id,
+            created_by_user_id=current_user.id,
+            status="open",
+        )
+        self.conversations.create(conv)
+        self.db.flush()
+        self.conversations.add_participant(conv.id, booking.passenger_id, "passenger")
+        self.conversations.add_participant(conv.id, ride.driver_id, "driver")
+        self.db.commit()
+        self.db.refresh(conv)
+        created = self.conversations.get(conv.id)
+        if created is None:
+            raise HTTPException(status_code=500, detail="Conversation was not created")
+        return created
+
+    def get_conversation(
+        self, conversation_id: UUID, current_user: CurrentUser
+    ) -> Conversation:
+        conv = self.conversations.get(conversation_id)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        if not self._can_access_conversation(conv, current_user):
+            raise HTTPException(status_code=403, detail="Not authorized")
+        return conv
+
+    def _can_access_conversation(
+        self, conv: Conversation, current_user: CurrentUser
+    ) -> bool:
+        if current_user.role == "admin" and conv.type == "support":
+            return True
+        for p in conv.participants:
+            if p.user_id == current_user.id:
+                return True
+        return False
+
+    def _message_payload(self, message: Message, current_user: CurrentUser) -> dict:
+        return {
             "id": str(message.id),
-            "ride_id": str(message.ride_id),
+            "conversation_id": str(message.conversation_id)
+            if message.conversation_id
+            else None,
+            "ride_id": str(message.ride_id) if message.ride_id else None,
             "sender_id": str(message.sender_id),
             "content": message.content,
             "created_at": str(message.created_at),
             "sender_name": f"{current_user.first_name} {current_user.last_name}",
         }
-        await manager.broadcast_to_ride(message_data, message_in.ride_id)
 
-        participants = self.bookings.get_accepted_passenger_ids(ride.id)
-        participants.append(ride.driver_id)
-        for participant_id in participants:
-            if participant_id != current_user.id:
+    async def send_message(
+        self, message_in: MessageCreate, current_user: CurrentUser, manager
+    ) -> Message:
+        if not message_in.conversation_id and message_in.ride_id:
+            # legacy support for direct ride_id
+            ride = self.rides.get_ride(message_in.ride_id)
+            if not ride:
+                raise HTTPException(status_code=404, detail="Ride not found")
+            if not self._is_participant(ride, current_user.id):
+                raise HTTPException(
+                    status_code=403, detail="Only participants can send messages"
+                )
+            message = self.messages.create(current_user.id, message_in)
+            message_data = self._message_payload(message, current_user)
+            await manager.broadcast_to_ride(message_data, message_in.ride_id)
+            return message
+
+        return await self.send_chat_message(
+            message_in.conversation_id,
+            ChatMessageCreate(content=message_in.content),
+            current_user,
+            manager,
+        )
+
+    async def send_chat_message(
+        self,
+        conversation_id: UUID | None,
+        message_in: ChatMessageCreate,
+        current_user: CurrentUser,
+        manager=None,
+    ) -> Message:
+        if conversation_id is None:
+            raise HTTPException(status_code=400, detail="conversation_id is required")
+        conv = self.conversations.get(conversation_id)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        if not self._can_access_conversation(conv, current_user):
+            raise HTTPException(status_code=403, detail="Not a participant")
+
+        message = self.messages.create_for_conversation(
+            conv.id, current_user.id, message_in.content, conv.ride_id
+        )
+
+        if manager:
+            await manager.broadcast_to_conversation(
+                self._message_payload(message, current_user), conv.id
+            )
+
+        for part in conv.participants:
+            if part.user_id != current_user.id:
                 self.notifications.send_push_notification(
-                    user_id=participant_id,
+                    user_id=part.user_id,
                     title=f"New Message from {current_user.first_name}",
                     body=message.content,
-                    data={"ride_id": str(ride.id), "type": "new_message"},
+                    data={"conversation_id": str(conv.id), "type": "new_message"},
                 )
 
         # Gamification: chatterbox badge (5+ messages)
-        # We can do a quick count of user's messages in this ride or overall. Let's do overall.
-        from app.domains.engagement.models import Message
-
         msg_count = (
             self.db.query(Message).filter(Message.sender_id == current_user.id).count()
         )
@@ -127,6 +257,25 @@ class EngagementService:
             await check_and_award_badge_async(self.db, current_user.id, "chatterbox")
 
         return message
+
+    def get_conversation_messages(
+        self,
+        conversation_id: UUID,
+        current_user: CurrentUser,
+        limit: int = 50,
+        before=None,
+    ) -> list[Message]:
+        self.get_conversation(conversation_id, current_user)
+        return self.messages.list_for_conversation(
+            conversation_id, min(limit, 100), before
+        )
+
+    def mark_conversation_read(
+        self, conversation_id: UUID, current_user: CurrentUser
+    ) -> dict[str, bool]:
+        self.get_conversation(conversation_id, current_user)
+        self.messages.mark_read(conversation_id, current_user.id)
+        return {"ok": True}
 
     def get_ride_messages(
         self, ride_id: UUID, current_user: CurrentUser

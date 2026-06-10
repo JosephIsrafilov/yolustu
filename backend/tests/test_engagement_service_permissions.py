@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import asyncio
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -9,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.bookings.ports import BookingParticipantPort
-from app.domains.engagement.schemas import ReviewCreate
+from app.domains.engagement.schemas import ChatMessageCreate, ReviewCreate
 from app.domains.engagement.services import EngagementService
 from app.domains.engagement.repositories import MessageRepository, ReviewRepository
 from app.domains.identity.dependencies import CurrentUser
@@ -110,6 +111,72 @@ class FakeMessageRepository:
 
     def list_for_ride(self, ride_id: UUID):
         return self.messages
+
+
+class FakeConversationRepository:
+    def __init__(self, conversation):
+        self.conversation = conversation
+
+    def get(self, conversation_id: UUID):
+        if conversation_id == self.conversation.id:
+            return self.conversation
+        return None
+
+    def list_visible_conversations(self, user_id: UUID, user_role: str):
+        if user_role == "admin" and self.conversation.type == "support":
+            return [self.conversation]
+        if any(part.user_id == user_id for part in self.conversation.participants):
+            return [self.conversation]
+        return []
+
+
+class FakeChatMessageRepository(FakeMessageRepository):
+    def create_for_conversation(
+        self,
+        conversation_id: UUID,
+        sender_id: UUID,
+        content: str,
+        ride_id: UUID | None = None,
+    ):
+        message = SimpleNamespace(
+            id=uuid4(),
+            conversation_id=conversation_id,
+            ride_id=ride_id,
+            sender_id=sender_id,
+            content=content,
+            created_at=datetime.now(timezone.utc),
+            sender_name="Test User",
+        )
+        self.messages.append(message)
+        return message
+
+    def list_for_conversation(self, conversation_id: UUID, limit=50, before=None):
+        return [
+            message
+            for message in self.messages
+            if message.conversation_id == conversation_id
+        ]
+
+    def mark_read(self, conversation_id: UUID, user_id: UUID):
+        return None
+
+
+class FakeQuery:
+    def filter(self, *args, **kwargs):
+        return self
+
+    def count(self) -> int:
+        return 1
+
+
+class FakeDb:
+    def query(self, *args, **kwargs):
+        return FakeQuery()
+
+
+class FakeNotificationService:
+    def send_push_notification(self, **kwargs):
+        return None
 
 
 def make_current_user(user_id: UUID, role: str = "passenger") -> CurrentUser:
@@ -292,3 +359,78 @@ def test_chat_access_denied_for_non_active_booking_status(status: str):
 
     assert exc.value.status_code == 403
     assert "Only participants can read messages" in str(exc.value.detail)
+
+
+def make_conversation(conversation_type: str = "support"):
+    user_id = uuid4()
+    conversation = SimpleNamespace(
+        id=uuid4(),
+        type=conversation_type,
+        ride_id=uuid4() if conversation_type == "ride" else None,
+        booking_id=uuid4() if conversation_type == "ride" else None,
+        created_by_user_id=user_id,
+        status="open",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        participants=[SimpleNamespace(user_id=user_id, role="user")],
+    )
+    return conversation, make_current_user(user_id)
+
+
+def make_chat_service(conversation) -> EngagementService:
+    service = EngagementService(db=cast(Session, FakeDb()))
+    service_any = cast(Any, service)
+    service_any.conversations = FakeConversationRepository(conversation)
+    service_any.messages = FakeChatMessageRepository([])
+    service_any.notifications = FakeNotificationService()
+    return service
+
+
+def test_user_can_read_own_support_conversation():
+    conversation, user = make_conversation("support")
+    service = make_chat_service(conversation)
+
+    result = service.get_conversation(conversation.id, user)
+
+    assert result.id == conversation.id
+
+
+def test_admin_can_read_support_conversation_without_participant():
+    conversation, _ = make_conversation("support")
+    service = make_chat_service(conversation)
+    admin = make_current_user(uuid4(), role="admin")
+
+    result = service.get_conversation(conversation.id, admin)
+
+    assert result.id == conversation.id
+
+
+def test_outsider_cannot_read_support_conversation():
+    conversation, _ = make_conversation("support")
+    service = make_chat_service(conversation)
+    outsider = make_current_user(uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        service.get_conversation(conversation.id, outsider)
+
+    assert exc.value.status_code == 403
+
+
+def test_participant_can_send_chat_message():
+    conversation, user = make_conversation("support")
+    service = make_chat_service(conversation)
+
+    message = asyncio.run(
+        service.send_chat_message(
+            conversation.id, ChatMessageCreate(content="Need help"), user
+        )
+    )
+
+    assert message.conversation_id == conversation.id
+    assert message.content == "Need help"
+
+
+@pytest.mark.parametrize("content", ["", "x" * 2001])
+def test_chat_message_body_validation(content: str):
+    with pytest.raises(ValueError):
+        ChatMessageCreate(content=content)

@@ -23,9 +23,15 @@ class ConnectionManager:
 
     def disconnect(self, websocket: WebSocket, ride_id: UUID):
         if ride_id in self.active_connections:
-            self.active_connections[ride_id].remove(websocket)
+            self.active_connections[ride_id].discard(websocket)
             if not self.active_connections[ride_id]:
                 del self.active_connections[ride_id]
+
+    async def connect_conversation(self, websocket: WebSocket, conversation_id: UUID):
+        await self.connect(websocket, conversation_id)
+
+    def disconnect_conversation(self, websocket: WebSocket, conversation_id: UUID):
+        self.disconnect(websocket, conversation_id)
 
     async def connect_user(self, websocket: WebSocket, user_id: UUID):
         await websocket.accept()
@@ -69,6 +75,12 @@ class ConnectionManager:
         if ride_id in self.active_connections:
             message_json = json.dumps(message, default=str)
             for connection in self.active_connections[ride_id]:
+                await connection.send_text(message_json)
+
+    async def broadcast_to_conversation(self, message: dict, conversation_id: UUID):
+        if conversation_id in self.active_connections:
+            message_json = json.dumps(message, default=str)
+            for connection in self.active_connections[conversation_id]:
                 await connection.send_text(message_json)
 
 

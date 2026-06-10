@@ -21,6 +21,7 @@ from slowapi import _rate_limit_exceeded_handler
 from app.core.websocket import manager
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
+from app.domains.engagement.chats_router import router as chats_router
 from app.domains.engagement.messages_router import router as messages_router
 from app.domains.engagement.notifications_router import router as notifications_router
 from app.domains.engagement.reviews_router import router as reviews_router
@@ -122,6 +123,7 @@ v1_router.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
 v1_router.include_router(vehicles_router, prefix="/vehicles", tags=["vehicles"])
 v1_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])
 v1_router.include_router(messages_router, prefix="/messages", tags=["messages"])
+v1_router.include_router(chats_router, prefix="/chats", tags=["chats"])
 v1_router.include_router(
     notifications_router, prefix="/notifications", tags=["notifications"]
 )

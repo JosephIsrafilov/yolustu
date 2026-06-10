@@ -128,3 +128,36 @@ def test_websocket_rejects_blocked_user(monkeypatch):
             cookies={"access_token": "Bearer blocked-token"},
         ):
             pass
+
+
+def test_conversation_websocket_rejects_non_participant(monkeypatch):
+    monkeypatch.setattr(
+        "app.domains.engagement.chats_router.get_current_user_from_websocket",
+        lambda websocket, db, token=None: make_user(),
+    )
+    monkeypatch.setattr(
+        EngagementService,
+        "get_conversation",
+        lambda self, conversation_id, current_user: (_ for _ in ()).throw(
+            HTTPException(status_code=403, detail="Not authorized")
+        ),
+    )
+
+    with pytest.raises(WebSocketDisconnect):
+        with client.websocket_connect(f"/api/v1/chats/ws/{uuid4()}?token=outsider"):
+            pass
+
+
+def test_conversation_websocket_accepts_participant(monkeypatch):
+    monkeypatch.setattr(
+        "app.domains.engagement.chats_router.get_current_user_from_websocket",
+        lambda websocket, db, token=None: make_user(),
+    )
+    monkeypatch.setattr(
+        EngagementService,
+        "get_conversation",
+        lambda self, conversation_id, current_user: object(),
+    )
+
+    with client.websocket_connect(f"/api/v1/chats/ws/{uuid4()}?token=valid") as ws:
+        ws.send_text("ping")
