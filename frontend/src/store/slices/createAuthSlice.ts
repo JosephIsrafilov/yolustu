@@ -12,6 +12,7 @@ export const createAuthSlice: StateCreator<
 > = (set, get) => ({
   currentUser: null,
   isAuthenticated: false,
+  authStatus: 'unknown',
   activeRole: 'passenger',
   activeMode: 'passenger',
   lastError: null,
@@ -98,6 +99,7 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: user,
         isAuthenticated: true,
+        authStatus: 'authenticated',
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
         activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
@@ -117,6 +119,7 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: user,
         isAuthenticated: true,
+        authStatus: 'authenticated',
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
         activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
@@ -127,6 +130,7 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: null,
         isAuthenticated: false,
+        authStatus: 'unauthenticated',
         activeRole: 'passenger',
         activeMode: 'passenger',
         lastError: apiError.message || 'Invalid phone or password.',
@@ -144,6 +148,7 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: null,
         isAuthenticated: false,
+        authStatus: 'unauthenticated',
         activeRole: 'passenger',
         activeMode: 'passenger',
         lastError: null,
@@ -178,6 +183,7 @@ export const createAuthSlice: StateCreator<
         set({
           currentUser: admin,
           isAuthenticated: true,
+          authStatus: 'authenticated',
           activeRole: 'passenger',
           activeMode: 'passenger',
           lastError: null,
@@ -194,11 +200,13 @@ export const createAuthSlice: StateCreator<
 
   initAuth: async () => {
     try {
+      set({ authStatus: 'loading' });
       const user = await authService.getCurrentUser();
       if (user) {
         set({
           currentUser: user,
           isAuthenticated: true,
+          authStatus: 'authenticated',
           activeRole: user.role === 'driver' ? 'driver' : 'passenger',
           activeMode: user.role === 'driver' ? 'driver' : 'passenger',
           lastError: null,
@@ -207,6 +215,7 @@ export const createAuthSlice: StateCreator<
         set({
           currentUser: null,
           isAuthenticated: false,
+          authStatus: 'unauthenticated',
           activeRole: 'passenger',
           activeMode: 'passenger',
         });
@@ -222,6 +231,7 @@ export const createAuthSlice: StateCreator<
       set({
         currentUser: null,
         isAuthenticated: false,
+        authStatus: 'unauthenticated',
         activeRole: 'passenger',
         activeMode: 'passenger',
       });

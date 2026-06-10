@@ -147,10 +147,10 @@ export default function HomePage() {
 
       <main className="grow flex flex-col">
         {/* Hero */}
-        <section className="relative w-full overflow-hidden bg-navy text-white py-20 sm:py-24 lg:py-0 animate-fade-in">
+        <section className="relative w-full bg-navy text-white py-20 sm:py-24 lg:py-0 animate-fade-in">
           {/* Animated Background Gradients */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.35_0.065_248)_0%,transparent_50%)] opacity-40 pointer-events-none overflow-hidden" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.55_0.085_215)_0%,transparent_50%)] opacity-30 pointer-events-none overflow-hidden" />
           
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:flex lg:min-h-[calc(100dvh-54px)] lg:items-center lg:px-8">
             <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-2">

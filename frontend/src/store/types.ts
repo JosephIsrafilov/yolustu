@@ -6,6 +6,7 @@ import type { ActiveMode } from '@/lib/access-control';
 export interface AuthSlice {
   currentUser: User | null;
   isAuthenticated: boolean;
+  authStatus: 'unknown' | 'loading' | 'authenticated' | 'unauthenticated';
   activeRole: 'passenger' | 'driver';
   activeMode: ActiveMode;
   lastError: string | null;

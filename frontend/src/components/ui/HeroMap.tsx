@@ -78,7 +78,8 @@ export default function HeroMap() {
 
       <svg
         viewBox="0 0 800 600"
-        className="h-full w-full max-w-[120%] scale-110 sm:scale-100"
+        className="h-full w-full object-contain"
+        preserveAspectRatio="xMidYMid meet"
         style={{ filter: 'drop-shadow(0 0 20px rgba(20, 184, 166, 0.1))' }}
       >
         {ROUTES.map((route, i) => {
@@ -157,7 +158,7 @@ export default function HeroMap() {
                   fontWeight={isActive ? '700' : '500'}
                   textAnchor="middle"
                   className="font-sans transition-all duration-500"
-                  style={{ filter: isActive ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' : 'none' }}
+                  style={{ textShadow: isActive ? '0 2px 4px rgba(0,0,0,0.8)' : 'none' }}
                 >
                   {city.name}
                 </text>

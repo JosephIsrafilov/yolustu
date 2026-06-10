@@ -104,14 +104,16 @@ export default function SupportWidget() {
         type="button"
         onClick={openSupport}
         aria-label={isAuthenticated ? t.contact : t.login}
-        className="h-12 w-12 overflow-hidden rounded-full px-0 shadow-lg transition-all duration-300 ease-out hover:w-auto hover:min-w-[12rem] hover:rounded-full hover:px-4 focus-visible:w-auto focus-visible:min-w-[12rem] focus-visible:px-4 sm:group-focus-within:w-auto sm:group-focus-within:min-w-[12rem] sm:group-focus-within:px-4"
+        className="h-12 overflow-hidden rounded-full shadow-lg transition-all duration-300 ease-in-out w-12 hover:w-[14rem] focus-visible:w-[14rem] sm:group-focus-within:w-[14rem] p-0 flex items-center bg-teal-500 hover:bg-teal-400 text-navy"
       >
-        <span className="flex w-full items-center justify-center gap-2 sm:justify-start">
-          <Icon name="message-square" size={18} />
-          <span className="hidden whitespace-nowrap text-sm font-semibold sm:group-hover:inline sm:group-focus-within:inline">
+        <div className="flex items-center w-[14rem] h-full">
+          <div className="w-12 h-12 flex shrink-0 items-center justify-center">
+            <Icon name="message-square" size={18} />
+          </div>
+          <span className="whitespace-nowrap text-sm font-semibold opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
             {buttonLabel}
           </span>
-        </span>
+        </div>
       </Button>
     </div>
   );

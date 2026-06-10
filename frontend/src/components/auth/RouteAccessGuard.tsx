@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import { getUserCapabilities } from '@/lib/access-control';
+import TireLoader from '@/components/ui/TireLoader';
 
 const AUTH_REQUIRED_PREFIXES = ['/bookings', '/profile', '/reviews', '/driver', '/admin'];
 const DRIVER_PROTECTED_PREFIXES = ['/driver/create-trip', '/driver/my-trips', '/driver/requests', '/driver/vehicle', '/driver/documents'];
@@ -16,7 +17,7 @@ function startsWithAny(pathname: string, prefixes: string[]) {
 export default function RouteAccessGuard() {
   const router = useRouter();
   const pathname = usePathname();
-  const { currentUser, isAuthenticated, activeMode } = useAppStore();
+  const { currentUser, isAuthenticated, authStatus, activeMode } = useAppStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -32,6 +33,10 @@ export default function RouteAccessGuard() {
     const isAuthRoute = pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/auth/verify';
     const needsAuth = startsWithAny(pathname, AUTH_REQUIRED_PREFIXES);
     const isDriverProtected = startsWithAny(pathname, DRIVER_PROTECTED_PREFIXES);
+
+    if (authStatus === 'unknown' || authStatus === 'loading') {
+      return;
+    }
 
     if (!isAuthenticated || !currentUser) {
       if (needsAuth) {
@@ -62,7 +67,19 @@ export default function RouteAccessGuard() {
     if (isAuthRoute) {
       router.replace(ROUTES.search);
     }
-  }, [pathname, router, currentUser, isAuthenticated, activeMode, isHydrated]);
+  }, [pathname, router, currentUser, isAuthenticated, authStatus, activeMode, isHydrated]);
+
+  if (!isHydrated || authStatus === 'unknown' || authStatus === 'loading') {
+    const needsAuth = pathname ? startsWithAny(pathname, AUTH_REQUIRED_PREFIXES) : false;
+    if (needsAuth) {
+      return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <TireLoader />
+        </div>
+      );
+    }
+    return null;
+  }
 
   return null;
 }

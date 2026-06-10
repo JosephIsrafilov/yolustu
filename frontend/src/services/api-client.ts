@@ -212,13 +212,6 @@ class ApiClient {
       } catch (error) {
         this.isRefreshing = false;
         this.onTokenRefreshFailed(error);
-
-        if (typeof window !== 'undefined') {
-          if (!window.location.pathname.includes(ROUTES.login)) {
-            const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
-            window.location.href = `${ROUTES.login}?redirect_to=${currentUrl}`;
-          }
-        }
         throw error;
       }
     }
