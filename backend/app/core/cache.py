@@ -149,8 +149,8 @@ class CacheManager:
         """Invalidate all cache entries related to a ride."""
         patterns = [
             f"ride:ride_id={ride_id}",
-            f"rides:search:*",
-            f"rides:my:*",
+            "rides:search:*",
+            "rides:my:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)
@@ -168,7 +168,7 @@ class CacheManager:
         """Invalidate all cache entries related to a vehicle."""
         patterns = [
             f"vehicle:vehicle_id={vehicle_id}",
-            f"vehicles:my:*",
+            "vehicles:my:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)
@@ -176,8 +176,8 @@ class CacheManager:
     def invalidate_booking(self, booking_id: str) -> None:
         """Invalidate all cache entries related to a booking."""
         patterns = [
-            f"bookings:my:*",
-            f"bookings:requests:*",
+            "bookings:my:*",
+            "bookings:requests:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)

@@ -7,7 +7,6 @@ from apscheduler.triggers.interval import IntervalTrigger
 from app.core.database import SessionLocal
 from app.domains.bookings.services import BookingsService
 from app.domains.bookings.repositories import BookingRepository
-from app.domains.lifecycle import BOOKING_ACCEPTED
 
 logger = logging.getLogger(__name__)
 
