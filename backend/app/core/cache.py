@@ -1,4 +1,5 @@
 """Redis caching utilities for read-heavy endpoints."""
+
 import json
 import logging
 from functools import wraps
@@ -50,12 +51,14 @@ def cache_response(
         def get_ride(ride_id: UUID, db: Session):
             return service.get_ride(ride_id)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             # Skip Request objects when building cache key
             cache_kwargs = {
-                k: str(v) for k, v in kwargs.items()
+                k: str(v)
+                for k, v in kwargs.items()
                 if not isinstance(v, (Request, type(None)))
             }
 
@@ -79,11 +82,7 @@ def cache_response(
                 result = func(*args, **kwargs)
 
                 # Store in cache
-                redis_client.setex(
-                    cache_key,
-                    ttl,
-                    json.dumps(result, default=str)
-                )
+                redis_client.setex(cache_key, ttl, json.dumps(result, default=str))
 
                 return result
 
@@ -93,6 +92,7 @@ def cache_response(
                 return func(*args, **kwargs)
 
         return cast(Callable[..., T], wrapper)
+
     return decorator
 
 
