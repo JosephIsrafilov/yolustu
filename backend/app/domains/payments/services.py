@@ -23,7 +23,6 @@ from app.domains.lifecycle import (
 from app.domains.payments.models import (
     Payment,
     PayoutRequest,
-    TRANSACTION_TYPES,
     WalletTransaction,
 )
 from app.domains.payments.providers import get_payment_provider
