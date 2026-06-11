@@ -157,27 +157,29 @@ def refresh_token(
 @router.post("/logout")
 def logout(response: Response):
     secure = _use_secure_cookies()
+    samesite = _cookie_samesite()
     response.delete_cookie(
-        key="access_token", httponly=True, secure=secure, samesite="lax", path="/"
+        key="access_token", httponly=True, secure=secure, samesite=samesite, path="/"
     )
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=secure, samesite="lax", path="/"
+        key="refresh_token", httponly=True, secure=secure, samesite=samesite, path="/"
     )
     response.delete_cookie(
-        key=CSRF_COOKIE_NAME, secure=secure, samesite="lax", path="/"
+        key=CSRF_COOKIE_NAME, secure=secure, samesite=samesite, path="/"
     )
     return {"message": "Logged out successfully"}
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     secure = _use_secure_cookies()
+    samesite = _cookie_samesite()
     csrf_token = generate_csrf_token()
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         path="/",
         max_age=15 * 60,  # 15 minutes
     )
@@ -186,7 +188,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         value=refresh_token,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         path="/",
         max_age=30 * 24 * 60 * 60,  # 30 days
     )
@@ -195,11 +197,22 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         value=csrf_token,
         httponly=False,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         path="/",
         max_age=30 * 24 * 60 * 60,  # 30 days
     )
 
 
+def _cookie_samesite() -> str:
+    value = settings.COOKIE_SAMESITE.strip().lower()
+    if value not in {"lax", "strict", "none"}:
+        return "lax"
+    return value
+
+
 def _use_secure_cookies() -> bool:
+    # Browsers reject SameSite=None cookies unless they are also Secure, so
+    # cross-site deployments must serve over HTTPS regardless of ENVIRONMENT.
+    if _cookie_samesite() == "none":
+        return True
     return settings.ENVIRONMENT.lower() == "production"

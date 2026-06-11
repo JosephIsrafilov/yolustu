@@ -243,7 +243,8 @@ class BookingsService:
             ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
             if ride and ride.status != RIDE_COMPLETED:
                 ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                    ride.total_seats, ride.available_seats + booking.seats_booked  # type: ignore[arg-type]
+                    ride.total_seats,
+                    ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
                 )
             self.bookings.save(booking)
             self.notifications.send_push_notification(

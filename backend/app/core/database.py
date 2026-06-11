@@ -42,14 +42,34 @@ pool_size = int(os.getenv("DB_POOL_SIZE", 5))
 max_overflow = int(os.getenv("DB_MAX_OVERFLOW", 10))
 pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", 30))
 
-engine = create_engine(
-    database_url,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=pool_size,
-    max_overflow=max_overflow,
-    pool_timeout=pool_timeout,
-)
+engine_kwargs: dict = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+if _is_sqlite_url(database_url):
+    # SQLite (tests/local) uses a single shared connection across threads.
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs.update(
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_timeout=pool_timeout,
+    )
+    # Supabase (and any pooled remote Postgres) silently drops idle
+    # connections. Without a connect timeout a dead socket makes login hang;
+    # without TCP keepalives a checked-out connection can stall mid-request.
+    # pool_pre_ping above catches dead connections on checkout; these settings
+    # bound the failure window for connections that die while in use.
+    engine_kwargs["connect_args"] = {
+        "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", 10)),
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+    }
+
+engine = create_engine(database_url, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

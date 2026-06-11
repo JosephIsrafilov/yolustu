@@ -1,21 +1,29 @@
 'use client';
 
 import React from 'react';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import WebLayout from '@/components/layout/WebLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import Icon from '@/components/ui/Icon';
-import LoadingState from '@/components/ui/LoadingState';
+import { Skeleton } from '@/components/ui/Skeleton';
+import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import { paymentsService } from '@/services';
-import type { Wallet, WalletTransaction, WalletTransactionType } from '@/types';
+import type { WalletTransaction, Payout } from '@/types';
+import type { WalletTransactionFilter } from '@/services/contracts/payments-service';
 import { formatPrice } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
+import { ROUTES } from '@/lib/routes';
 import TopUpModal from './TopUpModal';
+import PayoutModal from './PayoutModal';
+import { getTransactionMeta, transactionLabel } from './meta';
+import { formatRelativeTime, formatAbsoluteTime, groupTransactionsByDay } from './format';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-type WalletFilter = 'all' | 'payments' | 'topups' | 'refunds' | 'income';
+const TRANSACTIONS_PER_PAGE = 20;
 
 const WALLET_COPY = {
   az: {
@@ -29,9 +37,32 @@ const WALLET_COPY = {
     refunded: 'Qaytarmalar',
     history: 'Əməliyyat tarixçəsi',
     historyHint: 'Ödənişlər, balans artırmaları, qaytarmalar və gəlirlər burada görünəcək.',
-    empty: 'Hələ balans əməliyyatı yoxdur',
     emptyDesc: 'Ödənişləriniz, balans artırmalarınız və qaytarmalarınız burada görünəcək.',
     topup: 'Balansı artır',
+    withdraw: 'Çıxarış',
+    loadMore: 'Daha çox',
+    loadError: 'Məlumat yüklənmədi.',
+    retry: 'Yenidən cəhd et',
+    payouts: 'Çıxarış sorğuları',
+    payoutsHint: 'Çıxarış sorğularınız və statusları burada görünəcək.',
+    payoutsEmpty: 'Hələ çıxarış sorğusu yoxdur',
+    empty: {
+      all: 'Hələ balans əməliyyatı yoxdur',
+      payments: 'Hələ ödəniş yoxdur',
+      topups: 'Hələ balans artırma yoxdur',
+      refunds: 'Hələ qaytarma yoxdur',
+      income: 'Hələ gəlir yoxdur',
+    },
+    statuses: {
+      posted: 'Tamamlandı',
+      pending: 'Gözləyir',
+      reversed: 'Geri qaytarıldı',
+    },
+    payoutStatuses: {
+      pending: 'Gözləyir',
+      completed: 'Tamamlandı',
+      rejected: 'Rədd edildi',
+    },
     filters: {
       all: 'Hamısı',
       payments: 'Ödənişlər',
@@ -51,9 +82,32 @@ const WALLET_COPY = {
     refunded: 'Возвраты',
     history: 'История операций',
     historyHint: 'Здесь будут отображаться оплаты, пополнения, возвраты и поступления.',
-    empty: 'Операций по балансу пока нет',
     emptyDesc: 'Ваши платежи, пополнения и возвраты появятся здесь.',
     topup: 'Пополнить',
+    withdraw: 'Вывести',
+    loadMore: 'Показать ещё',
+    loadError: 'Не удалось загрузить данные.',
+    retry: 'Повторить',
+    payouts: 'Запросы на вывод',
+    payoutsHint: 'Ваши запросы на вывод и их статусы появятся здесь.',
+    payoutsEmpty: 'Запросов на вывод пока нет',
+    empty: {
+      all: 'Операций по балансу пока нет',
+      payments: 'Платежей пока нет',
+      topups: 'Пополнений пока нет',
+      refunds: 'Возвратов пока нет',
+      income: 'Поступлений пока нет',
+    },
+    statuses: {
+      posted: 'Проведено',
+      pending: 'В ожидании',
+      reversed: 'Отменено',
+    },
+    payoutStatuses: {
+      pending: 'В ожидании',
+      completed: 'Завершено',
+      rejected: 'Отклонено',
+    },
     filters: {
       all: 'Все',
       payments: 'Платежи',
@@ -73,9 +127,32 @@ const WALLET_COPY = {
     refunded: 'Refunds',
     history: 'Transaction history',
     historyHint: 'Your payments, top-ups, refunds and income will appear here.',
-    empty: 'No wallet operations yet',
     emptyDesc: 'Your payments, top-ups and refunds will appear here.',
     topup: 'Top up',
+    withdraw: 'Withdraw',
+    loadMore: 'Load more',
+    loadError: 'Could not load data.',
+    retry: 'Try again',
+    payouts: 'Payout requests',
+    payoutsHint: 'Your payout requests and their statuses will appear here.',
+    payoutsEmpty: 'No payout requests yet',
+    empty: {
+      all: 'No wallet operations yet',
+      payments: 'No payments yet',
+      topups: 'No top-ups yet',
+      refunds: 'No refunds yet',
+      income: 'No income yet',
+    },
+    statuses: {
+      posted: 'Completed',
+      pending: 'Pending',
+      reversed: 'Reversed',
+    },
+    payoutStatuses: {
+      pending: 'Pending',
+      completed: 'Completed',
+      rejected: 'Rejected',
+    },
     filters: {
       all: 'All',
       payments: 'Payments',
@@ -87,135 +164,227 @@ const WALLET_COPY = {
 } as const;
 
 const METRIC_META = [
-  { key: 'pending', icon: 'clock' as const, accent: 'text-amber-600 bg-amber-50 border-amber-200' },
   { key: 'earned', icon: 'banknote' as const, accent: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
   { key: 'spent', icon: 'credit-card' as const, accent: 'text-[#054752] bg-[#edfcff] border-[#c0e3ea]' },
   { key: 'refunded', icon: 'refresh-cw' as const, accent: 'text-sky-700 bg-sky-50 border-sky-200' },
 ] as const;
 
-function transactionMatchesFilter(transaction: WalletTransaction, filter: WalletFilter) {
-  if (filter === 'all') return true;
-  if (filter === 'refunds') return transaction.type === 'refund';
-  if (filter === 'income') return transaction.direction === 'credit' && transaction.type !== 'refund';
-  if (filter === 'payments') return transaction.direction === 'debit' && transaction.type !== 'refund';
-  if (filter === 'topups') return transaction.type === 'adjustment';
-  return true;
+const STATUS_VARIANT = {
+  posted: 'success',
+  pending: 'warning',
+  reversed: 'muted',
+} as const;
+
+const PAYOUT_STATUS_VARIANT = {
+  pending: 'warning',
+  completed: 'success',
+  rejected: 'danger',
+} as const;
+
+/**
+ * Resolves the detail route a transaction row should open, preferring the ride
+ * (trip) detail when present, then the bookings list. Rows with neither id stay
+ * non-interactive.
+ */
+function transactionHref(transaction: WalletTransaction): string | null {
+  if (transaction.rideId) return ROUTES.tripDetails(transaction.rideId);
+  if (transaction.bookingId) return ROUTES.bookings;
+  return null;
 }
 
-function transactionLabel(type: WalletTransactionType, language: keyof typeof WALLET_COPY) {
-  const labels: Record<WalletTransactionType, Record<keyof typeof WALLET_COPY, string>> = {
-    passenger_payment: { az: 'Sərnişin ödənişi', ru: 'Оплата пассажира', en: 'Passenger payment' },
-    platform_fee: { az: 'Platforma komissiyası', ru: 'Комиссия платформы', en: 'Platform fee' },
-    driver_pending_earning: { az: 'Gözləyən gəlir', ru: 'Ожидаемый доход', en: 'Pending income' },
-    driver_available_earning: { az: 'Aktiv gəlir', ru: 'Доступный доход', en: 'Available income' },
-    refund: { az: 'Qaytarma', ru: 'Возврат', en: 'Refund' },
-    payout: { az: 'Çıxarış', ru: 'Выплата', en: 'Payout' },
-    adjustment: { az: 'Balans artırma', ru: 'Пополнение', en: 'Top-up' },
-  };
-
-  return labels[type][language];
+function WalletSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-52 w-full rounded-3xl" />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+      </div>
+      <Skeleton className="h-14 w-full rounded-2xl" />
+      <div className="space-y-3">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function WalletContent() {
   const language = useAppStore((state) => state.language);
   const copy = WALLET_COPY[language];
-  const [wallet, setWallet] = React.useState<Wallet | null>(null);
-  const [transactions, setTransactions] = React.useState<WalletTransaction[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [activeFilter, setActiveFilter] = React.useState<WalletFilter>('all');
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
+
   const initialTopup = searchParams.get('topup') ? Number(searchParams.get('topup')) : undefined;
   const returnTo = searchParams.get('returnTo');
   const [isTopUpOpen, setIsTopUpOpen] = React.useState(Boolean(initialTopup));
-  const [isTopUpLoading, setIsTopUpLoading] = React.useState(false);
+  const [isPayoutOpen, setIsPayoutOpen] = React.useState(false);
+  const [activeFilter, setActiveFilter] = React.useState<WalletTransactionFilter>('all');
 
-  React.useEffect(() => {
-    let cancelled = false;
+  const walletQuery = useQuery({
+    queryKey: ['wallet'],
+    queryFn: () => paymentsService.getWallet(),
+  });
+  const wallet = walletQuery.data;
 
-    async function loadWallet() {
-      try {
-        const [walletResponse, txResponse] = await Promise.all([
-          paymentsService.getWallet(),
-          paymentsService.getWalletTransactions(1, 50),
-        ]);
+  const transactionsQuery = useInfiniteQuery({
+    queryKey: ['wallet-transactions', activeFilter],
+    queryFn: ({ pageParam }) =>
+      paymentsService.getWalletTransactions(pageParam, TRANSACTIONS_PER_PAGE, activeFilter),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.page < lastPage.pages ? lastPage.page + 1 : undefined),
+  });
 
-        if (!cancelled) {
-          setWallet(walletResponse);
-          setTransactions(txResponse.items);
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
+  const payoutsQuery = useQuery({
+    queryKey: ['wallet-payouts'],
+    queryFn: () => paymentsService.getPayouts(1, 50),
+  });
 
-    void loadWallet();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const transactions = React.useMemo(
+    () => transactionsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [transactionsQuery.data],
+  );
 
-  const handleTopup = async (amount: number) => {
-    try {
-      setIsTopUpLoading(true);
-      await paymentsService.topupWallet(amount);
-      const [walletResponse, txResponse] = await Promise.all([
-        paymentsService.getWallet(),
-        paymentsService.getWalletTransactions(1, 50),
-      ]);
-      setWallet(walletResponse);
-      setTransactions(txResponse.items);
-      if (returnTo) router.push(returnTo);
-    } catch (error) {
-      alert('Top up failed');
-      throw error;
-    } finally {
-      setIsTopUpLoading(false);
-    }
+  const groupedTransactions = React.useMemo(
+    () => groupTransactionsByDay(transactions, language),
+    [transactions, language],
+  );
+
+  const invalidateWallet = () => {
+    void queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    void queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
   };
 
-  const filteredTransactions = React.useMemo(
-    () => transactions.filter((transaction) => transactionMatchesFilter(transaction, activeFilter)),
-    [transactions, activeFilter],
-  );
+  const topupMutation = useMutation({
+    mutationFn: (amount: number) => paymentsService.topupWallet(amount, crypto.randomUUID()),
+    onSuccess: () => {
+      invalidateWallet();
+    },
+  });
+
+  const payoutMutation = useMutation({
+    mutationFn: (amount: number) => paymentsService.requestPayout(amount, crypto.randomUUID()),
+    onSuccess: () => {
+      invalidateWallet();
+      void queryClient.invalidateQueries({ queryKey: ['wallet-payouts'] });
+    },
+  });
+
+  const handleTopup = async (amount: number) => {
+    await topupMutation.mutateAsync(amount);
+    if (returnTo) router.push(returnTo);
+  };
+
+  const handlePayout = async (amount: number) => {
+    await payoutMutation.mutateAsync(amount);
+  };
+
+  const last4 = (wallet?.userId ?? '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000';
+  const availableBalance = wallet?.availableBalance ?? 0;
+  const payouts = payoutsQuery.data?.items ?? [];
+
+  const isInitialLoading = walletQuery.isLoading || transactionsQuery.isLoading;
+  const hasLoadError = walletQuery.isError || transactionsQuery.isError;
+
+  if (isInitialLoading) {
+    return (
+      <WebLayout title={copy.title}>
+        <ProtectedRoute>
+          <WalletSkeleton />
+        </ProtectedRoute>
+      </WebLayout>
+    );
+  }
 
   return (
     <WebLayout title={copy.title}>
       <ProtectedRoute>
-        {isLoading ? (
-          <LoadingState />
+        {hasLoadError ? (
+          <Card className="p-8">
+            <EmptyState
+              icon={<Icon name="alert-triangle" size={28} />}
+              title={copy.loadError}
+              action={
+                <Button
+                  onClick={() => {
+                    void walletQuery.refetch();
+                    void transactionsQuery.refetch();
+                  }}
+                >
+                  <Icon name="refresh-cw" size={16} />
+                  {copy.retry}
+                </Button>
+              }
+            />
+          </Card>
         ) : (
           <div className="space-y-6">
-            <Card className="overflow-hidden border-[#bfe2ea] bg-[linear-gradient(135deg,#042f36_0%,#0c4f5a_55%,#15717e_100%)] p-0 text-white shadow-[0_20px_50px_rgba(4,47,54,0.18)]">
-              <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:p-8">
-                <div>
-                  <p className="text-sm font-medium text-white/70">{copy.subtitle}</p>
-                  <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-teal-100/70">{copy.available}</p>
-                  <p className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">{formatPrice(wallet?.availableBalance ?? 0)}</p>
-                  <p className="mt-3 max-w-md text-sm text-teal-50/75">{copy.availableHint}</p>
+            {/* Fintech balance card */}
+            <Card className="relative overflow-hidden border-[#bfe2ea] bg-[linear-gradient(135deg,#042f36_0%,#0c4f5a_55%,#15717e_100%)] p-0 text-white shadow-[0_20px_50px_rgba(4,47,54,0.18)]">
+              {/* Decorative glass orbs */}
+              <div className="pointer-events-none absolute -right-16 -top-24 h-60 w-60 rounded-full bg-white/10 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-28 -left-12 h-60 w-60 rounded-full bg-teal-300/10 blur-2xl" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_55%)]" />
+
+              <div className="relative grid gap-7 p-6 md:p-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-100/70">{copy.available}</p>
+                    <AnimatedCounter
+                      key={`${availableBalance}`}
+                      value={formatPrice(availableBalance)}
+                      duration={900}
+                      className="mt-2 block text-4xl font-black tracking-tight sm:text-5xl"
+                    />
+                  </div>
+                  <div className="flex flex-col items-end gap-3">
+                    {/* EMV-style chip */}
+                    <span className="h-9 w-12 rounded-md bg-gradient-to-br from-amber-200 to-amber-400/80 shadow-inner ring-1 ring-white/30" />
+                    <span className="font-mono text-sm tracking-[0.3em] text-white/70">•••• {last4}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-stretch gap-3 md:min-w-[220px]">
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-teal-50 backdrop-blur">
+                    <Icon name="clock" size={13} />
+                    {copy.pending}: {formatPrice(wallet?.pendingBalance ?? 0)}
+                  </span>
+                  <p className="max-w-md text-sm text-teal-50/70">{copy.availableHint}</p>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
                     onClick={() => setIsTopUpOpen(true)}
-                    className="w-full bg-white text-[#04313a] hover:bg-[#f4fdff]"
+                    className="bg-white text-[#04313a] hover:bg-[#f4fdff] sm:w-auto"
                   >
                     <Icon name="plus" size={16} />
                     {copy.topup}
                   </Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPayoutOpen(true)}
+                    disabled={availableBalance <= 0}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/50 disabled:hover:bg-white/5"
+                  >
+                    <Icon name="upload" size={16} />
+                    {copy.withdraw}
+                  </button>
                 </div>
               </div>
             </Card>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {/* Metric strip */}
+            <div className="grid gap-4 sm:grid-cols-3">
               {METRIC_META.map((item) => {
                 const value =
-                  item.key === 'pending'
-                    ? wallet?.pendingBalance ?? 0
-                    : item.key === 'earned'
-                      ? wallet?.totalEarned ?? 0
-                      : item.key === 'spent'
-                        ? wallet?.totalSpent ?? 0
-                        : wallet?.totalRefunded ?? 0;
+                  item.key === 'earned'
+                    ? wallet?.totalEarned ?? 0
+                    : item.key === 'spent'
+                      ? wallet?.totalSpent ?? 0
+                      : wallet?.totalRefunded ?? 0;
 
                 return (
                   <Card key={item.key} className="p-5">
@@ -233,6 +402,7 @@ function WalletContent() {
               })}
             </div>
 
+            {/* Transaction history */}
             <Card className="p-5 md:p-6">
               <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -240,7 +410,7 @@ function WalletContent() {
                   <p className="mt-1 text-sm text-[#5d6e73]">{copy.historyHint}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(Object.keys(copy.filters) as WalletFilter[]).map((filter) => (
+                  {(Object.keys(copy.filters) as WalletTransactionFilter[]).map((filter) => (
                     <button
                       key={filter}
                       type="button"
@@ -258,36 +428,150 @@ function WalletContent() {
               </div>
 
               <div className="pt-5">
-                {filteredTransactions.length === 0 ? (
+                {transactions.length === 0 ? (
                   <EmptyState
                     className="py-12"
                     icon={<Icon name="credit-card" size={28} />}
-                    title={copy.empty}
+                    title={copy.empty[activeFilter]}
                     description={copy.emptyDesc}
                   />
                 ) : (
+                  <div className="space-y-6">
+                    {groupedTransactions.map((group) => (
+                      <div key={group.key} className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-[#7a8b8f]">{group.label}</span>
+                          <span className="h-px flex-1 bg-border" />
+                        </div>
+                        {group.transactions.map((transaction) => {
+                          const meta = getTransactionMeta(transaction.type);
+                          const href = transactionHref(transaction);
+                          const isInteractive = href !== null;
+
+                          return (
+                            <div
+                              key={transaction.id}
+                              role={isInteractive ? 'button' : undefined}
+                              tabIndex={isInteractive ? 0 : undefined}
+                              onClick={isInteractive ? () => router.push(href) : undefined}
+                              onKeyDown={
+                                isInteractive
+                                  ? (e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        router.push(href);
+                                      }
+                                    }
+                                  : undefined
+                              }
+                              className={`flex flex-col gap-3 rounded-2xl border border-border bg-[#fbfeff] p-4 md:flex-row md:items-center md:justify-between ${
+                                isInteractive
+                                  ? 'cursor-pointer transition-colors hover:border-brand-200 hover:bg-[#f4fbfd] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                                  : ''
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
+                                  transaction.direction === 'credit' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                  <Icon name={meta.icon} size={16} />
+                                </span>
+                                <div>
+                                  <p className="flex items-center gap-1.5 font-semibold text-[#002f37]">
+                                    {transactionLabel(transaction.type, language)}
+                                    {isInteractive && <Icon name="chevron-right" size={14} className="text-[#9bb0b5]" />}
+                                  </p>
+                                  <p
+                                    className="mt-1 text-sm text-[#5d6e73]"
+                                    title={formatAbsoluteTime(transaction.createdAt, language)}
+                                  >
+                                    {formatRelativeTime(transaction.createdAt, language)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 md:flex-col md:items-end md:gap-1">
+                                <p className={`text-lg font-bold ${transaction.direction === 'credit' ? 'text-emerald-600' : 'text-[#002f37]'}`}>
+                                  {transaction.direction === 'credit' ? '+' : '-'}{formatPrice(transaction.amount)}
+                                </p>
+                                <Badge variant={STATUS_VARIANT[transaction.status]}>
+                                  {copy.statuses[transaction.status]}
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+
+                    {transactionsQuery.hasNextPage && (
+                      <div className="flex justify-center pt-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => void transactionsQuery.fetchNextPage()}
+                          loading={transactionsQuery.isFetchingNextPage}
+                        >
+                          {copy.loadMore}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Payout requests */}
+            <Card className="p-5 md:p-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-xl font-semibold text-[#002f37]">{copy.payouts}</h2>
+                <p className="mt-1 text-sm text-[#5d6e73]">{copy.payoutsHint}</p>
+              </div>
+
+              <div className="pt-5">
+                {payoutsQuery.isError ? (
+                  <EmptyState
+                    className="py-12"
+                    icon={<Icon name="alert-triangle" size={28} />}
+                    title={copy.loadError}
+                    action={
+                      <Button variant="outline" onClick={() => void payoutsQuery.refetch()}>
+                        <Icon name="refresh-cw" size={16} />
+                        {copy.retry}
+                      </Button>
+                    }
+                  />
+                ) : payouts.length === 0 ? (
+                  <EmptyState
+                    className="py-12"
+                    icon={<Icon name="upload" size={28} />}
+                    title={copy.payoutsEmpty}
+                    description={copy.payoutsHint}
+                  />
+                ) : (
                   <div className="space-y-3">
-                    {filteredTransactions.map((transaction) => (
+                    {payouts.map((payout: Payout) => (
                       <div
-                        key={transaction.id}
+                        key={payout.id}
                         className="flex flex-col gap-3 rounded-2xl border border-border bg-[#fbfeff] p-4 md:flex-row md:items-center md:justify-between"
                       >
                         <div className="flex items-start gap-3">
-                          <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
-                            transaction.direction === 'credit' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            <Icon name={transaction.direction === 'credit' ? 'plus' : 'minus'} size={16} />
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                            <Icon name="upload" size={16} />
                           </span>
                           <div>
-                            <p className="font-semibold text-[#002f37]">{transactionLabel(transaction.type, language)}</p>
-                            <p className="mt-1 text-sm text-[#5d6e73]">{new Date(transaction.createdAt).toLocaleString()}</p>
+                            <p className="font-semibold text-[#002f37]">{copy.withdraw}</p>
+                            <p
+                              className="mt-1 text-sm text-[#5d6e73]"
+                              title={formatAbsoluteTime(payout.createdAt, language)}
+                            >
+                              {formatRelativeTime(payout.createdAt, language)}
+                            </p>
                           </div>
                         </div>
-                        <div className="md:text-right">
-                          <p className={`text-lg font-bold ${transaction.direction === 'credit' ? 'text-emerald-600' : 'text-[#002f37]'}`}>
-                            {transaction.direction === 'credit' ? '+' : '-'}{formatPrice(transaction.amount)}
-                          </p>
-                          <p className="mt-1 text-xs uppercase tracking-wide text-[#7a8b8f]">{transaction.status}</p>
+                        <div className="flex items-center gap-3 md:flex-col md:items-end md:gap-1">
+                          <p className="text-lg font-bold text-[#002f37]">-{formatPrice(payout.amount)}</p>
+                          <Badge variant={PAYOUT_STATUS_VARIANT[payout.status]}>
+                            {copy.payoutStatuses[payout.status]}
+                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -297,13 +581,21 @@ function WalletContent() {
             </Card>
           </div>
         )}
+
         <TopUpModal
           key={initialTopup ?? 'default-topup'}
           isOpen={isTopUpOpen}
           onClose={() => setIsTopUpOpen(false)}
           onSuccess={handleTopup}
-          isLoading={isTopUpLoading}
+          isLoading={topupMutation.isPending}
           initialAmount={initialTopup}
+        />
+        <PayoutModal
+          isOpen={isPayoutOpen}
+          onClose={() => setIsPayoutOpen(false)}
+          availableBalance={availableBalance}
+          onSubmit={handlePayout}
+          isLoading={payoutMutation.isPending}
         />
       </ProtectedRoute>
     </WebLayout>
@@ -315,7 +607,7 @@ export default function WalletPage() {
   const copy = WALLET_COPY[language];
 
   return (
-    <React.Suspense fallback={<WebLayout title={copy.title}><LoadingState /></WebLayout>}>
+    <React.Suspense fallback={<WebLayout title={copy.title}><WalletSkeleton /></WebLayout>}>
       <WalletContent />
     </React.Suspense>
   );
