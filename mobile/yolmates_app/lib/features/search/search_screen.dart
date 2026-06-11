@@ -150,7 +150,7 @@ class _SearchScreenState extends State<SearchScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: const Icon(Icons.location_on),

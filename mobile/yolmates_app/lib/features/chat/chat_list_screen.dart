@@ -19,7 +19,7 @@ class ChatListScreen extends StatelessWidget {
           return ListTile(
             onTap: () => context.push('/chat/conv-$index'),
             leading: CircleAvatar(
-              backgroundColor: AppTheme.teal.withOpacity(0.2),
+              backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
               child: Text(
                 'U${index + 1}',
                 style: const TextStyle(

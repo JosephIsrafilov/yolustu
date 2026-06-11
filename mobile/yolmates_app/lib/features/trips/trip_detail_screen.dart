@@ -82,7 +82,7 @@ class TripDetailScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 30,
-                        backgroundColor: AppTheme.teal.withOpacity(0.2),
+                        backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
                         child: const Text(
                           'RS',
                           style: TextStyle(
