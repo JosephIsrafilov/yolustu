@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -574,7 +575,7 @@ class PaymentService:
             raise HTTPException(status_code=400, detail="Payout request is not pending")
 
         tx = self.wallets.get_transaction_by_idempotency_key(
-            (payout.payout_metadata or {}).get("idempotency_key", "")
+            self._payout_idempotency_key(payout)
         )
         if tx is not None:
             tx.status = "posted"  # type: ignore[assignment]
@@ -604,7 +605,7 @@ class PaymentService:
         )
 
         tx = self.wallets.get_transaction_by_idempotency_key(
-            (payout.payout_metadata or {}).get("idempotency_key", "")
+            self._payout_idempotency_key(payout)
         )
         if tx is not None:
             tx.status = "reversed"  # type: ignore[assignment]
@@ -690,3 +691,8 @@ class PaymentService:
             "checkout_url": payment.provider_checkout_url or "",
             "transaction_id": payment.transaction_id or "",
         }
+
+    @staticmethod
+    def _payout_idempotency_key(payout: PayoutRequest) -> str:
+        metadata = cast(dict[str, Any] | None, payout.payout_metadata)
+        return str((metadata or {}).get("idempotency_key", ""))
