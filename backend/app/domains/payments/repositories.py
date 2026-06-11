@@ -177,7 +177,9 @@ class WalletRepository:
             .first()
         )
 
-    def get_transaction_for_update(self, transaction_id: UUID) -> WalletTransaction | None:
+    def get_transaction_for_update(
+        self, transaction_id: UUID
+    ) -> WalletTransaction | None:
         return (
             self.db.query(WalletTransaction)
             .filter(WalletTransaction.id == transaction_id)
@@ -265,7 +267,5 @@ class PayoutRepository:
 
     def count_by_status(self, status: str) -> int:
         return (
-            self.db.query(PayoutRequest)
-            .filter(PayoutRequest.status == status)
-            .count()
+            self.db.query(PayoutRequest).filter(PayoutRequest.status == status).count()
         )

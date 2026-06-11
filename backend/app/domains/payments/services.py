@@ -481,7 +481,11 @@ class PaymentService:
         }
 
     def wallet_transactions(
-        self, current_user: CurrentUser, page: int = 1, limit: int = 50, filter: str = "all"
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        limit: int = 50,
+        filter: str = "all",
     ):
         skip = (page - 1) * limit
         items = self.wallets.list_transactions(
@@ -567,9 +571,7 @@ class PaymentService:
         if not payout:
             raise HTTPException(status_code=404, detail="Payout request not found")
         if payout.status != "pending":
-            raise HTTPException(
-                status_code=400, detail="Payout request is not pending"
-            )
+            raise HTTPException(status_code=400, detail="Payout request is not pending")
 
         tx = self.wallets.get_transaction_by_idempotency_key(
             (payout.payout_metadata or {}).get("idempotency_key", "")
@@ -591,12 +593,11 @@ class PaymentService:
         if not payout:
             raise HTTPException(status_code=404, detail="Payout request not found")
         if payout.status != "pending":
-            raise HTTPException(
-                status_code=400, detail="Payout request is not pending"
-            )
+            raise HTTPException(status_code=400, detail="Payout request is not pending")
 
         wallet = self.wallets.get_or_create_for_update(
-            payout.user_id, payout.currency  # type: ignore[arg-type]
+            payout.user_id,
+            payout.currency,  # type: ignore[arg-type]
         )
         wallet.available_balance = money(  # type: ignore[assignment]
             wallet.available_balance + payout.amount  # type: ignore[arg-type]

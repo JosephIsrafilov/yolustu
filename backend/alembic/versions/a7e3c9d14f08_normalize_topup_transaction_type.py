@@ -22,8 +22,7 @@ def upgrade() -> None:
     # Standardize legacy wallet top-ups on the canonical "adjustment" type.
     op.execute(
         sa.text(
-            "UPDATE wallet_transactions SET type = 'adjustment' "
-            "WHERE type = 'topup'"
+            "UPDATE wallet_transactions SET type = 'adjustment' WHERE type = 'topup'"
         )
     )
 

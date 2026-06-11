@@ -188,9 +188,7 @@ class FakeWalletRepository:
                 tx for tx in txs if tx.direction == "credit" and tx.type != "refund"
             ]
         if filter == "payments":
-            return [
-                tx for tx in txs if tx.direction == "debit" and tx.type != "refund"
-            ]
+            return [tx for tx in txs if tx.direction == "debit" and tx.type != "refund"]
         if filter == "topups":
             return [tx for tx in txs if tx.type == "adjustment"]
         return txs
