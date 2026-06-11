@@ -2,6 +2,7 @@
 
 import { useState, Suspense, useEffect, useMemo } from "react";
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -11,13 +12,17 @@ import { formatPrice } from '@/lib/utils';
 import { getLocalizedCityName, getLocalizedCityOptions, PUBLIC_CITY_KEYS, CITY_COORDINATES, CITY_LABELS, getCityCoordinatesByName } from '@/lib/cities';
 import Icon from '@/components/ui/Icon';
 import type { TripSearchFilters } from '@/types';
-import { MapContainer } from '@/components/ui/Map';
 import { useOsrmMultipleRoutes } from '@/components/ui/Map/utils';
 import type { MapMarkerData } from '@/components/ui/Map/types';
 import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
 import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
+
+const MapContainer = dynamic(() => import('@/components/ui/Map').then(mod => ({ default: mod.MapContainer })), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-xl animate-pulse" />,
+});
 
 function TripsContent() {
   const searchParams = useSearchParams();

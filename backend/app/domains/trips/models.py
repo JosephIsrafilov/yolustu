@@ -70,4 +70,8 @@ class Ride(Base):
 Index("ix_rides_departure_time", Ride.departure_time)
 Index("ix_rides_status", Ride.status)
 Index("ix_rides_driver_id", Ride.driver_id)
+Index("ix_rides_origin_city", Ride.origin_city)
+Index("ix_rides_destination_city", Ride.destination_city)
+Index("ix_rides_status_departure", Ride.status, Ride.departure_time)
+Index("ix_rides_available_seats", Ride.available_seats)
 Index("ix_vehicles_user_id", Vehicle.user_id)

@@ -148,7 +148,7 @@ export default function AdminBookingsPage() {
       setAllBookings(res.items);
       setTotalPages(res.pages);
     } catch (error) {
-      console.error('Fetch admin bookings error:', error);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }

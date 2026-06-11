@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, WebSocket, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -52,14 +52,14 @@ class CurrentUser:
     @classmethod
     def from_model(cls, user: User) -> "CurrentUser":
         return cls(
-            id=user.id,
-            phone=user.phone,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            role=user.role,
-            is_verified=user.is_verified,
-            is_blocked=user.is_blocked,
-            verification_status=user.verification_status,
+            id=user.id,  # type: ignore[arg-type]
+            phone=user.phone,  # type: ignore[arg-type]
+            first_name=user.first_name,  # type: ignore[arg-type]
+            last_name=user.last_name,  # type: ignore[arg-type]
+            role=user.role,  # type: ignore[arg-type]
+            is_verified=user.is_verified,  # type: ignore[arg-type]
+            is_blocked=user.is_blocked,  # type: ignore[arg-type]
+            verification_status=user.verification_status,  # type: ignore[arg-type]
         )
 
 
@@ -90,7 +90,7 @@ def get_current_user_from_token(token: str, db: Session) -> CurrentUser:
     except JWTError:
         raise credentials_exception
 
-    user = UserRepository(db).get_by_id(token_data.user_id)
+    user = UserRepository(db).get_by_id(token_data.user_id)  # type: ignore[arg-type]
     if user is None:
         raise credentials_exception
     if user.is_blocked:

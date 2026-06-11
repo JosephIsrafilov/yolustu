@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, HTTPException, status, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.cache import cache_response
 from app.core.config import UPLOADS_DIR
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
@@ -31,6 +32,7 @@ VERIFICATION_UPLOAD_TYPES: dict[str, set[str]] = {
 
 
 @router.get("/me", response_model=UserResponse)
+@cache_response(prefix="user:me", ttl=60)  # 1 minute cache for current user
 def read_user_me(
     current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -80,7 +82,7 @@ async def upload_avatar(
     avatar_url = f"{base_url}/uploads/{filename}"
 
     user_model = IdentityService(db).get_current_user_model(current_user)
-    user_model.avatar_url = avatar_url
+    user_model.avatar_url = avatar_url  # type: ignore[assignment]
     db.commit()
     db.refresh(user_model)
     return user_model

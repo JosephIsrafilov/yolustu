@@ -42,11 +42,11 @@ class UserRepository:
 
     def update(self, user: User, user_in: UserUpdate) -> User:
         if user_in.phone and user_in.phone != user.phone:
-            user.phone = user_in.phone
+            user.phone = user_in.phone  # type: ignore[assignment]
 
         if user_in.email and user_in.email != user.email:
-            user.email = user_in.email
-            user.is_email_verified = False
+            user.email = user_in.email  # type: ignore[assignment]
+            user.is_email_verified = False  # type: ignore[assignment]
 
         for field in (
             "first_name",
@@ -66,19 +66,19 @@ class UserRepository:
         return user
 
     def mark_verified(self, user: User) -> User:
-        user.is_verified = True
+        user.is_verified = True  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(user)
         return user
 
     def set_blocked(self, user: User, is_blocked: bool) -> User:
-        user.is_blocked = is_blocked
+        user.is_blocked = is_blocked  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(user)
         return user
 
     def update_rating(self, user: User, rating: float) -> User:
-        user.rating = rating
+        user.rating = rating  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(user)
         return user
@@ -86,9 +86,9 @@ class UserRepository:
     def update_verification_status(
         self, user: User, status: str, document_url: str | None = None
     ) -> User:
-        user.verification_status = status
+        user.verification_status = status  # type: ignore[assignment]
         if document_url:
-            user.document_url = document_url
+            user.document_url = document_url  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(user)
         return user
@@ -96,7 +96,7 @@ class UserRepository:
     def increment_total_rides(self, user_id: UUID):
         user = self.get_by_id(user_id)
         if user:
-            user.total_rides += 1
+            user.total_rides += 1  # type: ignore[assignment]
 
     def count_all(self) -> int:
         return self.db.query(User).count()
@@ -116,7 +116,7 @@ class UserRepository:
         )
         if existing_token:
             if existing_token.user_id != user_id:
-                existing_token.user_id = user_id
+                existing_token.user_id = user_id  # type: ignore[assignment]
                 self.db.commit()
             return
 

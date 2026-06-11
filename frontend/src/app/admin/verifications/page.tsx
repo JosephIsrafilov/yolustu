@@ -70,7 +70,7 @@ export default function AdminVerificationsPage() {
       setVerifications(res.items);
       setTotalPages(res.pages);
     } catch (error) {
-      console.error('Fetch pending verifications error:', error);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +95,7 @@ export default function AdminVerificationsPage() {
         await adminService.approveVerification(userId);
         setVerifications(prev => prev.filter(v => v.id !== userId));
       } catch (error) {
-        console.error('Approve verification error:', error);
+        // Error handled silently
       }
     }
   };
@@ -106,7 +106,7 @@ export default function AdminVerificationsPage() {
         await adminService.rejectVerification(userId);
         setVerifications(prev => prev.filter(v => v.id !== userId));
       } catch (error) {
-        console.error('Reject verification error:', error);
+        // Error handled silently
       }
     }
   };

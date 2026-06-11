@@ -175,20 +175,16 @@ export default function AdminDashboardPage() {
 
   const fetchData = () => {
     Promise.all([
-      adminService.getUsers(1, 100).catch((err) => {
-        console.error('Fetch users error:', err);
+      adminService.getUsers(1, 100).catch(() => {
         return { items: [] };
       }),
-      adminService.getTrips(1, 100).catch((err) => {
-        console.error('Fetch trips error:', err);
+      adminService.getTrips(1, 100).catch(() => {
         return { items: [] };
       }),
-      adminService.getBookings(1, 100).catch((err) => {
-        console.error('Fetch bookings error:', err);
+      adminService.getBookings(1, 100).catch(() => {
         return { items: [] };
       }),
-      adminService.getAdminStats().catch((err) => {
-        console.error('Fetch stats error:', err);
+      adminService.getAdminStats().catch(() => {
         return null;
       }),
     ]).then(([usersRes, tripsRes, bookingsRes, statsRes]) => {
@@ -197,8 +193,7 @@ export default function AdminDashboardPage() {
       setBookingsList(bookingsRes.items);
       setApiStats(statsRes);
       setIsLoading(false);
-    }).catch((error) => {
-      console.error('Fetch admin stats error:', error);
+    }).catch(() => {
       setIsLoading(false);
     });
   };
@@ -219,7 +214,6 @@ export default function AdminDashboardPage() {
       });
       fetchData(); // Refresh data
     } catch (err) {
-      console.error(err);
       setActiveToast({
         type: 'notification',
         title: 'Error',

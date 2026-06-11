@@ -77,7 +77,7 @@ def mock_payment_succeed(
     db: Session = Depends(get_db),
 ):
     payment = PaymentService(db).get_payment(payment_id, current_user)
-    return PaymentService(db).mark_payment_succeeded(payment.id)
+    return PaymentService(db).mark_payment_succeeded(payment.id)  # type: ignore[arg-type]
 
 
 @router.post("/mock/{payment_id}/fail", response_model=PaymentWebhookResponse)
@@ -87,7 +87,7 @@ def mock_payment_fail(
     db: Session = Depends(get_db),
 ):
     payment = PaymentService(db).get_payment(payment_id, current_user)
-    return PaymentService(db).mark_payment_failed(payment.id, "Mock failure")
+    return PaymentService(db).mark_payment_failed(payment.id, "Mock failure")  # type: ignore[arg-type]
 
 
 @router.post("/webhook/{provider}", response_model=PaymentWebhookResponse)

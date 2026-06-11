@@ -81,7 +81,6 @@ export default function BookingsPage() {
                       }
                       window.location.href = res.checkoutUrl;
                     } catch (error) {
-                      console.error('Payment start failed', error);
                       alert(copy.paymentFail);
                     }
                   }}

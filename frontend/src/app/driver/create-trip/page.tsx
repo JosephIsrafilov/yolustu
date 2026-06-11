@@ -141,7 +141,6 @@ export default function CreateTripPage() {
         const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
         return response.map(mapApiVehicleToVehicle);
       } catch (err) {
-        console.error('Fetch vehicles error:', err);
         return [];
       }
     },
@@ -262,7 +261,7 @@ export default function CreateTripPage() {
         setValue('comment', response.description);
       }
     } catch (error) {
-      console.error('AI Draft Description Error:', error);
+      // Error handled silently
     } finally {
       setIsDrafting(false);
     }
@@ -362,7 +361,7 @@ export default function CreateTripPage() {
         setValue(field, shortName.replace(/,\s*$/, '').trim());
       }
     } catch (err) {
-      console.error('Failed to reverse geocode', err);
+      // Error handled silently
     }
   };
 

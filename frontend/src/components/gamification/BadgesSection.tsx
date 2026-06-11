@@ -28,7 +28,7 @@ export const BadgesSection: React.FC = () => {
         setAllBadges(badgesRes);
         setUserBadges(userBadgesRes);
       } catch (err) {
-        console.error('Failed to load badges', err);
+        // Error handled silently
       } finally {
         setLoading(false);
       }

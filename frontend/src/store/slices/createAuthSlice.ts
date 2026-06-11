@@ -143,7 +143,7 @@ export const createAuthSlice: StateCreator<
     try {
       await authService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      // Error handled silently
     } finally {
       set({
         currentUser: null,
@@ -190,7 +190,7 @@ export const createAuthSlice: StateCreator<
         });
       }
     } catch (error) {
-      console.error('Admin login error:', error);
+      // Error handled silently
     }
   },
 
@@ -225,7 +225,7 @@ export const createAuthSlice: StateCreator<
         error && typeof error === 'object' && 'status' in error && error.status === 401;
 
       if (!isUnauthorized) {
-        console.error('Failed to initialize auth:', error);
+        // Error handled silently
       }
 
       set({
@@ -261,7 +261,7 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
-      console.error('Block user error:', error);
+      // Error handled silently
     }
   },
 
@@ -272,7 +272,7 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
-      console.error('Unblock user error:', error);
+      // Error handled silently
     }
   },
 
@@ -281,7 +281,7 @@ export const createAuthSlice: StateCreator<
       const response = await adminService.getUsers();
       set({ users: response.items });
     } catch (error) {
-      console.error('Fetch users error:', error);
+      // Error handled silently
     }
   },
 
@@ -290,7 +290,7 @@ export const createAuthSlice: StateCreator<
       const response = await adminService.getPendingVerifications();
       set({ pendingVerifications: response.items });
     } catch (error) {
-      console.error('Fetch pending verifications error:', error);
+      // Error handled silently
     }
   },
 
@@ -302,7 +302,7 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
-      console.error('Approve verification error:', error);
+      // Error handled silently
     }
   },
 
@@ -314,7 +314,7 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch (error) {
-      console.error('Reject verification error:', error);
+      // Error handled silently
     }
   },
 

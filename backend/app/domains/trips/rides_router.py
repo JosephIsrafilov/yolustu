@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
-
+from app.core.cache import cache_response
 from app.core.database import get_db
 from app.domains.identity.dependencies import CurrentUser, get_current_user
 from app.domains.trips.schemas import RideCreate, RideResponse
@@ -27,6 +27,7 @@ def create_ride(
 
 
 @router.get("/search", response_model=List[RideResponse])
+@cache_response(prefix="rides:search", ttl=180)  # 3 minutes cache for search results
 def search_rides(
     origin_lat: Optional[float] = None,
     origin_lon: Optional[float] = None,
@@ -65,6 +66,7 @@ def search_rides(
 
 
 @router.get("/my", response_model=List[RideResponse])
+@cache_response(prefix="rides:my", ttl=120)  # 2 minutes cache for user's rides
 def get_my_rides(
     current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -72,6 +74,7 @@ def get_my_rides(
 
 
 @router.get("/{ride_id}", response_model=RideResponse)
+@cache_response(prefix="ride", ttl=300)  # 5 minutes cache for individual rides
 def get_ride(ride_id: UUID, db: Session = Depends(get_db)):
     return TripsService(db).get_ride(ride_id)
 

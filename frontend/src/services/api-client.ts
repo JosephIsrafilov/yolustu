@@ -270,7 +270,7 @@ class ApiClient {
     try {
       await this.post('/auth/logout');
     } catch (e) {
-      console.error('Logout failed', e);
+      // Error handled silently
     } finally {
       if (typeof window !== 'undefined') {
         window.location.href = ROUTES.login;

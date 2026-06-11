@@ -195,7 +195,6 @@ export default function TripDetailsPage() {
         setTripLoadError(false);
       })
       .catch((error) => {
-        console.error('Fetch trip details error:', error);
         setTripLoadError(true);
       });
   }, [tripId, trips]);
@@ -235,7 +234,6 @@ export default function TripDetailsPage() {
     try {
       bookingId = await createBooking(trip.id, seats);
     } catch (err) {
-      console.error('Booking failed:', err);
       bookingId = '';
     } finally {
       setIsBookingLoading(false);

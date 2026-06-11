@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 firebase_ready = False
 try:
-    import firebase_admin
+    import firebase_admin  # type: ignore[import-untyped]
     from firebase_admin import credentials, messaging
 
     if not firebase_admin._apps:

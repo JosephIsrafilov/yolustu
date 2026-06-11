@@ -445,7 +445,6 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
       alert(copy.uploadSuccess);
       setFile(null);
     } catch (error) {
-      console.error('Upload error:', error);
       alert(copy.uploadError);
     } finally {
       setUploading(false);
