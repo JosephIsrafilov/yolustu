@@ -1,5 +1,6 @@
 # Environments
 .env
+!.env.example
 .venv
 env/
 venv/
@@ -58,6 +59,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+.ruff_cache/
 cover/
 
 # Jupyter Notebook

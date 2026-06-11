@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+!.env.example
 venv/
 .venv/
 node_modules/
@@ -24,13 +25,19 @@ scripts/
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
 backend/.pytest_cache/
 backend/uploads/
 
 # Next.js
 frontend/.next/
+frontend/.next-build-*/
 frontend/playwright-report/
 frontend/test-results/
+frontend/coverage/
 frontend/out/
 frontend/tsconfig.tsbuildinfo
 backend/test.db
@@ -48,5 +55,7 @@ skills-lock.json
 build/
 coverage/
 *.log
+tmp_backend_*.log
+tmp_frontend_*.log
 analyze.out
 analyze.err

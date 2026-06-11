@@ -185,6 +185,24 @@ Stop:
 
 ---
 
+## Local Cleanup
+
+Generated folders can become large during normal backend, frontend, and Flutter work. Use targeted cleanup only; do not use `git clean -fdx` because it can remove local env files and other untracked work.
+
+Safe PowerShell cleanup from repo root:
+
+```powershell
+Remove-Item -Recurse -Force frontend/.next, frontend/.next-build-*, frontend/playwright-report, frontend/test-results, frontend/coverage -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force backend/.pytest_cache, backend/.mypy_cache, backend/.ruff_cache, backend/htmlcov -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force mobile/yolmates_app/build, mobile/yolmates_app/.dart_tool -ErrorAction SilentlyContinue
+Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force
+Remove-Item -Force *.log, tmp_backend_*.log, tmp_frontend_*.log -ErrorAction SilentlyContinue
+```
+
+These commands target generated caches, reports, logs, and build output only. They intentionally do not remove `.env`, `.env.local`, source files, migrations, committed platform files, or Flutter plugin registrant files.
+
+---
+
 ## Demo Users
 
 To populate your local PostgreSQL database with demo data (users, vehicles, trips), run:
