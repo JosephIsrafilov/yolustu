@@ -55,7 +55,8 @@ class EngagementService:
 
         target_is_driver = ride.driver_id == review_in.target_id
         target_is_passenger = self.bookings.is_accepted_passenger(
-            ride.id, review_in.target_id  # type: ignore[arg-type]
+            ride.id,
+            review_in.target_id,  # type: ignore[arg-type]
         )
         if not (target_is_driver or target_is_passenger):
             raise HTTPException(
@@ -68,7 +69,9 @@ class EngagementService:
         if not target_user:
             raise HTTPException(status_code=404, detail="Target user not found")
         if self.reviews.exists_for_author_target_ride(
-            current_user.id, review_in.target_id, ride.id  # type: ignore[arg-type]
+            current_user.id,
+            review_in.target_id,
+            ride.id,  # type: ignore[arg-type]
         ):
             raise HTTPException(
                 status_code=400,
@@ -240,12 +243,16 @@ class EngagementService:
             raise HTTPException(status_code=403, detail="Not a participant")
 
         message = self.messages.create_for_conversation(
-            conv.id, current_user.id, message_in.content, conv.ride_id  # type: ignore[arg-type]
+            conv.id,
+            current_user.id,
+            message_in.content,
+            conv.ride_id,  # type: ignore[arg-type]
         )
 
         if manager:
             await manager.broadcast_to_conversation(
-                self._message_payload(message, current_user), conv.id  # type: ignore[arg-type]
+                self._message_payload(message, current_user),
+                conv.id,  # type: ignore[arg-type]
             )
 
         for part in conv.participants:

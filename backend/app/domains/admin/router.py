@@ -9,6 +9,8 @@ from app.domains.admin.services import AdminService
 from app.domains.bookings.schemas import BookingResponse
 from app.domains.identity.dependencies import CurrentUser, get_current_admin
 from app.domains.identity.schemas import UserResponse
+from app.domains.payments.schemas import PayoutRequestResponse
+from app.domains.payments.services import PaymentService
 from app.domains.trips.schemas import RideResponse
 
 router = APIRouter()
@@ -115,3 +117,31 @@ def simulate_journey(
     current_user: CurrentUser = Depends(get_current_admin),
 ):
     return AdminService(db).simulate_journey(current_user)
+
+
+@router.get("/payouts", response_model=PaginatedResponse[PayoutRequestResponse])
+def get_pending_payouts(
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+):
+    return PaymentService(db).list_admin_payouts(current_user, page=page, limit=limit)
+
+
+@router.patch("/payouts/{payout_id}/approve", response_model=PayoutRequestResponse)
+def approve_payout(
+    payout_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return PaymentService(db).approve_payout(payout_id, current_user)
+
+
+@router.patch("/payouts/{payout_id}/reject", response_model=PayoutRequestResponse)
+def reject_payout(
+    payout_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return PaymentService(db).reject_payout(payout_id, current_user)

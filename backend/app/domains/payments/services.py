@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -20,9 +21,17 @@ from app.domains.lifecycle import (
     PAYMENT_SUCCEEDED,
     RIDE_COMPLETED,
 )
-from app.domains.payments.models import Payment, WalletTransaction
+from app.domains.payments.models import (
+    Payment,
+    PayoutRequest,
+    WalletTransaction,
+)
 from app.domains.payments.providers import get_payment_provider
-from app.domains.payments.repositories import PaymentRepository, WalletRepository
+from app.domains.payments.repositories import (
+    PaymentRepository,
+    PayoutRepository,
+    WalletRepository,
+)
 from app.domains.trips.ports import RideLookupPort
 
 MONEY = Decimal("0.01")
@@ -37,6 +46,7 @@ class PaymentService:
         self.db = db
         self.payments = PaymentRepository(db)
         self.wallets = WalletRepository(db)
+        self.payouts = PayoutRepository(db)
         self.bookings = BookingRepository(db)
         self.rides = RideLookupPort(db)
         self.notifications = NotificationService(db)
@@ -254,7 +264,8 @@ class PaymentService:
         booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
         if ride.status != RIDE_COMPLETED:
             ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                ride.total_seats, ride.available_seats + booking.seats_booked  # type: ignore[arg-type]
+                ride.total_seats,
+                ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
             )
 
         self._ledger(
@@ -316,12 +327,23 @@ class PaymentService:
             booking.status = "completed"
         self.db.commit()
 
-    def topup_wallet(self, current_user: CurrentUser, amount: Decimal) -> dict:
-        import uuid
-
+    def topup_wallet(
+        self, current_user: CurrentUser, amount: Decimal, idempotency_key: str
+    ) -> dict:
         amount = money(amount)
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Topup amount must be positive")
+
+        scoped_key = f"topup:{current_user.id}:{idempotency_key}"
+        existing = self.wallets.get_transaction_by_idempotency_key(scoped_key)
+        if existing:
+            wallet = self.wallets.get_or_create(
+                current_user.id, settings.PAYMENT_CURRENCY
+            )
+            return {
+                "detail": "Topup successful",
+                "new_balance": money(wallet.available_balance),  # type: ignore[arg-type]
+            }
 
         wallet = self.wallets.get_or_create_for_update(
             current_user.id, settings.PAYMENT_CURRENCY
@@ -330,13 +352,13 @@ class PaymentService:
 
         tx = WalletTransaction(
             user_id=current_user.id,
-            type="topup",
+            type="adjustment",
             direction="credit",
             amount=amount,
             currency=settings.PAYMENT_CURRENCY,
             status="posted",
             description="Wallet top-up (Fake Payment)",
-            idempotency_key=f"topup:{uuid.uuid4()}",
+            idempotency_key=scoped_key,
         )
         self.wallets.add_transaction(tx)
         self.db.commit()
@@ -460,14 +482,138 @@ class PaymentService:
         }
 
     def wallet_transactions(
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        limit: int = 50,
+        filter: str = "all",
+    ):
+        skip = (page - 1) * limit
+        items = self.wallets.list_transactions(
+            current_user.id, skip=skip, limit=limit, filter=filter
+        )
+        total = self.wallets.count_transactions(current_user.id, filter=filter)
+        return create_paginated_response(items, total, page, limit)
+
+    def request_payout(
+        self, current_user: CurrentUser, amount: Decimal, idempotency_key: str
+    ) -> PayoutRequest:
+        amount = money(amount)
+        if amount <= 0:
+            raise HTTPException(
+                status_code=400, detail="Payout amount must be positive"
+            )
+
+        scoped_key = f"payout:{current_user.id}:{idempotency_key}"
+        existing_tx = self.wallets.get_transaction_by_idempotency_key(scoped_key)
+        if existing_tx is not None:
+            existing_payout = self.payouts.get_by_idempotency_key(scoped_key)
+            if existing_payout is not None:
+                return existing_payout
+
+        wallet = self.wallets.get_or_create_for_update(
+            current_user.id, settings.PAYMENT_CURRENCY
+        )
+        if money(wallet.available_balance) < amount:  # type: ignore[arg-type]
+            raise HTTPException(status_code=400, detail="Insufficient wallet balance")
+
+        wallet.available_balance = money(wallet.available_balance - amount)  # type: ignore[assignment,arg-type]
+
+        payout = PayoutRequest(
+            user_id=current_user.id,
+            amount=amount,
+            currency=settings.PAYMENT_CURRENCY,
+            status="pending",
+            method="mock",
+            payout_metadata={"idempotency_key": scoped_key},
+        )
+        self.payouts.add(payout)
+
+        self.wallets.add_transaction(
+            WalletTransaction(
+                user_id=current_user.id,
+                type="payout",
+                direction="debit",
+                amount=amount,
+                currency=settings.PAYMENT_CURRENCY,
+                status="pending",
+                description="Wallet payout request",
+                idempotency_key=scoped_key,
+            )
+        )
+        self.db.commit()
+        self.db.refresh(payout)
+        return payout
+
+    def list_user_payouts(
         self, current_user: CurrentUser, page: int = 1, limit: int = 50
     ):
         skip = (page - 1) * limit
-        items = self.wallets.list_transactions(current_user.id, skip=skip, limit=limit)
-        total = len(
-            self.wallets.list_transactions(current_user.id, skip=0, limit=10000)
-        )
+        items = self.payouts.list_for_user(current_user.id, skip=skip, limit=limit)
+        total = self.payouts.count_for_user(current_user.id)
         return create_paginated_response(items, total, page, limit)
+
+    def list_admin_payouts(
+        self, current_user: CurrentUser, page: int = 1, limit: int = 50
+    ):
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        skip = (page - 1) * limit
+        items = self.payouts.list_by_status("pending", skip=skip, limit=limit)
+        total = self.payouts.count_by_status("pending")
+        return create_paginated_response(items, total, page, limit)
+
+    def approve_payout(
+        self, payout_id: UUID, current_user: CurrentUser
+    ) -> PayoutRequest:
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        payout = self.payouts.get_for_update(payout_id)
+        if not payout:
+            raise HTTPException(status_code=404, detail="Payout request not found")
+        if payout.status != "pending":
+            raise HTTPException(status_code=400, detail="Payout request is not pending")
+
+        tx = self.wallets.get_transaction_by_idempotency_key(
+            self._payout_idempotency_key(payout)
+        )
+        if tx is not None:
+            tx.status = "posted"  # type: ignore[assignment]
+        payout.status = "completed"  # type: ignore[assignment]
+        payout.processed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(payout)
+        return payout
+
+    def reject_payout(
+        self, payout_id: UUID, current_user: CurrentUser
+    ) -> PayoutRequest:
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        payout = self.payouts.get_for_update(payout_id)
+        if not payout:
+            raise HTTPException(status_code=404, detail="Payout request not found")
+        if payout.status != "pending":
+            raise HTTPException(status_code=400, detail="Payout request is not pending")
+
+        wallet = self.wallets.get_or_create_for_update(
+            payout.user_id,
+            payout.currency,  # type: ignore[arg-type]
+        )
+        wallet.available_balance = money(  # type: ignore[assignment]
+            wallet.available_balance + payout.amount  # type: ignore[arg-type]
+        )
+
+        tx = self.wallets.get_transaction_by_idempotency_key(
+            self._payout_idempotency_key(payout)
+        )
+        if tx is not None:
+            tx.status = "reversed"  # type: ignore[assignment]
+        payout.status = "rejected"  # type: ignore[assignment]
+        payout.processed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(payout)
+        return payout
 
     def list_admin_payments(
         self,
@@ -545,3 +691,8 @@ class PaymentService:
             "checkout_url": payment.provider_checkout_url or "",
             "transaction_id": payment.transaction_id or "",
         }
+
+    @staticmethod
+    def _payout_idempotency_key(payout: PayoutRequest) -> str:
+        metadata = cast(dict[str, Any] | None, payout.payout_metadata)
+        return str((metadata or {}).get("idempotency_key", ""))

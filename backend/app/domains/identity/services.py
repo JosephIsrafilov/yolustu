@@ -264,7 +264,9 @@ class IdentityService:
             raise HTTPException(status_code=400, detail="Email is already verified")
 
         background_tasks.add_task(
-            self._send_email_verify_code, user.email, redis_client  # type: ignore[arg-type]
+            self._send_email_verify_code,
+            user.email,
+            redis_client,  # type: ignore[arg-type]
         )
         return {"message": "Verification code sent to email"}
 

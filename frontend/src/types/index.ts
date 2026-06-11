@@ -125,6 +125,20 @@ export interface WalletTransaction {
   createdAt: string;
 }
 
+export type PayoutStatus = 'pending' | 'completed' | 'rejected';
+
+export interface Payout {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  status: PayoutStatus;
+  method?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  processedAt?: string;
+}
+
 export interface Booking {
   id: string;
   tripId: string;

@@ -4,7 +4,13 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.domains.payments.models import Payment, Wallet, WalletTransaction
+from app.domains.payments.models import (
+    Payment,
+    PayoutRequest,
+    TRANSACTION_TYPES,
+    Wallet,
+    WalletTransaction,
+)
 
 
 class PaymentRepository:
@@ -128,17 +134,39 @@ class WalletRepository:
         self.db.flush()
         return wallet
 
+    def _filtered_transactions_query(self, user_id: UUID, filter: str = "all"):
+        query = self.db.query(WalletTransaction).filter(
+            WalletTransaction.user_id == user_id
+        )
+        if filter == "refunds":
+            query = query.filter(WalletTransaction.type == "refund")
+        elif filter == "income":
+            query = query.filter(
+                WalletTransaction.direction == "credit",
+                WalletTransaction.type != "refund",
+            )
+        elif filter == "payments":
+            query = query.filter(
+                WalletTransaction.direction == "debit",
+                WalletTransaction.type != "refund",
+            )
+        elif filter == "topups":
+            query = query.filter(WalletTransaction.type == "adjustment")
+        return query
+
     def list_transactions(
-        self, user_id: UUID, skip: int = 0, limit: int = 50
+        self, user_id: UUID, skip: int = 0, limit: int = 50, filter: str = "all"
     ) -> list[WalletTransaction]:
         return (
-            self.db.query(WalletTransaction)
-            .filter(WalletTransaction.user_id == user_id)
+            self._filtered_transactions_query(user_id, filter)
             .order_by(WalletTransaction.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
         )
+
+    def count_transactions(self, user_id: UUID, filter: str = "all") -> int:
+        return self._filtered_transactions_query(user_id, filter).count()
 
     def get_transaction_by_idempotency_key(
         self, idempotency_key: str
@@ -149,7 +177,19 @@ class WalletRepository:
             .first()
         )
 
+    def get_transaction_for_update(
+        self, transaction_id: UUID
+    ) -> WalletTransaction | None:
+        return (
+            self.db.query(WalletTransaction)
+            .filter(WalletTransaction.id == transaction_id)
+            .with_for_update()
+            .first()
+        )
+
     def add_transaction(self, transaction: WalletTransaction) -> WalletTransaction:
+        if transaction.type not in TRANSACTION_TYPES:
+            raise ValueError(f"Unknown wallet transaction type: {transaction.type!r}")
         self.db.add(transaction)
         self.db.flush()
         return transaction
@@ -165,3 +205,67 @@ class WalletRepository:
             .scalar()
         )
         return Decimal(value or 0)
+
+
+class PayoutRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, payout: PayoutRequest) -> PayoutRequest:
+        self.db.add(payout)
+        self.db.flush()
+        return payout
+
+    def get_for_update(self, payout_id: UUID) -> PayoutRequest | None:
+        return (
+            self.db.query(PayoutRequest)
+            .filter(PayoutRequest.id == payout_id)
+            .with_for_update()
+            .first()
+        )
+
+    def get_by_idempotency_key(self, idempotency_key: str) -> PayoutRequest | None:
+        return (
+            self.db.query(PayoutRequest)
+            .filter(
+                PayoutRequest.payout_metadata["idempotency_key"].astext
+                == idempotency_key
+            )
+            .first()
+        )
+
+    def list_for_user(
+        self, user_id: UUID, skip: int = 0, limit: int = 50
+    ) -> list[PayoutRequest]:
+        return (
+            self.db.query(PayoutRequest)
+            .filter(PayoutRequest.user_id == user_id)
+            .order_by(PayoutRequest.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def count_for_user(self, user_id: UUID) -> int:
+        return (
+            self.db.query(PayoutRequest)
+            .filter(PayoutRequest.user_id == user_id)
+            .count()
+        )
+
+    def list_by_status(
+        self, status: str, skip: int = 0, limit: int = 50
+    ) -> list[PayoutRequest]:
+        return (
+            self.db.query(PayoutRequest)
+            .filter(PayoutRequest.status == status)
+            .order_by(PayoutRequest.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def count_by_status(self, status: str) -> int:
+        return (
+            self.db.query(PayoutRequest).filter(PayoutRequest.status == status).count()
+        )

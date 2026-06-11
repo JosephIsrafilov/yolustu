@@ -6,6 +6,28 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+# Canonical set of wallet transaction types. The ``type`` column stays a plain
+# String(50) (changing it to a DB enum is risky with existing data), but this
+# tuple is the single source of truth for validation at the Python level.
+TRANSACTION_TYPES: tuple[str, ...] = (
+    "passenger_payment",
+    "platform_fee",
+    "driver_pending_earning",
+    "driver_available_earning",
+    "refund",
+    "payout",
+    "adjustment",
+)
+
+# Filters exposed on the transactions listing endpoint.
+TRANSACTION_FILTERS: tuple[str, ...] = (
+    "all",
+    "payments",
+    "refunds",
+    "income",
+    "topups",
+)
+
 
 class Payment(Base):
     __tablename__ = "payments"

@@ -17,6 +17,7 @@ const TOPUP_COPY = {
     cancel: 'Ləğv et',
     success: 'Balansınız uğurla artırıldı!',
     done: 'Bağla',
+    error: 'Ödəniş alınmadı. Yenidən cəhd edin.',
   },
   ru: {
     title: 'Пополнить баланс',
@@ -29,6 +30,7 @@ const TOPUP_COPY = {
     cancel: 'Отмена',
     success: 'Баланс успешно пополнен!',
     done: 'Закрыть',
+    error: 'Платёж не прошёл. Попробуйте ещё раз.',
   },
   en: {
     title: 'Top up wallet',
@@ -41,6 +43,7 @@ const TOPUP_COPY = {
     cancel: 'Cancel',
     success: 'Balance successfully topped up!',
     done: 'Close',
+    error: 'Payment failed. Please try again.',
   },
 } as const;
 
@@ -58,6 +61,7 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
 
   const [step, setStep] = useState<'amount' | 'fake_payment' | 'success'>('amount');
   const [amount, setAmount] = useState<number | ''>(initialAmount || '');
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -65,20 +69,27 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
 
   const handleContinue = () => {
     if (amount && amount > 0) {
+      setError(null);
       setStep('fake_payment');
     }
   };
 
   const handlePay = async () => {
     if (amount && amount > 0) {
-      await onSuccess(amount);
-      setStep('success');
+      setError(null);
+      try {
+        await onSuccess(amount);
+        setStep('success');
+      } catch {
+        setError(copy.error);
+      }
     }
   };
 
   const resetAndClose = () => {
     setStep('amount');
     setAmount('');
+    setError(null);
     onClose();
   };
 
@@ -165,6 +176,13 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
                   {copy.pay}
                 </Button>
               </div>
+
+              {error && (
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                  <Icon name="alert-triangle" size={16} />
+                  <span>{error}</span>
+                </div>
+              )}
             </div>
           )}
 

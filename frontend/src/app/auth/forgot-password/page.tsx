@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
   const validateStep2 = () => {
     const e: Record<string, string> = {};
     if (otp.length !== 6) e.otp = language === 'az' ? '6 rəqəmli kod daxil edin' : language === 'ru' ? 'Введите 6-значный код' : 'Enter 6-digit code';
-    if (newPassword.length < 6) e.newPassword = language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters';
+    if (newPassword.length < 8) e.newPassword = language === 'az' ? 'Ən azı 8 simvol' : language === 'ru' ? 'Минимум 8 символов' : 'Minimum 8 characters';
     if (newPassword !== confirmPassword) e.confirmPassword = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;

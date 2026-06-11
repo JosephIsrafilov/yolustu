@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = ""
     ENVIRONMENT: str = "development"
 
+    # Cookie policy. When the frontend and backend are served from different
+    # sites in production (e.g. app.example.com + api.example.com), browsers
+    # require SameSite=None; Secure for the auth cookies to be sent on API
+    # calls. Set COOKIE_SAMESITE=none in that deployment.
+    COOKIE_SAMESITE: str = "lax"  # lax | strict | none
+
     SMTP_SERVER: str = ""
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
