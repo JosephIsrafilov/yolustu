@@ -18,4 +18,4 @@ class RideLookupPort:
 
     @staticmethod
     def is_driver(ride: Ride, user_id: UUID) -> bool:
-        return ride.driver_id == user_id
+        return ride.driver_id == user_id  # type: ignore[return-value]

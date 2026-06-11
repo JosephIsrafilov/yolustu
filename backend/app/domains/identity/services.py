@@ -53,13 +53,13 @@ class IdentityService:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         user = self.users.create(user_in, get_password_hash(user_in.password))
-        self._send_otp_simulation(user.phone, redis_client)
+        self._send_otp_simulation(user.phone, redis_client)  # type: ignore[arg-type]
         return self._create_auth_session(user, redis_client)
 
     def login(self, login_data: LoginInput, redis_client):
         user = self.users.get_by_phone(login_data.phone)
 
-        if not user or not verify_password(login_data.password, user.hashed_password):
+        if not user or not verify_password(login_data.password, user.hashed_password):  # type: ignore[arg-type]
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect phone or password",
@@ -217,7 +217,7 @@ class IdentityService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        user.hashed_password = get_password_hash(new_password)
+        user.hashed_password = get_password_hash(new_password)  # type: ignore[assignment]
         self.users.db.commit()
 
         redis_client.delete(f"pwd_reset:{email}")
@@ -264,7 +264,7 @@ class IdentityService:
             raise HTTPException(status_code=400, detail="Email is already verified")
 
         background_tasks.add_task(
-            self._send_email_verify_code, user.email, redis_client
+            self._send_email_verify_code, user.email, redis_client  # type: ignore[arg-type]
         )
         return {"message": "Verification code sent to email"}
 
@@ -286,7 +286,7 @@ class IdentityService:
                 detail="Invalid or expired verification code",
             )
 
-        user.is_email_verified = True
+        user.is_email_verified = True  # type: ignore[assignment]
         self.users.db.commit()
         self.users.db.refresh(user)
         redis_client.delete(f"email_verify:{user.email}")

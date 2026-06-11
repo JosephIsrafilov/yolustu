@@ -163,7 +163,7 @@ class MessageRepository:
         self.db.add(message)
         conversation = self.db.query(Conversation).filter_by(id=conversation_id).first()
         if conversation:
-            conversation.updated_at = datetime.now(timezone.utc)
+            conversation.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(message)
         return message

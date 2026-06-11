@@ -111,7 +111,7 @@ def invalidate_cache(redis: Redis, pattern: str) -> int:
         if keys:
             deleted = redis.delete(*keys)
             logger.info(f"Invalidated {deleted} cache keys matching '{pattern}'")
-            return int(deleted)
+            return int(deleted)  # type: ignore[arg-type]
         return 0
     except Exception as e:
         logger.error(f"Failed to invalidate cache pattern '{pattern}': {e}")
@@ -132,7 +132,7 @@ def invalidate_cache_keys(redis: Redis, keys: list[str]) -> int:
         if keys:
             deleted = redis.delete(*keys)
             logger.info(f"Invalidated {deleted} specific cache keys")
-            return int(deleted)
+            return int(deleted)  # type: ignore[arg-type]
         return 0
     except Exception as e:
         logger.error(f"Failed to invalidate cache keys: {e}")

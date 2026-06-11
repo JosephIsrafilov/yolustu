@@ -64,9 +64,9 @@ class AdminService:
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         if ride.status != RIDE_CANCELLED:
-            if not can_transition_ride(ride.status, RIDE_CANCELLED):
+            if not can_transition_ride(ride.status, RIDE_CANCELLED):  # type: ignore[arg-type]
                 raise HTTPException(status_code=400, detail="Ride cannot be cancelled")
-            ride.status = RIDE_CANCELLED
+            ride.status = RIDE_CANCELLED  # type: ignore[assignment]
             self.rides.save(ride)
         return {"message": "Ride cancelled"}
 
@@ -94,12 +94,12 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        user.role = "driver"
-        user.is_verified = True
+        user.role = "driver"  # type: ignore[assignment]
+        user.is_verified = True  # type: ignore[assignment]
         updated_user = self.users.update_verification_status(user, "approved")
 
         # Gamification: newcomer badge
-        check_and_award_badge(self.db, user.id, "newcomer")
+        check_and_award_badge(self.db, user.id, "newcomer")  # type: ignore[arg-type]
 
         return updated_user
 
@@ -108,8 +108,8 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        user.role = "passenger"
-        user.is_verified = False
+        user.role = "passenger"  # type: ignore[assignment]
+        user.is_verified = False  # type: ignore[assignment]
         return self.users.update_verification_status(user, "rejected")
 
     def simulate_journey(self, current_user: CurrentUser):
@@ -197,15 +197,15 @@ class AdminService:
         )
         self.db.add(review)
 
-        driver.total_rides = (driver.total_rides or 0) + 1
-        passenger.total_rides = (passenger.total_rides or 0) + 1
+        driver.total_rides = (driver.total_rides or 0) + 1  # type: ignore[assignment]
+        passenger.total_rides = (passenger.total_rides or 0) + 1  # type: ignore[assignment]
 
         self.db.commit()
 
         # Gamification
-        check_and_award_badge(self.db, driver.id, "first_ride")
-        check_and_award_badge(self.db, driver.id, "5_star")
+        check_and_award_badge(self.db, driver.id, "first_ride")  # type: ignore[arg-type]
+        check_and_award_badge(self.db, driver.id, "5_star")  # type: ignore[arg-type]
         if driver.total_rides >= 10:
-            check_and_award_badge(self.db, driver.id, "veteran")
+            check_and_award_badge(self.db, driver.id, "veteran")  # type: ignore[arg-type]
 
         return {"message": "Mock journey created successfully", "ride_id": ride.id}

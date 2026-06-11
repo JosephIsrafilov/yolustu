@@ -5,6 +5,7 @@ from sqlalchemy import (
     Text,
     DateTime,
     ForeignKey,
+    Index,
     func,
     UniqueConstraint,
 )
@@ -43,3 +44,7 @@ class UserBadge(Base):
 
     user = relationship("User", back_populates="badges")
     badge = relationship("Badge", back_populates="user_badges")
+
+
+Index("ix_user_badges_user_id", UserBadge.user_id)
+Index("ix_user_badges_badge_id", UserBadge.badge_id)

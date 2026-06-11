@@ -11,8 +11,8 @@ if not hasattr(bcrypt, "__about__"):
 
     bcrypt.__about__ = About()  # type: ignore
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+from jose import JWTError, jwt  # type: ignore[import-untyped]
+from passlib.context import CryptContext  # type: ignore[import-untyped]
 
 from app.core.config import settings
 

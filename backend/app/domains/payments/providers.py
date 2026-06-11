@@ -56,15 +56,15 @@ class MockPaymentProvider(BasePaymentProvider):
     def create_payment_session(
         self, payment: Payment, return_url: str, cancel_url: str
     ) -> PaymentSession:
-        transaction_id = payment.transaction_id or f"mock_tx_{uuid.uuid4().hex}"
+        transaction_id = payment.transaction_id or f"mock_tx_{uuid.uuid4().hex}"  # type: ignore[arg-type]
         checkout_url = (
             f"{settings.FRONTEND_URL}/bookings"
             f"?mock_payment={payment.id}&tx={transaction_id}"
         )
         return PaymentSession(
-            transaction_id=transaction_id,
+            transaction_id=transaction_id,  # type: ignore[arg-type]
             checkout_url=checkout_url,
-            provider_payment_id=transaction_id,
+            provider_payment_id=transaction_id,  # type: ignore[arg-type]
         )
 
     def verify_webhook_signature(self, headers: dict[str, str], body: bytes) -> bool:
