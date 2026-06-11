@@ -224,6 +224,22 @@ function WalletContent() {
   const [isPayoutOpen, setIsPayoutOpen] = React.useState(false);
   const [activeFilter, setActiveFilter] = React.useState<WalletTransactionFilter>('all');
 
+  // One idempotency key per intent (modal open), not per request. A double
+  // click or an in-modal retry reuses the same key so the backend dedupes;
+  // each fresh open mints a new key. Lazy init covers the deep-link case where
+  // the top-up modal is already open on mount.
+  const [topupKey, setTopupKey] = React.useState(() => crypto.randomUUID());
+  const [payoutKey, setPayoutKey] = React.useState(() => crypto.randomUUID());
+
+  const openTopUp = () => {
+    setTopupKey(crypto.randomUUID());
+    setIsTopUpOpen(true);
+  };
+  const openPayout = () => {
+    setPayoutKey(crypto.randomUUID());
+    setIsPayoutOpen(true);
+  };
+
   const walletQuery = useQuery({
     queryKey: ['wallet'],
     queryFn: () => paymentsService.getWallet(),
@@ -259,14 +275,14 @@ function WalletContent() {
   };
 
   const topupMutation = useMutation({
-    mutationFn: (amount: number) => paymentsService.topupWallet(amount, crypto.randomUUID()),
+    mutationFn: (amount: number) => paymentsService.topupWallet(amount, topupKey),
     onSuccess: () => {
       invalidateWallet();
     },
   });
 
   const payoutMutation = useMutation({
-    mutationFn: (amount: number) => paymentsService.requestPayout(amount, crypto.randomUUID()),
+    mutationFn: (amount: number) => paymentsService.requestPayout(amount, payoutKey),
     onSuccess: () => {
       invalidateWallet();
       void queryClient.invalidateQueries({ queryKey: ['wallet-payouts'] });
@@ -357,7 +373,7 @@ function WalletContent() {
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
-                    onClick={() => setIsTopUpOpen(true)}
+                    onClick={openTopUp}
                     className="bg-white text-[#04313a] hover:bg-[#f4fdff] sm:w-auto"
                   >
                     <Icon name="plus" size={16} />
@@ -365,7 +381,7 @@ function WalletContent() {
                   </Button>
                   <button
                     type="button"
-                    onClick={() => setIsPayoutOpen(true)}
+                    onClick={openPayout}
                     disabled={availableBalance <= 0}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/50 disabled:hover:bg-white/5"
                   >
@@ -583,7 +599,7 @@ function WalletContent() {
         )}
 
         <TopUpModal
-          key={initialTopup ?? 'default-topup'}
+          key={topupKey}
           isOpen={isTopUpOpen}
           onClose={() => setIsTopUpOpen(false)}
           onSuccess={handleTopup}
