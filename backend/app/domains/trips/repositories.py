@@ -100,10 +100,25 @@ class RideRepository:
         return ride
 
     def get(self, ride_id: UUID) -> Ride | None:
-        return self.db.query(Ride).filter(Ride.id == ride_id).first()
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
+            .filter(Ride.id == ride_id)
+            .first()
+        )
 
     def get_for_update(self, ride_id: UUID) -> Ride | None:
-        return self.db.query(Ride).filter(Ride.id == ride_id).with_for_update().first()
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
+            .filter(Ride.id == ride_id)
+            .with_for_update()
+            .first()
+        )
 
     def list_for_driver(self, driver_id: UUID) -> list[Ride]:
         from sqlalchemy.orm import joinedload

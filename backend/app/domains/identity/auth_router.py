@@ -56,7 +56,7 @@ def reset_password(
 
 
 @router.post("/request-otp")
-@limiter.limit("5/minute")
+@limiter.limit("3/1 hour")
 def request_otp(
     request: Request,
     phone: str,
@@ -121,7 +121,7 @@ def register(
 
 
 @router.post("/login", response_model=AuthSessionResponse)
-@limiter.limit("10/minute")
+@limiter.limit("5/15 minutes")
 def login(
     request: Request,
     response: Response,

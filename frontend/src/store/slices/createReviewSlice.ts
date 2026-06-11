@@ -15,7 +15,7 @@ export const createReviewSlice: StateCreator<
       const reviews = await reviewsService.getReviewsForUser(targetUserId);
       set({ reviews });
     } catch (error) {
-      console.error('Fetch reviews error:', error);
+      // Error handled silently
     }
   },
 
@@ -27,7 +27,7 @@ export const createReviewSlice: StateCreator<
       }));
       return true;
     } catch (error) {
-      console.error('Create review error:', error);
+      // Error handled silently
       return false;
     }
   },

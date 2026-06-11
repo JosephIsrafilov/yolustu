@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -34,11 +35,29 @@ class BookingRepository:
         return booking
 
     def get(self, booking_id: UUID) -> Booking | None:
-        return self.db.query(Booking).filter(Booking.id == booking_id).first()
+        from sqlalchemy.orm import joinedload
 
-    def get_for_update(self, booking_id: UUID) -> Booking | None:
         return (
             self.db.query(Booking)
+            .options(
+                joinedload(Booking.ride).joinedload("driver"),
+                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.passenger),
+            )
+            .filter(Booking.id == booking_id)
+            .first()
+        )
+
+    def get_for_update(self, booking_id: UUID) -> Booking | None:
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Booking)
+            .options(
+                joinedload(Booking.ride).joinedload("driver"),
+                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.passenger),
+            )
             .filter(Booking.id == booking_id)
             .with_for_update()
             .first()
@@ -85,7 +104,11 @@ class BookingRepository:
 
         return (
             self.db.query(Booking)
-            .options(joinedload(Booking.ride), joinedload(Booking.passenger))
+            .options(
+                joinedload(Booking.ride).joinedload("driver"),
+                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.passenger),
+            )
             .filter(Booking.passenger_id == passenger_id)
             .all()
         )
@@ -98,7 +121,11 @@ class BookingRepository:
             self.db.query(Booking)
             .join(Ride)
             .filter(Ride.driver_id == driver_id)
-            .options(joinedload(Booking.ride), joinedload(Booking.passenger))
+            .options(
+                joinedload(Booking.ride).joinedload("driver"),
+                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.passenger),
+            )
             .all()
         )
 
@@ -118,3 +145,18 @@ class BookingRepository:
         self.db.commit()
         self.db.refresh(booking)
         return booking
+
+    def get_accepted_with_deadline_before(self, deadline: datetime) -> list[Booking]:
+        """Get all accepted bookings with payment deadline before the given time."""
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Booking)
+            .options(joinedload(Booking.ride))
+            .filter(
+                Booking.status == BOOKING_ACCEPTED,
+                Booking.payment_deadline.isnot(None),
+                Booking.payment_deadline < deadline,
+            )
+            .all()
+        )

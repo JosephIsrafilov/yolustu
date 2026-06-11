@@ -63,7 +63,7 @@ export default function ChatPage() {
         const history = await messagesService.getRideMessages(rideId);
         setMessages(history);
       } catch (err) {
-        console.error('Failed to fetch chat history:', err);
+        // Error handled silently
       }
     };
     if (rideId) fetchHistory();
@@ -87,7 +87,7 @@ export default function ChatPage() {
       });
       setInputText('');
     } catch (err) {
-      console.error('Failed to send message:', err);
+      // Error handled silently
     } finally {
       setIsSending(false);
     }

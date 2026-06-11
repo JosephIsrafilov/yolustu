@@ -19,6 +19,7 @@ from app.core.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.websocket import manager
+from app.core.scheduler import start_scheduler, shutdown_scheduler
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
 from app.domains.engagement.chats_router import router as chats_router
@@ -40,7 +41,9 @@ setup_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     manager.loop = asyncio.get_running_loop()
+    start_scheduler()
     yield
+    shutdown_scheduler()
 
 
 app = FastAPI(title="Yolmates API", lifespan=lifespan)
@@ -54,19 +57,29 @@ app.add_exception_handler(
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
-origins = [
-    settings.FRONTEND_URL,
-    "http://127.0.0.1:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.ENVIRONMENT == "production":
+    # Production: only allow the configured frontend URL
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[settings.FRONTEND_URL],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Development: allow localhost and 127.0.0.1 on any port
+    origins = [
+        settings.FRONTEND_URL,
+        "http://127.0.0.1:3000",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.middleware("http")

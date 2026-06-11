@@ -150,7 +150,7 @@ export default function AdminTripsPage() {
       setTrips(res.items);
       setTotalPages(res.pages);
     } catch (error) {
-      console.error('Fetch admin trips error:', error);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +177,7 @@ export default function AdminTripsPage() {
       await adminService.deleteTrip(tripId);
       void fetchTrips(page);
     } catch (error) {
-      console.error('Delete trip error:', error);
+      // Error handled silently
     }
   };
 

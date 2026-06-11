@@ -81,7 +81,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       const wallet = await paymentsService.getWallet();
       setBalance(wallet.availableBalance);
     } catch (e) {
-      console.error(e);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +111,6 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       setIsSuccess(true);
       onPaymentSuccess();
     } catch (error) {
-      console.error(error);
       alert('Payment failed');
     } finally {
       setIsPaying(false);
@@ -124,7 +123,6 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       await paymentsService.topupWallet(missingAmount);
       await fetchBalance();
     } catch (error) {
-      console.error(error);
       alert('Top-up failed');
     } finally {
       setIsPaying(false);

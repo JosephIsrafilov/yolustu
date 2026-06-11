@@ -123,7 +123,7 @@ export const createTripSlice: StateCreator<
       }));
       return true;
     } catch (error) {
-      console.error('Delete trip error:', error);
+      // Error handled silently
       return false;
     }
   },

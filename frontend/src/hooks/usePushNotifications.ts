@@ -102,7 +102,7 @@ export function usePushNotifications() {
             }
           }
         } catch (error) {
-          console.error('[WebSocket] Failed to parse message', error);
+          // Error handled silently
         }
       };
 

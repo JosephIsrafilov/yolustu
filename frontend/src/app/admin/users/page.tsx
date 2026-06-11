@@ -205,7 +205,7 @@ export default function AdminUsersPage() {
       setUsers(res.items);
       setTotalPages(res.pages);
     } catch (error) {
-      console.error('Failed to fetch users', error);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }
@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
       const updatedUser = await adminService.blockUser(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
     } catch (error) {
-      console.error('Failed to block user', error);
+      // Error handled silently
     }
   };
 
@@ -238,7 +238,7 @@ export default function AdminUsersPage() {
       const updatedUser = await adminService.unblockUser(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
     } catch (error) {
-      console.error('Failed to unblock user', error);
+      // Error handled silently
     }
   };
 
@@ -247,7 +247,7 @@ export default function AdminUsersPage() {
       const updatedUser = await adminService.approveVerification(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
     } catch (error) {
-      console.error('Failed to verify user', error);
+      // Error handled silently
     }
   };
 
@@ -256,7 +256,7 @@ export default function AdminUsersPage() {
       const updatedUser = await adminService.rejectVerification(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
     } catch (error) {
-      console.error('Failed to reject user', error);
+      // Error handled silently
     }
   };
 
