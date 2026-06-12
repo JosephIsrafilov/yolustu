@@ -7,9 +7,6 @@ table for security, compliance, and forensics.
 import uuid
 from datetime import datetime, timedelta
 
-import pytest
-from fastapi import HTTPException
-
 from app.core.security import get_password_hash
 from app.domains.admin.repositories import AuditLogRepository
 from app.domains.admin.services import AdminService
