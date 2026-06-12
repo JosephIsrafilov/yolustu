@@ -1,0 +1,397 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/constants.dart';
+import '../../core/routes.dart';
+import '../../core/theme.dart';
+import 'data/driver_ride.dart';
+import 'data/driver_controller.dart';
+
+/// Single-screen create-ride form (mock publish).
+///
+/// On publish creates a [DriverRide] via [driverRidesProvider] and routes to
+/// "my rides". Kept a single screen to match the app's current simplicity.
+class CreateRideScreen extends ConsumerStatefulWidget {
+  const CreateRideScreen({super.key});
+
+  @override
+  ConsumerState<CreateRideScreen> createState() => _CreateRideScreenState();
+}
+
+class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _price = TextEditingController();
+  final _description = TextEditingController();
+
+  String _from = AppConstants.cities.first;
+  String _to = AppConstants.cities[1];
+  DateTime _date = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
+  int _seats = 3;
+  bool _allowLuggage = true;
+  bool _allowSmoking = false;
+  bool _allowMusic = true;
+
+  bool _publishing = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _price.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  String? _validatePrice(String? v) {
+    final value = (v ?? '').trim();
+    if (value.isEmpty) return 'Qiyməti daxil edin';
+    final parsed = double.tryParse(value);
+    if (parsed == null || parsed <= 0) return 'Düzgün qiymət daxil edin';
+    return null;
+  }
+
+  Future<void> _publish() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    if (_from == _to) {
+      setState(() => _error = 'Çıxış və təyinat eyni ola bilməz');
+      return;
+    }
+
+    setState(() {
+      _publishing = true;
+      _error = null;
+    });
+
+    try {
+      final ride = DriverRide(
+        id: 'dr-${DateTime.now().millisecondsSinceEpoch}',
+        fromCity: _from,
+        toCity: _to,
+        departureTime: DateTime(
+            _date.year, _date.month, _date.day, _time.hour, _time.minute),
+        seats: _seats,
+        pricePerSeat: double.parse(_price.text.trim()),
+        allowLuggage: _allowLuggage,
+        allowSmoking: _allowSmoking,
+        allowMusic: _allowMusic,
+        description: _description.text.trim(),
+        status: DriverRideStatus.upcoming,
+      );
+      await ref.read(driverRidesProvider.notifier).publish(ride);
+      if (!mounted) return;
+      await _showSuccess();
+      if (!mounted) return;
+      context.go(AppRoutes.myRides);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Səyahət dərc edilə bilmədi. Yenidən cəhd edin.');
+    } finally {
+      if (mounted) setState(() => _publishing = false);
+    }
+  }
+
+  Future<void> _showSuccess() {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: AppTheme.tealDark, size: 48),
+            const SizedBox(height: 16),
+            const Text('Səyahət dərc edildi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text('Sərnişinlər artıq sizi tapa bilər.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.slate500)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Bağla'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Səyahət yarat')),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppConstants.spacing24),
+            children: [
+              _label('Haradan'),
+              _CityDropdown(
+                value: _from,
+                onChanged: (v) => setState(() => _from = v),
+              ),
+              const SizedBox(height: 16),
+              _label('Hara'),
+              _CityDropdown(
+                value: _to,
+                onChanged: (v) => setState(() => _to = v),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PickerTile(
+                      icon: Icons.calendar_today,
+                      label: 'Tarix',
+                      value: '${_date.day}.${_date.month}.${_date.year}',
+                      onTap: _pickDate,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _PickerTile(
+                      icon: Icons.access_time,
+                      label: 'Vaxt',
+                      value: _time.format(context),
+                      onTap: _pickTime,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _label('Boş yerlər'),
+              _SeatsStepper(
+                seats: _seats,
+                onChanged: (s) => setState(() => _seats = s),
+              ),
+              const SizedBox(height: 16),
+              _label('Bir yer üçün qiymət (AZN)'),
+              TextFormField(
+                controller: _price,
+                enabled: !_publishing,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: _validatePrice,
+                decoration: const InputDecoration(hintText: 'məs. 15'),
+              ),
+              const SizedBox(height: 24),
+              _label('Üstünlüklər'),
+              _PrefSwitch(
+                title: 'Baqaja icazə',
+                value: _allowLuggage,
+                onChanged: (v) => setState(() => _allowLuggage = v),
+              ),
+              _PrefSwitch(
+                title: 'Siqaret',
+                value: _allowSmoking,
+                onChanged: (v) => setState(() => _allowSmoking = v),
+              ),
+              _PrefSwitch(
+                title: 'Musiqi',
+                value: _allowMusic,
+                onChanged: (v) => setState(() => _allowMusic = v),
+              ),
+              const SizedBox(height: 16),
+              _label('Qeyd (istəyə bağlı)'),
+              TextFormField(
+                controller: _description,
+                enabled: !_publishing,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                    hintText: 'Sərnişinlər üçün əlavə məlumat'),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: 18, color: Colors.red.shade600),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_error!,
+                          style: TextStyle(color: Colors.red.shade600)),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 28),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _publishing ? null : _publish,
+                  child: _publishing
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : const Text('Dərc et'),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+    );
+    if (picked != null) setState(() => _date = picked);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null) setState(() => _time = picked);
+  }
+
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.navy)),
+      );
+}
+
+class _CityDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _CityDropdown({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: const InputDecoration(prefixIcon: Icon(Icons.location_on)),
+      items: AppConstants.cities
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) onChanged(v);
+      },
+    );
+  }
+}
+
+class _PickerTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _PickerTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppTheme.slate200),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppTheme.slate500),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(fontSize: 11, color: AppTheme.slate500)),
+                Text(value,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeatsStepper extends StatelessWidget {
+  final int seats;
+  final ValueChanged<int> onChanged;
+
+  const _SeatsStepper({required this.seats, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.slate200),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Yer sayı', style: TextStyle(fontSize: 16)),
+          Row(
+            children: [
+              IconButton(
+                onPressed: seats > 1 ? () => onChanged(seats - 1) : null,
+                icon: const Icon(Icons.remove_circle_outline),
+              ),
+              Text('$seats',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(
+                onPressed: seats < 4 ? () => onChanged(seats + 1) : null,
+                icon: const Icon(Icons.add_circle_outline),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrefSwitch extends StatelessWidget {
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _PrefSwitch({
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title, style: const TextStyle(fontSize: 15)),
+      value: value,
+      activeThumbColor: AppTheme.teal,
+      onChanged: onChanged,
+    );
+  }
+}

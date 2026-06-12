@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -73,8 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {},
+                            icon: const Icon(Icons.notifications_outlined,
+                                color: Colors.white),
+                            onPressed: () =>
+                                context.push(AppRoutes.notifications),
                           ),
                         ],
                       ),
@@ -137,10 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () => context.push(
+                                  '${AppRoutes.rideResults}?from=$_from&to=$_to',
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.teal,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -171,13 +177,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () =>
+                                  context.push(AppRoutes.driverOnboarding),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.white,
                                 side: BorderSide(
                                   color: Colors.white.withValues(alpha: 0.3),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -228,7 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomNav(),
     );
   }
 
@@ -342,54 +349,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      selectedItemColor: AppTheme.teal,
-      unselectedItemColor: AppTheme.slate500,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            context.go('/');
-          case 1:
-            context.push('/search');
-          case 2:
-            context.push('/bookings');
-          case 3:
-            context.push('/chat');
-          case 4:
-            context.push('/profile');
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Ana səhifə',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Axtar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.inbox),
-          label: 'Rezervasiyalar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline),
-          label: 'Mesajlar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
     );
   }
 }

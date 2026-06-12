@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -15,15 +17,47 @@ class _SearchScreenState extends State<SearchScreen> {
   DateTime _date = DateTime.now();
   int _passengers = 1;
 
-  final List<String> _cities = [
-    'Bakı',
-    'Gəncə',
-    'Sumqayıt',
-    'Mingəçevir',
-    'Şəki',
-    'Quba',
-    'Lənkəran',
+  final List<String> _cities = AppConstants.cities;
+
+  static const _months = [
+    'Yan',
+    'Fev',
+    'Mar',
+    'Apr',
+    'May',
+    'İyn',
+    'İyl',
+    'Avq',
+    'Sen',
+    'Okt',
+    'Noy',
+    'Dek',
   ];
+  static const _weekdays = [
+    'B.e',
+    'Ç.a',
+    'Çər',
+    'C.a',
+    'Cüm',
+    'Şən',
+    'Baz',
+  ];
+
+  String get _dateLabel =>
+      '${_weekdays[_date.weekday - 1]}, ${_date.day} ${_months[_date.month - 1]}';
+
+  void _search() {
+    if (_from == _to) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Çıxış və təyinat eyni ola bilməz')),
+      );
+      return;
+    }
+    context.push(
+      '${AppRoutes.rideResults}?from=$_from&to=$_to'
+      '&passengers=$_passengers',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +88,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
             // Date
             ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: AppTheme.slate200),
@@ -62,7 +97,7 @@ class _SearchScreenState extends State<SearchScreen> {
               leading: const Icon(Icons.calendar_today),
               title: const Text('Tarix'),
               subtitle: Text(
-                '${_date.day}.${_date.month}.${_date.year}',
+                _dateLabel,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               onTap: () async {
@@ -123,9 +158,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
             // Search button
             ElevatedButton(
-              onPressed: () {
-                context.push('/trips?from=$_from&to=$_to');
-              },
+              onPressed: _search,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),

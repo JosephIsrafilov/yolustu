@@ -52,7 +52,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -79,7 +80,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: teal, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

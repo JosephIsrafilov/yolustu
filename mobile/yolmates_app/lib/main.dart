@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/routes.dart';
 import 'core/theme.dart';
 
 void main() {
-  runApp(const YolmatesApp());
+  runApp(const ProviderScope(child: YolmatesApp()));
 }
 
-class YolmatesApp extends StatelessWidget {
+class YolmatesApp extends ConsumerWidget {
   const YolmatesApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'Yolmates',
       theme: AppTheme.lightTheme,
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,
     );
   }

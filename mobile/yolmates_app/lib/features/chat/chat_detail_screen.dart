@@ -41,10 +41,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 final msg = _messages[index];
                 final isMine = msg['isMine'] as bool;
                 return Align(
-                  alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment:
+                      isMine ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.7,
                     ),
