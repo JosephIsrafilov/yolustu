@@ -58,23 +58,23 @@ class BookingsService:
             raise HTTPException(status_code=403, detail="Admin cannot book rides")
         if ride.driver_id == current_user.id:
             raise HTTPException(status_code=403, detail="You cannot book your own ride")
-        if self.bookings.get_active_for_ride_and_passenger(ride.id, current_user.id):
+        if self.bookings.get_active_for_ride_and_passenger(ride.id, current_user.id):  # type: ignore[arg-type]
             raise HTTPException(
                 status_code=400, detail="Booking already exists for this ride"
             )
 
         booking = self.bookings.create(
-            ride_id=ride.id,
+            ride_id=ride.id,  # type: ignore[arg-type]
             passenger_id=current_user.id,
             seats_booked=booking_in.seats_booked,
-            total_price=ride.price_per_seat * booking_in.seats_booked,
+            total_price=ride.price_per_seat * booking_in.seats_booked,  # type: ignore[arg-type]
         )
-        ride.available_seats -= booking_in.seats_booked
+        ride.available_seats -= booking_in.seats_booked  # type: ignore[assignment]
         if self.db is not None:
             self.db.commit()
             self.db.refresh(booking)
         self.notifications.send_push_notification(
-            user_id=ride.driver_id,
+            user_id=ride.driver_id,  # type: ignore[arg-type]
             title="New Booking Request",
             body=f"{current_user.first_name} requested {booking_in.seats_booked} seats for your ride.",
             data={"booking_id": str(booking.id), "type": "booking_request"},
@@ -104,15 +104,15 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Booking is not pending")
         if ride.status != RIDE_ACTIVE:
             raise HTTPException(status_code=400, detail="Ride is not active")
-        if not can_transition_booking(booking.status, BOOKING_ACCEPTED):
+        if not can_transition_booking(booking.status, BOOKING_ACCEPTED):  # type: ignore[arg-type]
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
-        booking.status = BOOKING_ACCEPTED
-        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=24)
+        booking.status = BOOKING_ACCEPTED  # type: ignore[assignment]
+        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=24)  # type: ignore[assignment]
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
-            user_id=booking.passenger_id,
+            user_id=booking.passenger_id,  # type: ignore[arg-type]
             title="Booking Accepted!",
             body="The driver accepted your booking request.",
             data={"booking_id": str(booking.id), "type": "booking_accepted"},
@@ -131,18 +131,18 @@ class BookingsService:
             )
         if booking.status != BOOKING_PENDING:
             raise HTTPException(status_code=400, detail="Booking is not pending")
-        if not can_transition_booking(booking.status, BOOKING_REJECTED):
+        if not can_transition_booking(booking.status, BOOKING_REJECTED):  # type: ignore[arg-type]
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
-        booking.status = BOOKING_REJECTED
+        booking.status = BOOKING_REJECTED  # type: ignore[assignment]
         if ride.status != RIDE_COMPLETED:
-            ride.available_seats = min(
+            ride.available_seats = min(  # type: ignore[assignment,arg-type]
                 ride.total_seats, ride.available_seats + booking.seats_booked
             )
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
-            user_id=booking.passenger_id,
+            user_id=booking.passenger_id,  # type: ignore[arg-type]
             title="Booking Declined",
             body="The driver declined your booking request.",
             data={"booking_id": str(booking.id), "type": "booking_rejected"},
@@ -168,32 +168,32 @@ class BookingsService:
             raise HTTPException(
                 status_code=400, detail="Booking cannot be cancelled in current status"
             )
-        if not can_transition_booking(booking.status, BOOKING_CANCELLED):
+        if not can_transition_booking(booking.status, BOOKING_CANCELLED):  # type: ignore[arg-type]
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         if booking.status == BOOKING_PAID and self.db is not None:
             from app.domains.payments.services import PaymentService
 
             payment = PaymentService(self.db).payments.get_succeeded_for_booking(
-                booking.id
+                booking.id  # type: ignore[arg-type]
             )
             if payment:
-                PaymentService(self.db).refund_payment(payment.id, None)
+                PaymentService(self.db).refund_payment(payment.id, None)  # type: ignore[arg-type]
                 return booking_to_response(self._get_booking(booking_id))
 
         if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)
             if ride.status != RIDE_COMPLETED:
-                ride.available_seats = min(
+                ride.available_seats = min(  # type: ignore[assignment,arg-type]
                     ride.total_seats, ride.available_seats + booking.seats_booked
                 )
 
-        booking.status = BOOKING_CANCELLED
+        booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
         self.bookings.save(booking)
 
         ride = self._get_booking_ride(booking)
         self.notifications.send_push_notification(
-            user_id=ride.driver_id,
+            user_id=ride.driver_id,  # type: ignore[arg-type]
             title="Booking Cancelled",
             body="A passenger cancelled their booking.",
             data={"booking_id": str(booking.id), "type": "booking_cancelled"},
@@ -216,13 +216,13 @@ class BookingsService:
         return booking
 
     def _get_booking_ride(self, booking: Booking):
-        ride = self.rides.get_ride(booking.ride_id)
+        ride = self.rides.get_ride(booking.ride_id)  # type: ignore[arg-type]
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         return ride
 
     def _get_booking_ride_for_update(self, booking: Booking):
-        ride = self.rides.get_ride_for_update(booking.ride_id)
+        ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         return ride
@@ -239,15 +239,16 @@ class BookingsService:
                 expired.append(booking)
 
         for booking in expired:
-            booking.status = BOOKING_EXPIRED
-            ride = self.rides.get_ride_for_update(booking.ride_id)
+            booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
+            ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
             if ride and ride.status != RIDE_COMPLETED:
-                ride.available_seats = min(
-                    ride.total_seats, ride.available_seats + booking.seats_booked
+                ride.available_seats = min(  # type: ignore[assignment,arg-type]
+                    ride.total_seats,
+                    ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
                 )
             self.bookings.save(booking)
             self.notifications.send_push_notification(
-                user_id=booking.passenger_id,
+                user_id=booking.passenger_id,  # type: ignore[arg-type]
                 title="Rezerv vaxtı bitdi",
                 body="Ödəniş edilmədiyi üçün rezerviniz ləğv edildi.",
                 data={"booking_id": str(booking.id), "type": "booking_expired"},

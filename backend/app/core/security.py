@@ -11,20 +11,35 @@ if not hasattr(bcrypt, "__about__"):
 
     bcrypt.__about__ = About()  # type: ignore
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+from jose import JWTError, jwt  # type: ignore[import-untyped]
+from passlib.context import CryptContext  # type: ignore[import-untyped]
 
 from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# bcrypt only considers the first 72 *bytes* of the password and newer
+# bcrypt releases raise instead of silently truncating. We truncate on a
+# byte boundary ourselves so hashing and verification stay consistent and
+# never crash on long or multibyte (e.g. Cyrillic) passwords.
+BCRYPT_MAX_BYTES = 72
+
+
+def _prepare_password(password: str) -> str:
+    encoded = password.encode("utf-8")
+    if len(encoded) <= BCRYPT_MAX_BYTES:
+        return password
+    return encoded[:BCRYPT_MAX_BYTES].decode("utf-8", errors="ignore")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    if not hashed_password:
+        return False
+    return pwd_context.verify(_prepare_password(plain_password), hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return pwd_context.hash(_prepare_password(password))
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

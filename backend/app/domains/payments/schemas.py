@@ -86,3 +86,19 @@ class WalletTransactionResponse(BaseModel):
 
 class PaymentWebhookResponse(BaseModel):
     detail: str
+
+
+class PayoutRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    user_id: UUID
+    amount: Decimal
+    currency: str
+    status: str
+    method: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = Field(
+        default=None, validation_alias="payout_metadata"
+    )
+    created_at: datetime
+    processed_at: Optional[datetime] = None

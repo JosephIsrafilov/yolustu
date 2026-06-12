@@ -120,7 +120,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
   const handleTopupExact = async () => {
     try {
       setIsPaying(true);
-      await paymentsService.topupWallet(missingAmount);
+      await paymentsService.topupWallet(missingAmount, crypto.randomUUID());
       await fetchBalance();
     } catch (error) {
       alert('Top-up failed');
@@ -134,7 +134,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
   };
 
   const handleTopupModalSuccess = async (amount: number) => {
-    await paymentsService.topupWallet(amount);
+    await paymentsService.topupWallet(amount, crypto.randomUUID());
     await fetchBalance();
     setIsTopUpOpen(false);
   };

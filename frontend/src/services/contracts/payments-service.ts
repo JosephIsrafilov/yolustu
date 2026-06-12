@@ -1,5 +1,7 @@
-import type { Payment, PaymentStatus, Wallet, WalletTransaction } from '@/types';
+import type { Payment, PaymentStatus, Payout, Wallet, WalletTransaction } from '@/types';
 import type { Paginated } from './admin-service';
+
+export type WalletTransactionFilter = 'all' | 'payments' | 'refunds' | 'income' | 'topups';
 
 export interface PaymentSessionResponse {
   paymentId: string;
@@ -27,9 +29,15 @@ export interface PaymentsService {
   refund(paymentId: string): Promise<void>;
   simulateWebhook(payload: WebhookPayload): Promise<void>;
   getWallet(): Promise<Wallet>;
-  getWalletTransactions(page?: number, limit?: number): Promise<Paginated<WalletTransaction>>;
-  topupWallet(amount: number): Promise<{ detail: string; new_balance: number }>;
+  getWalletTransactions(
+    page?: number,
+    limit?: number,
+    filter?: WalletTransactionFilter,
+  ): Promise<Paginated<WalletTransaction>>;
+  topupWallet(amount: number, idempotencyKey: string): Promise<{ detail: string; new_balance: number }>;
   payFromWallet(bookingId: string): Promise<{ detail: string }>;
+  requestPayout(amount: number, idempotencyKey: string): Promise<Payout>;
+  getPayouts(page?: number, limit?: number): Promise<Paginated<Payout>>;
   listAdminPayments(params?: {
     page?: number;
     limit?: number;

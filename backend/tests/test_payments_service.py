@@ -11,8 +11,12 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.domains.identity.dependencies import CurrentUser
-from app.domains.payments.models import Payment, WalletTransaction
-from app.domains.payments.repositories import PaymentRepository, WalletRepository
+from app.domains.payments.models import Payment, PayoutRequest, WalletTransaction
+from app.domains.payments.repositories import (
+    PaymentRepository,
+    PayoutRepository,
+    WalletRepository,
+)
 from app.domains.payments.services import PaymentService, money
 
 
@@ -173,12 +177,29 @@ class FakeWalletRepository:
         self.transactions[stored.idempotency_key] = stored
         return stored
 
-    def list_transactions(
-        self, user_id: UUID, skip: int = 0, limit: int = 50
+    def _filtered(
+        self, user_id: UUID, filter: str = "all"
     ) -> list[FakeWalletTransaction]:
-        return [tx for tx in self.transactions.values() if tx.user_id == user_id][
-            skip : skip + limit
-        ]
+        txs = [tx for tx in self.transactions.values() if tx.user_id == user_id]
+        if filter == "refunds":
+            return [tx for tx in txs if tx.type == "refund"]
+        if filter == "income":
+            return [
+                tx for tx in txs if tx.direction == "credit" and tx.type != "refund"
+            ]
+        if filter == "payments":
+            return [tx for tx in txs if tx.direction == "debit" and tx.type != "refund"]
+        if filter == "topups":
+            return [tx for tx in txs if tx.type == "adjustment"]
+        return txs
+
+    def list_transactions(
+        self, user_id: UUID, skip: int = 0, limit: int = 50, filter: str = "all"
+    ) -> list[FakeWalletTransaction]:
+        return self._filtered(user_id, filter)[skip : skip + limit]
+
+    def count_transactions(self, user_id: UUID, filter: str = "all") -> int:
+        return len(self._filtered(user_id, filter))
 
     def sum_by_type(self, user_id: UUID, tx_type: str) -> Decimal:
         return sum(
@@ -191,6 +212,52 @@ class FakeWalletRepository:
             ),
             Decimal("0.00"),
         )
+
+
+class FakePayoutRepository:
+    def __init__(self) -> None:
+        self.payouts: dict[UUID, PayoutRequest] = {}
+
+    def add(self, payout: PayoutRequest) -> PayoutRequest:
+        cast(Any, payout).id = uuid4()
+        self.payouts[cast(Any, payout).id] = payout
+        return payout
+
+    def get_for_update(self, payout_id: UUID) -> PayoutRequest | None:
+        return self.payouts.get(payout_id)
+
+    def get_by_idempotency_key(self, idempotency_key: str) -> PayoutRequest | None:
+        return next(
+            (
+                p
+                for p in self.payouts.values()
+                if (cast(Any, p).payout_metadata or {}).get("idempotency_key")
+                == idempotency_key
+            ),
+            None,
+        )
+
+    def _for_user(self, user_id: UUID) -> list[PayoutRequest]:
+        return [p for p in self.payouts.values() if cast(Any, p).user_id == user_id]
+
+    def list_for_user(
+        self, user_id: UUID, skip: int = 0, limit: int = 50
+    ) -> list[PayoutRequest]:
+        return self._for_user(user_id)[skip : skip + limit]
+
+    def count_for_user(self, user_id: UUID) -> int:
+        return len(self._for_user(user_id))
+
+    def _by_status(self, status: str) -> list[PayoutRequest]:
+        return [p for p in self.payouts.values() if cast(Any, p).status == status]
+
+    def list_by_status(
+        self, status: str, skip: int = 0, limit: int = 50
+    ) -> list[PayoutRequest]:
+        return self._by_status(status)[skip : skip + limit]
+
+    def count_by_status(self, status: str) -> int:
+        return len(self._by_status(status))
 
 
 class FakeBookingRepository:
@@ -267,9 +334,11 @@ def make_service(
     )
     payment_repo = FakePaymentRepository()
     wallet_repo = FakeWalletRepository()
+    payout_repo = FakePayoutRepository()
     service_any = cast(Any, service)
     service_any.payments = cast(PaymentRepository, payment_repo)
     service_any.wallets = cast(WalletRepository, wallet_repo)
+    service_any.payouts = cast(PayoutRepository, payout_repo)
     service_any.bookings = FakeBookingRepository(booking)
     service_any.rides = FakeRideLookup(ride)
     service_any.notifications = FakeNotificationService()
@@ -395,3 +464,251 @@ def test_wallet_me_returns_correct_balances():
 def test_decimal_precision_rounds_money_values():
     assert money(Decimal("10.005")) == Decimal("10.01")
     assert money("10.004") == Decimal("10.00")
+
+
+def test_topup_is_idempotent_with_same_key():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4())
+
+    first = service.topup_wallet(user, Decimal("25.00"), idempotency_key="abc-123")
+    second = service.topup_wallet(user, Decimal("25.00"), idempotency_key="abc-123")
+
+    assert first["new_balance"] == Decimal("25.00")
+    assert second["new_balance"] == Decimal("25.00")
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("25.00")
+    user_txs = [tx for tx in wallet_repo.transactions.values() if tx.user_id == user.id]
+    assert len(user_txs) == 1
+
+
+def test_topup_distinct_keys_credit_separately():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4())
+
+    service.topup_wallet(user, Decimal("25.00"), idempotency_key="key-1")
+    service.topup_wallet(user, Decimal("25.00"), idempotency_key="key-2")
+
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("50.00")
+
+
+def test_topup_writes_adjustment_type():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4())
+
+    service.topup_wallet(user, Decimal("10.00"), idempotency_key="k")
+
+    tx = next(iter(wallet_repo.transactions.values()))
+    assert tx.type == "adjustment"
+    assert tx.direction == "credit"
+
+
+def _seed_filter_transactions(wallet_repo, user_id: UUID) -> None:
+    rows = [
+        ("passenger_payment", "debit"),
+        ("platform_fee", "debit"),
+        ("driver_pending_earning", "credit"),
+        ("driver_available_earning", "credit"),
+        ("refund", "credit"),
+        ("adjustment", "credit"),
+    ]
+    for tx_type, direction in rows:
+        wallet_repo.add_transaction(
+            WalletTransaction(
+                user_id=user_id,
+                type=tx_type,
+                direction=direction,
+                amount=Decimal("5.00"),
+                currency="AZN",
+                status="posted",
+                description=tx_type,
+                idempotency_key=f"seed:{user_id}:{tx_type}",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "filter_value,expected_types",
+    [
+        (
+            "all",
+            {
+                "passenger_payment",
+                "platform_fee",
+                "driver_pending_earning",
+                "driver_available_earning",
+                "refund",
+                "adjustment",
+            },
+        ),
+        ("refunds", {"refund"}),
+        (
+            "income",
+            {"driver_pending_earning", "driver_available_earning", "adjustment"},
+        ),
+        ("payments", {"passenger_payment", "platform_fee"}),
+        ("topups", {"adjustment"}),
+    ],
+)
+def test_wallet_transactions_filter_returns_right_rows(filter_value, expected_types):
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4())
+    _seed_filter_transactions(wallet_repo, user.id)
+
+    result = service.wallet_transactions(user, page=1, limit=50, filter=filter_value)
+
+    returned_types = {tx.type for tx in result.items}
+    assert returned_types == expected_types
+    assert result.total == len(expected_types)
+
+
+def test_request_payout_debits_balance_and_creates_pending_records():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+
+    payout = service.request_payout(user, Decimal("40.00"), idempotency_key="p-1")
+
+    assert payout.status == "pending"
+    assert payout.amount == Decimal("40.00")
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("60.00")
+    txs = [tx for tx in wallet_repo.transactions.values() if tx.user_id == user.id]
+    assert len(txs) == 1
+    assert txs[0].type == "payout"
+    assert txs[0].direction == "debit"
+    assert txs[0].status == "pending"
+
+
+def test_request_payout_rejects_amount_above_balance():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("10.00")
+
+    with pytest.raises(HTTPException) as exc:
+        service.request_payout(user, Decimal("25.00"), idempotency_key="p-2")
+
+    assert exc.value.status_code == 400
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("10.00")
+    assert len(wallet_repo.transactions) == 0
+
+
+def test_request_payout_rejects_non_positive_amount():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("10.00")
+
+    with pytest.raises(HTTPException) as exc:
+        service.request_payout(user, Decimal("0.00"), idempotency_key="p-3")
+
+    assert exc.value.status_code == 400
+
+
+def test_request_payout_is_idempotent_with_same_key():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+
+    first = service.request_payout(user, Decimal("40.00"), idempotency_key="dup")
+    second = service.request_payout(user, Decimal("40.00"), idempotency_key="dup")
+
+    assert first.id == second.id
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("60.00")
+    txs = [tx for tx in wallet_repo.transactions.values() if tx.user_id == user.id]
+    assert len(txs) == 1
+
+
+def test_admin_list_pending_payouts_requires_admin():
+    service, _, _, _, _ = make_service("accepted")
+    with pytest.raises(HTTPException) as exc:
+        service.list_admin_payouts(make_current_user(uuid4(), role="driver"))
+    assert exc.value.status_code == 403
+
+
+def test_admin_list_pending_payouts_returns_only_pending():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    service.request_payout(user, Decimal("10.00"), idempotency_key="a")
+    service.request_payout(user, Decimal("20.00"), idempotency_key="b")
+
+    result = service.list_admin_payouts(make_current_user(uuid4(), role="admin"))
+
+    assert result.total == 2
+    assert all(item.status == "pending" for item in result.items)
+
+
+def test_admin_approve_payout_marks_completed_and_posts_transaction():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    payout = service.request_payout(user, Decimal("40.00"), idempotency_key="ap")
+
+    approved = service.approve_payout(
+        payout.id, make_current_user(uuid4(), role="admin")
+    )
+
+    assert approved.status == "completed"
+    assert approved.processed_at is not None
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("60.00")
+    tx = next(iter(wallet_repo.transactions.values()))
+    assert tx.status == "posted"
+
+
+def test_admin_approve_payout_requires_admin():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    payout = service.request_payout(user, Decimal("40.00"), idempotency_key="ap2")
+
+    with pytest.raises(HTTPException) as exc:
+        service.approve_payout(payout.id, make_current_user(uuid4(), role="driver"))
+    assert exc.value.status_code == 403
+
+
+def test_admin_reject_payout_reverses_balance_and_marks_reversed():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    payout = service.request_payout(user, Decimal("40.00"), idempotency_key="rj")
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("60.00")
+
+    rejected = service.reject_payout(
+        payout.id, make_current_user(uuid4(), role="admin")
+    )
+
+    assert rejected.status == "rejected"
+    assert rejected.processed_at is not None
+    assert wallet_repo.wallets[user.id].available_balance == Decimal("100.00")
+    tx = next(iter(wallet_repo.transactions.values()))
+    assert tx.status == "reversed"
+
+
+def test_admin_approve_nonexistent_payout_returns_404():
+    service, _, _, _, _ = make_service("accepted")
+    with pytest.raises(HTTPException) as exc:
+        service.approve_payout(uuid4(), make_current_user(uuid4(), role="admin"))
+    assert exc.value.status_code == 404
+
+
+def test_admin_cannot_approve_already_processed_payout():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    payout = service.request_payout(user, Decimal("40.00"), idempotency_key="twice")
+    admin = make_current_user(uuid4(), role="admin")
+    service.approve_payout(payout.id, admin)
+
+    with pytest.raises(HTTPException) as exc:
+        service.approve_payout(payout.id, admin)
+    assert exc.value.status_code == 400
+
+
+def test_list_user_payouts_returns_only_own():
+    service, _, _, _, wallet_repo = make_service("accepted")
+    user = make_current_user(uuid4(), role="driver")
+    wallet_repo.get_or_create(user.id).available_balance = Decimal("100.00")
+    service.request_payout(user, Decimal("10.00"), idempotency_key="u1")
+    service.request_payout(user, Decimal("20.00"), idempotency_key="u2")
+
+    result = service.list_user_payouts(user)
+
+    assert result.total == 2
+    assert all(item.user_id == user.id for item in result.items)

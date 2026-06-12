@@ -36,12 +36,13 @@ class BookingRepository:
 
     def get(self, booking_id: UUID) -> Booking | None:
         from sqlalchemy.orm import joinedload
+        from app.domains.trips.models import Ride
 
         return (
             self.db.query(Booking)
             .options(
-                joinedload(Booking.ride).joinedload("driver"),
-                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.ride).joinedload(Ride.driver),
+                joinedload(Booking.ride).joinedload(Ride.vehicle),
                 joinedload(Booking.passenger),
             )
             .filter(Booking.id == booking_id)
@@ -50,12 +51,13 @@ class BookingRepository:
 
     def get_for_update(self, booking_id: UUID) -> Booking | None:
         from sqlalchemy.orm import joinedload
+        from app.domains.trips.models import Ride
 
         return (
             self.db.query(Booking)
             .options(
-                joinedload(Booking.ride).joinedload("driver"),
-                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.ride).joinedload(Ride.driver),
+                joinedload(Booking.ride).joinedload(Ride.vehicle),
                 joinedload(Booking.passenger),
             )
             .filter(Booking.id == booking_id)
@@ -97,16 +99,17 @@ class BookingRepository:
             )
             .all()
         )
-        return [b.passenger_id for b in bookings]
+        return [b.passenger_id for b in bookings]  # type: ignore[misc]
 
     def list_for_passenger(self, passenger_id: UUID) -> list[Booking]:
         from sqlalchemy.orm import joinedload
+        from app.domains.trips.models import Ride
 
         return (
             self.db.query(Booking)
             .options(
-                joinedload(Booking.ride).joinedload("driver"),
-                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.ride).joinedload(Ride.driver),
+                joinedload(Booking.ride).joinedload(Ride.vehicle),
                 joinedload(Booking.passenger),
             )
             .filter(Booking.passenger_id == passenger_id)
@@ -122,8 +125,8 @@ class BookingRepository:
             .join(Ride)
             .filter(Ride.driver_id == driver_id)
             .options(
-                joinedload(Booking.ride).joinedload("driver"),
-                joinedload(Booking.ride).joinedload("vehicle"),
+                joinedload(Booking.ride).joinedload(Ride.driver),
+                joinedload(Booking.ride).joinedload(Ride.vehicle),
                 joinedload(Booking.passenger),
             )
             .all()

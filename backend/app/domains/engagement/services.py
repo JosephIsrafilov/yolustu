@@ -55,7 +55,8 @@ class EngagementService:
 
         target_is_driver = ride.driver_id == review_in.target_id
         target_is_passenger = self.bookings.is_accepted_passenger(
-            ride.id, review_in.target_id
+            ride.id,
+            review_in.target_id,  # type: ignore[arg-type]
         )
         if not (target_is_driver or target_is_passenger):
             raise HTTPException(
@@ -68,7 +69,9 @@ class EngagementService:
         if not target_user:
             raise HTTPException(status_code=404, detail="Target user not found")
         if self.reviews.exists_for_author_target_ride(
-            current_user.id, review_in.target_id, ride.id
+            current_user.id,
+            review_in.target_id,
+            ride.id,  # type: ignore[arg-type]
         ):
             raise HTTPException(
                 status_code=400,
@@ -79,7 +82,7 @@ class EngagementService:
         total_rating = (
             sum(review.rating for review in existing_reviews) + review_in.rating
         )
-        target_user.rating = total_rating / (len(existing_reviews) + 1)
+        target_user.rating = total_rating / (len(existing_reviews) + 1)  # type: ignore[assignment]
 
         review = self.reviews.create(current_user.id, review_in)
         saved_review = self.reviews.save(review)
@@ -112,10 +115,10 @@ class EngagementService:
         )
         self.conversations.create(conv)
         self.db.flush()
-        self.conversations.add_participant(conv.id, current_user.id, "user")
+        self.conversations.add_participant(conv.id, current_user.id, "user")  # type: ignore[arg-type]
         self.db.commit()
         self.db.refresh(conv)
-        created = self.conversations.get(conv.id)
+        created = self.conversations.get(conv.id)  # type: ignore[arg-type]
         if created is None:
             raise HTTPException(status_code=500, detail="Conversation was not created")
         return created
@@ -127,7 +130,7 @@ class EngagementService:
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
 
-        ride = self.rides.get_ride(booking.ride_id)
+        ride = self.rides.get_ride(booking.ride_id)  # type: ignore[arg-type]
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
 
@@ -149,11 +152,11 @@ class EngagementService:
         )
         self.conversations.create(conv)
         self.db.flush()
-        self.conversations.add_participant(conv.id, booking.passenger_id, "passenger")
-        self.conversations.add_participant(conv.id, ride.driver_id, "driver")
+        self.conversations.add_participant(conv.id, booking.passenger_id, "passenger")  # type: ignore[arg-type]
+        self.conversations.add_participant(conv.id, ride.driver_id, "driver")  # type: ignore[arg-type]
         self.db.commit()
         self.db.refresh(conv)
-        created = self.conversations.get(conv.id)
+        created = self.conversations.get(conv.id)  # type: ignore[arg-type]
         if created is None:
             raise HTTPException(status_code=500, detail="Conversation was not created")
         return created
@@ -240,20 +243,24 @@ class EngagementService:
             raise HTTPException(status_code=403, detail="Not a participant")
 
         message = self.messages.create_for_conversation(
-            conv.id, current_user.id, message_in.content, conv.ride_id
+            conv.id,
+            current_user.id,
+            message_in.content,
+            conv.ride_id,  # type: ignore[arg-type]
         )
 
         if manager:
             await manager.broadcast_to_conversation(
-                self._message_payload(message, current_user), conv.id
+                self._message_payload(message, current_user),
+                conv.id,  # type: ignore[arg-type]
             )
 
         for part in conv.participants:
             if part.user_id != current_user.id:
                 self.notifications.send_push_notification(
-                    user_id=part.user_id,
+                    user_id=part.user_id,  # type: ignore[arg-type]
                     title=f"New Message from {current_user.first_name}",
-                    body=message.content,
+                    body=message.content,  # type: ignore[arg-type]
                     data={"conversation_id": str(conv.id), "type": "new_message"},
                 )
 

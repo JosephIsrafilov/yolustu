@@ -50,8 +50,8 @@ export default function RegisterPage() {
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) {
       nextErrors.email = language === 'az' ? 'Düzgün email daxil edin' : language === 'ru' ? 'Введите правильный email' : 'Enter a valid email';
     }
-    if (form.password.length < 6) {
-      nextErrors.password = language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters';
+    if (form.password.length < 8) {
+      nextErrors.password = language === 'az' ? 'Ən azı 8 simvol' : language === 'ru' ? 'Минимум 8 символов' : 'Minimum 8 characters';
     }
     if (form.password !== form.confirm) {
       nextErrors.confirm = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
@@ -99,7 +99,7 @@ export default function RegisterPage() {
     { key: 'fullName', label: copy.auth.fullNameLabel, icon: 'user', placeholder: copy.auth.fullNamePlaceholder, type: 'text' },
     { key: 'phone', label: copy.auth.phoneLabel, icon: 'phone', placeholder: copy.auth.phonePlaceholder, type: 'tel' },
     { key: 'email', label: 'Email', icon: 'mail', placeholder: 'nadir@example.com', type: 'email' },
-    { key: 'password', label: copy.auth.passwordLabel, icon: 'lock', placeholder: language === 'az' ? 'Ən azı 6 simvol' : language === 'ru' ? 'Минимум 6 символов' : 'Minimum 6 characters', type: 'password' },
+    { key: 'password', label: copy.auth.passwordLabel, icon: 'lock', placeholder: language === 'az' ? 'Ən azı 8 simvol' : language === 'ru' ? 'Минимум 8 символов' : 'Minimum 8 characters', type: 'password' },
     { key: 'confirm', label: language === 'az' ? 'Şifrəni təsdiqləyin' : language === 'ru' ? 'Подтвердите пароль' : 'Confirm password', icon: 'lock', placeholder: language === 'az' ? 'Təkrar daxil edin' : language === 'ru' ? 'Повторите пароль' : 'Confirm password', type: 'password' },
   ];
 

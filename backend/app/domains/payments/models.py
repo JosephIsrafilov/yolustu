@@ -6,6 +6,28 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+# Canonical set of wallet transaction types. The ``type`` column stays a plain
+# String(50) (changing it to a DB enum is risky with existing data), but this
+# tuple is the single source of truth for validation at the Python level.
+TRANSACTION_TYPES: tuple[str, ...] = (
+    "passenger_payment",
+    "platform_fee",
+    "driver_pending_earning",
+    "driver_available_earning",
+    "refund",
+    "payout",
+    "adjustment",
+)
+
+# Filters exposed on the transactions listing endpoint.
+TRANSACTION_FILTERS: tuple[str, ...] = (
+    "all",
+    "payments",
+    "refunds",
+    "income",
+    "topups",
+)
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -90,6 +112,10 @@ class PayoutRequest(Base):
 
 
 Index("ix_payments_booking_id", Payment.booking_id)
+Index("ix_payments_status", Payment.status)
+Index("ix_payments_passenger_id", Payment.passenger_id)
+Index("ix_payments_driver_id", Payment.driver_id)
+Index("ix_payments_created_at", Payment.created_at)
 Index("ix_payments_provider_payment_id", Payment.provider_payment_id, unique=True)
 Index("ix_payments_transaction_id", Payment.transaction_id, unique=True)
 Index("ix_payments_idempotency_key", Payment.idempotency_key, unique=True)
@@ -98,6 +124,8 @@ Index(
     WalletTransaction.user_id,
     WalletTransaction.created_at,
 )
+Index("ix_wallet_transactions_type", WalletTransaction.type)
+Index("ix_wallet_transactions_status", WalletTransaction.status)
 Index(
     "ix_wallet_transactions_idempotency_key",
     WalletTransaction.idempotency_key,

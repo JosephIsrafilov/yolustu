@@ -34,3 +34,5 @@ class Booking(Base):
 
 Index("ix_bookings_passenger_id", Booking.passenger_id)
 Index("ix_bookings_ride_id", Booking.ride_id)
+Index("ix_bookings_status", Booking.status)
+Index("ix_bookings_created_at", Booking.created_at)

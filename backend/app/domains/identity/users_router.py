@@ -82,7 +82,7 @@ async def upload_avatar(
     avatar_url = f"{base_url}/uploads/{filename}"
 
     user_model = IdentityService(db).get_current_user_model(current_user)
-    user_model.avatar_url = avatar_url
+    user_model.avatar_url = avatar_url  # type: ignore[assignment]
     db.commit()
     db.refresh(user_model)
     return user_model

@@ -90,7 +90,10 @@ class TokenData(BaseModel):
 
 class LoginInput(BaseModel):
     phone: str
-    password: str = Field(min_length=8, max_length=72)
+    # No length constraint on login: we verify the credential, we don't
+    # re-validate the policy. A min_length here would 422 legacy/short
+    # passwords before verification and leak the password policy.
+    password: str
 
 
 class DeviceTokenInput(BaseModel):

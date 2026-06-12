@@ -1,13 +1,12 @@
 import logging
 from datetime import datetime, timezone
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-not-found]
+from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import-not-found]
 
 from app.core.database import SessionLocal
 from app.domains.bookings.services import BookingsService
 from app.domains.bookings.repositories import BookingRepository
-from app.domains.lifecycle import BOOKING_ACCEPTED
 
 logger = logging.getLogger(__name__)
 

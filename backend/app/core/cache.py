@@ -1,4 +1,5 @@
 """Redis caching utilities for read-heavy endpoints."""
+
 import json
 import logging
 from functools import wraps
@@ -50,12 +51,14 @@ def cache_response(
         def get_ride(ride_id: UUID, db: Session):
             return service.get_ride(ride_id)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             # Skip Request objects when building cache key
             cache_kwargs = {
-                k: str(v) for k, v in kwargs.items()
+                k: str(v)
+                for k, v in kwargs.items()
                 if not isinstance(v, (Request, type(None)))
             }
 
@@ -79,11 +82,7 @@ def cache_response(
                 result = func(*args, **kwargs)
 
                 # Store in cache
-                redis_client.setex(
-                    cache_key,
-                    ttl,
-                    json.dumps(result, default=str)
-                )
+                redis_client.setex(cache_key, ttl, json.dumps(result, default=str))
 
                 return result
 
@@ -93,6 +92,7 @@ def cache_response(
                 return func(*args, **kwargs)
 
         return cast(Callable[..., T], wrapper)
+
     return decorator
 
 
@@ -111,7 +111,7 @@ def invalidate_cache(redis: Redis, pattern: str) -> int:
         if keys:
             deleted = redis.delete(*keys)
             logger.info(f"Invalidated {deleted} cache keys matching '{pattern}'")
-            return deleted
+            return int(deleted)  # type: ignore[arg-type]
         return 0
     except Exception as e:
         logger.error(f"Failed to invalidate cache pattern '{pattern}': {e}")
@@ -132,7 +132,7 @@ def invalidate_cache_keys(redis: Redis, keys: list[str]) -> int:
         if keys:
             deleted = redis.delete(*keys)
             logger.info(f"Invalidated {deleted} specific cache keys")
-            return deleted
+            return int(deleted)  # type: ignore[arg-type]
         return 0
     except Exception as e:
         logger.error(f"Failed to invalidate cache keys: {e}")
@@ -149,8 +149,8 @@ class CacheManager:
         """Invalidate all cache entries related to a ride."""
         patterns = [
             f"ride:ride_id={ride_id}",
-            f"rides:search:*",
-            f"rides:my:*",
+            "rides:search:*",
+            "rides:my:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)
@@ -168,7 +168,7 @@ class CacheManager:
         """Invalidate all cache entries related to a vehicle."""
         patterns = [
             f"vehicle:vehicle_id={vehicle_id}",
-            f"vehicles:my:*",
+            "vehicles:my:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)
@@ -176,8 +176,8 @@ class CacheManager:
     def invalidate_booking(self, booking_id: str) -> None:
         """Invalidate all cache entries related to a booking."""
         patterns = [
-            f"bookings:my:*",
-            f"bookings:requests:*",
+            "bookings:my:*",
+            "bookings:requests:*",
         ]
         for pattern in patterns:
             invalidate_cache(self.redis, pattern)

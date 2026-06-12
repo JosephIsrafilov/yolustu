@@ -1,6 +1,11 @@
 import { apiClient } from '@/services/api-client';
-import type { PaymentsService, PaymentSessionResponse, WebhookPayload } from '@/services/contracts/payments-service';
-import type { Payment, PaymentStatus, Wallet, WalletTransaction } from '@/types';
+import type {
+  PaymentsService,
+  PaymentSessionResponse,
+  WalletTransactionFilter,
+  WebhookPayload,
+} from '@/services/contracts/payments-service';
+import type { Payment, PaymentStatus, Payout, PayoutStatus, Wallet, WalletTransaction } from '@/types';
 
 interface ApiPaymentSessionResponse {
   payment_id: string;
@@ -51,13 +56,27 @@ interface ApiWalletTransaction {
   payment_id?: string | null;
   booking_id?: string | null;
   ride_id?: string | null;
-  type: WalletTransaction['type'];
+  // Raw backend type. The API uses "topup" where the frontend models it as
+  // "adjustment", so this is a plain string and gets normalized below.
+  type: string;
   direction: WalletTransaction['direction'];
   amount: string | number;
   currency: string;
   status: WalletTransaction['status'];
   description?: string | null;
   created_at: string;
+}
+
+interface ApiPayout {
+  id: string;
+  user_id: string;
+  amount: string | number;
+  currency: string;
+  status: PayoutStatus;
+  method?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+  processed_at?: string | null;
 }
 
 interface ApiPaginated<T> {
@@ -70,6 +89,16 @@ interface ApiPaginated<T> {
 
 function amount(value: string | number): number {
   return Number(value);
+}
+
+// The backend uses "topup" for wallet top-ups; the frontend models that as
+// "adjustment". Normalize here so icons, filters, and labels stay consistent.
+const TRANSACTION_TYPE_ALIASES: Record<string, WalletTransaction['type']> = {
+  topup: 'adjustment',
+};
+
+function normalizeTransactionType(type: string): WalletTransaction['type'] {
+  return TRANSACTION_TYPE_ALIASES[type] ?? (type as WalletTransaction['type']);
 }
 
 function mapSession(api: ApiPaymentSessionResponse): PaymentSessionResponse {
@@ -128,13 +157,27 @@ function mapWalletTransaction(api: ApiWalletTransaction): WalletTransaction {
     paymentId: api.payment_id ?? undefined,
     bookingId: api.booking_id ?? undefined,
     rideId: api.ride_id ?? undefined,
-    type: api.type,
+    type: normalizeTransactionType(api.type),
     direction: api.direction,
     amount: amount(api.amount),
     currency: api.currency,
     status: api.status,
     description: api.description ?? undefined,
     createdAt: api.created_at,
+  };
+}
+
+function mapPayout(api: ApiPayout): Payout {
+  return {
+    id: api.id,
+    userId: api.user_id,
+    amount: amount(api.amount),
+    currency: api.currency,
+    status: api.status,
+    method: api.method ?? undefined,
+    metadata: api.metadata ?? undefined,
+    createdAt: api.created_at,
+    processedAt: api.processed_at ?? undefined,
   };
 }
 
@@ -170,21 +213,42 @@ export const apiPaymentsService: PaymentsService = {
     return mapWallet(res);
   },
 
-  async getWalletTransactions(page = 1, limit = 50) {
-    const res = await apiClient.get<ApiPaginated<ApiWalletTransaction>>(`/wallet/me/transactions?page=${page}&limit=${limit}`);
+  async getWalletTransactions(page = 1, limit = 50, filter: WalletTransactionFilter = 'all') {
+    const query = new URLSearchParams({ page: String(page), limit: String(limit), filter });
+    const res = await apiClient.get<ApiPaginated<ApiWalletTransaction>>(`/wallet/me/transactions?${query.toString()}`);
     return {
       ...res,
       items: res.items.map(mapWalletTransaction),
     };
   },
 
-  async topupWallet(amount: number) {
-    const res = await apiClient.post<{ detail: string; new_balance: number | string }>('/wallet/me/topup', { amount });
+  async topupWallet(amount: number, idempotencyKey: string) {
+    const res = await apiClient.post<{ detail: string; new_balance: number | string }>('/wallet/me/topup', {
+      amount,
+      idempotency_key: idempotencyKey,
+    });
     return { detail: res.detail, new_balance: Number(res.new_balance) };
   },
 
   async payFromWallet(bookingId: string) {
     return await apiClient.post<{ detail: string }>('/payments/wallet-pay', { booking_id: bookingId });
+  },
+
+  async requestPayout(amount: number, idempotencyKey: string) {
+    const res = await apiClient.post<ApiPayout>('/wallet/me/payouts', {
+      amount,
+      idempotency_key: idempotencyKey,
+    });
+    return mapPayout(res);
+  },
+
+  async getPayouts(page = 1, limit = 50) {
+    const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const res = await apiClient.get<ApiPaginated<ApiPayout>>(`/wallet/me/payouts?${query.toString()}`);
+    return {
+      ...res,
+      items: res.items.map(mapPayout),
+    };
   },
 
   async listAdminPayments(params = {}) {

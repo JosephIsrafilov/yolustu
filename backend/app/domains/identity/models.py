@@ -5,6 +5,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    Index,
     Integer,
     String,
     Text,
@@ -71,3 +72,8 @@ class DeviceToken(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="device_tokens")
+
+
+Index("ix_users_role", User.role)
+Index("ix_users_verification_status", User.verification_status)
+Index("ix_users_is_blocked", User.is_blocked)
