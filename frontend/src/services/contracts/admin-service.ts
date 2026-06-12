@@ -1,4 +1,4 @@
-import type { Booking, Trip, User } from '@/types';
+import type { Booking, Trip, User, UserRole } from '@/types';
 
 export interface Paginated<T> {
   items: T[];
@@ -19,9 +19,30 @@ export interface AdminStats {
   pendingVerifications: number;
 }
 
+export interface GetUsersOptions {
+  page?: number;
+  limit?: number;
+  role?: string;
+  status?: 'active' | 'blocked' | 'all';
+  verification?: 'none' | 'pending' | 'approved' | 'rejected' | 'all';
+  q?: string;
+}
+
+export interface AdminCreateUserInput {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  password: string;
+  role: UserRole;
+  city?: string;
+}
+
 export interface AdminService {
   getAdminStats(): Promise<AdminStats>;
-  getUsers(page?: number, limit?: number): Promise<Paginated<User>>;
+  getUsers(options?: GetUsersOptions): Promise<Paginated<User>>;
+  createUser(input: AdminCreateUserInput): Promise<User>;
+  updateUserRole(userId: string, role: UserRole): Promise<User>;
   blockUser(userId: string): Promise<User>;
   unblockUser(userId: string): Promise<User>;
   getTrips(page?: number, limit?: number): Promise<Paginated<Trip>>;

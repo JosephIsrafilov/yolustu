@@ -12,6 +12,7 @@ import Icon from '@/components/ui/Icon';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
 import { adminService } from '@/services';
+import CreateUserModal from './CreateUserModal';
 import type { User, UserRole } from '@/types';
 
 const USERS_I18N = {
@@ -65,6 +66,14 @@ const USERS_I18N = {
       phone: 'Telefon',
       city: 'Şəhər',
       created: 'Qeydiyyat',
+    },
+    manage: {
+      createUser: 'İstifadəçi yarat',
+      role: 'Rol',
+      changeRole: 'Rolu dəyiş',
+      save: 'Yadda saxla',
+      roleError: 'Rol dəyişdirilə bilmədi.',
+      actionError: 'Əməliyyat alınmadı. Yenidən cəhd edin.',
     }
   },
   ru: {
@@ -117,6 +126,14 @@ const USERS_I18N = {
       phone: 'Телефон',
       city: 'Город',
       created: 'Регистрация',
+    },
+    manage: {
+      createUser: 'Создать пользователя',
+      role: 'Роль',
+      changeRole: 'Изменить роль',
+      save: 'Сохранить',
+      roleError: 'Не удалось изменить роль.',
+      actionError: 'Операция не выполнена. Попробуйте ещё раз.',
     }
   },
   en: {
@@ -169,6 +186,14 @@ const USERS_I18N = {
       phone: 'Phone',
       city: 'City',
       created: 'Created',
+    },
+    manage: {
+      createUser: 'Create user',
+      role: 'Role',
+      changeRole: 'Change role',
+      save: 'Save',
+      roleError: 'Could not change role.',
+      actionError: 'Action failed. Please try again.',
     }
   }
 } as const;
@@ -189,6 +214,9 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingRoleUserId, setEditingRoleUserId] = useState<string | null>(null);
+  const [editingRole, setEditingRole] = useState<UserRole | null>(null);
   const limit = 10;
 
   const bookingsByPassengerId = useMemo(() => {
@@ -201,7 +229,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async (currentPage: number) => {
     try {
-      const res = await adminService.getUsers(currentPage, limit);
+      const res = await adminService.getUsers({ page: currentPage, limit });
       setUsers(res.items);
       setTotalPages(res.pages);
     } catch (error) {
@@ -258,6 +286,21 @@ export default function AdminUsersPage() {
     } catch (error) {
       // Error handled silently
     }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      const updatedUser = await adminService.updateUserRole(userId, newRole);
+      setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
+      setEditingRoleUserId(null);
+      setEditingRole(null);
+    } catch (error) {
+      // Error handled silently
+    }
+  };
+
+  const handleCreateSuccess = () => {
+    void fetchUsers(page);
   };
 
   const handleSort = (key: string) => {
@@ -341,9 +384,15 @@ export default function AdminUsersPage() {
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-text">{t.title}</h1>
-        <p className="text-sm text-text-muted">{t.subtitle}</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-text">{t.title}</h1>
+          <p className="text-sm text-text-muted">{t.subtitle}</p>
+        </div>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Icon name="user" size={16} />
+          {t.manage.createUser}
+        </Button>
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-[1.6fr_repeat(3,1fr)_auto] lg:items-end">
@@ -604,7 +653,7 @@ export default function AdminUsersPage() {
                       <tr>
                         <td colSpan={9} className="bg-surface-muted/50 p-0 border-b border-border">
                           <div className="sticky left-0 w-full max-w-[100vw] px-6 py-4">
-                            <div className="grid gap-4 sm:grid-cols-4 text-sm">
+                            <div className="grid gap-4 sm:grid-cols-5 text-sm">
                             <div>
                               <p className="text-xs text-text-muted">{t.details.email}</p>
                               <p className="font-semibold text-text">{u.email || t.placeholder}</p>
@@ -620,6 +669,28 @@ export default function AdminUsersPage() {
                             <div>
                               <p className="text-xs text-text-muted">{t.details.created}</p>
                               <p className="font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-text-muted mb-2">{t.manage.role}</p>
+                              {editingRoleUserId === u.id ? (
+                                <div className="flex gap-2 items-center">
+                                  <Select
+                                    value={editingRole || u.role}
+                                    onChange={(value) => setEditingRole(value as UserRole)}
+                                    options={roleOptions}
+                                  />
+                                  <Button size="sm" onClick={() => editingRole && handleRoleChange(u.id, editingRole)}>
+                                    <Icon name="check" size={14} />
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(null); setEditingRole(null); }}>
+                                    <Icon name="x" size={14} />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(u.id); setEditingRole(u.role); }}>
+                                  <Icon name="settings" size={14} /> {t.manage.changeRole}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -642,6 +713,11 @@ export default function AdminUsersPage() {
           />
         </div>
       )}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </AdminLayout>
   );
 }

@@ -1,3 +1,4 @@
+from app.domains.admin.models import AuditLog
 from app.domains.bookings.models import Booking
 from app.domains.engagement.models import (
     Conversation,
@@ -16,6 +17,7 @@ from app.domains.payments.models import (
 from app.domains.gamification.models import Badge, UserBadge
 
 __all__ = [
+    "AuditLog",
     "Booking",
     "Conversation",
     "ConversationParticipant",

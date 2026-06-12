@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -5,10 +6,16 @@ from sqlalchemy.orm import Session
 
 from app.core.pagination import PaginatedResponse
 from app.core.database import get_db
+from app.domains.admin.repositories import AuditLogRepository
+from app.domains.admin.schemas import AuditLogResponse
 from app.domains.admin.services import AdminService
 from app.domains.bookings.schemas import BookingResponse
 from app.domains.identity.dependencies import CurrentUser, get_current_admin
-from app.domains.identity.schemas import UserResponse
+from app.domains.identity.schemas import (
+    AdminRoleUpdate,
+    AdminUserCreate,
+    UserResponse,
+)
 from app.domains.payments.schemas import PayoutRequestResponse
 from app.domains.payments.services import PaymentService
 from app.domains.trips.schemas import RideResponse
@@ -30,8 +37,41 @@ def get_users(
     current_user: CurrentUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
+    role: str | None = Query(None, pattern="^(passenger|driver|admin)$"),
+    status: str = Query("all", pattern="^(active|blocked|all)$"),
+    verification: str = Query(
+        "all", pattern="^(none|pending|approved|rejected|all)$"
+    ),
+    q: str | None = Query(None, max_length=100),
 ):
-    return AdminService(db).get_users(current_user, page=page, limit=limit)
+    return AdminService(db).get_users(
+        current_user,
+        page=page,
+        limit=limit,
+        role=role,
+        status=status,
+        verification=verification,
+        q=q,
+    )
+
+
+@router.post("/users", response_model=UserResponse)
+def create_user(
+    payload: AdminUserCreate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return AdminService(db).create_user(current_user, payload)
+
+
+@router.patch("/users/{user_id}/role", response_model=UserResponse)
+def change_user_role(
+    user_id: UUID,
+    payload: AdminRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return AdminService(db).change_user_role(current_user, user_id, payload.role)
 
 
 @router.patch("/users/{user_id}/block", response_model=UserResponse)
@@ -145,3 +185,71 @@ def reject_payout(
     current_user: CurrentUser = Depends(get_current_admin),
 ):
     return PaymentService(db).reject_payout(payout_id, current_user)
+
+
+# Audit Logs
+@router.get("/audit-logs", response_model=PaginatedResponse[AuditLogResponse])
+def get_audit_logs(
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    admin_user_id: UUID | None = Query(None),
+    resource_type: str | None = Query(None, pattern="^(user|ride|booking|payout)$"),
+    resource_id: UUID | None = Query(None),
+    action: str | None = Query(None),
+    start_date: datetime | None = Query(None),
+    end_date: datetime | None = Query(None),
+):
+    """Get audit logs with optional filters for forensics and compliance."""
+    AdminService.require_admin(current_user)
+    audit_repo = AuditLogRepository(db)
+    skip = (page - 1) * limit
+
+    items = audit_repo.list_logs(
+        skip=skip,
+        limit=limit,
+        admin_user_id=admin_user_id,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        action=action,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    total = audit_repo.count_logs(
+        admin_user_id=admin_user_id,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        action=action,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    from app.core.pagination import create_paginated_response
+    return create_paginated_response(items, total, page, limit)
+
+
+@router.get("/audit-logs/user/{user_id}", response_model=list[AuditLogResponse])
+def get_user_audit_timeline(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+    limit: int = Query(50, ge=1, le=100),
+):
+    """Get all admin actions performed on a specific user."""
+    AdminService.require_admin(current_user)
+    audit_repo = AuditLogRepository(db)
+    return audit_repo.get_user_activity_timeline(user_id, limit=limit)
+
+
+@router.get("/audit-logs/recent", response_model=list[AuditLogResponse])
+def get_recent_audit_activity(
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """Get recent audit log entries for admin dashboard."""
+    AdminService.require_admin(current_user)
+    audit_repo = AuditLogRepository(db)
+    return audit_repo.get_recent_activity(limit=limit)
+

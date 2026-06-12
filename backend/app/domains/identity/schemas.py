@@ -21,6 +21,36 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=72)
 
 
+_ADMIN_MANAGEABLE_ROLES = {"passenger", "driver", "admin"}
+
+
+class AdminUserCreate(UserBase):
+    password: str = Field(min_length=8, max_length=72)
+    role: str = "passenger"
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        if v not in _ADMIN_MANAGEABLE_ROLES:
+            raise ValueError(
+                f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}"
+            )
+        return v
+
+
+class AdminRoleUpdate(BaseModel):
+    role: str
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        if v not in _ADMIN_MANAGEABLE_ROLES:
+            raise ValueError(
+                f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}"
+            )
+        return v
+
+
 class UserUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None

@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
 
   const fetchData = () => {
     Promise.all([
-      adminService.getUsers(1, 100).catch(() => {
+      adminService.getUsers({ page: 1, limit: 100 }).catch(() => {
         return { items: [] };
       }),
       adminService.getTrips(1, 100).catch(() => {

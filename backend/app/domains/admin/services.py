@@ -3,11 +3,13 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.domains.admin.repositories import AdminRepository
+from app.domains.admin.repositories import AdminRepository, AuditLogRepository
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.bookings.schemas import booking_to_response
+from app.core.security import get_password_hash
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
+from app.domains.identity.schemas import AdminUserCreate
 from app.domains.trips.repositories import RideRepository
 from app.domains.trips.schemas import ride_to_response
 from app.core.pagination import create_paginated_response
@@ -19,6 +21,7 @@ class AdminService:
     def __init__(self, db: Session):
         self.db = db
         self.admin = AdminRepository(db)
+        self.audit = AuditLogRepository(db)
         self.users = UserRepository(db)
         self.rides = RideRepository(db)
         self.bookings = BookingRepository(db)
@@ -32,12 +35,105 @@ class AdminService:
         self.require_admin(current_user)
         return self.admin.stats()
 
-    def get_users(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
+    def get_users(
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        limit: int = 100,
+        role: str | None = None,
+        status: str = "all",
+        verification: str = "all",
+        q: str | None = None,
+    ):
         self.require_admin(current_user)
         skip = (page - 1) * limit
-        items = self.users.list_all(skip=skip, limit=limit)
-        total = self.users.count_all()
+
+        # Translate the API-facing enums into repository filter args.
+        role_filter = role if role and role != "all" else None
+        is_blocked: bool | None = None
+        if status == "active":
+            is_blocked = False
+        elif status == "blocked":
+            is_blocked = True
+        verification_filter = (
+            verification if verification and verification != "all" else None
+        )
+        search = q.strip() if q and q.strip() else None
+
+        items = self.users.search_users(
+            skip=skip,
+            limit=limit,
+            role=role_filter,
+            is_blocked=is_blocked,
+            verification_status=verification_filter,
+            q=search,
+        )
+        total = self.users.count_filtered(
+            role=role_filter,
+            is_blocked=is_blocked,
+            verification_status=verification_filter,
+            q=search,
+        )
         return create_paginated_response(items, total, page, limit)
+
+    def create_user(self, current_user: CurrentUser, payload: AdminUserCreate):
+        self.require_admin(current_user)
+        if self.users.get_by_phone(payload.phone):
+            raise HTTPException(
+                status_code=400, detail="Phone number already registered"
+            )
+        if payload.email and self.users.get_by_email(payload.email):
+            raise HTTPException(status_code=400, detail="Email already registered")
+        hashed_password = get_password_hash(payload.password)
+        user = self.users.create_by_admin(payload, hashed_password)
+
+        # Audit log
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action="create_user",
+            resource_type="user",
+            resource_id=user.id,
+            description=f"Created user {payload.first_name} {payload.last_name} ({payload.phone}) with role {payload.role}",
+            extra_data={"role": payload.role, "phone": payload.phone, "email": payload.email},
+        )
+
+        return user
+
+    def change_user_role(
+        self, current_user: CurrentUser, user_id: UUID, role: str
+    ):
+        self.require_admin(current_user)
+        if role not in {"passenger", "driver", "admin"}:
+            raise HTTPException(status_code=400, detail="Invalid role")
+        user = self.users.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        # Guard: do not allow demoting the last remaining admin.
+        if (
+            user.role == "admin"
+            and role != "admin"
+            and self.users.count_admins() <= 1
+        ):
+            raise HTTPException(
+                status_code=400, detail="Cannot demote the last admin"
+            )
+
+        old_role = user.role
+        updated_user = self.users.set_role(user, role)
+
+        # Audit log
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action="change_role",
+            resource_type="user",
+            resource_id=user_id,
+            description=f"Changed role of {user.first_name} {user.last_name} from {old_role} to {role}",
+            changes={"role": {"old": old_role, "new": role}},
+        )
+
+        return updated_user
 
     def set_user_blocked(
         self, user_id: UUID, is_blocked: bool, current_user: CurrentUser
@@ -46,7 +142,22 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return self.users.set_blocked(user, is_blocked)
+
+        action = "block_user" if is_blocked else "unblock_user"
+        updated_user = self.users.set_blocked(user, is_blocked)
+
+        # Audit log
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action=action,
+            resource_type="user",
+            resource_id=user_id,
+            description=f"{'Blocked' if is_blocked else 'Unblocked'} user {user.first_name} {user.last_name} ({user.phone})",
+            changes={"is_blocked": {"old": not is_blocked, "new": is_blocked}},
+        )
+
+        return updated_user
 
     def get_rides(self, current_user: CurrentUser, page: int = 1, limit: int = 100):
         self.require_admin(current_user)
@@ -98,6 +209,17 @@ class AdminService:
         user.is_verified = True  # type: ignore[assignment]
         updated_user = self.users.update_verification_status(user, "approved")
 
+        # Audit log
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action="approve_verification",
+            resource_type="user",
+            resource_id=user_id,
+            description=f"Approved driver verification for {user.first_name} {user.last_name}",
+            changes={"verification_status": {"old": "pending", "new": "approved"}, "role": {"old": "passenger", "new": "driver"}},
+        )
+
         # Gamification: newcomer badge
         check_and_award_badge(self.db, user.id, "newcomer")  # type: ignore[arg-type]
 
@@ -110,7 +232,20 @@ class AdminService:
             raise HTTPException(status_code=404, detail="User not found")
         user.role = "passenger"  # type: ignore[assignment]
         user.is_verified = False  # type: ignore[assignment]
-        return self.users.update_verification_status(user, "rejected")
+        updated_user = self.users.update_verification_status(user, "rejected")
+
+        # Audit log
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action="reject_verification",
+            resource_type="user",
+            resource_id=user_id,
+            description=f"Rejected driver verification for {user.first_name} {user.last_name}",
+            changes={"verification_status": {"old": "pending", "new": "rejected"}},
+        )
+
+        return updated_user
 
     def simulate_journey(self, current_user: CurrentUser):
         self.require_admin(current_user)

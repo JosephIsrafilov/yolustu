@@ -22,12 +22,39 @@ export const apiAdminService: AdminService = {
     return apiClient.get<AdminStats>('/admin/stats');
   },
 
-  async getUsers(page = 1, limit = 10) {
-    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/users?page=${page}&limit=${limit}`);
+  async getUsers(options = {}) {
+    const { page = 1, limit = 10, role, status, verification, q } = options;
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    if (role) params.set('role', role);
+    if (status) params.set('status', status);
+    if (verification) params.set('verification', verification);
+    if (q && q.trim()) params.set('q', q.trim());
+    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/users?${params.toString()}`);
     return {
       ...res,
       items: res.items.map(mapApiUserToUser)
     };
+  },
+
+  async createUser(input) {
+    const body = {
+      first_name: input.firstName,
+      last_name: input.lastName,
+      phone: input.phone,
+      email: input.email || undefined,
+      password: input.password,
+      role: input.role,
+      city: input.city || undefined,
+    };
+    const user = await apiClient.post<ApiUser>('/admin/users', body);
+    return mapApiUserToUser(user);
+  },
+
+  async updateUserRole(userId, role) {
+    const user = await apiClient.patch<ApiUser>(`/admin/users/${userId}/role`, { role });
+    return mapApiUserToUser(user);
   },
 
   async blockUser(userId) {

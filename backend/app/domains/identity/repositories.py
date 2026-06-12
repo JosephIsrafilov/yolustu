@@ -1,9 +1,10 @@
 from uuid import UUID
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.domains.identity.models import DeviceToken, User
-from app.domains.identity.schemas import UserCreate, UserUpdate
+from app.domains.identity.schemas import AdminUserCreate, UserCreate, UserUpdate
 
 
 class UserRepository:
@@ -39,6 +40,38 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def create_by_admin(
+        self, user_in: AdminUserCreate, hashed_password: str
+    ) -> User:
+        # Admin path: honors any of the three manageable roles. Role values are
+        # already validated by the AdminUserCreate schema.
+        user = User(
+            phone=user_in.phone,
+            email=user_in.email,
+            first_name=user_in.first_name,
+            last_name=user_in.last_name,
+            avatar_url=user_in.avatar_url,
+            language=user_in.language or "az",
+            role=user_in.role,
+            city=user_in.city,
+            bio=user_in.bio,
+            hashed_password=hashed_password,
+            is_verified=False,
+        )
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def set_role(self, user: User, role: str) -> User:
+        user.role = role  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def count_admins(self) -> int:
+        return self.db.query(User).filter(User.role == "admin").count()
 
     def update(self, user: User, user_in: UserUpdate) -> User:
         if user_in.phone and user_in.phone != user.phone:
@@ -109,6 +142,71 @@ class UserRepository:
             .limit(limit)
             .all()
         )
+
+    def _apply_filters(
+        self,
+        query,
+        role: str | None = None,
+        is_blocked: bool | None = None,
+        verification_status: str | None = None,
+        q: str | None = None,
+    ):
+        if role:
+            query = query.filter(User.role == role)
+        if is_blocked is not None:
+            query = query.filter(User.is_blocked == is_blocked)
+        if verification_status:
+            query = query.filter(User.verification_status == verification_status)
+        if q:
+            term = f"%{q}%"
+            query = query.filter(
+                or_(
+                    User.first_name.ilike(term),
+                    User.last_name.ilike(term),
+                    User.email.ilike(term),
+                    User.phone.ilike(term),
+                )
+            )
+        return query
+
+    def search_users(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        role: str | None = None,
+        is_blocked: bool | None = None,
+        verification_status: str | None = None,
+        q: str | None = None,
+    ) -> list[User]:
+        query = self._apply_filters(
+            self.db.query(User),
+            role=role,
+            is_blocked=is_blocked,
+            verification_status=verification_status,
+            q=q,
+        )
+        return (
+            query.order_by(User.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def count_filtered(
+        self,
+        role: str | None = None,
+        is_blocked: bool | None = None,
+        verification_status: str | None = None,
+        q: str | None = None,
+    ) -> int:
+        query = self._apply_filters(
+            self.db.query(User),
+            role=role,
+            is_blocked=is_blocked,
+            verification_status=verification_status,
+            q=q,
+        )
+        return query.count()
 
     def add_device_token(self, user_id: UUID, token: str):
         existing_token = (
