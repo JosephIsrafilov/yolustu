@@ -95,14 +95,16 @@ class AdminService:
             resource_type="user",
             resource_id=user.id,
             description=f"Created user {payload.first_name} {payload.last_name} ({payload.phone}) with role {payload.role}",
-            extra_data={"role": payload.role, "phone": payload.phone, "email": payload.email},
+            extra_data={
+                "role": payload.role,
+                "phone": payload.phone,
+                "email": payload.email,
+            },
         )
 
         return user
 
-    def change_user_role(
-        self, current_user: CurrentUser, user_id: UUID, role: str
-    ):
+    def change_user_role(self, current_user: CurrentUser, user_id: UUID, role: str):
         self.require_admin(current_user)
         if role not in {"passenger", "driver", "admin"}:
             raise HTTPException(status_code=400, detail="Invalid role")
@@ -110,14 +112,8 @@ class AdminService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         # Guard: do not allow demoting the last remaining admin.
-        if (
-            user.role == "admin"
-            and role != "admin"
-            and self.users.count_admins() <= 1
-        ):
-            raise HTTPException(
-                status_code=400, detail="Cannot demote the last admin"
-            )
+        if user.role == "admin" and role != "admin" and self.users.count_admins() <= 1:
+            raise HTTPException(status_code=400, detail="Cannot demote the last admin")
 
         old_role = user.role
         updated_user = self.users.set_role(user, role)
@@ -217,7 +213,10 @@ class AdminService:
             resource_type="user",
             resource_id=user_id,
             description=f"Approved driver verification for {user.first_name} {user.last_name}",
-            changes={"verification_status": {"old": "pending", "new": "approved"}, "role": {"old": "passenger", "new": "driver"}},
+            changes={
+                "verification_status": {"old": "pending", "new": "approved"},
+                "role": {"old": "passenger", "new": "driver"},
+            },
         )
 
         # Gamification: newcomer badge

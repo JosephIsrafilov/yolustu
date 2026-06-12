@@ -41,9 +41,7 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def create_by_admin(
-        self, user_in: AdminUserCreate, hashed_password: str
-    ) -> User:
+    def create_by_admin(self, user_in: AdminUserCreate, hashed_password: str) -> User:
         # Admin path: honors any of the three manageable roles. Role values are
         # already validated by the AdminUserCreate schema.
         user = User(
@@ -185,12 +183,7 @@ class UserRepository:
             verification_status=verification_status,
             q=q,
         )
-        return (
-            query.order_by(User.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        return query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
 
     def count_filtered(
         self,

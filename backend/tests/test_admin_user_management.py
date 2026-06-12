@@ -148,9 +148,7 @@ def test_change_role_invalid_role_returns_400(db):
     target = service.create_user(_admin_current_user(admin.id), _payload())
 
     with pytest.raises(HTTPException) as exc:
-        service.change_user_role(
-            _admin_current_user(admin.id), target.id, "superuser"
-        )
+        service.change_user_role(_admin_current_user(admin.id), target.id, "superuser")
     assert exc.value.status_code == 400
 
 
@@ -159,9 +157,7 @@ def test_change_role_missing_user_returns_404(db):
     service = AdminService(db)
 
     with pytest.raises(HTTPException) as exc:
-        service.change_user_role(
-            _admin_current_user(admin.id), uuid.uuid4(), "driver"
-        )
+        service.change_user_role(_admin_current_user(admin.id), uuid.uuid4(), "driver")
     assert exc.value.status_code == 404
 
 
@@ -222,9 +218,7 @@ def test_filter_by_role_returns_only_that_role(db):
     _create_user_with_name(db, service, admin, "driver", token)
     _create_user_with_name(db, service, admin, "passenger", token)
 
-    result = service.get_users(
-        _admin_current_user(admin.id), role="driver", q=token
-    )
+    result = service.get_users(_admin_current_user(admin.id), role="driver", q=token)
     assert result.total == 2
     assert all(u.role == "driver" for u in result.items)
 
@@ -251,9 +245,7 @@ def test_filter_by_status_blocked(db):
     _create_user_with_name(db, service, admin, "passenger", token)
     service.users.set_blocked(service.users.get_by_id(blocked.id), True)
 
-    result = service.get_users(
-        _admin_current_user(admin.id), status="blocked", q=token
-    )
+    result = service.get_users(_admin_current_user(admin.id), status="blocked", q=token)
     assert result.total == 1
     assert result.items[0].id == blocked.id
 

@@ -39,9 +39,7 @@ def get_users(
     limit: int = Query(10, ge=1, le=100),
     role: str | None = Query(None, pattern="^(passenger|driver|admin)$"),
     status: str = Query("all", pattern="^(active|blocked|all)$"),
-    verification: str = Query(
-        "all", pattern="^(none|pending|approved|rejected|all)$"
-    ),
+    verification: str = Query("all", pattern="^(none|pending|approved|rejected|all)$"),
     q: str | None = Query(None, max_length=100),
 ):
     return AdminService(db).get_users(
@@ -226,6 +224,7 @@ def get_audit_logs(
     )
 
     from app.core.pagination import create_paginated_response
+
     return create_paginated_response(items, total, page, limit)
 
 
@@ -252,4 +251,3 @@ def get_recent_audit_activity(
     AdminService.require_admin(current_user)
     audit_repo = AuditLogRepository(db)
     return audit_repo.get_recent_activity(limit=limit)
-

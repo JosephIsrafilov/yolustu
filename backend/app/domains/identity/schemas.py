@@ -32,9 +32,7 @@ class AdminUserCreate(UserBase):
     @classmethod
     def validate_role(cls, v: str) -> str:
         if v not in _ADMIN_MANAGEABLE_ROLES:
-            raise ValueError(
-                f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}"
-            )
+            raise ValueError(f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}")
         return v
 
 
@@ -45,9 +43,7 @@ class AdminRoleUpdate(BaseModel):
     @classmethod
     def validate_role(cls, v: str) -> str:
         if v not in _ADMIN_MANAGEABLE_ROLES:
-            raise ValueError(
-                f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}"
-            )
+            raise ValueError(f"role must be one of {sorted(_ADMIN_MANAGEABLE_ROLES)}")
         return v
 
 
