@@ -7,6 +7,7 @@ import '../../core/routes.dart';
 import '../../core/theme.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
+import 'data/ai_pricing_repository.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 
 /// Single-screen create-ride form (mock publish).
@@ -37,6 +38,11 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   bool _publishing = false;
   String? _error;
 
+  // AI Pricing
+  bool _loadingAi = false;
+  PricingSuggestionResponse? _aiSuggestion;
+  String? _aiError;
+
   @override
   void dispose() {
     _price.dispose();
@@ -50,6 +56,45 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
     final parsed = double.tryParse(value);
     if (parsed == null || parsed <= 0) return 'Düzgün qiymət daxil edin';
     return null;
+  }
+
+  Future<void> _fetchAiPrice() async {
+    FocusScope.of(context).unfocus();
+    if (_from == _to) {
+      setState(() => _aiError = 'Çıxış və təyinat eyni ola bilməz');
+      return;
+    }
+    setState(() {
+      _loadingAi = true;
+      _aiError = null;
+      _aiSuggestion = null;
+    });
+
+    try {
+      final req = PricingSuggestionRequest(
+        origin: _from,
+        destination: _to,
+        departureTime: '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+        departureDate: '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
+        seatsTotal: _seats,
+        language: 'az',
+      );
+      final repo = ref.read(aiPricingRepositoryProvider);
+      final res = await repo.getSuggestion(req);
+      if (mounted) {
+        setState(() {
+          _aiSuggestion = res;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _aiError = 'Qiymət təklifi alınmadı');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loadingAi = false);
+      }
+    }
   }
 
   Future<void> _publish() async {
@@ -193,6 +238,106 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                     const TextInputType.numberWithOptions(decimal: true),
                 validator: _validatePrice,
                 decoration: const InputDecoration(hintText: 'məs. 15'),
+              ),
+              const SizedBox(height: 16),
+
+              // AI Suggestion UI
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.teal.withValues(alpha: 0.05),
+                  border: Border.all(color: AppTheme.teal.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.auto_awesome, color: AppTheme.tealDark, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'AI qiymət təklifi',
+                            style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.navy),
+                          ),
+                        ),
+                        if (!_loadingAi && _aiSuggestion == null)
+                          TextButton(
+                            onPressed: _fetchAiPrice,
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              foregroundColor: AppTheme.tealDark,
+                            ),
+                            child: const Text('Təklif al'),
+                          ),
+                      ],
+                    ),
+                    if (_loadingAi)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppTheme.teal)),
+                          )
+                        ),
+                      ),
+                    if (_aiError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, size: 16, color: Colors.red.shade600),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(_aiError!, style: TextStyle(color: Colors.red.shade600, fontSize: 13))),
+                            TextButton(
+                              onPressed: _fetchAiPrice,
+                              child: const Text('Yenidən cəhd et', style: TextStyle(fontSize: 13)),
+                            )
+                          ],
+                        ),
+                      ),
+                    if (_aiSuggestion != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Təklif olunan qiymət: ${_aiSuggestion!.suggestedPrice} AZN',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.tealDark),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _aiSuggestion!.reasoning,
+                              style: TextStyle(color: AppTheme.slate500, fontSize: 13),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _price.text = _aiSuggestion!.suggestedPrice.toString();
+                                    _error = null;
+                                  });
+                                  // Re-validate field after setting text
+                                  _formKey.currentState?.validate();
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.tealDark,
+                                  side: const BorderSide(color: AppTheme.tealDark),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text('Bu qiyməti istifadə et'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               _label('Üstünlüklər'),
