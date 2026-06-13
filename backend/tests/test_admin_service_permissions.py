@@ -153,12 +153,15 @@ def make_service() -> tuple[AdminService, list[FakeUser], FakeRide]:
         ),
     ]
 
+    from unittest.mock import MagicMock
+
     ride = FakeRide(id=uuid4())
     service = AdminService(db=cast(Session, None))
     service.admin = cast(AdminRepository, FakeAdminRepository(users))
     service.users = cast(UserRepository, FakeUserRepository(users))
     service.rides = cast(RideRepository, FakeRideRepository([ride]))
     service.bookings = cast(BookingRepository, FakeBookingRepository())
+    service.audit = MagicMock()
     return service, users, ride
 
 

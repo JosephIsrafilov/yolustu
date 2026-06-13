@@ -16,6 +16,8 @@ from app.core.redis import get_redis
 from app.core.security import get_password_hash
 from app.core.limiter import limiter
 from app.domains.identity.models import User
+from app.domains.admin.models import AuditLog
+from app.domains.gamification.models import Badge, UserBadge
 
 limiter.enabled = False
 
@@ -31,9 +33,20 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
-    Base.metadata.create_all(bind=engine, tables=[User.__table__])
+    Base.metadata.create_all(
+        bind=engine,
+        tables=[
+            User.__table__,
+            AuditLog.__table__,
+            Badge.__table__,
+            UserBadge.__table__,
+        ],
+    )
     seed_user()
     yield
+    UserBadge.__table__.drop(bind=engine)
+    Badge.__table__.drop(bind=engine)
+    AuditLog.__table__.drop(bind=engine)
     User.__table__.drop(bind=engine)
 
 
