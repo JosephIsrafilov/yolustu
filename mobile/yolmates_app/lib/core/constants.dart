@@ -1,6 +1,11 @@
+import 'network/api_config.dart';
+
 class AppConstants {
   // API
-  static const String apiBaseUrl = 'http://localhost:8000/api/v1';
+  /// @deprecated Use ApiConfig.baseUrl or apiBaseUrlProvider instead.
+  /// This constant is kept for backward compatibility but will be removed.
+  /// Prefer --dart-define=API_BASE_URL=... for configuration.
+  static String get apiBaseUrl => ApiConfig.baseUrl;
 
   // Cities
   static const List<String> cities = [

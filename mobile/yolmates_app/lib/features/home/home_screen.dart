@@ -1,21 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../auth/state/auth_controller.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final String _from = 'Bakı';
   final String _to = 'Gəncə';
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authControllerProvider).user;
+    final userStatus = user?.verificationStatus ?? 'none';
+
+    final String btnLabel;
+    final VoidCallback? btnAction;
+    final IconData btnIcon;
+
+    if (userStatus == 'approved') {
+      btnLabel = 'Sürücü Paneli';
+      btnAction = () => context.push(AppRoutes.myRides);
+      btnIcon = Icons.dashboard_outlined;
+    } else if (userStatus == 'pending') {
+      btnLabel = 'Sənədlər yoxlanılır';
+      btnAction = () => context.push(AppRoutes.driverVerification);
+      btnIcon = Icons.hourglass_empty;
+    } else {
+      btnLabel = 'Sürücü ol';
+      btnAction = () => context.push(AppRoutes.driverOnboarding);
+      btnIcon = Icons.directions_car;
+    }
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -177,8 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () =>
-                                  context.push(AppRoutes.driverOnboarding),
+                              onPressed: btnAction,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.white,
                                 side: BorderSide(
@@ -190,12 +212,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.directions_car, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Sürücü ol'),
+                                  Icon(btnIcon, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(btnLabel),
                                 ],
                               ),
                             ),

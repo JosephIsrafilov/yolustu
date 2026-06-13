@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/providers.dart';
+import '../../features/auth/data/auth_mode.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/data/mock_data.dart';
+import 'api_rides_repository.dart';
 
 /// Search/detail contract for rides. Backend swap point.
 abstract class RidesRepository {
@@ -43,8 +46,15 @@ class MockRidesRepository implements RidesRepository {
 
 // --- Providers ---------------------------------------------------------------
 
+/// Binds to real API or mock based on --dart-define=API_MODE.
 final ridesRepositoryProvider = Provider<RidesRepository>(
-  (ref) => MockRidesRepository(),
+  (ref) {
+    if (AuthMode.isApi) {
+      return ApiRidesRepository(ref.read(apiClientProvider));
+    } else {
+      return MockRidesRepository();
+    }
+  },
 );
 
 /// Search parameters used as the [rideSearchProvider] family key.

@@ -41,6 +41,7 @@ extension BookingStatusX on BookingStatus {
 class Booking {
   final String id;
   final String rideId;
+  final String driverId;
   final String fromCity;
   final String toCity;
   final String driverName;
@@ -53,6 +54,7 @@ class Booking {
   const Booking({
     required this.id,
     required this.rideId,
+    this.driverId = 'mock-driver-id',
     required this.fromCity,
     required this.toCity,
     required this.driverName,
@@ -69,6 +71,7 @@ class Booking {
     return Booking(
       id: id,
       rideId: rideId,
+      driverId: driverId,
       fromCity: fromCity,
       toCity: toCity,
       driverName: driverName,

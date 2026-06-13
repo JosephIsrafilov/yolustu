@@ -33,6 +33,12 @@ abstract class AuthRepository {
     AppLanguage? language,
   });
 
+  /// Submits document verification for the user.
+  Future<AppUser> submitVerification(String documentPath);
+
+  /// Debug helper to approve the driver (mock repository only).
+  Future<AppUser> mockApproveDriver();
+
   /// Clears the persisted session.
   Future<void> logout();
 }

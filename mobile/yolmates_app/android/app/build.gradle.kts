@@ -1,8 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val keysProperties = Properties()
+val keysPropertiesFile = rootProject.file("keys.properties")
+if (keysPropertiesFile.exists()) {
+    keysProperties.load(FileInputStream(keysPropertiesFile))
+}
+val googleMapsApiKey = keysProperties.getProperty("googleMapsApiKey") ?: ""
 
 android {
     namespace = "com.example.yolmates_app"
@@ -23,6 +33,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["googleMapsApiKey"] = googleMapsApiKey
     }
 
     buildTypes {

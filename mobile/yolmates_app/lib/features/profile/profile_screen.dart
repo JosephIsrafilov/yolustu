@@ -62,16 +62,30 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           _MenuCard(
             items: [
-              _MenuItem(
-                icon: Icons.directions_car_outlined,
-                label: 'Sürücü rejimi',
-                onTap: () => context.push(AppRoutes.driverOnboarding),
-              ),
-              _MenuItem(
-                icon: Icons.local_taxi_outlined,
-                label: 'Səfərlərim',
-                onTap: () => context.push(AppRoutes.myRides),
-              ),
+              if (user?.verificationStatus == 'approved') ...[
+                _MenuItem(
+                  icon: Icons.dashboard_outlined,
+                  label: 'Sürücü Paneli',
+                  onTap: () => context.push(AppRoutes.myRides),
+                ),
+                _MenuItem(
+                  icon: Icons.add_circle_outline,
+                  label: 'Yeni səfər yarat',
+                  onTap: () => context.push(AppRoutes.createRide),
+                ),
+              ] else if (user?.verificationStatus == 'pending') ...[
+                _MenuItem(
+                  icon: Icons.hourglass_empty,
+                  label: 'Sürücü statusu: Yoxlanılır',
+                  onTap: () => context.push(AppRoutes.driverVerification),
+                ),
+              ] else ...[
+                _MenuItem(
+                  icon: Icons.directions_car_outlined,
+                  label: 'Sürücü olmaq istəyirsiniz?',
+                  onTap: () => context.push(AppRoutes.driverOnboarding),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 16),

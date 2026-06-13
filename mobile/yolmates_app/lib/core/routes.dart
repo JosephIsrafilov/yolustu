@@ -6,6 +6,8 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/presentation/phone_login_screen.dart';
 import '../features/auth/presentation/otp_verify_screen.dart';
 import '../features/auth/presentation/profile_setup_screen.dart';
+import '../features/auth/presentation/onboarding_screen.dart';
+import '../features/auth/presentation/auth_intro_screen.dart';
 import '../features/auth/state/auth_controller.dart';
 import '../features/bookings/bookings_screen.dart';
 import '../features/bookings/booking_confirm_screen.dart';
@@ -18,6 +20,7 @@ import '../features/driver/driver_verification_screen.dart';
 import '../features/driver/create_ride_screen.dart';
 import '../features/driver/my_rides_screen.dart';
 import '../features/driver/passenger_requests_screen.dart';
+import '../features/driver/active_ride_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -36,10 +39,12 @@ class AppRoutes {
 
   // Auth (outside bottom navigation)
   static const splash = '/splash';
+  static const onboarding = '/onboarding';
+  static const authIntro = '/auth-intro';
   static const login = '/login';
   static const otp = '/otp';
   static const profileSetup = '/profile-setup';
-
+ 
   // Main app (bottom-nav branches)
   static const home = '/';
   static const search = '/search';
@@ -90,10 +95,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final status = ref.read(authControllerProvider).status;
       final loc = state.matchedLocation;
 
-      const authRoutes = {AppRoutes.login, AppRoutes.otp};
+      const authRoutes = {AppRoutes.login, AppRoutes.otp, AppRoutes.authIntro};
       final onSplash = loc == AppRoutes.splash;
       final onAuth = authRoutes.contains(loc);
       final onProfileSetup = loc == AppRoutes.profileSetup;
+      final onOnboarding = loc == AppRoutes.onboarding;
 
       switch (status) {
         case AuthStatus.unknown:
@@ -101,9 +107,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Stay on splash while bootstrapping / on load error.
           return onSplash ? null : AppRoutes.splash;
 
+        case AuthStatus.onboarding:
+          return onOnboarding ? null : AppRoutes.onboarding;
+
         case AuthStatus.unauthenticated:
-          // Only login/otp allowed.
-          return onAuth ? null : AppRoutes.login;
+          // Only login/otp/intro allowed.
+          return onAuth ? null : AppRoutes.authIntro;
 
         case AuthStatus.incompleteProfile:
           // Force profile setup.
@@ -111,7 +120,20 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         case AuthStatus.authenticated:
           // Bounce away from auth/splash into the app.
-          if (onSplash || onAuth || onProfileSetup) return AppRoutes.home;
+          if (onSplash || onAuth || onProfileSetup || onOnboarding) return AppRoutes.home;
+
+          // Driver routes access control: only approved drivers can access panel routes
+          final user = ref.read(authControllerProvider).user;
+          final isDriverRoute = loc.startsWith('/driver');
+          if (isDriverRoute) {
+            if (user?.verificationStatus != 'approved') {
+              // Allow access to onboarding and verification flow only
+              if (loc == AppRoutes.driverOnboarding || loc == AppRoutes.driverVerification) {
+                return null;
+              }
+              return AppRoutes.driverOnboarding;
+            }
+          }
           return null;
       }
     },
@@ -119,6 +141,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.splash,
         builder: (_, __) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (_, __) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.authIntro,
+        builder: (_, __) => const AuthIntroScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -263,6 +293,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myRides,
         builder: (_, __) => const MyRidesScreen(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.myRides}/:id',
+        builder: (context, state) => ActiveRideScreen(
+          rideId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: AppRoutes.passengerRequests,

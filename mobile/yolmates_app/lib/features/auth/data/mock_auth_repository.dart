@@ -70,6 +70,33 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> submitVerification(String documentPath) async {
+    await Future.delayed(_latency);
+    final current = await currentUser();
+    final base = current ?? const AppUser(id: 'mock-anonymous', phone: '');
+    final updated = base.copyWith(
+      verificationStatus: 'pending',
+      documentUrl: documentPath,
+    );
+    await _persist(updated);
+    return updated;
+  }
+
+  @override
+  Future<AppUser> mockApproveDriver() async {
+    await Future.delayed(_latency);
+    final current = await currentUser();
+    final base = current ?? const AppUser(id: 'mock-anonymous', phone: '');
+    final updated = base.copyWith(
+      isVerified: true,
+      verificationStatus: 'approved',
+      role: UserRole.driver,
+    );
+    await _persist(updated);
+    return updated;
+  }
+
+  @override
   Future<void> logout() async {
     await _storage.delete(_userKey);
   }

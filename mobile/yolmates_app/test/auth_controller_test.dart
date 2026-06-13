@@ -7,10 +7,14 @@ import 'package:yolmates_app/features/auth/state/auth_controller.dart';
 
 /// Builds a container with in-memory session storage so no platform
 /// keystore is touched during tests.
-ProviderContainer _makeContainer() {
+ProviderContainer _makeContainer({bool onboardingSeen = true}) {
+  final storage = InMemorySessionStorage();
+  if (onboardingSeen) {
+    storage.write('onboarding_seen', 'true');
+  }
   final container = ProviderContainer(
     overrides: [
-      sessionStorageProvider.overrideWithValue(InMemorySessionStorage()),
+      sessionStorageProvider.overrideWithValue(storage),
     ],
   );
   addTearDown(container.dispose);
@@ -27,8 +31,15 @@ Future<AuthState> _settled(ProviderContainer c) async {
 
 void main() {
   group('AuthController bootstrap', () {
-    test('starts unauthenticated with empty storage', () async {
-      final c = _makeContainer();
+    test('starts on onboarding with empty storage', () async {
+      final c = _makeContainer(onboardingSeen: false);
+      final state = await _settled(c);
+      expect(state.status, AuthStatus.onboarding);
+      expect(state.user, isNull);
+    });
+
+    test('starts unauthenticated if onboarding already seen', () async {
+      final c = _makeContainer(onboardingSeen: true);
       final state = await _settled(c);
       expect(state.status, AuthStatus.unauthenticated);
       expect(state.user, isNull);
@@ -108,6 +119,7 @@ void main() {
     test('a completed profile survives a fresh controller on same storage',
         () async {
       final storage = InMemorySessionStorage();
+      storage.write('onboarding_seen', 'true');
       final overrides = [sessionStorageProvider.overrideWithValue(storage)];
 
       final c1 = ProviderContainer(overrides: overrides);

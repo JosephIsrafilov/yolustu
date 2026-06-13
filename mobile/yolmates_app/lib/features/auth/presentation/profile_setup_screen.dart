@@ -25,7 +25,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _lastName = TextEditingController();
 
   AppLanguage _language = AppLanguage.az;
-  UserRole _role = UserRole.passenger;
+  // Role removed - all users start as passenger
+  // Driver application moved to profile/settings
 
   bool _saving = false;
   String? _error;
@@ -33,13 +34,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   void initState() {
     super.initState();
-    // Prefill from any partial user the mock session already holds.
     final user = ref.read(authControllerProvider).user;
     if (user != null) {
       _firstName.text = user.firstName ?? '';
       _lastName.text = user.lastName ?? '';
       _language = user.language;
-      _role = user.role;
+      // Role always passenger on initial setup
     }
   }
 
@@ -50,10 +50,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     super.dispose();
   }
 
-  String? _required(String? v) {
-    if ((v ?? '').trim().isEmpty) return 'Bu sahə tələb olunur';
-    if ((v ?? '').trim().length < 2) return 'Ən azı 2 hərf';
-    return null;
+  String? _required(String? v) => v == null || v.trim().isEmpty ? 'Tələb olunur' : null;
+
+  String _previewInitials() {
+    final f = _firstName.text.trim();
+    final l = _lastName.text.trim();
+    if (f.isEmpty && l.isEmpty) return '?';
+    return '${f.isNotEmpty ? f[0] : ''}${l.isNotEmpty ? l[0] : ''}'.toUpperCase();
   }
 
   Future<void> _submit() async {
@@ -69,7 +72,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       await ref.read(authControllerProvider.notifier).completeProfile(
             firstName: _firstName.text.trim(),
             lastName: _lastName.text.trim(),
-            role: _role,
+            role: UserRole.passenger, // Always start as passenger
             language: _language,
           );
       // Router redirect handles navigation to the main app.
@@ -116,7 +119,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(hintText: 'Adınız'),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Text('Soyad', style: _labelStyle(context)),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -137,14 +140,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   enabled: !_saving,
                   onChanged: (l) => setState(() => _language = l),
                 ),
-                const SizedBox(height: 24),
-                Text('Rol', style: _labelStyle(context)),
-                const SizedBox(height: 8),
-                _RoleSelector(
-                  value: _role,
-                  enabled: !_saving,
-                  onChanged: (r) => setState(() => _role = r),
-                ),
+                // Role selection removed - all users start as passenger
+                // Driver registration available from profile settings
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   Row(
@@ -168,17 +165,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     onPressed: _saving ? null : _submit,
                     child: _saving
                         ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Davam et'),
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -187,20 +180,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  String _previewInitials() {
-    final f = _firstName.text.trim();
-    final l = _lastName.text.trim();
-    final a = f.isNotEmpty ? f[0] : '';
-    final b = l.isNotEmpty ? l[0] : '';
-    final out = (a + b).toUpperCase();
-    return out.isEmpty ? '?' : out;
+  TextStyle _labelStyle(BuildContext context) {
+    return const TextStyle(fontSize: 15, fontWeight: FontWeight.w600);
   }
-
-  TextStyle _labelStyle(BuildContext context) => const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.navy,
-      );
 }
 
 class _AvatarPlaceholder extends StatelessWidget {
@@ -210,33 +192,24 @@ class _AvatarPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CircleAvatar(
-          radius: 44,
-          backgroundColor: AppTheme.teal.withValues(alpha: 0.15),
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: AppTheme.tealDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 30,
-            ),
+    return Container(
+      width: 88,
+      height: 88,
+      decoration: BoxDecoration(
+        color: AppTheme.slate50,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppTheme.slate200, width: 2),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.slate500,
           ),
         ),
-        Positioned(
-          right: 0,
-          bottom: 0,
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              color: AppTheme.teal,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -252,22 +225,23 @@ class _LanguageSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _labels = {
-    AppLanguage.az: 'AZ',
-    AppLanguage.ru: 'RU',
-    AppLanguage.en: 'EN',
-  };
-
   @override
   Widget build(BuildContext context) {
     return Row(
       children: AppLanguage.values.map((lang) {
-        final selected = lang == value;
+        final selected = value == lang;
+        final label = switch (lang) {
+          AppLanguage.az => '🇦🇿 AZ',
+          AppLanguage.ru => '🇷🇺 RU',
+          AppLanguage.en => '🇬🇧 EN',
+        };
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(
+              right: lang != AppLanguage.values.last ? 8 : 0,
+            ),
             child: _ChoiceChipBox(
-              label: _labels[lang]!,
+              label: label,
               selected: selected,
               onTap: enabled ? () => onChanged(lang) : null,
             ),
@@ -278,54 +252,15 @@ class _LanguageSelector extends StatelessWidget {
   }
 }
 
-class _RoleSelector extends StatelessWidget {
-  final UserRole value;
-  final bool enabled;
-  final ValueChanged<UserRole> onChanged;
-
-  const _RoleSelector({
-    required this.value,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ChoiceChipBox(
-            label: 'Sərnişin',
-            icon: Icons.person_outline,
-            selected: value == UserRole.passenger,
-            onTap: enabled ? () => onChanged(UserRole.passenger) : null,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ChoiceChipBox(
-            label: 'Sürücü',
-            icon: Icons.directions_car_outlined,
-            selected: value == UserRole.driver,
-            onTap: enabled ? () => onChanged(UserRole.driver) : null,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ChoiceChipBox extends StatelessWidget {
   final String label;
-  final IconData? icon;
   final bool selected;
   final VoidCallback? onTap;
 
   const _ChoiceChipBox({
     required this.label,
     required this.selected,
-    required this.onTap,
-    this.icon,
+    this.onTap,
   });
 
   @override
@@ -333,8 +268,7 @@ class _ChoiceChipBox extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: selected ? AppTheme.teal.withValues(alpha: 0.1) : Colors.white,
@@ -347,14 +281,6 @@ class _ChoiceChipBox extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 18,
-                color: selected ? AppTheme.tealDark : AppTheme.slate500,
-              ),
-              const SizedBox(width: 6),
-            ],
             Text(
               label,
               style: TextStyle(
@@ -368,3 +294,4 @@ class _ChoiceChipBox extends StatelessWidget {
     );
   }
 }
+

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/error_state.dart';
+import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -123,40 +124,66 @@ class _DetailState extends ConsumerState<_Detail> {
         const SizedBox(height: 20),
         _Timeline(status: b.status),
         const SizedBox(height: 24),
-        if (b.status.needsPayment) ...[
+        // Chat button - only show for confirmed/paid bookings in mock mode
+        // In API mode, chat not implemented yet
+        if (b.status == BookingStatus.confirmed || b.status == BookingStatus.paid) ...[
           SizedBox(
             height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _busy ? null : () => _setStatus(BookingStatus.paid),
-              icon: const Icon(Icons.credit_card),
-              label: const Text('Ödəniş et (mock)'),
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/messages/conv-${b.rideId}'),
+              icon: const Icon(Icons.message_outlined),
+              label: const Text('Sürücüyə yaz'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.slate500,
+              ),
             ),
           ),
           const SizedBox(height: 12),
         ],
-        SizedBox(
-          height: 52,
-          child: OutlinedButton.icon(
-            onPressed: () => context.push('/messages/conv-${b.rideId}'),
-            icon: const Icon(Icons.message_outlined),
-            label: const Text('Sürücüyə yaz'),
+        // Review button - show when completed
+        if (b.status == BookingStatus.completed) ...[
+          SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () => ReviewDialog.show(
+                context,
+                targetId: b.driverId,
+                rideId: b.rideId,
+                targetName: b.driverName,
+              ),
+              icon: const Icon(Icons.star),
+              label: const Text('Sürücüyə rəy bildir'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.teal,
+              ),
+            ),
           ),
-        ),
-        if (b.status.isActive) ...[
           const SizedBox(height: 12),
+        ],
+        // Cancel button - only for active bookings
+        if (b.status.isActive) ...[
           SizedBox(
             height: 52,
             child: OutlinedButton.icon(
               onPressed: _busy ? null : _cancel,
+              icon: const Icon(Icons.cancel_outlined),
+              label: const Text('Rezervasiyanı ləğv et'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red.shade600,
-                side: BorderSide(color: Colors.red.shade200),
               ),
-              icon: const Icon(Icons.close),
-              label: const Text('Rezervasiyanı ləğv et'),
             ),
           ),
         ],
+        // Back to bookings button - always visible
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: () => context.go('/bookings'),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Rezervasiyalara qayıt'),
+          ),
+        ),
       ],
     );
   }

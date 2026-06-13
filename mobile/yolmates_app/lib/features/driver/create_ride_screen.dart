@@ -7,6 +7,7 @@ import '../../core/routes.dart';
 import '../../core/theme.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
+import '../../shared/widgets/map/route_map_view.dart';
 
 /// Single-screen create-ride form (mock publish).
 ///
@@ -140,6 +141,20 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
               _CityDropdown(
                 value: _to,
                 onChanged: (v) => setState(() => _to = v),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.slate200),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: RouteMapView(
+                  origin: _from,
+                  destination: _to,
+                ),
               ),
               const SizedBox(height: 16),
               Row(

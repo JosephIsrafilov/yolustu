@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/providers.dart';
+import '../../auth/data/auth_mode.dart';
+import 'api_bookings_repository.dart';
 import 'booking.dart';
 
 /// Bookings store contract. Backend swap point.
@@ -48,8 +51,15 @@ class MockBookingsRepository implements BookingsRepository {
 
 // --- Providers ---------------------------------------------------------------
 
+/// Binds to real API or mock based on --dart-define=API_MODE.
 final bookingsRepositoryProvider = Provider<BookingsRepository>(
-  (ref) => MockBookingsRepository(),
+  (ref) {
+    if (AuthMode.isApi) {
+      return ApiBookingsRepository(ref.read(apiClientProvider));
+    } else {
+      return MockBookingsRepository();
+    }
+  },
 );
 
 /// Reactive list of the current user's bookings.

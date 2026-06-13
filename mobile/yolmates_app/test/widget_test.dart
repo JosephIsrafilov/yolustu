@@ -37,16 +37,49 @@ class _TestApp extends ConsumerWidget {
 }
 
 void main() {
-  testWidgets('fresh launch lands on the phone login screen', (tester) async {
+  testWidgets('fresh launch lands on onboarding, skip goes to auth intro and login', (tester) async {
     await _pumpApp(tester);
 
-    // Login screen copy / CTA.
-    expect(find.text('Daxil ol'), findsOneWidget);
+    // Fresh launch lands on onboarding screen
+    expect(find.text('Yol yoldaşı tap'), findsOneWidget);
+    expect(find.text('Keç'), findsOneWidget);
+
+    // Tap "Keç" to skip onboarding
+    await tester.tap(find.text('Keç'));
+    await tester.pumpAndSettle();
+
+    // Now on AuthIntroScreen
+    expect(find.text('Yolüstü'), findsOneWidget);
+    expect(find.text('Qeydiyyatdan keç'), findsOneWidget);
+
+    // Tap "Daxil ol"
+    await tester.tap(find.text('Daxil ol'));
+    await tester.pumpAndSettle();
+
+    // Now on PhoneLoginScreen
+    expect(find.text('Telefon nömrənizi daxil edin, sizə təsdiq kodu göndərək.'), findsOneWidget);
     expect(find.text('Kod göndər'), findsOneWidget);
   });
 
   testWidgets('login validates an empty phone number', (tester) async {
-    await _pumpApp(tester);
+    final storage = InMemorySessionStorage();
+    await storage.write('onboarding_seen', 'true'); // bypass onboarding
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionStorageProvider.overrideWithValue(storage),
+        ],
+        child: const _TestApp(),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    
+    // Tap "Daxil ol" from AuthIntroScreen to get to login
+    await tester.tap(find.text('Daxil ol'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Kod göndər'));
     await tester.pump();

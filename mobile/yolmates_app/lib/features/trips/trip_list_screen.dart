@@ -10,6 +10,7 @@ import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/map/route_map_view.dart';
 
 /// Search results for a route, backed by [rideSearchProvider].
 ///
@@ -36,6 +37,7 @@ enum _Sort { timeAsc, priceAsc }
 class _TripListScreenState extends ConsumerState<TripListScreen> {
   _Sort _sort = _Sort.timeAsc;
   bool _verifiedOnly = false;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +73,9 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
         filtered.sort((a, b) => a.price.compareTo(b.price));
     }
 
+    final activeIndex = _selectedIndex.clamp(0, filtered.isEmpty ? 0 : filtered.length - 1);
+    final selectedTrip = filtered.isNotEmpty ? filtered[activeIndex] : null;
+
     return Column(
       children: [
         _FilterBar(
@@ -79,6 +84,22 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
           onSort: (s) => setState(() => _sort = s),
           onVerified: (v) => setState(() => _verifiedOnly = v),
         ),
+        if (selectedTrip != null) ...[
+          Container(
+            height: 180,
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.slate200),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: RouteMapView(
+              origin: selectedTrip.fromCity,
+              destination: selectedTrip.toCity,
+            ),
+          ),
+        ],
         Expanded(
           child: filtered.isEmpty
               ? const EmptyState(
@@ -91,7 +112,20 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                   padding: const EdgeInsets.all(AppConstants.spacing16),
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => _TripCard(trip: filtered[i]),
+                  itemBuilder: (context, i) {
+                    final isSelected = i == activeIndex;
+                    return _TripCard(
+                      trip: filtered[i],
+                      isSelected: isSelected,
+                      onTap: () {
+                        if (isSelected) {
+                          context.push('${AppRoutes.rideDetails}/${filtered[i].id}');
+                        } else {
+                          setState(() => _selectedIndex = i);
+                        }
+                      },
+                    );
+                  },
                 ),
         ),
       ],
@@ -189,8 +223,14 @@ class _FilterBar extends StatelessWidget {
 
 class _TripCard extends StatelessWidget {
   final Trip trip;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const _TripCard({required this.trip});
+  const _TripCard({
+    required this.trip,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,14 +238,17 @@ class _TripCard extends StatelessWidget {
         '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
 
     return InkWell(
-      onTap: () => context.push('${AppRoutes.rideDetails}/${trip.id}'),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spacing16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.slate200),
+          border: Border.all(
+            color: isSelected ? AppTheme.teal : AppTheme.slate200,
+            width: isSelected ? 2.0 : 1.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,6 +314,18 @@ class _TripCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text('${trip.availableSeats} boş yer',
                     style: const TextStyle(fontSize: 15)),
+                if (isSelected) ...[
+                  const Spacer(),
+                  Text(
+                    'Detallara baxmaq üçün yenidən toxunun',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.tealDark,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, size: 16, color: AppTheme.tealDark),
+                ],
               ],
             ),
           ],

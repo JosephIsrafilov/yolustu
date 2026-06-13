@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/error_state.dart';
+import '../../shared/widgets/map/route_map_view.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
@@ -72,6 +73,16 @@ class _Body extends StatelessWidget {
                 ),
                 _CityTime(city: ride.toCity, time: '', alignEnd: true),
               ],
+            ),
+          ),
+          
+          // Map visualizer
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: RouteMapView(
+              origin: ride.fromCity,
+              destination: ride.toCity,
             ),
           ),
 

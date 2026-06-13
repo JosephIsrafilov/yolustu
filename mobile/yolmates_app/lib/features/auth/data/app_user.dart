@@ -13,6 +13,9 @@ class AppUser {
   final String? avatarUrl;
   final UserRole role;
   final AppLanguage language;
+  final bool isVerified;
+  final String verificationStatus;
+  final String? documentUrl;
 
   const AppUser({
     required this.id,
@@ -22,6 +25,9 @@ class AppUser {
     this.avatarUrl,
     this.role = UserRole.passenger,
     this.language = AppLanguage.az,
+    this.isVerified = false,
+    this.verificationStatus = 'none',
+    this.documentUrl,
   });
 
   /// Profile is complete once both name fields are filled.
@@ -47,6 +53,9 @@ class AppUser {
     String? avatarUrl,
     UserRole? role,
     AppLanguage? language,
+    bool? isVerified,
+    String? verificationStatus,
+    String? documentUrl,
   }) {
     return AppUser(
       id: id,
@@ -56,6 +65,9 @@ class AppUser {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       language: language ?? this.language,
+      isVerified: isVerified ?? this.isVerified,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      documentUrl: documentUrl ?? this.documentUrl,
     );
   }
 
@@ -74,6 +86,9 @@ class AppUser {
         (l) => l.name == json['language'],
         orElse: () => AppLanguage.az,
       ),
+      isVerified: json['is_verified'] as bool? ?? false,
+      verificationStatus: json['verification_status'] as String? ?? 'none',
+      documentUrl: json['document_url'] as String?,
     );
   }
 
@@ -86,6 +101,9 @@ class AppUser {
       'avatar_url': avatarUrl,
       'role': role.name,
       'language': language.name,
+      'is_verified': isVerified,
+      'verification_status': verificationStatus,
+      'document_url': documentUrl,
     };
   }
 }

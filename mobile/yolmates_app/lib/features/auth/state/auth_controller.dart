@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/providers.dart';
+import '../data/api_auth_repository.dart';
 import '../data/app_user.dart';
+import '../data/auth_mode.dart';
 import '../data/auth_repository.dart';
 import '../data/mock_auth_repository.dart';
 import '../data/session_storage.dart';
@@ -8,6 +11,7 @@ import '../data/session_storage.dart';
 /// Coarse auth/session status the router gates on.
 enum AuthStatus {
   unknown, // bootstrapping (splash)
+  onboarding, // first time onboarding screen
   unauthenticated, // no session -> login
   incompleteProfile, // session exists, profile not finished -> setup
   authenticated, // session + complete profile -> main app
@@ -22,6 +26,7 @@ class AuthState {
   const AuthState._(this.status, {this.user, this.errorMessage});
 
   const AuthState.unknown() : this._(AuthStatus.unknown);
+  const AuthState.onboarding() : this._(AuthStatus.onboarding);
   const AuthState.unauthenticated() : this._(AuthStatus.unauthenticated);
   const AuthState.incompleteProfile(AppUser user)
       : this._(AuthStatus.incompleteProfile, user: user);
@@ -38,9 +43,22 @@ final sessionStorageProvider = Provider<SessionStorage>(
   (ref) => SecureSessionStorage(),
 );
 
-/// Bound to the mock implementation for now; swap for a real repo later.
+/// Binds to real API or mock based on --dart-define=API_MODE.
+///
+/// API mode: Uses backend via ApiAuthRepository.
+/// Mock mode (default): Uses in-memory MockAuthRepository.
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => MockAuthRepository(ref.read(sessionStorageProvider)),
+  (ref) {
+    if (AuthMode.isApi) {
+      return ApiAuthRepository(
+        ref.read(apiClientProvider),
+        ref.read(authTokenStorageProvider),
+        ref.read(sessionStorageProvider),
+      );
+    } else {
+      return MockAuthRepository(ref.read(sessionStorageProvider));
+    }
+  },
 );
 
 final authControllerProvider =
@@ -61,6 +79,12 @@ class AuthController extends Notifier<AuthState> {
   Future<void> _bootstrap() async {
     state = const AuthState.unknown();
     try {
+      final storage = ref.read(sessionStorageProvider);
+      final onboardingSeen = await storage.read('onboarding_seen');
+      if (onboardingSeen != 'true') {
+        state = const AuthState.onboarding();
+        return;
+      }
       final user = await _repo.currentUser();
       state = _resolve(user);
     } catch (e) {
@@ -72,6 +96,13 @@ class AuthController extends Notifier<AuthState> {
     if (user == null) return const AuthState.unauthenticated();
     if (!user.isProfileComplete) return AuthState.incompleteProfile(user);
     return AuthState.authenticated(user);
+  }
+
+  /// Mark onboarding as completed.
+  Future<void> markOnboardingSeen() async {
+    final storage = ref.read(sessionStorageProvider);
+    await storage.write('onboarding_seen', 'true');
+    state = const AuthState.unauthenticated();
   }
 
   /// Re-run the session check (splash error retry).
@@ -109,5 +140,17 @@ class AuthController extends Notifier<AuthState> {
   Future<void> logout() async {
     await _repo.logout();
     state = const AuthState.unauthenticated();
+  }
+
+  /// Submit driver document verification.
+  Future<void> submitVerification(String documentPath) async {
+    final user = await _repo.submitVerification(documentPath);
+    state = _resolve(user);
+  }
+
+  /// Instantly approve driver for testing (Mock repository only).
+  Future<void> mockApproveDriver() async {
+    final user = await _repo.mockApproveDriver();
+    state = _resolve(user);
   }
 }

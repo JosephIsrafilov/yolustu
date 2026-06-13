@@ -74,14 +74,17 @@ class _RideCard extends ConsumerWidget {
     final date =
         '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
 
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.spacing16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.slate200),
-      ),
-      child: Column(
+    return InkWell(
+      onTap: () => context.push('${AppRoutes.myRides}/${ride.id}'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.spacing16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.slate200),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -154,7 +157,8 @@ class _RideCard extends ConsumerWidget {
           ],
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _action({
