@@ -66,12 +66,7 @@ class ProfileScreen extends ConsumerWidget {
                 _MenuItem(
                   icon: Icons.dashboard_outlined,
                   label: 'Sürücü Paneli',
-                  onTap: () => context.push(AppRoutes.myRides),
-                ),
-                _MenuItem(
-                  icon: Icons.add_circle_outline,
-                  label: 'Yeni səfər yarat',
-                  onTap: () => context.push(AppRoutes.createRide),
+                  onTap: () => context.push(AppRoutes.driverPanel),
                 ),
               ] else if (user?.verificationStatus == 'pending') ...[
                 _MenuItem(

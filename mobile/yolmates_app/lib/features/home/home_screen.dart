@@ -27,7 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (userStatus == 'approved') {
       btnLabel = 'Sürücü Paneli';
-      btnAction = () => context.push(AppRoutes.myRides);
+      btnAction = () => context.push(AppRoutes.driverPanel);
       btnIcon = Icons.dashboard_outlined;
     } else if (userStatus == 'pending') {
       btnLabel = 'Sənədlər yoxlanılır';

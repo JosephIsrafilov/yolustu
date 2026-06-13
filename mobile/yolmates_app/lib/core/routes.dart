@@ -21,6 +21,7 @@ import '../features/driver/create_ride_screen.dart';
 import '../features/driver/my_rides_screen.dart';
 import '../features/driver/passenger_requests_screen.dart';
 import '../features/driver/active_ride_screen.dart';
+import '../features/driver/driver_panel_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -67,6 +68,7 @@ class AppRoutes {
   static const wallet = '/wallet';
 
   // Driver
+  static const driverPanel = '/driver/panel';
   static const driverOnboarding = '/driver';
   static const addVehicle = '/driver/vehicle';
   static const driverVerification = '/driver/verification';
@@ -274,6 +276,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Driver
+      GoRoute(
+        path: AppRoutes.driverPanel,
+        builder: (_, __) => const DriverPanelScreen(),
+      ),
       GoRoute(
         path: AppRoutes.driverOnboarding,
         builder: (_, __) => const DriverOnboardingScreen(),
