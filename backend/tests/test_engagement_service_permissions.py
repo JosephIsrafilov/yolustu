@@ -136,6 +136,8 @@ class FakeChatMessageRepository(FakeMessageRepository):
         conversation_id: UUID,
         sender_id: UUID,
         content: str,
+        message_type: str = "text",
+        attachments: list[str] | None = None,
         ride_id: UUID | None = None,
     ):
         message = SimpleNamespace(
@@ -144,6 +146,8 @@ class FakeChatMessageRepository(FakeMessageRepository):
             ride_id=ride_id,
             sender_id=sender_id,
             content=content,
+            message_type=message_type,
+            attachments=attachments or [],
             created_at=datetime.now(timezone.utc),
             sender_name="Test User",
         )
@@ -430,7 +434,7 @@ def test_participant_can_send_chat_message():
     assert message.content == "Need help"
 
 
-@pytest.mark.parametrize("content", ["", "x" * 2001])
+@pytest.mark.parametrize("content", ["x" * 2001])
 def test_chat_message_body_validation(content: str):
     with pytest.raises(ValueError):
         ChatMessageCreate(content=content)

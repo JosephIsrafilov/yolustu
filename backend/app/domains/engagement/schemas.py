@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
 
 
 class ReviewBase(BaseModel):
@@ -26,7 +27,9 @@ class ReviewResponse(ReviewBase):
 
 
 class MessageBase(BaseModel):
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=0, max_length=2000)
+    message_type: str = "text"
+    attachments: list[str] = Field(default_factory=list)
 
 
 class MessageCreate(MessageBase):
@@ -44,6 +47,8 @@ class MessageResponse(MessageBase):
     created_at: datetime
     read_at: Optional[datetime] = None
     sender_name: str
+    message_type: str
+    attachments: list[str] = []
 
 
 class ConversationParticipantResponse(BaseModel):

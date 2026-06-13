@@ -1,53 +1,73 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import '../../../core/network/providers.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import '../../auth/state/auth_controller.dart';
+import 'chat_models.dart';
+import 'chat_repository.dart';
 
-/// Conversation summary for the messages list (mock).
-class Conversation {
-  final String id;
-  final String name;
-  final String lastMessage;
-  final String time;
-  final int unread;
+final conversationsProvider = FutureProvider.autoDispose<List<Conversation>>((ref) async {
+  final repo = ref.watch(chatRepositoryProvider);
+  return repo.getConversations();
+});
 
-  const Conversation({
-    required this.id,
-    required this.name,
-    required this.lastMessage,
-    required this.time,
-    this.unread = 0,
-  });
+class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
+  WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
+
+  @override
+  Future<List<ChatMessage>> build(String arg) async {
+    final repo = ref.watch(chatRepositoryProvider);
+    final messages = await repo.getMessages(arg);
+
+    // Try to connect websocket
+    final tokenStorage = ref.read(authTokenStorageProvider);
+    final token = await tokenStorage.getAccessToken();
+    if (token != null) {
+      _channel = repo.connectWebSocket(arg, token);
+      if (_channel != null) {
+        _subscription = _channel!.stream.listen((event) {
+          try {
+            final data = jsonDecode(event);
+            final newMsg = ChatMessage.fromJson(data);
+            state = AsyncData([...state.value ?? [], newMsg]);
+            repo.markAsRead(arg);
+          } catch (e) {
+            // ignore
+          }
+        });
+      }
+    }
+    
+    // Mark as read when opened
+    repo.markAsRead(arg);
+    
+    ref.onDispose(() {
+      _subscription?.cancel();
+      _channel?.sink.close();
+    });
+
+    return messages;
+  }
+
+  Future<void> sendMessage(String content, {String type = 'text', List<String> attachments = const []}) async {
+    final repo = ref.read(chatRepositoryProvider);
+    final prev = state.value ?? [];
+    try {
+      final msg = await repo.sendMessage(arg, content, type: type, attachments: attachments);
+      // Ensure we don't duplicate if websocket already got it
+      if (!prev.any((e) => e.id == msg.id)) {
+        state = AsyncData([...prev, msg]);
+      }
+    } catch (e) {
+      // Could show error
+      rethrow;
+    }
+  }
 }
 
-/// Seeded conversations; backend swap point.
-///
-/// Replace [MockChatRepository] with an API/WS-backed implementation later;
-/// the UI only depends on [conversationsProvider].
-final conversationsProvider = Provider<List<Conversation>>((ref) {
-  return const [
-    Conversation(
-      id: 'conv-0',
-      name: 'Rəşad Süleymanov',
-      lastMessage: 'Salam, sabah saat 8-də çıxırıq.',
-      time: '09:30',
-      unread: 2,
-    ),
-    Conversation(
-      id: 'conv-1',
-      name: 'Aysel Məmmədova',
-      lastMessage: 'Yerinizi təsdiqlədim, görüşənədək!',
-      time: '08:15',
-      unread: 1,
-    ),
-    Conversation(
-      id: 'conv-2',
-      name: 'Elçin Hüseynov',
-      lastMessage: 'Baqaj üçün yer var, narahat olmayın.',
-      time: 'Dünən',
-    ),
-    Conversation(
-      id: 'conv-3',
-      name: 'Nigar Əliyeva',
-      lastMessage: 'Təşəkkürlər, rahat səyahət idi.',
-      time: 'Dünən',
-    ),
-  ];
-});
+final chatMessagesProvider = AsyncNotifierProvider.autoDispose.family<ChatMessagesNotifier, List<ChatMessage>, String>(
+  ChatMessagesNotifier.new,
+);

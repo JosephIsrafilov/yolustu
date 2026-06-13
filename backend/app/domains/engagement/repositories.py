@@ -141,6 +141,8 @@ class MessageRepository:
             ride_id=message_in.ride_id,
             sender_id=sender_id,
             content=message_in.content,
+            message_type=message_in.message_type,
+            attachments=message_in.attachments,
         )
         self.db.add(message)
         self.db.commit()
@@ -152,6 +154,8 @@ class MessageRepository:
         conversation_id: UUID,
         sender_id: UUID,
         content: str,
+        message_type: str = "text",
+        attachments: list[str] | None = None,
         ride_id: UUID | None = None,
     ) -> Message:
         message = Message(
@@ -159,6 +163,8 @@ class MessageRepository:
             ride_id=ride_id,
             sender_id=sender_id,
             content=content,
+            message_type=message_type,
+            attachments=attachments or [],
         )
         self.db.add(message)
         conversation = self.db.query(Conversation).filter_by(id=conversation_id).first()

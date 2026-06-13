@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/localization/app_localizations.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../auth/data/app_user.dart';
@@ -29,11 +30,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authControllerProvider).user;
-    final language = user?.language ?? AppLanguage.az;
+    final language = ref.watch(languageProvider);
+    final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Parametrlər')),
+      appBar: AppBar(title: Text(l10n.profileSettings)),
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spacing16),
         children: [
@@ -127,6 +128,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (picked != null && picked != current) {
+      ref.read(languageProvider.notifier).setLanguage(picked);
+      
       final user = ref.read(authControllerProvider).user;
       if (user != null) {
         await ref.read(authControllerProvider.notifier).completeProfile(

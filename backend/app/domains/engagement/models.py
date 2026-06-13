@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, func, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -78,7 +78,9 @@ class Message(Base):
     )
     ride_id = Column(UUID(as_uuid=True), ForeignKey("rides.id"), nullable=True)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=False, default="")
+    message_type = Column(String(50), nullable=False, server_default="text")
+    attachments = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     read_at = Column(DateTime(timezone=True), nullable=True)
 

@@ -198,6 +198,8 @@ class EngagementService:
             "ride_id": str(message.ride_id) if message.ride_id else None,
             "sender_id": str(message.sender_id),
             "content": message.content,
+            "message_type": message.message_type,
+            "attachments": message.attachments or [],
             "created_at": str(message.created_at),
             "sender_name": f"{current_user.first_name} {current_user.last_name}",
         }
@@ -221,7 +223,11 @@ class EngagementService:
 
         return await self.send_chat_message(
             message_in.conversation_id,
-            ChatMessageCreate(content=message_in.content),
+            ChatMessageCreate(
+                content=message_in.content,
+                message_type=message_in.message_type,
+                attachments=message_in.attachments,
+            ),
             current_user,
             manager,
         )
@@ -246,6 +252,8 @@ class EngagementService:
             conv.id,
             current_user.id,
             message_in.content,
+            message_in.message_type,
+            message_in.attachments,
             conv.ride_id,  # type: ignore[arg-type]
         )
 
