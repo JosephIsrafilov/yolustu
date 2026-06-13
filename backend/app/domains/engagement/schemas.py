@@ -3,7 +3,6 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any
 
 
 class ReviewBase(BaseModel):
