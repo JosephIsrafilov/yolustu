@@ -27,7 +27,7 @@ test.describe('Search and Filters Flow', () => {
       await expect(trigger).toBeVisible();
       await trigger.click();
       await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-      await page.getByRole('option', { name: city, exact: true }).click();
+      await page.getByRole('option', { name: city, exact: true }).first().click();
       await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     };
 
