@@ -37,6 +37,30 @@ export function buildApiWebSocketUrl(path: string): string {
   return `${normalizeWebSocketBaseUrl(env.wsUrl)}${apiPath}`;
 }
 
+export function buildApiAssetUrl(path: string): string {
+  try {
+    const apiUrl = new URL(env.apiUrl);
+
+    if (/^https?:\/\//i.test(path)) {
+      const assetUrl = new URL(path);
+      const isAssetLoopback =
+        assetUrl.hostname === 'localhost' || assetUrl.hostname === '127.0.0.1';
+      const isApiLoopback =
+        apiUrl.hostname === 'localhost' || apiUrl.hostname === '127.0.0.1';
+
+      if (isAssetLoopback && isApiLoopback) {
+        return new URL(`${assetUrl.pathname}${assetUrl.search}${assetUrl.hash}`, apiUrl.origin).toString();
+      }
+
+      return assetUrl.toString();
+    }
+
+    return new URL(path.startsWith('/') ? path : `/${path}`, apiUrl.origin).toString();
+  } catch {
+    return path;
+  }
+}
+
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1',
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'ws://127.0.0.1:8000',

@@ -196,6 +196,13 @@ class AdminService:
         total = self.admin.count_pending_verifications()
         return create_paginated_response(items, total, page, limit)
 
+    def get_verification_user(self, user_id: UUID, current_user: CurrentUser):
+        self.require_admin(current_user)
+        user = self.users.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+
     def approve_verification(self, user_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)
         user = self.users.get_by_id(user_id)

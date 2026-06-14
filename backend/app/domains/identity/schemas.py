@@ -68,6 +68,7 @@ class UserResponse(UserBase):
     is_email_verified: bool = False
     verification_status: str = "pending"
     document_url: Optional[str] = None
+    verification_ai_review: Optional[dict] = None
     rating: float = 0.0
     total_rides: int = 0
     created_at: datetime

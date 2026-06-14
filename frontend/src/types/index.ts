@@ -2,6 +2,28 @@
 
 export type UserRole = 'passenger' | 'driver' | 'admin';
 
+export interface AiDocumentReview {
+  recommendation: 'approve' | 'needs_review' | 'reject';
+  confidence: number;
+  isDocument?: boolean | null;
+  isAzerbaijani?: boolean | null;
+  documentType?: string | null;
+  extractedName?: string | null;
+  expiryDate?: string | null;
+  nameMatchesProfile?: boolean | null;
+  isExpired?: boolean | null;
+  portraitPresent?: boolean | null;
+  documentNumberPresent?: boolean | null;
+  licenseTitlePresent?: boolean | null;
+  licenseCategories: string[];
+  imageDimensions?: { width: number; height: number } | null;
+  imageGeometryPlausible?: boolean | null;
+  visibleText: string[];
+  issues: string[];
+  model?: string | null;
+  reviewedAt?: string | null;
+}
+
 export interface User {
   id: string;
   fullName: string;
@@ -16,6 +38,7 @@ export interface User {
   verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
   isEmailVerified: boolean;
   documentUrl?: string;
+  aiReview?: AiDocumentReview;
   bio?: string;
   createdAt: string;
 }

@@ -29,6 +29,22 @@ const VERIFICATIONS_I18N = {
     reject: 'Rədd et',
     approve: 'Təsdiqlə',
     locale: 'az-AZ',
+    aiTitle: 'AI ilkin yoxlama',
+    aiRecApprove: 'Təsdiq tövsiyə olunur',
+    aiRecReview: 'Əl ilə yoxlama lazımdır',
+    aiRecReject: 'Rədd tövsiyə olunur',
+    aiConfidence: 'Bu nəticəyə etibar',
+    aiIsDocument: 'Sənəd tanındı',
+    aiExtractedName: 'Sənəddəki ad',
+    aiNameMatch: 'Ad uyğunluğu',
+    aiAzerbaijani: 'Azərbaycan sənədi',
+    aiExpiry: 'Bitmə tarixi',
+    aiExpired: 'Vaxtı keçib',
+    aiIssues: 'Qeydlər',
+    aiPending: 'AI yoxlaması davam edir və ya mövcud deyil.',
+    aiYes: 'Bəli',
+    aiNo: 'Xeyr',
+    aiDisclaimer: 'AI tövsiyəsi yalnız köməkçidir. Son qərarı admin verir.',
   },
   ru: {
     title: 'Подтверждение водителей',
@@ -45,6 +61,22 @@ const VERIFICATIONS_I18N = {
     reject: 'Отклонить',
     approve: 'Подтвердить',
     locale: 'ru-RU',
+    aiTitle: 'Предварительная AI-проверка',
+    aiRecApprove: 'Рекомендуется одобрить',
+    aiRecReview: 'Нужна ручная проверка',
+    aiRecReject: 'Рекомендуется отклонить',
+    aiConfidence: 'Уверенность в выводе',
+    aiIsDocument: 'Документ распознан',
+    aiExtractedName: 'Имя в документе',
+    aiNameMatch: 'Совпадение имени',
+    aiAzerbaijani: 'Документ Азербайджана',
+    aiExpiry: 'Срок действия',
+    aiExpired: 'Просрочен',
+    aiIssues: 'Замечания',
+    aiPending: 'AI-проверка выполняется или недоступна.',
+    aiYes: 'Да',
+    aiNo: 'Нет',
+    aiDisclaimer: 'Рекомендация AI вспомогательная. Решение принимает админ.',
   },
   en: {
     title: 'Driver Verifications',
@@ -61,8 +93,98 @@ const VERIFICATIONS_I18N = {
     reject: 'Reject',
     approve: 'Approve',
     locale: 'en-US',
+    aiTitle: 'AI pre-screen',
+    aiRecApprove: 'Approve recommended',
+    aiRecReview: 'Manual review needed',
+    aiRecReject: 'Reject recommended',
+    aiConfidence: 'Verdict confidence',
+    aiIsDocument: 'Document detected',
+    aiExtractedName: 'Name on document',
+    aiNameMatch: 'Name match',
+    aiAzerbaijani: 'Azerbaijani document',
+    aiExpiry: 'Expiry date',
+    aiExpired: 'Expired',
+    aiIssues: 'Flags',
+    aiPending: 'AI review is in progress or unavailable.',
+    aiYes: 'Yes',
+    aiNo: 'No',
+    aiDisclaimer: 'AI recommendation is advisory only. Admin makes the final call.',
   }
 } as const;
+
+type VerificationsCopy = (typeof VERIFICATIONS_I18N)[keyof typeof VERIFICATIONS_I18N];
+
+const AI_REC_STYLES: Record<string, { box: string; dot: string }> = {
+  approve: { box: 'border-green-200 bg-green-50 text-green-800', dot: 'bg-green-500' },
+  needs_review: { box: 'border-amber-200 bg-amber-50 text-amber-800', dot: 'bg-amber-500' },
+  reject: { box: 'border-red-200 bg-red-50 text-red-800', dot: 'bg-red-500' },
+};
+
+function AiReviewPanel({ review, t }: { review: User['aiReview']; t: VerificationsCopy }) {
+  if (!review) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-surface-muted px-4 py-3 text-sm text-text-muted flex items-center gap-2">
+        <Icon name="sparkles" size={16} className="shrink-0" />
+        <span>{t.aiPending}</span>
+      </div>
+    );
+  }
+
+  const style = AI_REC_STYLES[review.recommendation] ?? AI_REC_STYLES.needs_review;
+  const recLabel =
+    review.recommendation === 'approve'
+      ? t.aiRecApprove
+      : review.recommendation === 'reject'
+        ? t.aiRecReject
+        : t.aiRecReview;
+  const confidencePct = Math.round((review.confidence ?? 0) * 100);
+  const yesNo = (v?: boolean | null) => (v === true ? t.aiYes : v === false ? t.aiNo : '—');
+
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${style.box}`}>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2 font-semibold">
+          <Icon name="sparkles" size={16} className="shrink-0" />
+          <span>{t.aiTitle}</span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-bold">
+          <span className={`h-2 w-2 rounded-full ${style.dot}`} />
+          {recLabel}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+        <div><span className="opacity-70">{t.aiConfidence}:</span> <b>{confidencePct}%</b></div>
+        {review.isDocument !== undefined && review.isDocument !== null && (
+          <div><span className="opacity-70">{t.aiIsDocument}:</span> <b>{yesNo(review.isDocument)}</b></div>
+        )}
+        {review.extractedName && (
+          <div className="truncate"><span className="opacity-70">{t.aiExtractedName}:</span> <b>{review.extractedName}</b></div>
+        )}
+        {review.nameMatchesProfile !== undefined && review.nameMatchesProfile !== null && (
+          <div><span className="opacity-70">{t.aiNameMatch}:</span> <b>{yesNo(review.nameMatchesProfile)}</b></div>
+        )}
+        {review.isAzerbaijani !== undefined && review.isAzerbaijani !== null && (
+          <div><span className="opacity-70">{t.aiAzerbaijani}:</span> <b>{yesNo(review.isAzerbaijani)}</b></div>
+        )}
+        {review.expiryDate && (
+          <div><span className="opacity-70">{t.aiExpiry}:</span> <b>{review.expiryDate}</b></div>
+        )}
+        {review.isExpired !== undefined && review.isExpired !== null && (
+          <div><span className="opacity-70">{t.aiExpired}:</span> <b>{yesNo(review.isExpired)}</b></div>
+        )}
+      </div>
+      {review.issues.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs opacity-70">{t.aiIssues}:</span>
+          {review.issues.map((issue) => (
+            <span key={issue} className="rounded-md bg-white/70 px-2 py-0.5 text-xs font-medium">{issue}</span>
+          ))}
+        </div>
+      )}
+      <p className="mt-2 text-[11px] italic opacity-70">{t.aiDisclaimer}</p>
+    </div>
+  );
+}
 
 export default function AdminVerificationsPage() {
   const language = useAppStore((s) => s.language);
@@ -236,6 +358,9 @@ export default function AdminVerificationsPage() {
                         <Icon name="check" size={18} className="mr-1.5" /> {t.approve}
                       </Button>
                     </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border border-dashed">
+                    <AiReviewPanel review={user.aiReview} t={t} />
                   </div>
                 </Card>
               ))}

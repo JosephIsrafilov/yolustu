@@ -13,6 +13,7 @@ node_modules/
 .antigravitycli/
 .jules/
 .agents/
+.claude/settings.local.json
 
 # OS files
 .DS_Store
@@ -31,6 +32,7 @@ __pycache__/
 htmlcov/
 backend/.pytest_cache/
 backend/uploads/
+backend/verification_uploads/
 
 # Next.js
 frontend/.next/

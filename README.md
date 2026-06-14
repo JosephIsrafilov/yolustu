@@ -93,7 +93,8 @@ npm install
 npm run dev:lowmem   # http://localhost:3000 (recommended on Windows)
 ```
 
-`npm run dev` uses Turbopack and can fail with `JavaScript heap out of memory` on some Windows machines.
+`npm run dev` uses Webpack for stability on Windows. Turbopack remains available with
+`npm run dev:turbo`, but its development HMR can occasionally leave a stale module graph.
 
 If frontend becomes slow or hits OOM on Windows:
 

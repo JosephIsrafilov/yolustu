@@ -1,4 +1,27 @@
-import type { CreateTripData, Trip, Booking, User, Review, Vehicle } from '@/types';
+import type { CreateTripData, Trip, Booking, User, AiDocumentReview, Review, Vehicle } from '@/types';
+import { buildApiAssetUrl } from '@/lib/env';
+
+export interface ApiAiDocumentReview {
+  recommendation?: string | null;
+  confidence?: number | null;
+  is_document?: boolean | null;
+  is_azerbaijani?: boolean | null;
+  document_type?: string | null;
+  extracted_name?: string | null;
+  expiry_date?: string | null;
+  name_matches_profile?: boolean | null;
+  is_expired?: boolean | null;
+  portrait_present?: boolean | null;
+  document_number_present?: boolean | null;
+  license_title_present?: boolean | null;
+  license_categories?: string[] | null;
+  image_dimensions?: { width?: number; height?: number } | null;
+  image_geometry_plausible?: boolean | null;
+  visible_text?: string[] | null;
+  issues?: string[] | null;
+  model?: string | null;
+  reviewed_at?: string | null;
+}
 
 export interface ApiUser {
   id: string;
@@ -18,6 +41,7 @@ export interface ApiUser {
   is_email_verified?: boolean | null;
   verification_status?: User['verificationStatus'] | null;
   document_url?: string | null;
+  verification_ai_review?: ApiAiDocumentReview | null;
 }
 
 export interface ApiVehicle {
@@ -182,21 +206,91 @@ export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
   };
 }
 
+const VALID_AI_RECOMMENDATIONS = ['approve', 'needs_review', 'reject'] as const;
+
+function mapAiReview(raw?: ApiAiDocumentReview | null): AiDocumentReview | undefined {
+  if (!raw) return undefined;
+  let recommendation = VALID_AI_RECOMMENDATIONS.includes(
+    raw.recommendation as AiDocumentReview['recommendation'],
+  )
+    ? (raw.recommendation as AiDocumentReview['recommendation'])
+    : 'needs_review';
+  const hasApprovalEvidence =
+    raw.is_document === true &&
+    raw.is_azerbaijani === true &&
+    raw.document_type === 'drivers_license' &&
+    raw.name_matches_profile === true &&
+    raw.is_expired === false &&
+    raw.portrait_present === true &&
+    raw.document_number_present === true &&
+    raw.license_title_present === true &&
+    Array.isArray(raw.license_categories) &&
+    raw.license_categories.length > 0 &&
+    raw.image_geometry_plausible === true &&
+    Array.isArray(raw.visible_text) &&
+    raw.visible_text.length > 0 &&
+    typeof raw.confidence === 'number' &&
+    raw.confidence >= 0.9;
+  const issues = Array.isArray(raw.issues) ? [...raw.issues] : [];
+
+  // Old stored AI results did not contain evidence fields. Never display those
+  // legacy model-only approvals as trusted recommendations.
+  if (recommendation === 'approve' && !hasApprovalEvidence) {
+    recommendation = 'needs_review';
+    if (!issues.includes('insufficient_evidence')) {
+      issues.push('insufficient_evidence');
+    }
+  }
+  const confidence =
+    recommendation === 'needs_review' && issues.includes('insufficient_evidence')
+      ? 0
+      : typeof raw.confidence === 'number'
+        ? raw.confidence
+        : 0;
+
+  return {
+    recommendation,
+    confidence,
+    isDocument: raw.is_document ?? undefined,
+    isAzerbaijani: raw.is_azerbaijani ?? undefined,
+    documentType: raw.document_type ?? undefined,
+    extractedName: raw.extracted_name ?? undefined,
+    expiryDate: raw.expiry_date ?? undefined,
+    nameMatchesProfile: raw.name_matches_profile ?? undefined,
+    isExpired: raw.is_expired ?? undefined,
+    portraitPresent: raw.portrait_present ?? undefined,
+    documentNumberPresent: raw.document_number_present ?? undefined,
+    licenseTitlePresent: raw.license_title_present ?? undefined,
+    licenseCategories: Array.isArray(raw.license_categories) ? raw.license_categories : [],
+    imageDimensions:
+      typeof raw.image_dimensions?.width === 'number' &&
+      typeof raw.image_dimensions?.height === 'number'
+        ? { width: raw.image_dimensions.width, height: raw.image_dimensions.height }
+        : undefined,
+    imageGeometryPlausible: raw.image_geometry_plausible ?? undefined,
+    visibleText: Array.isArray(raw.visible_text) ? raw.visible_text : [],
+    issues,
+    model: raw.model ?? undefined,
+    reviewedAt: raw.reviewed_at ?? undefined,
+  };
+}
+
 export function mapApiUserToUser(apiUser: ApiUser): User {
   return {
     id: apiUser.id,
     fullName: `${apiUser.first_name} ${apiUser.last_name}`,
-    email: apiUser.email ?? '', 
+    email: apiUser.email ?? '',
     phone: apiUser.phone,
-    city: apiUser.city ?? '', 
-    avatarUrl: apiUser.avatar_url ?? undefined,
-    role: apiUser.role ?? 'passenger', 
+    city: apiUser.city ?? '',
+    avatarUrl: apiUser.avatar_url ? buildApiAssetUrl(apiUser.avatar_url) : undefined,
+    role: apiUser.role ?? 'passenger',
     rating: apiUser.rating,
-    totalTrips: apiUser.total_rides, 
-    isBlocked: apiUser.is_blocked ?? false, 
+    totalTrips: apiUser.total_rides,
+    isBlocked: apiUser.is_blocked ?? false,
     verificationStatus: apiUser.verification_status ?? 'none',
     isEmailVerified: apiUser.is_email_verified ?? false,
-    documentUrl: apiUser.document_url ?? undefined,
+    documentUrl: apiUser.document_url ? buildApiAssetUrl(apiUser.document_url) : undefined,
+    aiReview: mapAiReview(apiUser.verification_ai_review),
     bio: apiUser.bio ?? undefined,
     createdAt: apiUser.created_at,
   };

@@ -191,9 +191,9 @@ export default function AdminDashboardPage() {
   const fetchData = () => {
     setLoadError(false);
     Promise.all([
-      adminService.getUsers({ page: 1, limit: 100 }),
-      adminService.getTrips(1, 100),
-      adminService.getBookings(1, 100),
+      adminService.getUsers({ page: 1, limit: 10 }),
+      adminService.getTrips(1, 10),
+      adminService.getBookings(1, 10),
       adminService.getAdminStats().catch(() => null),
     ]).then(([usersRes, tripsRes, bookingsRes, statsRes]) => {
       setUsersList(usersRes.items);
@@ -247,30 +247,30 @@ export default function AdminDashboardPage() {
   }, [bookingsList, tripsById, usersById]);
 
   const totalUsers = apiStats?.totalUsers ?? usersList.length;
-  const drivers = usersList.filter((user) => user.role === 'driver').length;
-  const passengers = usersList.filter((user) => user.role === 'passenger').length;
+  const drivers = apiStats?.drivers ?? usersList.filter((user) => user.role === 'driver').length;
+  const passengers = apiStats?.passengers ?? usersList.filter((user) => user.role === 'passenger').length;
   const activeTrips = apiStats?.activeTrips ?? tripsList.filter((trip) => trip.status === 'active').length;
   const pendingBookings = apiStats?.pendingBookings ?? bookingsList.filter((booking) => booking.status === 'pending').length;
-  const completedBookings = bookingsList.filter((booking) => booking.status === 'completed').length;
+  const completedBookings = apiStats?.completedBookings ?? bookingsList.filter((booking) => booking.status === 'completed').length;
   const pendingVerifications = apiStats?.pendingVerifications ?? usersList.filter((user) => user.verificationStatus === 'pending').length;
 
-  const revenueTotal = enrichedBookings.reduce((sum, { booking, trip }) => {
+  const revenueTotal = apiStats?.revenueTotal ?? enrichedBookings.reduce((sum, { booking, trip }) => {
     if (!trip) return sum;
     if (booking.status !== 'paid' && booking.status !== 'completed' && booking.status !== 'accepted') return sum;
     return sum + trip.pricePerSeat * booking.seatsRequested;
   }, 0);
 
   const tripStatusCounts = {
-    active: tripsList.filter((trip) => trip.status === 'active').length,
-    completed: tripsList.filter((trip) => trip.status === 'completed').length,
-    cancelled: tripsList.filter((trip) => trip.status === 'cancelled').length,
+    active: activeTrips,
+    completed: apiStats?.completedTrips ?? tripsList.filter((trip) => trip.status === 'completed').length,
+    cancelled: apiStats?.cancelledTrips ?? tripsList.filter((trip) => trip.status === 'cancelled').length,
   };
 
   const bookingStatusCounts = {
-    pending: bookingsList.filter((booking) => booking.status === 'pending').length,
-    accepted: bookingsList.filter((booking) => booking.status === 'accepted').length,
-    cancelled: bookingsList.filter((booking) => booking.status === 'cancelled').length,
-    completed: bookingsList.filter((booking) => booking.status === 'completed').length,
+    pending: pendingBookings,
+    accepted: apiStats?.acceptedBookings ?? bookingsList.filter((booking) => booking.status === 'accepted').length,
+    cancelled: apiStats?.cancelledBookings ?? bookingsList.filter((booking) => booking.status === 'cancelled').length,
+    completed: completedBookings,
   };
 
   const stats: { label: string; value: string | number; icon: IconName; tone: string; bg: string }[] = [
@@ -524,4 +524,3 @@ export default function AdminDashboardPage() {
     </AdminLayout>
   );
 }
-

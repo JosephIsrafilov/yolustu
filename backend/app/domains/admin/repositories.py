@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from app.domains.admin.models import AuditLog
@@ -15,26 +15,80 @@ class AdminRepository:
         self.db = db
 
     def stats(self) -> dict:
+        (
+            total_users,
+            blocked_users,
+            drivers,
+            passengers,
+            pending_verifications,
+        ) = self.db.query(
+            func.count(User.id),
+            func.count(case((User.is_blocked.is_(True), 1))),
+            func.count(case((User.role == "driver", 1))),
+            func.count(case((User.role == "passenger", 1))),
+            func.count(case((User.verification_status == "pending", 1))),
+        ).one()
+
+        total_trips, active_trips, completed_trips, cancelled_trips = self.db.query(
+            func.count(Ride.id),
+            func.count(case((Ride.status == "active", 1))),
+            func.count(case((Ride.status == "completed", 1))),
+            func.count(case((Ride.status == "cancelled", 1))),
+        ).one()
+
+        payable_total = func.coalesce(
+            Booking.total_price,
+            Ride.price_per_seat * Booking.seats_booked,
+        )
+        (
+            total_bookings,
+            pending_bookings,
+            accepted_bookings,
+            cancelled_bookings,
+            completed_bookings,
+            revenue_total,
+        ) = (
+            self.db.query(
+                func.count(Booking.id),
+                func.count(case((Booking.status == "pending", 1))),
+                func.count(case((Booking.status == "accepted", 1))),
+                func.count(case((Booking.status == "cancelled", 1))),
+                func.count(case((Booking.status == "completed", 1))),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                Booking.status.in_(
+                                    ("accepted", "paid", "completed")
+                                ),
+                                payable_total,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ),
+            )
+            .outerjoin(Ride, Booking.ride_id == Ride.id)
+            .one()
+        )
+
         return {
-            "totalUsers": self.db.query(func.count(User.id)).scalar() or 0,
-            "blockedUsers": self.db.query(func.count(User.id))
-            .filter(User.is_blocked)
-            .scalar()
-            or 0,
-            "totalTrips": self.db.query(func.count(Ride.id)).scalar() or 0,
-            "activeTrips": self.db.query(func.count(Ride.id))
-            .filter(Ride.status == "active")
-            .scalar()
-            or 0,
-            "totalBookings": self.db.query(func.count(Booking.id)).scalar() or 0,
-            "pendingBookings": self.db.query(func.count(Booking.id))
-            .filter(Booking.status == "pending")
-            .scalar()
-            or 0,
-            "pendingVerifications": self.db.query(func.count(User.id))
-            .filter(User.verification_status == "pending")
-            .scalar()
-            or 0,
+            "totalUsers": total_users or 0,
+            "blockedUsers": blocked_users or 0,
+            "drivers": drivers or 0,
+            "passengers": passengers or 0,
+            "pendingVerifications": pending_verifications or 0,
+            "totalTrips": total_trips or 0,
+            "activeTrips": active_trips or 0,
+            "completedTrips": completed_trips or 0,
+            "cancelledTrips": cancelled_trips or 0,
+            "totalBookings": total_bookings or 0,
+            "pendingBookings": pending_bookings or 0,
+            "acceptedBookings": accepted_bookings or 0,
+            "cancelledBookings": cancelled_bookings or 0,
+            "completedBookings": completed_bookings or 0,
+            "revenueTotal": float(revenue_total or 0),
         }
 
     def count_pending_verifications(self) -> int:

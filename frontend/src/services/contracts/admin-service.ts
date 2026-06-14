@@ -12,11 +12,19 @@ export interface Paginated<T> {
 export interface AdminStats {
   totalUsers: number;
   blockedUsers: number;
+  drivers: number;
+  passengers: number;
   totalTrips: number;
   activeTrips: number;
+  completedTrips: number;
+  cancelledTrips: number;
   totalBookings: number;
   pendingBookings: number;
+  acceptedBookings: number;
+  cancelledBookings: number;
+  completedBookings: number;
   pendingVerifications: number;
+  revenueTotal: number;
 }
 
 export interface GetUsersOptions {

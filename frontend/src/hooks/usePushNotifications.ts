@@ -11,14 +11,15 @@ export interface PushNotification {
 
 export function usePushNotifications() {
   const [activeToast, setActiveToast] = useState<PushNotification | null>(null);
-  const { isAuthenticated } = useAppStore();
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const authStatus = useAppStore((state) => state.authStatus);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const shouldReconnectRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || authStatus !== 'authenticated') {
       shouldReconnectRef.current = false;
       if (wsRef.current) {
         wsRef.current.close();
@@ -38,8 +39,7 @@ export function usePushNotifications() {
       void store.fetchTrips();
     };
 
-    const connectWebSocket = async () => {
-      await useAppStore.getState().initAuth();
+    const connectWebSocket = () => {
       const latestState = useAppStore.getState();
       if (!latestState.isAuthenticated || !latestState.currentUser) {
         shouldReconnectRef.current = false;
@@ -119,7 +119,7 @@ export function usePushNotifications() {
         }
 
         reconnectTimeoutRef.current = setTimeout(() => {
-          void connectWebSocket();
+          connectWebSocket();
         }, 5000);
       };
 
@@ -130,7 +130,7 @@ export function usePushNotifications() {
       wsRef.current = ws;
     };
 
-    void connectWebSocket();
+    connectWebSocket();
     const handleFocus = () => {
       refreshCanonicalData();
     };
@@ -146,7 +146,7 @@ export function usePushNotifications() {
         wsRef.current = null;
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authStatus]);
 
   return { activeToast, setActiveToast };
 }

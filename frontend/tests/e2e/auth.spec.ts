@@ -154,4 +154,135 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveURL(/\/auth\/login/);
     await expect(page.getByText('Password is required')).toBeVisible();
   });
+
+  test('expires a stale admin session without mounting admin requests or redirect loops', async ({ page }) => {
+    let refreshRequests = 0;
+    let adminDataRequests = 0;
+
+    await page.addInitScript((adminUser) => {
+      window.localStorage.setItem(
+        'yolustu-storage',
+        JSON.stringify({
+          state: {
+            currentUser: adminUser,
+            isAuthenticated: true,
+            activeRole: 'passenger',
+            activeMode: 'passenger',
+            language: 'en',
+          },
+          version: 2,
+        }),
+      );
+    }, { ...apiUser, role: 'admin' });
+
+    await page.route('**/api/v1/**', async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith('/auth/refresh')) {
+        refreshRequests += 1;
+      }
+      if (path.includes('/admin/')) {
+        adminDataRequests += 1;
+      }
+
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Not authenticated' }),
+      });
+    });
+
+    await page.goto('/admin');
+
+    await expect(page).toHaveURL(/\/auth\/login$/);
+    await page.waitForTimeout(250);
+    await expect(page).toHaveURL(/\/auth\/login$/);
+    expect(refreshRequests).toBe(1);
+    expect(adminDataRequests).toBe(0);
+  });
+
+  test('keeps an authenticated admin dashboard mounted after auth bootstrap', async ({ page }) => {
+    let currentUserRequests = 0;
+    const adminUser = { ...apiUser, role: 'admin' };
+
+    await page.addInitScript((user) => {
+      window.localStorage.setItem(
+        'yolustu-storage',
+        JSON.stringify({
+          state: {
+            currentUser: user,
+            isAuthenticated: true,
+            activeRole: 'passenger',
+            activeMode: 'passenger',
+            language: 'en',
+          },
+          version: 2,
+        }),
+      );
+    }, adminUser);
+
+    await page.route('**/api/v1/**', async (route) => {
+      const path = new URL(route.request().url()).pathname;
+
+      if (path.endsWith('/users/me')) {
+        currentUserRequests += 1;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(adminUser),
+        });
+        return;
+      }
+
+      if (path.endsWith('/admin/stats')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            totalUsers: 1,
+            blockedUsers: 0,
+            drivers: 0,
+            passengers: 0,
+            totalTrips: 0,
+            activeTrips: 0,
+            completedTrips: 0,
+            cancelledTrips: 0,
+            totalBookings: 0,
+            pendingBookings: 0,
+            acceptedBookings: 0,
+            cancelledBookings: 0,
+            completedBookings: 0,
+            pendingVerifications: 0,
+            revenueTotal: 0,
+          }),
+        });
+        return;
+      }
+
+      if (path.endsWith('/admin/users') || path.endsWith('/admin/rides') || path.endsWith('/admin/bookings')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ items: [], total: 0, page: 1, size: 10, pages: 0 }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.goto('/admin');
+
+    const dashboardHeading = page.getByRole('heading', {
+      name: /Dashboard|İdarə paneli|Панель управления/i,
+    });
+    await expect(dashboardHeading).toBeVisible();
+    await page.waitForTimeout(250);
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(dashboardHeading).toBeVisible();
+    expect(currentUserRequests).toBe(1);
+  });
 });

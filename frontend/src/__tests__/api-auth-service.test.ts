@@ -151,7 +151,7 @@ describe('apiAuthService', () => {
 
     expect(mockedApiClient.post).toHaveBeenCalledWith('/users/me/verify', expect.any(FormData));
     expect(user.verificationStatus).toBe('pending');
-    expect(user.documentUrl).toBe('/uploads/doc.pdf');
+    expect(user.documentUrl).toBe('http://localhost:8000/uploads/doc.pdf');
   });
 
   it('normalizes phone for otp endpoints', async () => {

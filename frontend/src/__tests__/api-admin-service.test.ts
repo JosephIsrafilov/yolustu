@@ -47,7 +47,7 @@ describe('apiAdminService', () => {
     expect(users.items).toHaveLength(1);
     expect(users.items[0].id).toBe('u-1');
     expect(users.items[0].verificationStatus).toBe('pending');
-    expect(users.items[0].documentUrl).toBe('/uploads/doc.pdf');
+    expect(users.items[0].documentUrl).toBe('http://localhost:8000/uploads/doc.pdf');
   });
 
   it('approves verification via admin endpoint', async () => {

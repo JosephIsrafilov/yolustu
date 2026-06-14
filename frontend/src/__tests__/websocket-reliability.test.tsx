@@ -17,6 +17,7 @@ var mockRefreshFns = {
 // eslint-disable-next-line no-var
 var mockStoreState = {
   isAuthenticated: true,
+  authStatus: 'authenticated',
   currentUser: { id: 'u-1' },
   ...mockRefreshFns,
 };
@@ -62,6 +63,7 @@ describe('websocket reliability helpers', () => {
     Object.values(mockRefreshFns).forEach((fn) => fn.mockClear());
     mockStoreState = {
       isAuthenticated: true,
+      authStatus: 'authenticated',
       currentUser: { id: 'u-1' },
       ...mockRefreshFns,
     };
@@ -97,6 +99,7 @@ describe('websocket reliability helpers', () => {
     render(<PushHarness />);
 
     await waitFor(() => expect(MockWebSocket.instances).toHaveLength(1));
+    expect(mockRefreshFns.initAuth).not.toHaveBeenCalled();
     MockWebSocket.instances[0].onopen?.();
     window.dispatchEvent(new Event('focus'));
 

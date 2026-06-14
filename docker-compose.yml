@@ -7,6 +7,9 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/verification_uploads:/app/verification_uploads
     depends_on:
       - redis
     restart: unless-stopped

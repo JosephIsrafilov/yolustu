@@ -7,6 +7,7 @@ from sqlalchemy import (
     Float,
     Index,
     Integer,
+    JSON,
     String,
     Text,
     func,
@@ -39,6 +40,12 @@ class User(Base):
         String(20), default="none", nullable=False
     )  # none, pending, approved, rejected
     document_url = Column(String(255), nullable=True)
+    # AI pre-screen of the uploaded verification document. Advisory only:
+    # populated by a background VLM call, never flips verification_status.
+    # Shape: {recommendation, confidence, document_type, extracted_name,
+    #         expiry_date, name_matches_profile, is_expired, issues[], model,
+    #         reviewed_at}.
+    verification_ai_review = Column(JSON, nullable=True)
     rating = Column(Float, default=0.0)
     total_rides = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

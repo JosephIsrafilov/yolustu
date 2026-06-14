@@ -22,6 +22,7 @@ export interface AuthSlice {
   requestEmailVerification: () => Promise<boolean>;
   verifyEmail: (otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  clearSession: () => void;
   switchRole: (role: 'passenger' | 'driver') => void;
   loginAsAdmin: () => Promise<void>;
   clearError: () => void;

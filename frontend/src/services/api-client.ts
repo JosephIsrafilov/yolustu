@@ -1,5 +1,4 @@
 import { env } from '@/lib/env';
-import { ROUTES } from '@/lib/routes';
 import { ApiError, type ApiErrorCode, toApiError } from '@/services/api-error';
 
 function normalizePath(path: string): string {
@@ -122,31 +121,32 @@ function extractErrorMessage(responseBody: unknown, status: number): string {
   return `Request failed with status ${status}.`;
 }
 
-interface RefreshSubscriber {
-  resolve: (token: string) => void;
-  reject: (err: unknown) => void;
-}
-
-interface RefreshResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: unknown;
-}
-
 function shouldAttemptRefresh(path: string): boolean {
   return !path.startsWith('/auth/');
 }
 
+let sessionExpiredHandler: (() => void) | null = null;
+
+export function setSessionExpiredHandler(handler: (() => void) | null) {
+  sessionExpiredHandler = handler;
+}
+
 class ApiClient {
   private readonly baseUrl: string;
-  private isRefreshing = false;
-  private refreshSubscribers: RefreshSubscriber[] = [];
+  private refreshPromise: Promise<void> | null = null;
+  private sessionInvalid = false;
 
   constructor(baseUrl: string) {
     this.baseUrl = normalizeApiBaseUrl(baseUrl);
   }
 
-  private async request<T>(method: RequestMethod, path: string, body?: unknown, options?: RequestInit): Promise<T> {
+  private async request<T>(
+    method: RequestMethod,
+    path: string,
+    body?: unknown,
+    options?: RequestInit,
+    allowRefresh = true,
+  ): Promise<T> {
     try {
       const headers: Record<string, string> = {
         Accept: 'application/json',
@@ -180,7 +180,13 @@ class ApiClient {
 
       const responseBody = await parseResponseBody(response);
 
-      if (response.status === 401 && typeof window !== 'undefined' && shouldAttemptRefresh(path)) {
+      if (
+        response.status === 401 &&
+        allowRefresh &&
+        !this.sessionInvalid &&
+        typeof window !== 'undefined' &&
+        shouldAttemptRefresh(path)
+      ) {
         return this.handleUnauthorized<T>(method, path, body, options);
       }
 
@@ -194,6 +200,10 @@ class ApiClient {
         });
       }
 
+      if (path === '/auth/login' || path === '/auth/register' || path === '/auth/refresh') {
+        this.sessionInvalid = false;
+      }
+
       return responseBody as T;
     } catch (error) {
       throw toApiError(error);
@@ -201,49 +211,39 @@ class ApiClient {
   }
 
   private async handleUnauthorized<T>(method: RequestMethod, path: string, body?: unknown, options?: RequestInit): Promise<T> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      try {
-        const { accessToken } = await this.post<RefreshResponse>('/auth/refresh');
-
-        this.onTokenRefreshed(accessToken);
-        this.isRefreshing = false;
-        return this.request<T>(method, path, body, options);
-      } catch (error) {
-        this.isRefreshing = false;
-        this.onTokenRefreshFailed(error);
-        throw error;
-      }
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.post('/auth/refresh')
+        .then(() => undefined)
+        .catch((error) => {
+          this.expireSession();
+          throw error;
+        })
+        .finally(() => {
+          this.refreshPromise = null;
+        });
     }
 
-    return new Promise<T>((resolve, reject) => {
-      this.subscribeTokenRefresh(
-        () => {
-          this.request<T>(method, path, body, options).then(resolve).catch(reject);
-        },
-        (error: unknown) => {
-          reject(error);
-        }
-      );
-    });
+    await this.refreshPromise;
+    try {
+      return await this.request<T>(method, path, body, options, false);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        this.expireSession();
+      }
+      throw error;
+    }
   }
 
-  private subscribeTokenRefresh(resolve: (token: string) => void, reject: (err: unknown) => void) {
-    this.refreshSubscribers.push({ resolve, reject });
+  private expireSession() {
+    if (this.sessionInvalid) {
+      return;
+    }
+    this.sessionInvalid = true;
+    sessionExpiredHandler?.();
   }
 
-  private onTokenRefreshed(token: string) {
-    this.refreshSubscribers.forEach((subscriber) => {
-      subscriber.resolve(token);
-    });
-    this.refreshSubscribers = [];
-  }
-
-  private onTokenRefreshFailed(error: unknown) {
-    this.refreshSubscribers.forEach((subscriber) => {
-      subscriber.reject(error);
-    });
-    this.refreshSubscribers = [];
+  markSessionActive() {
+    this.sessionInvalid = false;
   }
 
   get<T>(path: string, options?: RequestInit): Promise<T> {
@@ -266,17 +266,6 @@ class ApiClient {
     return this.request<T>('DELETE', path);
   }
 
-  async logout(): Promise<void> {
-    try {
-      await this.post('/auth/logout');
-    } catch (e) {
-      // Error handled silently
-    } finally {
-      if (typeof window !== 'undefined') {
-        window.location.href = ROUTES.login;
-      }
-    }
-  }
 }
 
 export const apiClient = new ApiClient(env.apiUrl);

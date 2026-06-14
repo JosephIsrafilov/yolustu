@@ -140,20 +140,23 @@ export const createAuthSlice: StateCreator<
   },
 
   logout: async () => {
+    get().clearSession();
     try {
       await authService.logout();
-    } catch (error) {
+    } catch {
       // Error handled silently
-    } finally {
-      set({
-        currentUser: null,
-        isAuthenticated: false,
-        authStatus: 'unauthenticated',
-        activeRole: 'passenger',
-        activeMode: 'passenger',
-        lastError: null,
-      });
     }
+  },
+
+  clearSession: () => {
+    set({
+      currentUser: null,
+      isAuthenticated: false,
+      authStatus: 'unauthenticated',
+      activeRole: 'passenger',
+      activeMode: 'passenger',
+      lastError: null,
+    });
   },
 
   switchRole: (role) => {
@@ -212,13 +215,7 @@ export const createAuthSlice: StateCreator<
           lastError: null,
         });
       } else {
-        set({
-          currentUser: null,
-          isAuthenticated: false,
-          authStatus: 'unauthenticated',
-          activeRole: 'passenger',
-          activeMode: 'passenger',
-        });
+        get().clearSession();
       }
     } catch (error) {
       const isUnauthorized =
@@ -228,13 +225,7 @@ export const createAuthSlice: StateCreator<
         // Error handled silently
       }
 
-      set({
-        currentUser: null,
-        isAuthenticated: false,
-        authStatus: 'unauthenticated',
-        activeRole: 'passenger',
-        activeMode: 'passenger',
-      });
+      get().clearSession();
     }
   },
 

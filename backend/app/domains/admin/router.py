@@ -1,9 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR
 from app.core.pagination import PaginatedResponse
 from app.core.database import get_db
 from app.domains.admin.repositories import AuditLogRepository
@@ -129,6 +131,32 @@ def get_pending_verifications(
     return AdminService(db).get_pending_verifications(
         current_user, page=page, limit=limit
     )
+
+
+@router.get(
+    "/verifications/{user_id}/document/{filename}", response_class=FileResponse
+)
+def get_verification_document(
+    user_id: UUID,
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    user = AdminService(db).get_verification_user(user_id, current_user)
+    if not user.document_url:
+        raise HTTPException(status_code=404, detail="Verification document not found")
+
+    stored_filename = user.document_url.rsplit("/", 1)[-1]
+    if filename != stored_filename or not filename.startswith("verification_"):
+        raise HTTPException(status_code=404, detail="Verification document not found")
+
+    private_path = VERIFICATION_UPLOADS_DIR / filename
+    legacy_path = UPLOADS_DIR / filename
+    file_path = private_path if private_path.is_file() else legacy_path
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Verification document not found")
+
+    return FileResponse(file_path, filename=filename)
 
 
 @router.patch("/verifications/{user_id}/approve", response_model=UserResponse)

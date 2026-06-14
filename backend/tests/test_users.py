@@ -87,6 +87,17 @@ def test_submit_verification_rejects_unsafe_file_types(access_token):
     assert "Unsupported upload type" in response.json()["error"]["message"]
 
 
+def test_submit_verification_rejects_mismatched_file_content(access_token):
+    response = client.post(
+        "/api/v1/users/me/verify",
+        headers={"Authorization": f"Bearer {access_token}"},
+        files={"file": ("proof.png", b"\xff\xd8\xff\xe0not-a-png", "image/png")},
+    )
+
+    assert response.status_code == 400
+    assert "does not match" in response.json()["error"]["message"]
+
+
 def test_upload_avatar_rejects_oversized_file(access_token):
     oversized = b"\x89PNG\r\n\x1a\n" + b"0" * (5 * 1024 * 1024 + 1)
     response = client.post(
