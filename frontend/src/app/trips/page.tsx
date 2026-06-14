@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useEffect, useMemo } from "react";
+import { useState, Suspense, useMemo } from "react";
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import { I18N } from '@/lib/i18n';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
 import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
+import { useTripsPage } from '@/hooks/useTrips';
 
 const MapContainer = dynamic(() => import('@/components/ui/Map').then(mod => ({ default: mod.MapContainer })), {
   ssr: false,
@@ -27,7 +28,7 @@ const MapContainer = dynamic(() => import('@/components/ui/Map').then(mod => ({ 
 function TripsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { trips, users, fetchTrips, isLoadingTrips, lastError, clearError, language } = useAppStore();
+  const { users, language, clearError } = useAppStore();
   const copy = I18N[language];
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const cityOptions = getLocalizedCityOptions(language);
@@ -43,9 +44,9 @@ function TripsContent() {
   const [searchTo, setSearchTo] = useState(filters.arrivalCity || '');
   const [searchDate, setSearchDate] = useState(filters.date || '');
 
-  useEffect(() => {
-    fetchTrips(filters);
-  }, [fetchTrips, filters]);
+  // React Query — replaces Zustand fetchTrips
+  const { data: trips = [], isLoading: isLoadingTrips, error: queryError } = useTripsPage(filters);
+  const lastError = queryError ? String(queryError) : null;
 
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {

@@ -38,8 +38,8 @@ database_url = normalize_database_url(settings.DATABASE_URL)
 if _is_remote_postgres_url(database_url) and not _has_sslmode_query(database_url):
     database_url = _with_sslmode_require(database_url)
 
-pool_size = int(os.getenv("DB_POOL_SIZE", 5))
-max_overflow = int(os.getenv("DB_MAX_OVERFLOW", 10))
+pool_size = int(os.getenv("DB_POOL_SIZE", 20))
+max_overflow = int(os.getenv("DB_MAX_OVERFLOW", 30))
 pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", 30))
 
 engine_kwargs: dict = {

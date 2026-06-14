@@ -10,11 +10,11 @@ from app.core.limiter import limiter
 
 
 def setup_module(module):
-    limiter.enabled = True
+    pass
 
 
 def teardown_module(module):
-    limiter.enabled = False
+    pass
 
 
 client = TestClient(app)
@@ -196,27 +196,47 @@ def test_refresh_token_contract(redis_mock, db):
 
 
 def test_request_otp_rate_limit():
-    # We trigger request_otp multiple times to hit the 5/minute rate limit
-    responses = []
-    # Make 6 requests
-    for _ in range(6):
-        response = client.post(f"/api/v1/auth/request-otp?phone={TEST_PHONE}")
-        responses.append(response)
+    import random
 
-    status_codes = [r.status_code for r in responses]
-    assert 429 in status_codes
+    limiter.enabled = True
+    test_ip = f"10.1.{random.randint(0, 255)}.{random.randint(0, 255)}"
+    try:
+        # We trigger request_otp multiple times to hit the 5/minute rate limit
+        responses = []
+        # Make 6 requests
+        for _ in range(6):
+            response = client.post(
+                f"/api/v1/auth/request-otp?phone={TEST_PHONE}",
+                headers={"X-Forwarded-For": test_ip},
+            )
+            responses.append(response)
+
+        status_codes = [r.status_code for r in responses]
+        assert 429 in status_codes
+    finally:
+        limiter.enabled = False
 
 
 def test_verify_otp_rate_limit():
-    # We trigger verify_otp multiple times to hit the 10/minute rate limit
-    responses = []
-    # Make 11 requests
-    for _ in range(11):
-        response = client.post(f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000")
-        responses.append(response)
+    import random
 
-    status_codes = [r.status_code for r in responses]
-    assert 429 in status_codes
+    limiter.enabled = True
+    test_ip = f"10.2.{random.randint(0, 255)}.{random.randint(0, 255)}"
+    try:
+        # We trigger verify_otp multiple times to hit the 10/minute rate limit
+        responses = []
+        # Make 11 requests
+        for _ in range(11):
+            response = client.post(
+                f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000",
+                headers={"X-Forwarded-For": test_ip},
+            )
+            responses.append(response)
+
+        status_codes = [r.status_code for r in responses]
+        assert 429 in status_codes
+    finally:
+        limiter.enabled = False
 
 
 def test_request_password_reset_unknown_email():

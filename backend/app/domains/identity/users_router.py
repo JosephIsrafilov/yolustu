@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 from pathlib import Path
 from uuid import UUID
@@ -18,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.cache import cache_response
 from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
 from app.core.database import get_db
+from app.core.storage import get_storage
 from app.domains.identity.dependencies import CurrentUser, get_current_user
 from app.domains.identity.schemas import DeviceTokenInput, UserResponse, UserUpdate
 from app.domains.identity.services import IdentityService
@@ -63,25 +63,35 @@ async def submit_verification(
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    filename = _store_uploaded_file(
+    file_bytes, filename, content_type = _validate_and_read_file(
         file,
         filename_prefix="verification_",
         allowed_types=VERIFICATION_UPLOAD_TYPES,
-        destination=VERIFICATION_UPLOADS_DIR,
+    )
+    storage = get_storage()
+    storage.upload(
+        file_bytes,
+        filename,
+        content_type,
+        settings.STORAGE_BUCKET_VERIFICATIONS,
     )
     document_url = f"/api/v1/admin/verifications/{current_user.id}/document/{filename}"
 
+    # Keep a local copy for the AI document review task (reads from filesystem)
+    if settings.ENVIRONMENT != "production":
+        VERIFICATION_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+        (VERIFICATION_UPLOADS_DIR / filename).write_bytes(file_bytes)
+
     user = IdentityService(db).submit_verification(current_user, document_url)
 
-    # Advisory AI pre-screen, fire-and-forget. Never blocks submission and never
-    # changes verification_status — admin still decides. PDFs are skipped inside
-    # the reviewer (VLM reads images only).
+    # Advisory AI pre-screen, fire-and-forget.
     from app.domains.ai.document_review import run_document_review_task
 
+    local_path = str(VERIFICATION_UPLOADS_DIR / filename)
     background_tasks.add_task(
         run_document_review_task,
-        str(VERIFICATION_UPLOADS_DIR / filename),
-        (file.content_type or "").lower(),
+        local_path,
+        content_type,
         str(user.id),
         user.first_name,
         user.last_name,
@@ -96,14 +106,18 @@ async def upload_avatar(
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    filename = _store_uploaded_file(
+    file_bytes, filename, content_type = _validate_and_read_file(
         file,
         filename_prefix="avatar_",
         allowed_types=AVATAR_UPLOAD_TYPES,
     )
-    # Ensure full URL for frontend Next/Image
-    base_url = str(settings.BACKEND_URL).rstrip("/")
-    avatar_url = f"{base_url}/uploads/{filename}"
+    storage = get_storage()
+    avatar_url = storage.upload(
+        file_bytes,
+        filename,
+        content_type,
+        settings.STORAGE_BUCKET_AVATARS,
+    )
 
     user_model = IdentityService(db).get_current_user_model(current_user)
     user_model.avatar_url = avatar_url  # type: ignore[assignment]
@@ -112,13 +126,17 @@ async def upload_avatar(
     return user_model
 
 
-def _store_uploaded_file(
+def _validate_and_read_file(
     file: UploadFile,
     *,
     filename_prefix: str,
     allowed_types: dict[str, set[str]],
-    destination: Path = UPLOADS_DIR,
-) -> str:
+) -> tuple[bytes, str, str]:
+    """Validate an uploaded file and return (file_bytes, filename, content_type).
+
+    Replaces _store_uploaded_file — separates validation from storage so the
+    caller can route to LocalStorage or SupabaseStorage.
+    """
     file_ext = Path(file.filename or "").suffix.lower()
     content_type = (file.content_type or "").lower()
 
@@ -142,7 +160,7 @@ def _store_uploaded_file(
         file.file.seek(0, os.SEEK_END)
         file_size = file.file.tell()
         file.file.seek(0)
-    except Exception as exc:  # pragma: no cover - defensive fallback
+    except Exception as exc:  # pragma: no cover
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not read uploaded file.",
@@ -154,13 +172,34 @@ def _store_uploaded_file(
             detail="Upload exceeds the 5MB limit.",
         )
 
-    destination.mkdir(parents=True, exist_ok=True)
+    file_bytes = file.file.read()
     filename = f"{filename_prefix}{uuid.uuid4()}{file_ext}"
-    file_path = destination / filename
+    return file_bytes, filename, content_type
 
-    with file_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
 
+# ── Legacy helper (kept for any callers outside this module) ─────────────────
+
+
+def _store_uploaded_file(
+    file: UploadFile,
+    *,
+    filename_prefix: str,
+    allowed_types: dict[str, set[str]],
+    destination: Path = UPLOADS_DIR,
+) -> str:
+    """Write an uploaded file to the local filesystem and return the filename.
+
+    Deprecated: use _validate_and_read_file + StorageBackend.upload() instead.
+    Retained for backward compatibility with any external callers.
+    """
+
+    file_bytes, filename, _ct = _validate_and_read_file(
+        file,
+        filename_prefix=filename_prefix,
+        allowed_types=allowed_types,
+    )
+    destination.mkdir(parents=True, exist_ok=True)
+    (destination / filename).write_bytes(file_bytes)
     return filename
 
 

@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api-client';
-import type { TripsService } from '@/services/contracts/trips-service';
+import type { TripsService, PaginatedResponse } from '@/services/contracts/trips-service';
 import type { TripSearchFilters } from '@/types';
 import { getCityCoordinates } from '@/lib/utils';
 import {
@@ -9,6 +9,14 @@ import {
   type ApiTrip,
   type ApiVehicle,
 } from './mappers';
+
+interface ApiPaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
 
 async function resolveVehicleId(input: Parameters<TripsService['createTrip']>[0]): Promise<string> {
   if (input.vehicleId) return input.vehicleId;
@@ -45,7 +53,7 @@ function resolveCoordinates(
   return { lat: coords.lat, lon: coords.lng };
 }
 
-function buildSearchQuery(filters: TripSearchFilters): string {
+function buildSearchQuery(filters: TripSearchFilters & { limit?: number; offset?: number }): string {
   const params = new URLSearchParams();
 
   if (filters.departureCity) params.set('origin_city', filters.departureCity);
@@ -56,6 +64,8 @@ function buildSearchQuery(filters: TripSearchFilters): string {
   if (filters.smokingAllowed !== undefined) params.set('smoking_allowed', String(filters.smokingAllowed));
   if (filters.petsAllowed !== undefined) params.set('pets_allowed', String(filters.petsAllowed));
   if (filters.musicAllowed !== undefined) params.set('music_allowed', String(filters.musicAllowed));
+  if (typeof filters.limit === 'number') params.set('limit', String(filters.limit));
+  if (typeof filters.offset === 'number') params.set('offset', String(filters.offset));
 
   const query = params.toString();
   return query ? `?${query}` : '';
@@ -63,11 +73,21 @@ function buildSearchQuery(filters: TripSearchFilters): string {
 
 export const apiTripsService: TripsService = {
   async searchTrips(filters, options) {
-    const response = await apiClient.get<ApiTrip[]>(`/rides/search${buildSearchQuery(filters)}`, options);
-    const trips = response.map(mapApiTripToTrip);
-    return typeof filters.maxPrice === 'number'
-      ? trips.filter((trip) => trip.pricePerSeat <= filters.maxPrice!)
-      : trips;
+    const response = await apiClient.get<ApiPaginatedResponse<ApiTrip>>(
+      `/rides/search${buildSearchQuery(filters)}`,
+      options,
+    );
+    const allItems = response.items.map(mapApiTripToTrip);
+    const filteredItems = typeof filters.maxPrice === 'number'
+      ? allItems.filter((trip) => trip.pricePerSeat <= filters.maxPrice!)
+      : allItems;
+    return {
+      items: filteredItems,
+      total: response.total,
+      page: response.page,
+      size: response.size,
+      pages: response.pages,
+    };
   },
 
   async getTripById(tripId) {

@@ -120,13 +120,18 @@ class RideRepository:
             .first()
         )
 
-    def list_for_driver(self, driver_id: UUID) -> list[Ride]:
+    def list_for_driver(
+        self, driver_id: UUID, limit: int = 50, offset: int = 0
+    ) -> list[Ride]:
         from sqlalchemy.orm import joinedload
 
         return (
             self.db.query(Ride)
             .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
             .filter(Ride.driver_id == driver_id)
+            .order_by(Ride.departure_time.desc())
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 
@@ -182,7 +187,7 @@ class RideRepository:
             )
         elif criteria.origin_city:
             query = query.filter(
-                (Ride.origin_city.ilike(f"%{criteria.origin_city}%"))
+                (Ride.origin_city == criteria.origin_city)
                 | (Ride.intermediate_cities.ilike(f"%{criteria.origin_city}%"))
             )
 
@@ -202,7 +207,7 @@ class RideRepository:
             )
         elif criteria.dest_city:
             query = query.filter(
-                (Ride.destination_city.ilike(f"%{criteria.dest_city}%"))
+                (Ride.destination_city == criteria.dest_city)
                 | (Ride.intermediate_cities.ilike(f"%{criteria.dest_city}%"))
             )
 
@@ -221,6 +226,67 @@ class RideRepository:
             query = query.filter(Ride.music_allowed == criteria.music_allowed)
 
         return query.offset(criteria.offset).limit(criteria.limit).all()
+
+    def search_count(self, criteria: "RideSearch") -> int:
+        """Return the total number of rides matching search criteria (no LIMIT)."""
+        from datetime import datetime, timezone
+        from geoalchemy2 import Geography
+        from sqlalchemy import cast, func
+
+        geography_type = Geography(geometry_type="POINT", srid=4326)
+
+        query = self.db.query(Ride).filter(
+            Ride.status == RIDE_ACTIVE,
+            Ride.available_seats >= criteria.min_seats,
+            Ride.departure_time > datetime.now(timezone.utc),
+        )
+
+        window_start = ride_search_window_start(criteria.departure_date)
+        if window_start is not None:
+            query = query.filter(Ride.departure_time >= window_start)
+
+        if criteria.origin_lat is not None and criteria.origin_lon is not None:
+            origin_pt = f"POINT({criteria.origin_lon} {criteria.origin_lat})"
+            origin_geom = func.ST_GeomFromText(origin_pt, 4326)
+            query = query.filter(
+                func.ST_DWithin(
+                    cast(Ride.origin_location, geography_type),
+                    cast(origin_geom, geography_type),
+                    criteria.radius_meters,
+                )
+            )
+        elif criteria.origin_city:
+            query = query.filter(
+                (Ride.origin_city == criteria.origin_city)
+                | (Ride.intermediate_cities.ilike(f"%{criteria.origin_city}%"))
+            )
+
+        if criteria.dest_lat is not None and criteria.dest_lon is not None:
+            dest_pt = f"POINT({criteria.dest_lon} {criteria.dest_lat})"
+            dest_geom = func.ST_GeomFromText(dest_pt, 4326)
+            query = query.filter(
+                func.ST_DWithin(
+                    cast(Ride.destination_location, geography_type),
+                    cast(dest_geom, geography_type),
+                    criteria.radius_meters,
+                )
+            )
+        elif criteria.dest_city:
+            query = query.filter(
+                (Ride.destination_city == criteria.dest_city)
+                | (Ride.intermediate_cities.ilike(f"%{criteria.dest_city}%"))
+            )
+
+        if criteria.female_only is not None:
+            query = query.filter(Ride.female_only == criteria.female_only)
+        if criteria.smoking_allowed is not None:
+            query = query.filter(Ride.smoking_allowed == criteria.smoking_allowed)
+        if criteria.pets_allowed is not None:
+            query = query.filter(Ride.pets_allowed == criteria.pets_allowed)
+        if criteria.music_allowed is not None:
+            query = query.filter(Ride.music_allowed == criteria.music_allowed)
+
+        return query.count()
 
     def save(self, ride: Ride) -> Ride:
         self.db.commit()

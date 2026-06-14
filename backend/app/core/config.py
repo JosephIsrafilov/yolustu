@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = ""
     ENVIRONMENT: str = "development"
 
+    # Supabase Storage (used in production for avatar and verification uploads)
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    STORAGE_BUCKET_AVATARS: str = "avatars"
+    STORAGE_BUCKET_VERIFICATIONS: str = "verifications"
+
     # Cookie policy. When the frontend and backend are served from different
     # sites in production (e.g. app.example.com + api.example.com), browsers
     # require SameSite=None; Secure for the auth cookies to be sent on API

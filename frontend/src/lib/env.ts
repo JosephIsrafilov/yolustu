@@ -39,10 +39,10 @@ export function buildApiWebSocketUrl(path: string): string {
 
 export function buildApiAssetUrl(path: string): string {
   try {
-    const apiUrl = new URL(env.apiUrl);
+    const apiUrl = normalizeLoopbackHost(new URL(env.apiUrl));
 
     if (/^https?:\/\//i.test(path)) {
-      const assetUrl = new URL(path);
+      const assetUrl = normalizeLoopbackHost(new URL(path));
       const isAssetLoopback =
         assetUrl.hostname === 'localhost' || assetUrl.hostname === '127.0.0.1';
       const isApiLoopback =

@@ -266,6 +266,62 @@ class ApiClient {
     return this.request<T>('DELETE', path);
   }
 
+  /**
+   * Fetch a binary resource (image, PDF, etc.) as a Blob.
+   * Uses the same baseUrl, cookie auth, and loopback normalization as other methods.
+   */
+  async getBlob(path: string): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (
+      response.status === 401 &&
+      !this.sessionInvalid &&
+      typeof window !== 'undefined' &&
+      shouldAttemptRefresh(path)
+    ) {
+      // Try refreshing the session then retry
+      if (!this.refreshPromise) {
+        this.refreshPromise = this.post('/auth/refresh')
+          .then(() => undefined)
+          .catch((error) => {
+            this.expireSession();
+            throw error;
+          })
+          .finally(() => {
+            this.refreshPromise = null;
+          });
+      }
+      await this.refreshPromise;
+
+      const retryResponse = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!retryResponse.ok) {
+        throw new ApiError({
+          code: mapStatusToCode(retryResponse.status),
+          status: retryResponse.status,
+          message: `Failed to fetch resource: ${retryResponse.status}`,
+        });
+      }
+      return retryResponse.blob();
+    }
+
+    if (!response.ok) {
+      throw new ApiError({
+        code: mapStatusToCode(response.status),
+        status: response.status,
+        message: `Failed to fetch resource: ${response.status}`,
+      });
+    }
+
+    return response.blob();
+  }
+
 }
 
 export const apiClient = new ApiClient(env.apiUrl);

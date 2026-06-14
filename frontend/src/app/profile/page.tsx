@@ -425,9 +425,11 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
 }
 
 function DriverVerificationSection({ copy }: VerificationSectionProps) {
-  const { currentUser, submitVerification } = useAppStore();
+  const { currentUser, submitVerification, language } = useAppStore();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [showSuccess, setShowSuccess] = useState(false);
 
   if (!currentUser) return null;
 
@@ -442,10 +444,10 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
     setUploading(true);
     try {
       await submitVerification(file);
-      alert(copy.uploadSuccess);
+      setShowSuccess(true);
       setFile(null);
     } catch (error) {
-      alert(copy.uploadError);
+      useAppStore.setState({ lastError: copy.uploadError });
     } finally {
       setUploading(false);
     }
@@ -516,6 +518,14 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
           <p className="text-sm font-medium">{copy.approvedDesc}</p>
         </div>
       )}
+
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title={language === 'az' ? 'Sənəd Yükləndi!' : language === 'ru' ? 'Документ загружен!' : 'Document Uploaded!'}
+        description={copy.uploadSuccess}
+        buttonLabel={language === 'az' ? 'Tamam' : language === 'ru' ? 'ОК' : 'OK'}
+      />
     </Card>
   );
 }

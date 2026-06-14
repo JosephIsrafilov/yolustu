@@ -330,12 +330,17 @@ export default function AdminVerificationsPage() {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 py-4 lg:py-0 border-y lg:border-0 border-border border-dashed lg:border-solid">
                       {user.documentUrl ? (
                         <button 
-                          onClick={(e) => {
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            if (!user.documentUrl) return;
                             if (user.documentUrl === '#') {
-                              e.preventDefault();
                               alert('Document preview is not available for mock data.');
-                            } else {
-                              window.open(user.documentUrl, '_blank', 'noopener,noreferrer');
+                              return;
+                            }
+                            try {
+                              await adminService.openVerificationDocument(user.documentUrl);
+                            } catch (error) {
+                              alert(t.actionError);
                             }
                           }}
                           className="flex items-center justify-center gap-2 rounded-xl bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"

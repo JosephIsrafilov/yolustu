@@ -108,4 +108,22 @@ export const apiAdminService: AdminService = {
   async simulateJourney() {
     return apiClient.post<{ message: string; ride_id: string }>('/admin/mock/journey');
   },
+
+  async openVerificationDocument(documentUrl: string) {
+    // documentUrl is a full absolute URL (built by buildApiAssetUrl in the mapper),
+    // e.g. "http://localhost:8000/api/v1/admin/verifications/{id}/document/{fn}"
+    // We fetch it directly with credentials:include to send the session cookie.
+    const response = await fetch(documentUrl, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch document: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    window.open(objectUrl, '_blank');
+  },
 };

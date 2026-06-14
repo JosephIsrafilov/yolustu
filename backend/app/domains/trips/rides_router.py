@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.limiter import limiter
 from app.core.cache import cache_response
 from app.core.database import get_db
+from app.core.pagination import PaginatedResponse
 from app.domains.identity.dependencies import CurrentUser, get_current_user
 from app.domains.trips.schemas import RideCreate, RideResponse
 from app.domains.trips.services import TripsService
@@ -26,7 +27,7 @@ def create_ride(
     return TripsService(db).create_ride(ride_in, current_user)
 
 
-@router.get("/search", response_model=List[RideResponse])
+@router.get("/search", response_model=PaginatedResponse[RideResponse])
 @cache_response(prefix="rides:search", ttl=180)  # 3 minutes cache for search results
 def search_rides(
     origin_lat: Optional[float] = None,
@@ -68,9 +69,12 @@ def search_rides(
 @router.get("/my", response_model=List[RideResponse])
 @cache_response(prefix="rides:my", ttl=120)  # 2 minutes cache for user's rides
 def get_my_rides(
-    current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    return TripsService(db).get_my_rides(current_user)
+    return TripsService(db).get_my_rides(current_user, limit=limit, offset=offset)
 
 
 @router.get("/{ride_id}", response_model=RideResponse)

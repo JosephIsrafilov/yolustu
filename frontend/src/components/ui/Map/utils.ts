@@ -84,8 +84,15 @@ export function useOsrmMultipleRoutes(
 ) {
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
 
+  const tripsKey = trips
+    .filter((t) => t.origin && t.destination)
+    .map((t) => `${t.id}:${t.origin!.lat},${t.origin!.lng}-${t.destination!.lat},${t.destination!.lng}`)
+    .join('|');
+
   useEffect(() => {
+    if (!tripsKey) return;
     let active = true;
+
     const fetchAll = async () => {
       const validTrips = trips.filter((t) => t.origin && t.destination).slice(0, 20);
       const newRoutes: Record<string, [number, number][]> = {};
@@ -110,7 +117,7 @@ export function useOsrmMultipleRoutes(
         }
       }
       if (active) {
-        setRoutes((prev) => ({ ...prev, ...newRoutes }));
+        setRoutes(newRoutes);
       }
     };
 
@@ -118,7 +125,7 @@ export function useOsrmMultipleRoutes(
     return () => {
       active = false;
     };
-  }, [trips]);
+  }, [tripsKey]);
 
   return routes;
 }

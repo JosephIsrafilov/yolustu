@@ -80,7 +80,15 @@ def test_rides_create_endpoint(monkeypatch):
 
 def test_rides_search_endpoint(monkeypatch):
     monkeypatch.setattr(
-        TripsService, "search_rides", lambda self, **kwargs: [sample_ride_response()]
+        TripsService,
+        "search_rides",
+        lambda self, **kwargs: {
+            "items": [sample_ride_response()],
+            "total": 1,
+            "page": 1,
+            "size": 50,
+            "pages": 1,
+        },
     )
 
     response = client.get(
@@ -88,8 +96,9 @@ def test_rides_search_endpoint(monkeypatch):
     )
 
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
-    assert response.json()[0]["destination_city"] == "Ganja"
+    data = response.json()
+    assert isinstance(data.get("items"), list)
+    assert data["items"][0]["destination_city"] == "Ganja"
 
 
 def test_rides_detail_endpoint(monkeypatch):
@@ -106,7 +115,7 @@ def test_rides_my_endpoint(monkeypatch):
     monkeypatch.setattr(
         TripsService,
         "get_my_rides",
-        lambda self, current_user: [sample_ride_response()],
+        lambda self, current_user, **kwargs: [sample_ride_response()],
     )
     token = get_access_token()
 

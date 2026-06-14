@@ -233,6 +233,8 @@ export interface TripSearchFilters {
   smokingAllowed?: boolean;
   petsAllowed?: boolean;
   musicAllowed?: boolean;
+  limit?: number;
+  offset?: number;
 }
 
 export interface CreateTripData {

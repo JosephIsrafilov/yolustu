@@ -41,9 +41,11 @@ setup_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     manager.loop = asyncio.get_running_loop()
+    await manager.start()
     start_scheduler()
     yield
     shutdown_scheduler()
+    await manager.stop()
 
 
 app = FastAPI(title="Yolmates API", lifespan=lifespan)
@@ -53,9 +55,11 @@ app.add_exception_handler(
     _rate_limit_exceeded_handler,  # type: ignore[arg-type]
 )
 
-# Mount uploads directory
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+# Mount local uploads directory in development only.
+# Production serves files from Supabase Storage.
+if settings.ENVIRONMENT != "production":
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 if settings.ENVIRONMENT == "production":
     # Production: only allow the configured frontend URL

@@ -13,10 +13,12 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { I18N } from '@/lib/i18n';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import TireLoader from '@/components/ui/TireLoader';
+import { useMyTrips } from '@/hooks/useTrips';
 
 export default function MyTripsPage() {
   const router = useRouter();
-  const { myTrips, users, cancelTrip, completeTrip, fetchMyTrips, isLoadingTrips, lastError, clearError, language } = useAppStore();
+  const { users, cancelTrip, completeTrip, lastError, clearError, language } = useAppStore();
+  const { data: myTrips = [], isLoading: isLoadingTrips } = useMyTrips();
   const [cancelTripId, setCancelTripId] = React.useState<string | null>(null);
   const [completeTripId, setCompleteTripId] = React.useState<string | null>(null);
   const active = myTrips.filter((t) => t.status === 'active');
@@ -24,10 +26,6 @@ export default function MyTripsPage() {
 
   const copy = I18N[language].myTrips;
   const common = I18N[language].common;
-
-  React.useEffect(() => {
-    fetchMyTrips();
-  }, []);
 
   return (
     <DriverLayout>

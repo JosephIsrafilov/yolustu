@@ -23,6 +23,7 @@ from app.domains.trips.schemas import (
     ride_to_response,
 )
 from app.domains.gamification.services import check_and_award_badge
+from app.core.pagination import PaginatedResponse, create_paginated_response
 
 
 class TripsService:
@@ -88,7 +89,7 @@ class TripsService:
         music_allowed: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[RideResponse]:
+    ) -> PaginatedResponse:
         criteria = RideSearch(
             origin_lat=origin_lat,
             origin_lon=origin_lon,
@@ -107,12 +108,19 @@ class TripsService:
             offset=offset,
         )
         rides = self.rides.search(criteria)
-        return [ride_to_response(ride) for ride in rides]
+        total = self.rides.search_count(criteria)
+        items = [ride_to_response(ride) for ride in rides]
+        page = (offset // limit) + 1 if limit > 0 else 1
+        return create_paginated_response(items, total, page=page, size=limit)
 
-    def get_my_rides(self, current_user: CurrentUser) -> list[RideResponse]:
+    def get_my_rides(
+        self, current_user: CurrentUser, limit: int = 50, offset: int = 0
+    ) -> list[RideResponse]:
         return [
             ride_to_response(ride)
-            for ride in self.rides.list_for_driver(current_user.id)
+            for ride in self.rides.list_for_driver(
+                current_user.id, limit=limit, offset=offset
+            )
         ]
 
     def get_ride_model(self, ride_id: UUID) -> Ride:
