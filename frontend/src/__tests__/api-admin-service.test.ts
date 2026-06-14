@@ -1,5 +1,6 @@
 import { apiAdminService } from '@/services/api/api-admin-service';
 import { apiClient } from '@/services/api-client';
+import { ApiError } from '@/services/api-error';
 
 jest.mock('@/services/api-client', () => ({
   apiClient: {
@@ -167,5 +168,19 @@ describe('apiAdminService', () => {
 
     expect(mockedApiClient.patch).toHaveBeenCalledWith('/admin/users/u-1/role', { role: 'driver' });
     expect(user.role).toBe('driver');
+  });
+
+  it('propagates ApiError from getUsers instead of swallowing it', async () => {
+    const apiError = new ApiError({ code: 'SERVER_ERROR', message: 'boom', status: 500 });
+    mockedApiClient.get.mockRejectedValueOnce(apiError);
+
+    await expect(apiAdminService.getUsers()).rejects.toBe(apiError);
+  });
+
+  it('propagates errors from mutating endpoints (updateUserRole)', async () => {
+    const apiError = new ApiError({ code: 'FORBIDDEN', message: 'nope', status: 403 });
+    mockedApiClient.patch.mockRejectedValueOnce(apiError);
+
+    await expect(apiAdminService.updateUserRole('u-1', 'admin')).rejects.toBe(apiError);
   });
 });

@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import { useAppStore } from '@/store/useAppStore';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 import { adminService } from '@/services';
 import type { User } from '@/types';
 
@@ -19,6 +20,9 @@ const VERIFICATIONS_I18N = {
     confirmApprove: 'Bu istifadəçini təsdiqləmək istədiyinizə əminsiniz?',
     confirmReject: 'Bu istifadəçini rədd etmək istədiyinizə əminsiniz?',
     empty: 'Hal-hazırda gözləyən təsdiqləmə sorğusu yoxdur.',
+    loadError: 'Təsdiqləmələri yükləmək alınmadı.',
+    actionError: 'Əməliyyat alınmadı. Yenidən cəhd edin.',
+    retry: 'Yenidən cəhd et',
     registered: 'Qeydiyyat:',
     viewDoc: 'Sənədə bax',
     noDoc: 'Sənəd yüklənməyib',
@@ -32,6 +36,9 @@ const VERIFICATIONS_I18N = {
     confirmApprove: 'Вы уверены, что хотите подтвердить этого пользователя?',
     confirmReject: 'Вы уверены, что хотите отклонить этого пользователя?',
     empty: 'В настоящее время нет ожидающих запросов на подтверждение.',
+    loadError: 'Не удалось загрузить заявки на подтверждение.',
+    actionError: 'Операция не выполнена. Попробуйте ещё раз.',
+    retry: 'Повторить',
     registered: 'Регистрация:',
     viewDoc: 'Посмотреть документ',
     noDoc: 'Документ не загружен',
@@ -45,6 +52,9 @@ const VERIFICATIONS_I18N = {
     confirmApprove: 'Are you sure you want to approve this user?',
     confirmReject: 'Are you sure you want to reject this user?',
     empty: 'There are currently no pending verification requests.',
+    loadError: 'Could not load verification requests.',
+    actionError: 'Action failed. Please try again.',
+    retry: 'Retry',
     registered: 'Registered:',
     viewDoc: 'View Document',
     noDoc: 'No document uploaded',
@@ -62,19 +72,28 @@ export default function AdminVerificationsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const limit = 10;
 
   const fetchVerifications = useCallback(async (currentPage: number) => {
+    setLoadError(false);
     try {
       const res = await adminService.getPendingVerifications(currentPage, limit);
       setVerifications(res.items);
       setTotalPages(res.pages);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
   }, [limit]);
+
+  const retryFetch = () => {
+    setIsLoading(true);
+    void fetchVerifications(page);
+  };
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -91,22 +110,30 @@ export default function AdminVerificationsPage() {
 
   const handleApprove = async (userId: string) => {
     if (confirm(t.confirmApprove)) {
+      setActionError(null);
+      setPendingUserId(userId);
       try {
         await adminService.approveVerification(userId);
         setVerifications(prev => prev.filter(v => v.id !== userId));
-      } catch (error) {
-        // Error handled silently
+      } catch {
+        setActionError(t.actionError);
+      } finally {
+        setPendingUserId(null);
       }
     }
   };
 
   const handleReject = async (userId: string) => {
     if (confirm(t.confirmReject)) {
+      setActionError(null);
+      setPendingUserId(userId);
       try {
         await adminService.rejectVerification(userId);
         setVerifications(prev => prev.filter(v => v.id !== userId));
-      } catch (error) {
-        // Error handled silently
+      } catch {
+        setActionError(t.actionError);
+      } finally {
+        setPendingUserId(null);
       }
     }
   };
@@ -128,10 +155,17 @@ export default function AdminVerificationsPage() {
       </div>
 
       <div className="flex flex-col flex-1">
+        {actionError && (
+          <div className="mb-4">
+            <ErrorBanner message={actionError} />
+          </div>
+        )}
         {isLoading ? (
           <div className="flex justify-center py-12">
             <LoadingState />
           </div>
+        ) : loadError ? (
+          <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
         ) : verifications.length === 0 ? (
           <Card className="py-16 text-center shadow-sm border-border bg-white rounded-2xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-text-muted">
@@ -195,10 +229,10 @@ export default function AdminVerificationsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <Button variant="danger" className="flex-1 lg:flex-none" onClick={() => handleReject(user.id)}>
+                      <Button variant="danger" className="flex-1 lg:flex-none" disabled={pendingUserId === user.id} onClick={() => handleReject(user.id)}>
                         <Icon name="x" size={18} className="mr-1.5" /> {t.reject}
                       </Button>
-                      <Button variant="primary" className="flex-1 lg:flex-none" onClick={() => handleApprove(user.id)}>
+                      <Button variant="primary" className="flex-1 lg:flex-none" disabled={pendingUserId === user.id} onClick={() => handleApprove(user.id)}>
                         <Icon name="check" size={18} className="mr-1.5" /> {t.approve}
                       </Button>
                     </div>

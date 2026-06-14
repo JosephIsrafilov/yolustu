@@ -5,6 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 import Pagination from '@/components/ui/Pagination';
 import { paymentsService } from '@/services';
 import type { Payment, PaymentStatus } from '@/types';
@@ -27,6 +28,9 @@ const COPY = {
     created: 'Yaradıldı',
     refund: 'Refund',
     empty: 'Ödəniş tapılmadı',
+    loadError: 'Ödənişləri yükləmək alınmadı.',
+    actionError: 'Refund alınmadı. Yenidən cəhd edin.',
+    retry: 'Yenidən cəhd et',
   },
   ru: {
     title: 'Платежи',
@@ -41,6 +45,9 @@ const COPY = {
     created: 'Создан',
     refund: 'Возврат',
     empty: 'Платежи не найдены',
+    loadError: 'Не удалось загрузить платежи.',
+    actionError: 'Не удалось выполнить возврат. Попробуйте ещё раз.',
+    retry: 'Повторить',
   },
   en: {
     title: 'Payments',
@@ -55,6 +62,9 @@ const COPY = {
     created: 'Created',
     refund: 'Refund',
     empty: 'No payments found',
+    loadError: 'Could not load payments.',
+    actionError: 'Refund failed. Please try again.',
+    retry: 'Retry',
   },
 } as const;
 
@@ -67,10 +77,14 @@ export default function AdminPaymentsPage() {
   const [page, setPage] = React.useState(1);
   const [pages, setPages] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [pendingPaymentId, setPendingPaymentId] = React.useState<string | null>(null);
   const limit = 20;
 
   const loadPayments = React.useCallback(async () => {
     setIsLoading(true);
+    setLoadError(false);
     try {
       const response = await paymentsService.listAdminPayments({
         page,
@@ -80,6 +94,8 @@ export default function AdminPaymentsPage() {
       });
       setPayments(response.items);
       setPages(response.pages);
+    } catch {
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +110,16 @@ export default function AdminPaymentsPage() {
   }, [loadPayments]);
 
   const refund = async (paymentId: string) => {
-    await paymentsService.refund(paymentId);
-    await loadPayments();
+    setActionError(null);
+    setPendingPaymentId(paymentId);
+    try {
+      await paymentsService.refund(paymentId);
+      await loadPayments();
+    } catch {
+      setActionError(copy.actionError);
+    } finally {
+      setPendingPaymentId(null);
+    }
   };
 
   return (
@@ -135,6 +159,11 @@ export default function AdminPaymentsPage() {
           </label>
         </div>
       </Card>
+      {actionError && (
+        <div className="mb-4">
+          <ErrorBanner message={actionError} />
+        </div>
+      )}
       <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
         <table className="w-full min-w-[980px] text-sm">
           <thead className="border-b border-border bg-surface-muted">
@@ -152,6 +181,8 @@ export default function AdminPaymentsPage() {
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr><td colSpan={8} className="px-4 py-10"><LoadingState /></td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={8} className="px-4 py-8"><ErrorBanner message={copy.loadError} onRetry={() => void loadPayments()} retryLabel={copy.retry} /></td></tr>
             ) : payments.length === 0 ? (
               <tr><td colSpan={8} className="px-4 py-10 text-center text-text-muted">{copy.empty}</td></tr>
             ) : payments.map((payment) => (
@@ -165,7 +196,7 @@ export default function AdminPaymentsPage() {
                 <td className="px-4 py-3">{new Date(payment.createdAt).toLocaleString()}</td>
                 <td className="px-4 py-3 text-right">
                   {payment.status === 'succeeded' && (
-                    <Button size="sm" variant="danger" onClick={() => refund(payment.id)}>
+                    <Button size="sm" variant="danger" disabled={pendingPaymentId === payment.id} onClick={() => refund(payment.id)}>
                       {copy.refund}
                     </Button>
                   )}

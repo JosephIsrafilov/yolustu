@@ -37,3 +37,6 @@ The admin users page filters/sorts a single page of 100 client-side — past 100
 - pytest last ~15 lines with counts; explicit note the filtered-total test passed.
 - `npm run typecheck` clean output.
 - The new GET /admin/users query-param signature.
+
+SUPERGOAL_PHASE_VERIFY
+SUPERGOAL_PHASE_DONE

@@ -11,6 +11,7 @@ import type { Booking, BookingStatus } from '@/types';
 import { adminService } from '@/services';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 import Icon from '@/components/ui/Icon';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,9 @@ const BOOKINGS_I18N = {
     locale: 'az-AZ',
     emptyState: 'Rezerv tapılmadı',
     placeholder: '-',
+    loadError: 'Rezervləri yükləmək alınmadı.',
+    actionError: 'Əməliyyat alınmadı. Yenidən cəhd edin.',
+    retry: 'Yenidən cəhd et',
     searchPlaceholder: 'Sərnişin, sürücü və marşrut üzrə axtar',
     statuses: {
       all: 'Hamısı',
@@ -60,6 +64,9 @@ const BOOKINGS_I18N = {
     locale: 'ru-RU',
     emptyState: 'Бронирования не найдены',
     placeholder: '-',
+    loadError: 'Не удалось загрузить бронирования.',
+    actionError: 'Операция не выполнена. Попробуйте ещё раз.',
+    retry: 'Повторить',
     searchPlaceholder: 'Поиск по пассажиру, водителю или маршруту',
     statuses: {
       all: 'Все',
@@ -95,6 +102,9 @@ const BOOKINGS_I18N = {
     locale: 'en-US',
     emptyState: 'No bookings found',
     placeholder: '-',
+    loadError: 'Could not load bookings.',
+    actionError: 'Action failed. Please try again.',
+    retry: 'Retry',
     searchPlaceholder: 'Search by passenger, driver, or route',
     statuses: {
       all: 'All',
@@ -137,22 +147,31 @@ export default function AdminBookingsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
 
   const fetchBookings = useCallback(async (currentPage: number) => {
+    setLoadError(false);
     try {
       const res = await adminService.getBookings(currentPage, limit);
       setAllBookings(res.items);
       setTotalPages(res.pages);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
   }, [limit]);
+
+  const retryFetch = () => {
+    setIsLoading(true);
+    void fetchBookings(page);
+  };
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -165,6 +184,22 @@ export default function AdminBookingsPage() {
   const handlePageChange = (nextPage: number) => {
     setIsLoading(true);
     setPage(nextPage);
+  };
+
+  const runBookingAction = async (
+    bookingId: string,
+    action: (id: string) => Promise<boolean>,
+  ) => {
+    setActionError(null);
+    setPendingBookingId(bookingId);
+    try {
+      const ok = await action(bookingId);
+      if (!ok) {
+        setActionError(t.actionError);
+      }
+    } finally {
+      setPendingBookingId(null);
+    }
   };
 
   const tripsById = React.useMemo(() => new Map(trips.map((trip) => [trip.id, trip])), [trips]);
@@ -271,6 +306,12 @@ export default function AdminBookingsPage() {
         ))}
       </div>
 
+      {actionError && (
+        <div className="mb-4">
+          <ErrorBanner message={actionError} />
+        </div>
+      )}
+
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
         <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1540px]">
           <thead className="bg-surface-muted border-b border-border select-none">
@@ -376,6 +417,12 @@ export default function AdminBookingsPage() {
                   <LoadingState />
                 </td>
               </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-8">
+                  <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
+                </td>
+              </tr>
             ) : sortedBookings.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
@@ -446,16 +493,16 @@ export default function AdminBookingsPage() {
                         )}
                         {booking.status === 'pending' && (
                           <>
-                            <Button size="sm" variant="secondary" onClick={() => acceptBooking(booking.id)}>
+                            <Button size="sm" variant="secondary" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, acceptBooking)}>
                               <Icon name="check" size={14} /> {t.actions.confirm}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => rejectBooking(booking.id)}>
+                            <Button size="sm" variant="outline" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, rejectBooking)}>
                               <Icon name="x" size={14} /> {t.actions.reject}
                             </Button>
                           </>
                         )}
                         {(booking.status === 'accepted' || booking.status === 'paid') && (
-                          <Button size="sm" variant="danger" onClick={() => cancelBooking(booking.id)}>
+                          <Button size="sm" variant="danger" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, cancelBooking)}>
                             <Icon name="ban" size={14} /> {t.actions.cancel}
                           </Button>
                         )}

@@ -11,6 +11,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 import { adminService } from '@/services';
 import CreateUserModal from './CreateUserModal';
 import type { User, UserRole } from '@/types';
@@ -22,6 +23,8 @@ const USERS_I18N = {
     emptyState: 'İstifadəçi tapılmadı',
     placeholder: '-',
     locale: 'az-AZ',
+    loadError: 'İstifadəçiləri yükləmək alınmadı.',
+    retry: 'Yenidən cəhd et',
     searchPlaceholder: 'Ad, email və ya telefon üzrə axtar',
     filters: {
       role: 'Rol',
@@ -82,6 +85,8 @@ const USERS_I18N = {
     emptyState: 'Пользователи не найдены',
     placeholder: '-',
     locale: 'ru-RU',
+    loadError: 'Не удалось загрузить пользователей.',
+    retry: 'Повторить',
     searchPlaceholder: 'Поиск по имени, email или телефону',
     filters: {
       role: 'Роль',
@@ -142,6 +147,8 @@ const USERS_I18N = {
     emptyState: 'No users found',
     placeholder: '-',
     locale: 'en-US',
+    loadError: 'Could not load users.',
+    retry: 'Retry',
     searchPlaceholder: 'Search by name, email, or phone',
     filters: {
       role: 'Role',
@@ -212,6 +219,9 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingActionUserId, setPendingActionUserId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -228,16 +238,22 @@ export default function AdminUsersPage() {
   }, [bookings]);
 
   const fetchUsers = useCallback(async (currentPage: number) => {
+    setLoadError(false);
     try {
       const res = await adminService.getUsers({ page: currentPage, limit });
       setUsers(res.items);
       setTotalPages(res.pages);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
   }, [limit]);
+
+  const retryFetch = () => {
+    setIsLoading(true);
+    void fetchUsers(page);
+  };
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -253,49 +269,69 @@ export default function AdminUsersPage() {
   };
 
   const handleBlock = async (userId: string) => {
+    setActionError(null);
+    setPendingActionUserId(userId);
     try {
       const updatedUser = await adminService.blockUser(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.manage.actionError);
+    } finally {
+      setPendingActionUserId(null);
     }
   };
 
   const handleUnblock = async (userId: string) => {
+    setActionError(null);
+    setPendingActionUserId(userId);
     try {
       const updatedUser = await adminService.unblockUser(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.manage.actionError);
+    } finally {
+      setPendingActionUserId(null);
     }
   };
 
   const handleVerify = async (userId: string) => {
+    setActionError(null);
+    setPendingActionUserId(userId);
     try {
       const updatedUser = await adminService.approveVerification(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.manage.actionError);
+    } finally {
+      setPendingActionUserId(null);
     }
   };
 
   const handleReject = async (userId: string) => {
+    setActionError(null);
+    setPendingActionUserId(userId);
     try {
       const updatedUser = await adminService.rejectVerification(userId);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.manage.actionError);
+    } finally {
+      setPendingActionUserId(null);
     }
   };
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setActionError(null);
+    setPendingActionUserId(userId);
     try {
       const updatedUser = await adminService.updateUserRole(userId, newRole);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
       setEditingRoleUserId(null);
       setEditingRole(null);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.manage.roleError);
+    } finally {
+      setPendingActionUserId(null);
     }
   };
 
@@ -435,6 +471,12 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
+      {actionError && (
+        <div className="mb-4">
+          <ErrorBanner message={actionError} />
+        </div>
+      )}
+
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
         <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1420px]">
           <thead className="bg-surface-muted border-b border-border select-none">
@@ -553,6 +595,12 @@ export default function AdminUsersPage() {
                   <LoadingState />
                 </td>
               </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={9} className="px-6 py-8">
+                  <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
+                </td>
+              </tr>
             ) : sortedUsers.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-6 py-12 text-center text-text-muted">
@@ -629,20 +677,20 @@ export default function AdminUsersPage() {
                           </Button>
                           {u.verificationStatus === 'pending' && (
                             <>
-                              <Button size="sm" variant="secondary" onClick={() => handleVerify(u.id)}>
+                              <Button size="sm" variant="secondary" disabled={pendingActionUserId === u.id} onClick={() => handleVerify(u.id)}>
                                 <Icon name="check" size={14} /> {t.actions.verify}
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleReject(u.id)}>
+                              <Button size="sm" variant="outline" disabled={pendingActionUserId === u.id} onClick={() => handleReject(u.id)}>
                                 <Icon name="x" size={14} /> {t.actions.reject}
                               </Button>
                             </>
                           )}
                           {u.isBlocked ? (
-                            <Button size="sm" variant="secondary" onClick={() => handleUnblock(u.id)}>
+                            <Button size="sm" variant="secondary" disabled={pendingActionUserId === u.id} onClick={() => handleUnblock(u.id)}>
                               <Icon name="shield-check" size={14} /> {t.actions.unblock}
                             </Button>
                           ) : (
-                            <Button size="sm" variant="danger" onClick={() => handleBlock(u.id)}>
+                            <Button size="sm" variant="danger" disabled={pendingActionUserId === u.id} onClick={() => handleBlock(u.id)}>
                               <Icon name="shield-off" size={14} /> {t.actions.block}
                             </Button>
                           )}
@@ -679,7 +727,7 @@ export default function AdminUsersPage() {
                                     onChange={(value) => setEditingRole(value as UserRole)}
                                     options={roleOptions}
                                   />
-                                  <Button size="sm" onClick={() => editingRole && handleRoleChange(u.id, editingRole)}>
+                                  <Button size="sm" disabled={pendingActionUserId === u.id} onClick={() => editingRole && handleRoleChange(u.id, editingRole)}>
                                     <Icon name="check" size={14} />
                                   </Button>
                                   <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(null); setEditingRole(null); }}>

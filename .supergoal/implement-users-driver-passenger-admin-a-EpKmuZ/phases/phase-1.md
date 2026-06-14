@@ -37,3 +37,6 @@ Follow existing patterns (service raises HTTPException; router thin; repo does D
 - Last ~15 lines of pytest with pass counts.
 - The two new endpoint function signatures.
 - Explicit mention that the 403-non-admin and last-admin-guard tests passed.
+
+SUPERGOAL_PHASE_VERIFY
+SUPERGOAL_PHASE_DONE

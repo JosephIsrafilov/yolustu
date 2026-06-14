@@ -16,12 +16,17 @@ import Button from '@/components/ui/Button';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { formatCurrency } from '@/lib/utils';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 
 const DASHBOARD_I18N = {
   az: {
     title: 'İdarə paneli',
     subtitle: 'Əsas göstəricilər və son fəaliyyət',
     locale: 'az-AZ',
+    simulate: 'Səyahəti simulyasiya et',
+    simulateError: 'Səyahət simulyasiyası alınmadı.',
+    loadError: 'Panel məlumatlarını yükləmək alınmadı.',
+    retry: 'Yenidən cəhd et',
     kpis: {
       totalUsers: 'Ümumi istifadəçilər',
       drivers: 'Sürücülər',
@@ -69,6 +74,10 @@ const DASHBOARD_I18N = {
     title: 'Панель управления',
     subtitle: 'Ключевые показатели и последняя активность',
     locale: 'ru-RU',
+    simulate: 'Симуляция поездки',
+    simulateError: 'Не удалось смоделировать поездку.',
+    loadError: 'Не удалось загрузить данные панели.',
+    retry: 'Повторить',
     kpis: {
       totalUsers: 'Всего пользователей',
       drivers: 'Водители',
@@ -116,6 +125,10 @@ const DASHBOARD_I18N = {
     title: 'Dashboard',
     subtitle: 'Key metrics and recent activity',
     locale: 'en-US',
+    simulate: 'Simulate Journey',
+    simulateError: 'Failed to simulate journey.',
+    loadError: 'Could not load dashboard data.',
+    retry: 'Retry',
     kpis: {
       totalUsers: 'Total users',
       drivers: 'Drivers',
@@ -170,23 +183,18 @@ export default function AdminDashboardPage() {
   const [bookingsList, setBookingsList] = React.useState<Booking[]>([]);
   const [apiStats, setApiStats] = React.useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState(false);
+  const [simulateError, setSimulateError] = React.useState<string | null>(null);
   const [isSimulating, setIsSimulating] = React.useState(false);
   const { setActiveToast } = usePushNotifications();
 
   const fetchData = () => {
+    setLoadError(false);
     Promise.all([
-      adminService.getUsers({ page: 1, limit: 100 }).catch(() => {
-        return { items: [] };
-      }),
-      adminService.getTrips(1, 100).catch(() => {
-        return { items: [] };
-      }),
-      adminService.getBookings(1, 100).catch(() => {
-        return { items: [] };
-      }),
-      adminService.getAdminStats().catch(() => {
-        return null;
-      }),
+      adminService.getUsers({ page: 1, limit: 100 }),
+      adminService.getTrips(1, 100),
+      adminService.getBookings(1, 100),
+      adminService.getAdminStats().catch(() => null),
     ]).then(([usersRes, tripsRes, bookingsRes, statsRes]) => {
       setUsersList(usersRes.items);
       setTripsList(tripsRes.items);
@@ -194,16 +202,22 @@ export default function AdminDashboardPage() {
       setApiStats(statsRes);
       setIsLoading(false);
     }).catch(() => {
+      setLoadError(true);
       setIsLoading(false);
     });
   };
 
   React.useEffect(() => {
-    fetchData();
+    const timeoutId = window.setTimeout(() => {
+      fetchData();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const handleSimulateJourney = async () => {
     setIsSimulating(true);
+    setSimulateError(null);
     try {
       const res = await adminService.simulateJourney();
       setActiveToast({
@@ -213,13 +227,8 @@ export default function AdminDashboardPage() {
         data: {}
       });
       fetchData(); // Refresh data
-    } catch (err) {
-      setActiveToast({
-        type: 'notification',
-        title: 'Error',
-        body: 'Failed to simulate journey',
-        data: {}
-      });
+    } catch {
+      setSimulateError(t.simulateError);
     } finally {
       setIsSimulating(false);
     }
@@ -310,12 +319,34 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <AdminLayout>
+        <div className="mb-6 flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-text">{t.title}</h1>
+          <p className="text-sm text-text-muted">{t.subtitle}</p>
+        </div>
+        <ErrorBanner
+          message={t.loadError}
+          onRetry={() => { setIsLoading(true); fetchData(); }}
+          retryLabel={t.retry}
+        />
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="mb-6 flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-text">{t.title}</h1>
         <p className="text-sm text-text-muted">{t.subtitle}</p>
       </div>
+
+      {simulateError && (
+        <div className="mb-6">
+          <ErrorBanner message={simulateError} />
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
@@ -341,7 +372,7 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-bold text-text">{t.quickActions.title}</p>
             <Button size="sm" variant="outline" onClick={handleSimulateJourney} loading={isSimulating}>
-              <Icon name="zap" size={16} /> <span className="ml-1 hidden sm:inline">Simulate Journey</span>
+              <Icon name="zap" size={16} /> <span className="ml-1 hidden sm:inline">{t.simulate}</span>
             </Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

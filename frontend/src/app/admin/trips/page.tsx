@@ -13,6 +13,7 @@ import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Pagination from '@/components/ui/Pagination';
 import LoadingState from '@/components/ui/LoadingState';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 import { adminService } from '@/services';
 import type { Trip } from '@/types';
 import { AZ_CITIES, formatPrice } from '@/lib/utils';
@@ -25,6 +26,9 @@ const TRIPS_I18N = {
     emptyState: 'Gediş tapılmadı',
     placeholder: '-',
     locale: 'az-AZ',
+    loadError: 'Gedişləri yükləmək alınmadı.',
+    actionError: 'Əməliyyat alınmadı. Yenidən cəhd edin.',
+    retry: 'Yenidən cəhd et',
     searchPlaceholder: 'Marşrut və ya sürücü üzrə axtar',
     filters: {
       status: 'Status',
@@ -60,6 +64,9 @@ const TRIPS_I18N = {
     emptyState: 'Поездки не найдены',
     placeholder: '-',
     locale: 'ru-RU',
+    loadError: 'Не удалось загрузить поездки.',
+    actionError: 'Операция не выполнена. Попробуйте ещё раз.',
+    retry: 'Повторить',
     searchPlaceholder: 'Поиск по маршруту или водителю',
     filters: {
       status: 'Статус',
@@ -95,6 +102,9 @@ const TRIPS_I18N = {
     emptyState: 'No trips found',
     placeholder: '-',
     locale: 'en-US',
+    loadError: 'Could not load trips.',
+    actionError: 'Action failed. Please try again.',
+    retry: 'Retry',
     searchPlaceholder: 'Search by route or driver',
     filters: {
       status: 'Status',
@@ -140,21 +150,30 @@ export default function AdminTripsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingTripId, setPendingTripId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
 
   const fetchTrips = useCallback(async (currentPage: number) => {
+    setLoadError(false);
     try {
       const res = await adminService.getTrips(currentPage, limit);
       setTrips(res.items);
       setTotalPages(res.pages);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
   }, [limit]);
+
+  const retryFetch = () => {
+    setIsLoading(true);
+    void fetchTrips(page);
+  };
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -173,11 +192,15 @@ export default function AdminTripsPage() {
     if (!window.confirm(t.confirmDelete)) {
       return;
     }
+    setActionError(null);
+    setPendingTripId(tripId);
     try {
       await adminService.deleteTrip(tripId);
       void fetchTrips(page);
-    } catch (error) {
-      // Error handled silently
+    } catch {
+      setActionError(t.actionError);
+    } finally {
+      setPendingTripId(null);
     }
   };
 
@@ -303,6 +326,12 @@ export default function AdminTripsPage() {
         </Button>
       </div>
 
+      {actionError && (
+        <div className="mb-4">
+          <ErrorBanner message={actionError} />
+        </div>
+      )}
+
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
         <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1250px]">
           <thead className="bg-surface-muted border-b border-border select-none">
@@ -395,6 +424,12 @@ export default function AdminTripsPage() {
                   <LoadingState />
                 </td>
               </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-8">
+                  <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
+                </td>
+              </tr>
             ) : sortedTrips.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
@@ -446,7 +481,7 @@ export default function AdminTripsPage() {
                           <Icon name="file-text" size={14} /> {t.actions.view}
                         </Button>
                         {showDeactivate && (
-                          <Button size="sm" variant="danger" onClick={() => cancelTrip(trip.id)}>
+                          <Button size="sm" variant="danger" disabled={pendingTripId === trip.id} onClick={() => cancelTrip(trip.id)}>
                             <Icon name="ban" size={14} /> {t.actions.delete}
                           </Button>
                         )}
