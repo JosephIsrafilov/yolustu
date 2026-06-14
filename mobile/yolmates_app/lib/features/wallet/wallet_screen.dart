@@ -45,7 +45,8 @@ class WalletScreen extends ConsumerWidget {
                   balanceLabel: l10n.walletBalance,
                   amount: balance.availableBalance,
                   currency: balance.currency,
-                  onTopUp: null,
+                  topUpLabel: l10n.walletTopUpBtn,
+                  comingSoonLabel: l10n.walletComingSoon,
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -63,7 +64,20 @@ class WalletScreen extends ConsumerWidget {
                       Icon(Icons.credit_card, color: AppTheme.slate500),
                       const SizedBox(width: 12),
                       Expanded(child: Text(l10n.walletNoCard)),
-                      TextButton(onPressed: null, child: Text(l10n.walletAddCard)),
+                      TextButton(
+                        onPressed: null,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(l10n.walletAddCard),
+                            const SizedBox(width: 4),
+                            Text(
+                              '(${l10n.walletComingSoon})',
+                              style: TextStyle(fontSize: 11, color: AppTheme.slate500),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -125,13 +139,15 @@ class _BalanceCard extends StatelessWidget {
   final String balanceLabel;
   final double amount;
   final String currency;
-  final VoidCallback? onTopUp;
+  final String topUpLabel;
+  final String comingSoonLabel;
 
   const _BalanceCard({
     required this.balanceLabel,
     required this.amount,
     required this.currency,
-    this.onTopUp,
+    required this.topUpLabel,
+    required this.comingSoonLabel,
   });
 
   @override
@@ -165,13 +181,30 @@ class _BalanceCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: onTopUp,
+              onPressed: null,
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Balansı artır'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(topUpLabel),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      comingSoonLabel,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
