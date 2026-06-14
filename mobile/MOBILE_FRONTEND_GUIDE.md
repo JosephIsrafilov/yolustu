@@ -145,7 +145,7 @@ Legend: ✅ built & wired · 🟡 built, mock/placeholder data · 🔴 placehold
 | Booking detail | 🟡 | exists |
 | Chat list / detail | 🟡 | repo + ws channel present; realtime depth unaudited |
 | Notifications | 🟡 | controller exists |
-| **Wallet** | 🔴 | **hardcoded** balance `25 AZN`, fake txns, "demo mode" banner, all buttons `onPressed: null` (dead) |
+| **Wallet** | 🟡 | Foundation wired: AsyncNotifier controller, mock/API repos, balance + transactions from backend. Loading/error/empty states. Mock banner only in mock mode. Top-up/payment methods gated (T3.3). |
 | Reviews | 🟡 | repo + dialog exist |
 | Profile | ✅ | header, menu cards, logout sheet, driver-status-aware menu |
 | Settings | 🟡 | language switch likely; not audited |
@@ -158,7 +158,7 @@ Legend: ✅ built & wired · 🟡 built, mock/placeholder data · 🔴 placehold
 1. **`main_shell.dart:50`** — Home tab label uses `l10n.navSearch` ("Axtar") instead of a Home/"Ana səhifə" label. Two tabs say "Axtar". Add `navHome` to `AppLocalizations`, use it.
 2. **Home search card is fake** — tapping fields does nothing; can't change cities/date/passengers. Either make it real (open pickers) or make the whole card a single CTA into `/search`. Decide, don't leave dead.
 3. **Search date ignored** — `_date` selected but `_search()` omits it from query string. Pass `&date=` and consume in trip list.
-4. **Wallet fully dead** — every button disabled, data hardcoded. Either wire to payments backend or keep honest demo state behind a feature flag. No silent fake balance in a shippable build.
+4. **Wallet payment methods not implemented** — add-card/top-up buttons exist but gated (T3.3 pending). Foundation is wired: balance/transactions from repo, mock vs API mode working.
 5. **i18n major screens done** — `AppLocalizations` now covers ~120 strings across 10 major screens (Home, Search, TripList, Bookings, Settings, Profile, Wallet, TripDetail, BookingDetail, DriverPanel). Full AZ/EN/RU trilingual. Remaining: driver CRUD screens, minor detail screens, date/plural formatting helpers. Not 100% yet but no longer half-done.
 6. **No dark theme** — `theme.dart` only `lightTheme`. Modern apps expect dark. Add if in scope.
 7. **`AppLocalizations.tr` getter returns literal `'Translated'`** — dead stub, remove.
@@ -220,8 +220,8 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 - [ ] **T2.3** Remaining i18n cleanup: driver CRUD screens (CreateRide, AddVehicle, MyRides detail, PassengerRequests detail, ActiveRide), minor detail screens, date formatting helpers (Az month/weekday names), plural forms (1 yer / 2+ yerlər).
 
 ### Phase 3 — Wallet & payments
-- [ ] **T3.1** `WalletRepository` interface + api + mock impls. Wire balance + transactions from payments domain (`docs/api-contract.md`).
-- [ ] **T3.2** Replace hardcoded `WalletScreen` data with controller (AsyncNotifier). Loading/error/empty states.
+- [x] **T3.1** `WalletRepository` interface + api + mock impls. Wire balance + transactions from payments domain (`docs/api-contract.md`). ✅ Created domain models (WalletBalance, WalletTransaction), DTOs, MockWalletRepository (demo data), ApiWalletRepository (GET /wallet/me, GET /wallet/me/transactions).
+- [x] **T3.2** Replace hardcoded `WalletScreen` data with controller (AsyncNotifier). Loading/error/empty states. ✅ WalletController with refresh/loadMore, WalletScreen wired, pull-to-refresh, mock banner only in mock mode.
 - [ ] **T3.3** "Add card" + "top up" flows — or, if backend not ready, gate behind a real feature flag and keep the demo banner honest (no fake balance shown as real).
 
 ### Phase 4 — Trust & safety UX (carpooling-critical)

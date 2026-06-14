@@ -1,75 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/app_card.dart';
+import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/error_state.dart';
+import '../../shared/widgets/loading_view.dart';
+import '../auth/data/auth_mode.dart';
+import 'data/wallet_controller.dart';
 
-/// Wallet placeholder (clearly marked not connected).
-class WalletScreen extends StatelessWidget {
+/// Wallet screen with balance and transaction history.
+class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
 
-  static const _transactions = [
-    ('Bakı → Gəncə', '-15 AZN', false),
-    ('Balans artımı', '+50 AZN', true),
-    ('Bakı → Quba', '-10 AZN', false),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final walletAsync = ref.watch(walletControllerProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Pul kisəsi')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppConstants.spacing16),
-        children: [
-          const _MockBanner(),
-          const SizedBox(height: 16),
-          _BalanceCard(),
-          const SizedBox(height: 20),
-          Text(
-            'Ödəniş üsulu',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(AppConstants.spacing16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.slate200),
-            ),
-            child: Row(
+      appBar: AppBar(title: Text(l10n.walletTitle)),
+      body: walletAsync.when(
+        loading: () => const LoadingView(),
+        error: (err, stack) => ErrorStateView(
+          title: 'Xəta baş verdi',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(walletControllerProvider),
+        ),
+        data: (walletState) {
+          final balance = walletState.balance;
+          final transactions = walletState.transactions;
+
+          return RefreshIndicator(
+            onRefresh: () => ref.read(walletControllerProvider.notifier).refresh(),
+            child: ListView(
+              padding: const EdgeInsets.all(AppConstants.spacing16),
               children: [
-                Icon(Icons.credit_card, color: AppTheme.slate500),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Kart əlavə edilməyib')),
-                TextButton(onPressed: null, child: const Text('Əlavə et')),
+                if (!AuthMode.isApi) _MockBanner(message: l10n.walletMockBanner),
+                if (!AuthMode.isApi) const SizedBox(height: 16),
+                _BalanceCard(
+                  balanceLabel: l10n.walletBalance,
+                  amount: balance.availableBalance,
+                  currency: balance.currency,
+                  onTopUp: null,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.walletPaymentMethod,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.navy,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: const EdgeInsets.all(AppConstants.spacing16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.credit_card, color: AppTheme.slate500),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(l10n.walletNoCard)),
+                      TextButton(onPressed: null, child: Text(l10n.walletAddCard)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.walletTransactions,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.navy,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                if (transactions.isEmpty)
+                  const EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'Əməliyyat yoxdur',
+                    message: 'Hələ heç bir əməliyyat edilməyib',
+                  )
+                else
+                  ...transactions.map((txn) => _TxnRow(transaction: txn)),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Əməliyyatlar',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          ..._transactions.map((t) => _TxnRow(
-                label: t.$1,
-                amount: t.$2,
-                credit: t.$3,
-              )),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
 class _MockBanner extends StatelessWidget {
-  const _MockBanner();
+  final String message;
+  const _MockBanner({required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +111,7 @@ class _MockBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Demo rejimi — ödənişlər hələ qoşulmayıb.',
+              message,
               style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
             ),
           ),
@@ -96,6 +122,18 @@ class _MockBanner extends StatelessWidget {
 }
 
 class _BalanceCard extends StatelessWidget {
+  final String balanceLabel;
+  final double amount;
+  final String currency;
+  final VoidCallback? onTopUp;
+
+  const _BalanceCard({
+    required this.balanceLabel,
+    required this.amount,
+    required this.currency,
+    this.onTopUp,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -112,12 +150,12 @@ class _BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Balans',
+          Text(balanceLabel,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
           const SizedBox(height: 8),
-          const Text(
-            '25.00 AZN',
-            style: TextStyle(
+          Text(
+            '${amount.toStringAsFixed(2)} $currency',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -127,7 +165,7 @@ class _BalanceCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: null,
+              onPressed: onTopUp,
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
@@ -143,18 +181,18 @@ class _BalanceCard extends StatelessWidget {
 }
 
 class _TxnRow extends StatelessWidget {
-  final String label;
-  final String amount;
-  final bool credit;
+  final dynamic transaction;
 
-  const _TxnRow({
-    required this.label,
-    required this.amount,
-    required this.credit,
-  });
+  const _TxnRow({required this.transaction});
 
   @override
   Widget build(BuildContext context) {
+    final isCredit = transaction.isCredit;
+    final label = transaction.description ?? transaction.type.label;
+    final amount = transaction.amount;
+    final currency = transaction.currency;
+    final date = DateFormat('dd MMM, HH:mm').format(transaction.createdAt);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -163,23 +201,32 @@ class _TxnRow extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: (credit ? Colors.green : AppTheme.slate500)
+              color: (isCredit ? Colors.green : AppTheme.slate500)
                   .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              credit ? Icons.arrow_downward : Icons.arrow_upward,
+              isCredit ? Icons.arrow_downward : Icons.arrow_upward,
               size: 18,
-              color: credit ? Colors.green.shade700 : AppTheme.slate700,
+              color: isCredit ? Colors.green.shade700 : AppTheme.slate700,
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(label)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(date, style: TextStyle(fontSize: 12, color: AppTheme.slate500)),
+              ],
+            ),
+          ),
           Text(
-            amount,
+            '${amount >= 0 ? '+' : ''}${amount.toStringAsFixed(2)} $currency',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: credit ? Colors.green.shade700 : AppTheme.navy,
+              color: isCredit ? Colors.green.shade700 : AppTheme.navy,
             ),
           ),
         ],
