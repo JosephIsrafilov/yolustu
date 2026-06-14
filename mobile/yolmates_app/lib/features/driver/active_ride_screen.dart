@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../trips/data/ride_tracking_repository.dart';
@@ -75,8 +78,76 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
     }
   }
 
+  Future<void> _shareTrip(DriverRide ride) async {
+    final l10n = ref.read(l10nProvider);
+    final time = '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+    final date = '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
+
+    final shareText = '''
+Yolmates Səfər Məlumatı
+
+Marşrut: ${ride.fromCity} → ${ride.toCity}
+Tarix: $date, Saat: $time
+Səfər ID: ${ride.id}
+
+Təhlükəsizlik qeydi: Bu səfər Yolmates platforması vasitəsilə edilir.
+Təcili yardım: 112
+''';
+
+    await Clipboard.setData(ClipboardData(text: shareText.trim()));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.safetyShareCopied)),
+      );
+    }
+  }
+
+  Future<void> _showSOSDialog(DriverRide ride) async {
+    final l10n = ref.read(l10nProvider);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.safetySOSConfirmTitle),
+        content: Text(l10n.safetySOSConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'cancel'),
+            child: Text(l10n.safetyCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'copy'),
+            child: Text(l10n.safetySOSCopy),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, 'call'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(l10n.safetySOSCall),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == 'copy' || result == 'call') {
+      await _shareTrip(ride);
+    }
+
+    if (result == 'call') {
+      final uri = Uri.parse('tel:112');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     // Watch current rides
     final ridesAsync = ref.watch(driverRidesProvider);
 
@@ -209,6 +280,67 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
                         ),
                       ],
                       const Spacer(),
+                      // Safety Section (active rides only)
+                      if (ride.status == DriverRideStatus.active) ...[
+                        Container(
+                          padding: const EdgeInsets.all(AppConstants.spacing12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slate50,
+                            borderRadius: BorderRadius.circular(AppConstants.borderRadius12),
+                            border: Border.all(color: AppTheme.slate200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.shield_outlined, size: 18, color: AppTheme.tealDark),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l10n.safetyTitle,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.navy,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _shareTrip(ride!),
+                                      icon: const Icon(Icons.share, size: 18),
+                                      label: Text(l10n.safetyShareTrip),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        side: BorderSide(color: AppTheme.teal),
+                                        foregroundColor: AppTheme.tealDark,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _showSOSDialog(ride!),
+                                      icon: const Icon(Icons.warning_amber, size: 18),
+                                      label: Text(l10n.safetySOS),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        side: BorderSide(color: Colors.red.shade300),
+                                        foregroundColor: Colors.red.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       // Lifecycle Actions
                       if (ride.status == DriverRideStatus.upcoming)
                         SizedBox(

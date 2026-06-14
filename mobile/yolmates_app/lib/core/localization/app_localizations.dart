@@ -234,6 +234,17 @@ class AppLocalizations {
   String get trustTripsCount => _get({'az': 'səyahət', 'en': 'trips', 'ru': 'поездок'});
   String get trustRating => _get({'az': 'Reytinq', 'en': 'Rating', 'ru': 'Рейтинг'});
 
+  // Active Ride Safety
+  String get safetyTitle => _get({'az': 'Təhlükəsizlik', 'en': 'Safety', 'ru': 'Безопасность'});
+  String get safetyShareTrip => _get({'az': 'Səfəri paylaş', 'en': 'Share trip', 'ru': 'Поделиться поездкой'});
+  String get safetyShareCopied => _get({'az': 'Məlumat kopyalandı', 'en': 'Trip details copied', 'ru': 'Информация скопирована'});
+  String get safetySOS => _get({'az': 'Təcili yardım (SOS)', 'en': 'Emergency (SOS)', 'ru': 'Экстренная помощь (SOS)'});
+  String get safetySOSConfirmTitle => _get({'az': 'Təcili yardım çağırın?', 'en': 'Call emergency services?', 'ru': 'Вызвать экстренную помощь?'});
+  String get safetySOSConfirmMessage => _get({'az': 'Təcili yardım nömrəsi: 112\n\nSəfər məlumatı buferə kopyalanacaq.', 'en': 'Emergency number: 112\n\nTrip details will be copied to clipboard.', 'ru': 'Экстренный номер: 112\n\nИнформация о поездке будет скопирована.'});
+  String get safetySOSCall => _get({'az': '112-yə zəng et', 'en': 'Call 112', 'ru': 'Позвонить 112'});
+  String get safetySOSCopy => _get({'az': 'Məlumatı kopyala', 'en': 'Copy details', 'ru': 'Скопировать данные'});
+  String get safetyCancel => _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отмена'});
+
   String _get(Map<String, String> translations) {
     return translations[language.name] ?? translations['az'] ?? '';
   }
