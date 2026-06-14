@@ -222,7 +222,7 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 ### Phase 3 — Wallet & payments
 - [x] **T3.1** `WalletRepository` interface + api + mock impls. Wire balance + transactions from payments domain (`docs/api-contract.md`). ✅ Created domain models (WalletBalance, WalletTransaction), DTOs, MockWalletRepository (demo data), ApiWalletRepository (GET /wallet/me, GET /wallet/me/transactions).
 - [x] **T3.2** Replace hardcoded `WalletScreen` data with controller (AsyncNotifier). Loading/error/empty states. ✅ WalletController with refresh/loadMore, WalletScreen wired, pull-to-refresh, mock banner only in mock mode.
-- [ ] **T3.3** "Add card" + "top up" flows — or, if backend not ready, gate behind a real feature flag and keep the demo banner honest (no fake balance shown as real).
+- [x] **T3.3** "Add card" + "top up" flows — or, if backend not ready, gate behind a real feature flag and keep the demo banner honest (no fake balance shown as real). ✅ Actions gated with "Tezliklə/Coming soon/Скоро" badges until backend documents POST /wallet/topup and POST /wallet/payment-methods endpoints. No fake payment flows.
 
 ### Phase 4 — Trust & safety UX (carpooling-critical)
 - [ ] **T4.1** Driver profile card: photo, verified badge, rating, trip count, vehicle + plate. Reuse on trip list/detail/booking.
