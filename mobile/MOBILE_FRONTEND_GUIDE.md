@@ -225,8 +225,8 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 - [x] **T3.3** "Add card" + "top up" flows — or, if backend not ready, gate behind a real feature flag and keep the demo banner honest (no fake balance shown as real). ✅ Actions gated with "Tezliklə/Coming soon/Скоро" badges until backend documents POST /wallet/topup and POST /wallet/payment-methods endpoints. No fake payment flows.
 
 ### Phase 4 — Trust & safety UX (carpooling-critical)
-- [ ] **T4.1** Driver profile card: photo, verified badge, rating, trip count, vehicle + plate. Reuse on trip list/detail/booking.
-- [ ] **T4.2** Trip detail: prominent "Verified driver" / "Documents checked" trust block.
+- [x] **T4.1** Driver profile card: photo, verified badge, rating, trip count, vehicle + plate. Reuse on trip list/detail/booking. ✅ Created DriverTrustCard widget (avatar/verified badge/rating/trip count, compact mode, message button). Used in TripDetailScreen.
+- [x] **T4.2** Trip detail: prominent "Verified driver" / "Documents checked" trust block. ✅ Created TripTrustBlock with gradient background, verification icon, safety message.
 - [ ] **T4.3** Active ride: "Share trip" (live link) + "SOS"/emergency contact button.
 - [ ] **T4.4** Post-trip review prompt (auto-surface `review_dialog` on trip complete).
 
