@@ -133,9 +133,7 @@ def get_pending_verifications(
     )
 
 
-@router.get(
-    "/verifications/{user_id}/document/{filename}", response_class=FileResponse
-)
+@router.get("/verifications/{user_id}/document/{filename}", response_class=FileResponse)
 def get_verification_document(
     user_id: UUID,
     filename: str,

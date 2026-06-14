@@ -58,9 +58,7 @@ class AdminRepository:
                     func.sum(
                         case(
                             (
-                                Booking.status.in_(
-                                    ("accepted", "paid", "completed")
-                                ),
+                                Booking.status.in_(("accepted", "paid", "completed")),
                                 payable_total,
                             ),
                             else_=0,

@@ -69,9 +69,7 @@ async def submit_verification(
         allowed_types=VERIFICATION_UPLOAD_TYPES,
         destination=VERIFICATION_UPLOADS_DIR,
     )
-    document_url = (
-        f"/api/v1/admin/verifications/{current_user.id}/document/{filename}"
-    )
+    document_url = f"/api/v1/admin/verifications/{current_user.id}/document/{filename}"
 
     user = IdentityService(db).submit_verification(current_user, document_url)
 
