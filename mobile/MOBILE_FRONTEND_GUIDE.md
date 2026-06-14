@@ -227,8 +227,8 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 ### Phase 4 — Trust & safety UX (carpooling-critical)
 - [x] **T4.1** Driver profile card: photo, verified badge, rating, trip count, vehicle + plate. Reuse on trip list/detail/booking. ✅ Created DriverTrustCard widget (avatar/verified badge/rating/trip count, compact mode, message button). Used in TripDetailScreen.
 - [x] **T4.2** Trip detail: prominent "Verified driver" / "Documents checked" trust block. ✅ Created TripTrustBlock with gradient background, verification icon, safety message.
-- [ ] **T4.3** Active ride: "Share trip" (live link) + "SOS"/emergency contact button.
-- [ ] **T4.4** Post-trip review prompt (auto-surface `review_dialog` on trip complete).
+- [x] **T4.3** Active ride: "Share trip" (live link) + "SOS"/emergency contact button. ✅ Share trip copies route/time/ID to clipboard (no fake tracking URL). SOS shows confirmation dialog with copy details + call 112 options. Safety section visible only during active rides.
+- [x] **T4.4** Post-trip review prompt (auto-surface `review_dialog` on trip complete). ✅ Auto-prompts once per booking when status is completed in BookingDetailScreen. Session-only guard prevents repeat prompts. Manual review button remains for user-initiated reviews.
 
 ### Phase 5 — Core flow polish
 - [ ] **T5.1** Home: real "Popular routes" from backend (or AI/trips), not hardcoded 3 cards.

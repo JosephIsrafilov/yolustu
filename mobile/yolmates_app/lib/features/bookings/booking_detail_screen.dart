@@ -11,6 +11,9 @@ import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
+/// Session-only set of booking IDs that have already shown review prompt.
+final _reviewPromptedBookingsProvider = StateProvider<Set<String>>((ref) => {});
+
 /// Detail view for a single booking.
 ///
 /// Reads the booking reactively from [bookingsControllerProvider]; exposes
@@ -58,6 +61,31 @@ class _Detail extends ConsumerStatefulWidget {
 
 class _DetailState extends ConsumerState<_Detail> {
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Schedule review prompt check after first frame
+    if (widget.booking.status == BookingStatus.completed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptReview());
+    }
+  }
+
+  void _maybePromptReview() {
+    final prompted = ref.read(_reviewPromptedBookingsProvider);
+    if (prompted.contains(widget.booking.id)) return;
+
+    // Mark as prompted
+    ref.read(_reviewPromptedBookingsProvider.notifier).state = {...prompted, widget.booking.id};
+
+    // Show dialog
+    ReviewDialog.show(
+      context,
+      targetId: widget.booking.driverId,
+      rideId: widget.booking.rideId,
+      targetName: widget.booking.driverName,
+    );
+  }
 
   Future<void> _setStatus(BookingStatus status) async {
     setState(() => _busy = true);
