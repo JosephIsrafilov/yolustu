@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function getCurvedPath(origin: [number, number], destination: [number, number]) {
   // basic straight line for fallback
-  return [origin, destination];
+  return [origin, destination] as [number, number][];
 }
 
 interface OsrmRouteResponse {
@@ -57,8 +57,13 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
     return () => controller.abort();
   }, [origin, destination]);
 
+  const fallbackPath = React.useMemo(() => {
+    if (!origin || !destination) return [];
+    return getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
+  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+
   if (!origin || !destination) {
-    return [];
+    return fallbackPath;
   }
 
   if (
@@ -71,7 +76,7 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
     return routeData.path;
   }
 
-  return getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
+  return fallbackPath;
 }
 
 export function useOsrmMultipleRoutes(

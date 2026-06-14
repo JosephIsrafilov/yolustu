@@ -10,7 +10,7 @@ import Select from '@/components/ui/Select';
 import { useAppStore } from '@/store/useAppStore';
 import Icon from '@/components/ui/Icon';
 import Pagination from '@/components/ui/Pagination';
-import LoadingState from '@/components/ui/LoadingState';
+import { Skeleton } from '@/components/ui/Skeleton';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import { adminService } from '@/services';
 import CreateUserModal from './CreateUserModal';
@@ -240,7 +240,14 @@ export default function AdminUsersPage() {
   const fetchUsers = useCallback(async (currentPage: number) => {
     setLoadError(false);
     try {
-      const res = await adminService.getUsers({ page: currentPage, limit });
+      const res = await adminService.getUsers({ 
+        page: currentPage, 
+        limit,
+        role: roleFilter === 'all' ? undefined : roleFilter,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        verification: verificationFilter === 'all' ? undefined : verificationFilter,
+        q: query || undefined,
+      });
       setUsers(res.items);
       setTotalPages(res.pages);
     } catch {
@@ -248,7 +255,7 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [limit]);
+  }, [limit, roleFilter, statusFilter, verificationFilter, query]);
 
   const retryFetch = () => {
     setIsLoading(true);
@@ -256,9 +263,16 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
+    setPage(1);
+  }, [query, roleFilter, statusFilter, verificationFilter]);
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    setIsLoading(true);
     const timeoutId = window.setTimeout(() => {
       void fetchUsers(page);
-    }, 0);
+    }, 300);
 
     return () => window.clearTimeout(timeoutId);
   }, [fetchUsers, page]);
@@ -349,15 +363,7 @@ export default function AdminUsersPage() {
   };
 
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredUsers = users.filter((user) => {
-    const matchesQuery = !normalizedQuery || [user.fullName, user.email, user.phone]
-      .filter(Boolean)
-      .some((value) => value.toLowerCase().includes(normalizedQuery));
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? !user.isBlocked : user.isBlocked);
-    const matchesVerification = verificationFilter === 'all' || user.verificationStatus === verificationFilter;
-    return matchesQuery && matchesRole && matchesStatus && matchesVerification;
-  });
+  const filteredUsers = users;
 
   const sortedUsers = useMemo(() => {
     if (!sortKey) return filteredUsers;
@@ -478,12 +484,12 @@ export default function AdminUsersPage() {
       )}
 
       <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm whitespace-nowrap table-fixed min-w-[1420px]">
+        <table className="w-full text-sm">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('fullName')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[280px] min-w-[280px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.user}</span>
@@ -496,7 +502,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('role')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.role}</span>
@@ -509,7 +515,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('rating')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rating}</span>
@@ -522,7 +528,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -535,7 +541,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[100px] min-w-[100px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -548,7 +554,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('verificationStatus')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[150px] min-w-[150px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.verification}</span>
@@ -561,7 +567,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[120px] min-w-[120px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -574,7 +580,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group w-[130px] min-w-[130px]"
+                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -585,16 +591,32 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="text-right px-6 py-4 font-semibold text-text-secondary w-[320px] min-w-[320px] sticky right-0 bg-surface-muted shadow-[-4px_0_12px_rgba(0,0,0,0.05)] z-10">{t.table.actions}</th>
+              <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr>
-                <td colSpan={9} className="px-6 py-12 text-center">
-                  <LoadingState />
-                </td>
-              </tr>
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                      <div className="flex flex-col gap-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                  <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-24 ml-auto" /></td>
+                </tr>
+              ))
             ) : loadError ? (
               <tr>
                 <td colSpan={9} className="px-6 py-8">
@@ -633,7 +655,7 @@ export default function AdminUsersPage() {
                 return (
                   <React.Fragment key={u.id}>
                     <tr className="group hover:bg-surface-dim transition-colors duration-150">
-                      <td className="px-6 py-4 w-[280px] min-w-[280px]">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
                             {u.avatarUrl ? (
@@ -643,34 +665,34 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className="font-medium text-text block truncate">{u.fullName}</span>
-                            <span className="text-xs text-text-muted truncate block">{u.email || u.phone || t.placeholder}</span>
+                            <span className="font-medium text-text break-words line-clamp-2 block">{u.fullName}</span>
+                            <span className="text-xs text-text-muted break-words line-clamp-2 block">{u.email || u.phone || t.placeholder}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 w-[120px] min-w-[120px]">
+                      <td className="px-6 py-4">
                         <Badge variant={roleVariant}>{roleLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4 w-[100px] min-w-[100px]">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-1 font-medium">
                           <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
                           {u.rating.toFixed(1)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 w-[100px] min-w-[100px] text-text">{u.totalTrips}</td>
-                      <td className="px-6 py-4 w-[100px] min-w-[100px] text-text">{bookingCount}</td>
-                      <td className="px-6 py-4 w-[150px] min-w-[150px]">
+                      <td className="px-6 py-4 text-text">{u.totalTrips}</td>
+                      <td className="px-6 py-4 text-text">{bookingCount}</td>
+                      <td className="px-6 py-4">
                         <Badge variant={verificationVariant}>{verificationLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4 w-[120px] min-w-[120px]">
+                      <td className="px-6 py-4">
                         {u.isBlocked ? (
                            <Badge variant="danger">{t.status.blocked}</Badge>
                         ) : (
                           <Badge variant="success">{t.status.active}</Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-[130px] min-w-[130px] text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
-                      <td className="px-6 py-4 text-right w-[320px] min-w-[320px] sticky right-0 bg-white group-hover:bg-surface-dim transition-colors duration-150 shadow-[-4px_0_12px_rgba(0,0,0,0.05)] z-10">
+                      <td className="px-6 py-4 text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
+                      <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
                             <Icon name="file-text" size={14} /> {t.actions.view}

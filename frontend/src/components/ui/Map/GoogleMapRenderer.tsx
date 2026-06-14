@@ -34,9 +34,13 @@ export default function GoogleMapRenderer({
     mapRef.current = null;
   }, []);
 
+  const lastFitBoundsRef = React.useRef<string>('');
+
   // Update bounds if they change after mount
   useEffect(() => {
-    if (mapRef.current && fitBounds && fitBounds.length > 0) {
+    const currentBoundsStr = JSON.stringify(fitBounds);
+    if (mapRef.current && fitBounds && fitBounds.length > 0 && lastFitBoundsRef.current !== currentBoundsStr) {
+      lastFitBoundsRef.current = currentBoundsStr;
       const bounds = new window.google.maps.LatLngBounds();
       fitBounds.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
       mapRef.current.fitBounds(bounds, 36);

@@ -25,7 +25,7 @@ jest.mock('@/store/useAppStore', () => ({
   }),
 }));
 
-// Mock map components to avoid loading leaflet in jsdom
+// Mock map components to avoid loading maps in jsdom
 jest.mock('@/components/ui/Map', () => ({
   MapContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="map-container">{children}</div>,
   LocationPicker: () => <div data-testid="location-picker">Location Picker</div>,

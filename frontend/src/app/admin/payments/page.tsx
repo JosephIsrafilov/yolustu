@@ -4,9 +4,9 @@ import React from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import LoadingState from '@/components/ui/LoadingState';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import Pagination from '@/components/ui/Pagination';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { paymentsService } from '@/services';
 import type { Payment, PaymentStatus } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -165,7 +165,7 @@ export default function AdminPaymentsPage() {
         </div>
       )}
       <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full min-w-[980px] text-sm">
+        <table className="w-full text-sm">
           <thead className="border-b border-border bg-surface-muted">
             <tr>
               <th className="px-4 py-3 text-left">{copy.booking}</th>
@@ -180,7 +180,18 @@ export default function AdminPaymentsPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={8} className="px-4 py-10"><LoadingState /></td></tr>
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+                  <td className="px-4 py-3 text-right"><Skeleton className="h-8 w-16 ml-auto" /></td>
+                </tr>
+              ))
             ) : loadError ? (
               <tr><td colSpan={8} className="px-4 py-8"><ErrorBanner message={copy.loadError} onRetry={() => void loadPayments()} retryLabel={copy.retry} /></td></tr>
             ) : payments.length === 0 ? (

@@ -1,19 +1,6 @@
-import { Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-
-const originIcon = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-const destinationIcon = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+import { useEffect } from 'react';
+import { MarkerF, useGoogleMap } from '@react-google-maps/api';
+import { PRESET_LOCATIONS } from '@/lib/utils';
 
 interface LocationPickerProps {
   origin?: { lat: number; lng: number };
@@ -21,44 +8,81 @@ interface LocationPickerProps {
   onSelectOrigin: (pos: { lat: number; lng: number }) => void;
   onSelectDestination: (pos: { lat: number; lng: number }) => void;
   mode: 'origin' | 'destination';
+  departureCity?: string;
+  arrivalCity?: string;
 }
 
-const LocationPicker = ({ origin, destination, onSelectOrigin, onSelectDestination, mode }: LocationPickerProps) => {
-  useMapEvents({
-    click(e) {
+const PRESET_ICON = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+
+const LocationPicker = ({
+  origin,
+  destination,
+  onSelectOrigin,
+  onSelectDestination,
+  mode,
+  departureCity,
+  arrivalCity,
+}: LocationPickerProps) => {
+  const map = useGoogleMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const listener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
+      const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
       if (mode === 'origin') {
-        onSelectOrigin(e.latlng);
+        onSelectOrigin(pos);
       } else {
-        onSelectDestination(e.latlng);
+        onSelectDestination(pos);
       }
-    },
-  });
+    });
+
+    return () => {
+      google.maps.event.removeListener(listener);
+    };
+  }, [map, mode, onSelectOrigin, onSelectDestination]);
+
+  const activeCity = mode === 'origin' ? departureCity : arrivalCity;
+  const presets = activeCity ? (PRESET_LOCATIONS[activeCity] ?? []) : [];
 
   return (
     <>
+      {presets.map((preset) => (
+        <MarkerF
+          key={preset.name}
+          position={{ lat: preset.lat, lng: preset.lng }}
+          icon={PRESET_ICON}
+          title={preset.name}
+          onClick={() => {
+            const pos = { lat: preset.lat, lng: preset.lng };
+            if (mode === 'origin') {
+              onSelectOrigin(pos);
+            } else {
+              onSelectDestination(pos);
+            }
+          }}
+        />
+      ))}
+
       {origin && (
-        <Marker
+        <MarkerF
           position={origin}
-          icon={originIcon}
           draggable={true}
-          eventHandlers={{
-            dragend: (e) => {
-              const marker = e.target;
-              onSelectOrigin(marker.getLatLng());
-            },
+          icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          onDragEnd={(e) => {
+            if (e.latLng) onSelectOrigin({ lat: e.latLng.lat(), lng: e.latLng.lng() });
           }}
         />
       )}
+
       {destination && (
-        <Marker
+        <MarkerF
           position={destination}
-          icon={destinationIcon}
           draggable={true}
-          eventHandlers={{
-            dragend: (e) => {
-              const marker = e.target;
-              onSelectDestination(marker.getLatLng());
-            },
+          icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          onDragEnd={(e) => {
+            if (e.latLng) onSelectDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() });
           }}
         />
       )}

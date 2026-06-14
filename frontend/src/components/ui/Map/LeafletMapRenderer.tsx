@@ -52,10 +52,14 @@ function ResizeMap() {
 function MapController({ center, zoom, fitBounds }: { center?: [number, number]; zoom?: number; fitBounds?: [number, number][] }) {
   const map = useMap();
 
+  const lastFitBoundsRef = React.useRef<string>('');
+
   useEffect(() => {
-    if (fitBounds && fitBounds.length > 0) {
+    const currentBoundsStr = JSON.stringify(fitBounds);
+    if (fitBounds && fitBounds.length > 0 && lastFitBoundsRef.current !== currentBoundsStr) {
+      lastFitBoundsRef.current = currentBoundsStr;
       map.fitBounds(L.latLngBounds(fitBounds), { padding: [36, 36], maxZoom: 11 });
-    } else if (center && zoom) {
+    } else if (center && zoom && (!fitBounds || fitBounds.length === 0)) {
       map.setView(center, zoom);
     }
   }, [center, zoom, fitBounds, map]);

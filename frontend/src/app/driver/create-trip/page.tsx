@@ -24,7 +24,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
 import { apiClient } from '@/services/api-client';
 import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
-import { apiAiService } from '@/services/api/api-ai-service';
+import { apiAiService, type PricingSuggestionResponse } from '@/services/api/api-ai-service';
 import { I18N } from '@/lib/i18n';
 import SuccessModal from '@/components/ui/SuccessModal';
 
@@ -129,7 +129,8 @@ export default function CreateTripPage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [carLayout, setCarLayout] = useState<'5-seater' | '7-seater'>('5-seater');
   const [isDrafting, setIsDrafting] = useState(false);
-  const [showPriceRecommendation, setShowPriceRecommendation] = useState(false);
+  const [priceSuggestion, setPriceSuggestion] = useState<PricingSuggestionResponse | null>(null);
+  const [isPriceFetching, setIsPriceFetching] = useState(false);
   const [prevCities, setPrevCities] = useState({ dep: '', arr: '' });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -182,7 +183,7 @@ export default function CreateTripPage() {
 
   if (formValues.departureCity !== prevCities.dep || formValues.arrivalCity !== prevCities.arr) {
     setPrevCities({ dep: formValues.departureCity || '', arr: formValues.arrivalCity || '' });
-    setShowPriceRecommendation(false);
+    setPriceSuggestion(null);
   }
 
   useEffect(() => {
@@ -217,21 +218,31 @@ export default function CreateTripPage() {
     return 12;
   }, [pickerMode, formValues.origin, formValues.destination, formValues.departureCity, formValues.arrivalCity]);
 
-  const getRecommendedPrice = (origin: string, dest: string): number | null => {
-    if (!origin || !dest) return null;
-    const o = origin.toLowerCase();
-    const d = dest.toLowerCase();
-    
-    if ((o === 'bakı' && d === 'şəki') || (o === 'şəki' && d === 'bakı')) return 24;
-    if ((o === 'bakı' && d === 'gəncə') || (o === 'gəncə' && d === 'bakı')) return 22;
-    if ((o === 'bakı' && d === 'quba') || (o === 'quba' && d === 'bakı')) return 15;
-    if ((o === 'bakı' && d === 'lənkəran') || (o === 'lənkəran' && d === 'bakı')) return 20;
-    if ((o === 'bakı' && d === 'şamaxı') || (o === 'şamaxı' && d === 'bakı')) return 10;
-    
-    return 15;
+  const fetchPriceSuggestion = async () => {
+    const values = getValues();
+    if (!values.departureCity || !values.arrivalCity) return;
+    setIsPriceFetching(true);
+    try {
+      const result = await apiAiService.getSmartPricingSuggestion({
+        origin: values.departureCity,
+        destination: values.arrivalCity,
+        departure_time: values.time || '09:00',
+        departure_date: values.date || undefined,
+        language: language,
+        origin_coords: values.origin || undefined,
+        destination_coords: values.destination || undefined,
+        car_model: vehicles.find(v => v.id === values.vehicleId)?.brand
+          ? `${vehicles.find(v => v.id === values.vehicleId)!.brand} ${vehicles.find(v => v.id === values.vehicleId)!.model}`
+          : undefined,
+        seats_total: values.seatsTotal || 4,
+      });
+      setPriceSuggestion(result);
+    } catch {
+      setPriceSuggestion(null);
+    } finally {
+      setIsPriceFetching(false);
+    }
   };
-
-  const recommendedPrice = getRecommendedPrice(formValues.departureCity, formValues.arrivalCity);
 
   const handleGenerateDescription = async () => {
     const values = getValues();
@@ -510,6 +521,8 @@ export default function CreateTripPage() {
                           mode={pickerMode}
                           origin={formValues.origin}
                           destination={formValues.destination}
+                          departureCity={formValues.departureCity}
+                          arrivalCity={formValues.arrivalCity}
                           onSelectOrigin={(pos) => { 
                             if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
                               setError('origin', { type: 'manual', message: copy.onlyAzerbaijanError });
@@ -613,21 +626,93 @@ export default function CreateTripPage() {
                     </div>
                     {errors.pricePerSeat && <p className="text-xs font-semibold text-red-500">{errors.pricePerSeat.message}</p>}
 
-                    {!showPriceRecommendation && recommendedPrice ? (
-                      <button type="button" onClick={() => setShowPriceRecommendation(true)} className="mt-2 text-xs font-bold text-teal-600 self-start flex items-center gap-1 hover:underline">
+                    {/* Price fairness scale */}
+                    {priceSuggestion && (() => {
+                      const suggested = priceSuggestion.suggested_price;
+                      const current = formValues.pricePerSeat || 0;
+                      const diff = current - suggested;
+                      const pct = suggested > 0 ? (diff / suggested) * 100 : 0;
+                      // clamp to -60..+100 for display
+                      const clampedPct = Math.max(-60, Math.min(100, pct));
+                      // bar fill: 50% = exactly at suggestion, >50% = above, <50% = below
+                      const fillPct = Math.max(5, Math.min(95, 50 + clampedPct * 0.5));
+
+                      let barColor = 'bg-emerald-500';
+                      let textColor = 'text-emerald-700';
+                      let label = language === 'az' ? 'Ədalətli' : language === 'ru' ? 'Справедливо' : 'Fair';
+
+                      if (pct > 60) {
+                        barColor = 'bg-red-500';
+                        textColor = 'text-red-600';
+                        label = language === 'az' ? 'Çox bahalı' : language === 'ru' ? 'Очень дорого' : 'Very expensive';
+                      } else if (pct > 30) {
+                        barColor = 'bg-orange-500';
+                        textColor = 'text-orange-600';
+                        label = language === 'az' ? 'Bahalı' : language === 'ru' ? 'Дорого' : 'Expensive';
+                      } else if (pct > 10) {
+                        barColor = 'bg-amber-400';
+                        textColor = 'text-amber-600';
+                        label = language === 'az' ? 'Biraz bahalı' : language === 'ru' ? 'Немного дорого' : 'Slightly high';
+                      } else if (pct < -30) {
+                        barColor = 'bg-blue-400';
+                        textColor = 'text-blue-600';
+                        label = language === 'az' ? 'Çox ucuz' : language === 'ru' ? 'Очень дёшево' : 'Very low';
+                      } else if (pct < -10) {
+                        barColor = 'bg-sky-400';
+                        textColor = 'text-sky-600';
+                        label = language === 'az' ? 'Ucuz' : language === 'ru' ? 'Дёшево' : 'Low';
+                      }
+
+                      const lowLabel = language === 'az' ? 'Ucuz' : language === 'ru' ? 'Дёшево' : 'Low';
+                      const highLabel = language === 'az' ? 'Bahalı' : language === 'ru' ? 'Дорого' : 'High';
+
+                      return (
+                        <div className="mt-3 flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{lowLabel}</span>
+                            <span className={`text-[11px] font-black ${textColor}`}>{label}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{highLabel}</span>
+                          </div>
+                          <div className="relative h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out ${barColor}`}
+                              style={{ width: `${fillPct}%` }}
+                            />
+                            {/* marker at the AI suggestion point (always at 50%) */}
+                            <div className="absolute top-0 h-full w-0.5 bg-slate-900/20" style={{ left: '50%' }} />
+                          </div>
+                          <div className="flex justify-center">
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              ↑ AI: {suggested} ₼
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {!priceSuggestion && !isPriceFetching && formValues.departureCity && formValues.arrivalCity ? (
+                      <button type="button" onClick={fetchPriceSuggestion} className="mt-2 text-xs font-bold text-teal-600 self-start flex items-center gap-1 hover:underline">
                         <Icon name="sparkles" size={12} />
                         {pageCopy.calcRecommendedPrice}
                       </button>
-                    ) : showPriceRecommendation && recommendedPrice && formValues.pricePerSeat !== recommendedPrice ? (
+                    ) : isPriceFetching ? (
+                      <div className="mt-2 flex items-center gap-2 text-xs font-bold text-teal-600">
+                        <Icon name="loader-2" size={14} className="animate-spin" />
+                        {pageCopy.calcRecommendedPrice}...
+                      </div>
+                    ) : priceSuggestion && formValues.pricePerSeat !== priceSuggestion.suggested_price ? (
                       <div className="mt-2 p-3 rounded-xl bg-teal-50 border border-teal-100 shadow-sm transition-all flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-1">
                           <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
                             <Icon name="sparkles" size={12} className="text-teal-500" /> 
-                            {pageCopy.aiPriceSuggestion || "Tövsiyə olunan qiymət"}: {recommendedPrice} ₼
+                            {pageCopy.aiPriceSuggestion}: {priceSuggestion.suggested_price} ₼
                           </span>
+                          {priceSuggestion.reasoning && (
+                            <span className="text-[11px] text-teal-600/80 leading-snug">{priceSuggestion.reasoning}</span>
+                          )}
                         </div>
-                        <button type="button" onClick={() => setValue('pricePerSeat', recommendedPrice)} className="w-full rounded-lg bg-white border border-teal-200 text-teal-700 font-bold text-xs py-2 hover:bg-teal-50 transition-all active:scale-95">
-                          {pageCopy.applySuggestion || "Tövsiyə olunan qiyməti istifadə et"}
+                        <button type="button" onClick={() => setValue('pricePerSeat', priceSuggestion.suggested_price)} className="w-full rounded-lg bg-white border border-teal-200 text-teal-700 font-bold text-xs py-2 hover:bg-teal-50 transition-all active:scale-95">
+                          {pageCopy.applySuggestion}
                         </button>
                       </div>
                     ) : null}

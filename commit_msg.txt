@@ -1,7 +1,0 @@
-feat(mobile): polish driver mode experience
-
-- add verified-driver mode entry and central driver panel
-- gate driver actions by verification status
-- connect driver dashboard to create ride, requests, rides, chats and active ride flows
-- improve mobile route, map and tracking UX for driver workflows
-- validate mobile viewport behavior with Flutter web and smoke coverage

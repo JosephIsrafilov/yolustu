@@ -27,6 +27,7 @@ export const createTripSlice: StateCreator<
   TripSlice
 > = (set, get) => ({
   trips: [],
+  myTrips: [],
   isLoadingTrips: false,
 
   fetchTrips: async (filters) => {
@@ -60,17 +61,33 @@ export const createTripSlice: StateCreator<
     }
   },
 
+  fetchMyTrips: async () => {
+    set({ isLoadingTrips: true });
+    try {
+      const myTrips = await tripsService.getMyTrips();
+      set((state) => {
+        const drivers = myTrips
+          .map((trip) => trip.driver)
+          .filter((driver): driver is NonNullable<typeof driver> => Boolean(driver));
+        const usersById = new Map(state.users.map((user) => [user.id, user]));
+        drivers.forEach((driver) => usersById.set(driver.id, driver));
+        return {
+          myTrips,
+          users: [...usersById.values()],
+          isLoadingTrips: false,
+          lastError: null,
+        };
+      });
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+      set({ isLoadingTrips: false, lastError: apiError.message || 'Failed to load your trips.' });
+    }
+  },
+
   createTrip: async (data) => {
     try {
       const newTrip = await tripsService.createTrip(data);
-      set((state) => ({
-        trips: [newTrip, ...state.trips],
-        users: newTrip.driver
-          ? [newTrip.driver, ...state.users.filter((user) => user.id !== newTrip.driver?.id)]
-          : state.users,
-        lastError: null,
-      }));
-      await get().fetchTrips();
+      await get().fetchMyTrips();
       return newTrip.id;
     } catch (error) {
       const apiError = toApiError(error);
@@ -81,14 +98,16 @@ export const createTripSlice: StateCreator<
 
   cancelTrip: async (tripId) => {
     try {
-      const trip = await tripsService.cancelTrip(tripId);
+      await tripsService.cancelTrip(tripId);
       set((state) => ({
         trips: state.trips.map((t) =>
-          t.id === tripId ? { ...t, ...trip } : t
+          t.id === tripId ? { ...t, status: 'cancelled' as const } : t
+        ),
+        myTrips: state.myTrips.map((t) =>
+          t.id === tripId ? { ...t, status: 'cancelled' as const } : t
         ),
         lastError: null,
       }));
-      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -99,14 +118,16 @@ export const createTripSlice: StateCreator<
 
   completeTrip: async (tripId) => {
     try {
-      const trip = await tripsService.completeTrip(tripId);
+      await tripsService.completeTrip(tripId);
       set((state) => ({
         trips: state.trips.map((t) =>
-          t.id === tripId ? { ...t, ...trip } : t
+          t.id === tripId ? { ...t, status: 'completed' as const } : t
+        ),
+        myTrips: state.myTrips.map((t) =>
+          t.id === tripId ? { ...t, status: 'completed' as const } : t
         ),
         lastError: null,
       }));
-      await get().fetchTrips();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -120,10 +141,10 @@ export const createTripSlice: StateCreator<
 
       set((state) => ({
         trips: state.trips.filter((t) => t.id !== tripId),
+        myTrips: state.myTrips.filter((t) => t.id !== tripId),
       }));
       return true;
     } catch (error) {
-      // Error handled silently
       return false;
     }
   },

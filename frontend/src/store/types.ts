@@ -44,9 +44,11 @@ export interface AuthSlice {
 
 export interface TripSlice {
   trips: Trip[];
+  myTrips: Trip[];
   isLoadingTrips: boolean;
 
   fetchTrips: (filters?: TripSearchFilters) => Promise<void>;
+  fetchMyTrips: () => Promise<void>;
   createTrip: (data: CreateTripData) => Promise<string>;
   cancelTrip: (tripId: string) => Promise<boolean>;
   completeTrip: (tripId: string) => Promise<boolean>;

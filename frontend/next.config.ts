@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
       },
     ],
     qualities: [75],
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 };
 
