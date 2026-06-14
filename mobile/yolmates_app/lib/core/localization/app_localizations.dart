@@ -227,6 +227,13 @@ class AppLocalizations {
   String get profileLogoutBtn => _get({'az': 'Çıxış et', 'en': 'Log out', 'ru': 'Выйти'});
   String get profileCancel => _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отмена'});
 
+  // Trust & Safety
+  String get trustVerifiedDriver => _get({'az': 'Təsdiqlənmiş sürücü', 'en': 'Verified driver', 'ru': 'Проверенный водитель'});
+  String get trustDocumentsChecked => _get({'az': 'Sənədlər yoxlanılıb', 'en': 'Documents verified', 'ru': 'Документы проверены'});
+  String get trustSafetyNote => _get({'az': 'Şəxsiyyət və sürücülük vəsiqəsi təsdiqlənib', 'en': 'Identity and license verified', 'ru': 'Удостоверение личности и права проверены'});
+  String get trustTripsCount => _get({'az': 'səyahət', 'en': 'trips', 'ru': 'поездок'});
+  String get trustRating => _get({'az': 'Reytinq', 'en': 'Rating', 'ru': 'Рейтинг'});
+
   String _get(Map<String, String> translations) {
     return translations[language.name] ?? translations['az'] ?? '';
   }

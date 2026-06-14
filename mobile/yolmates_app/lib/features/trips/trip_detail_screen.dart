@@ -1,51 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/trip.dart';
+import '../../shared/widgets/driver_trust_card.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
-class TripDetailScreen extends StatelessWidget {
+class TripDetailScreen extends ConsumerWidget {
   final String tripId;
 
   const TripDetailScreen({required this.tripId, super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final ride = MockData.rideById(tripId);
 
     if (ride == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Səyahət detalları')),
+        appBar: AppBar(title: Text(l10n.tripDetailTitle)),
         body: ErrorStateView(
-          title: 'Səyahət tapılmadı',
-          message: 'Bu səyahət artıq mövcud deyil.',
+          title: l10n.tripDetailNotFound,
+          message: l10n.tripDetailNotFoundMessage,
           onRetry: () => context.pop(),
-          retryLabel: 'Geri qayıt',
+          retryLabel: l10n.bookingDetailGoBack,
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Səyahət detalları')),
+      appBar: AppBar(title: Text(l10n.tripDetailTitle)),
       body: _Body(ride: ride),
       bottomNavigationBar: _BookingBar(ride: ride),
     );
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   final Trip ride;
 
   const _Body({required this.ride});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final time =
         '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -66,7 +71,7 @@ class _Body extends StatelessWidget {
                   children: [
                     Icon(Icons.arrow_forward, color: AppTheme.tealLight),
                     const SizedBox(height: 4),
-                    Text('~4 saat',
+                    Text(l10n.tripDetailDuration,
                         style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.7))),
                   ],
@@ -91,83 +96,47 @@ class _Body extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionTitle('Sürücü'),
+                // Trust block
+                const TripTrustBlock(),
+                const SizedBox(height: 20),
+
+                // Driver card
+                _SectionTitle(l10n.tripDetailDriverSection),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
-                      child: Text(
-                        ride.driver.name[0],
-                        style: const TextStyle(
-                          color: AppTheme.tealDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ride.driver.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  size: 16, color: Colors.amber),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${ride.driver.rating.toStringAsFixed(1)} · ${ride.driver.tripCount} səyahət',
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () =>
-                          context.push('/messages/conv-${ride.id}'),
-                      icon: const Icon(Icons.message_outlined),
-                    ),
-                  ],
+                DriverTrustCard(
+                  driver: ride.driver,
+                  showVerificationBadge: true,
+                  showMessageButton: true,
+                  onMessageTap: () => context.push('/messages/conv-${ride.id}'),
                 ),
                 const SizedBox(height: 24),
-                _SectionTitle('Səyahət məlumatları'),
+                _SectionTitle(l10n.tripDetailInfoSection),
                 const SizedBox(height: 12),
                 _DetailRow(
                   icon: Icons.event_seat,
-                  label: 'Boş yerlər',
-                  value: '${ride.availableSeats} yer',
+                  label: l10n.tripDetailAvailableSeats,
+                  value: '${ride.availableSeats} ${l10n.tripDetailSeatsUnit}',
                 ),
                 _DetailRow(
                   icon: Icons.directions_car,
-                  label: 'Avtomobil',
+                  label: l10n.tripDetailCar,
                   value: 'Toyota Camry',
                 ),
                 _DetailRow(
                   icon: Icons.luggage,
-                  label: 'Baqaj',
-                  value: 'Orta ölçülü çamadan',
+                  label: l10n.tripDetailLuggage,
+                  value: l10n.tripDetailLuggageSize,
                 ),
                 const SizedBox(height: 24),
-                _SectionTitle('Üstünlüklər'),
+                _SectionTitle(l10n.tripDetailPreferences),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: const [
-                    _PrefChip(icon: Icons.smoke_free, label: 'Siqaret yox'),
-                    _PrefChip(icon: Icons.music_note, label: 'Musiqi var'),
-                    _PrefChip(icon: Icons.luggage, label: 'Baqaj olar'),
+                  children: [
+                    _PrefChip(icon: Icons.smoke_free, label: l10n.tripDetailNoSmoking),
+                    _PrefChip(icon: Icons.music_note, label: l10n.tripDetailMusic),
+                    _PrefChip(icon: Icons.luggage, label: l10n.tripDetailLuggageAllowed),
                   ],
                 ),
               ],
@@ -282,13 +251,14 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _BookingBar extends StatelessWidget {
+class _BookingBar extends ConsumerWidget {
   final Trip ride;
 
   const _BookingBar({required this.ride});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -310,7 +280,7 @@ class _BookingBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Qiymət',
+                    Text(l10n.tripDetailPriceLabel,
                         style:
                             TextStyle(fontSize: 12, color: AppTheme.slate500)),
                     Text(
@@ -333,7 +303,7 @@ class _BookingBar extends StatelessWidget {
                         ? () => context.push('/booking/confirm/${ride.id}')
                         : null,
                     child: Text(
-                        ride.availableSeats > 0 ? 'Rezerv et' : 'Yer yoxdur'),
+                        ride.availableSeats > 0 ? l10n.tripDetailBookBtn : l10n.tripDetailNoSeats),
                   ),
                 ),
               ),
