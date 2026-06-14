@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
+
 /// Booking domain model (mock).
 ///
 /// Backend integration maps its booking DTO onto this shape.
@@ -26,6 +29,24 @@ extension BookingStatusX on BookingStatus {
         return 'Ödənildi';
       case BookingStatus.completed:
         return 'Tamamlandı';
+    }
+  }
+
+  /// Badge colors (background, foreground).
+  (Color, Color) get colors {
+    switch (this) {
+      case BookingStatus.pending:
+        return (Colors.orange.shade50, Colors.orange.shade700);
+      case BookingStatus.confirmed:
+        return (AppTheme.teal.withValues(alpha: 0.1), AppTheme.tealDark);
+      case BookingStatus.paid:
+        return (Colors.green.shade50, Colors.green.shade700);
+      case BookingStatus.completed:
+        return (AppTheme.slate100, AppTheme.slate700);
+      case BookingStatus.rejected:
+        return (Colors.red.shade50, Colors.red.shade700);
+      case BookingStatus.cancelled:
+        return (Colors.red.shade50, Colors.red.shade700);
     }
   }
 

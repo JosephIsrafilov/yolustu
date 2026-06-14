@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../core/repositories/rides_repository.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
-import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/skeleton_cards.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 
 /// Search results for a route, backed by [rideSearchProvider].
@@ -20,11 +21,13 @@ class TripListScreen extends ConsumerStatefulWidget {
   final String fromCity;
   final String toCity;
   final int passengers;
+  final DateTime? date;
 
   const TripListScreen({
     required this.fromCity,
     required this.toCity,
     this.passengers = 1,
+    this.date,
     super.key,
   });
 
@@ -41,6 +44,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final params = RideSearchParams(
       fromCity: widget.fromCity,
       toCity: widget.toCity,
@@ -48,12 +52,27 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
 
+    final dateLabel = widget.date != null
+        ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
+        : '';
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.fromCity} → ${widget.toCity}')),
+      appBar: AppBar(title: Text('${widget.fromCity} → ${widget.toCity}$dateLabel')),
       body: ridesAsync.when(
-        loading: () => const LoadingView(message: 'Səyahətlər axtarılır...'),
+        loading: () => Column(
+          children: [
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(AppConstants.spacing16),
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, __) => const TripCardSkeleton(),
+              ),
+            ),
+          ],
+        ),
         error: (e, _) => ErrorStateView(
-          title: 'Axtarış alınmadı',
+          title: l10n.tripListSearchFailed,
           message: e.toString(),
           onRetry: () => ref.invalidate(rideSearchProvider(params)),
         ),
@@ -102,11 +121,10 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
         ],
         Expanded(
           child: filtered.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.search_off,
-                  title: 'Səyahət tapılmadı',
-                  message: 'Bu marşrut üçün uyğun reis yoxdur. '
-                      'Filtri dəyişin və ya başqa tarix seçin.',
+                  title: ref.read(l10nProvider).tripListNoResults,
+                  message: ref.read(l10nProvider).tripListNoResultsMessage,
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(AppConstants.spacing16),
@@ -133,7 +151,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
   }
 }
 
-class _FilterBar extends StatelessWidget {
+class _FilterBar extends ConsumerWidget {
   final _Sort sort;
   final bool verifiedOnly;
   final ValueChanged<_Sort> onSort;
@@ -147,7 +165,8 @@ class _FilterBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -157,19 +176,19 @@ class _FilterBar extends StatelessWidget {
       child: Row(
         children: [
           _chip(
-            label: 'Vaxt',
+            label: l10n.tripListSortTime,
             selected: sort == _Sort.timeAsc,
             onTap: () => onSort(_Sort.timeAsc),
           ),
           const SizedBox(width: 8),
           _chip(
-            label: 'Qiymət',
+            label: l10n.tripListSortPrice,
             selected: sort == _Sort.priceAsc,
             onTap: () => onSort(_Sort.priceAsc),
           ),
           const Spacer(),
           _chip(
-            label: 'Yoxlanılmış',
+            label: l10n.tripListVerifiedOnly,
             icon: Icons.verified,
             selected: verifiedOnly,
             onTap: () => onVerified(!verifiedOnly),

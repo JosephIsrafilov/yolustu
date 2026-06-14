@@ -34,6 +34,37 @@ import '../features/trips/trip_detail_screen.dart';
 import '../features/wallet/wallet_screen.dart';
 import '../shared/widgets/main_shell.dart';
 
+/// Shared axis transition for secondary routes.
+Page<T> _buildPageWithTransition<T>(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(0.03, 0);
+      const end = Offset.zero;
+      const curve = Curves.easeInOut;
+      final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      final offsetAnimation = animation.drive(tween);
+      final fadeAnimation = CurvedAnimation(parent: animation, curve: curve);
+
+      return SlideTransition(
+        position: offsetAnimation,
+        child: FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        ),
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 250),
+  );
+}
+
+/// Centralized route paths. Use these constants instead of raw strings.
+
 /// Centralized route paths. Use these constants instead of raw strings.
 class AppRoutes {
   AppRoutes._();
@@ -220,95 +251,173 @@ final routerProvider = Provider<GoRouter>((ref) {
       // --- Secondary routes (above the shell, full screen, normal back) ---
       GoRoute(
         path: '/trips/:id',
-        builder: (context, state) =>
-            TripDetailScreen(tripId: state.pathParameters['id']!),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          TripDetailScreen(tripId: state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: '/trips-list',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final q = state.uri.queryParameters;
-          return TripListScreen(
-            fromCity: q['from'] ?? 'Bakı',
-            toCity: q['to'] ?? 'Gəncə',
-            passengers: int.tryParse(q['passengers'] ?? '1') ?? 1,
+          DateTime? date;
+          if (q['date'] != null) {
+            try {
+              date = DateTime.parse(q['date']!);
+            } catch (_) {
+              // Invalid date format, ignore
+            }
+          }
+          return _buildPageWithTransition(
+            context,
+            state,
+            TripListScreen(
+              fromCity: q['from'] ?? 'Bakı',
+              toCity: q['to'] ?? 'Gəncə',
+              passengers: int.tryParse(q['passengers'] ?? '1') ?? 1,
+              date: date,
+            ),
           );
         },
       ),
       GoRoute(
         path: '/booking/confirm/:rideId',
-        builder: (context, state) => BookingConfirmScreen(
-          rideId: state.pathParameters['rideId']!,
-          initialSeats:
-              int.tryParse(state.uri.queryParameters['seats'] ?? '1') ?? 1,
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          BookingConfirmScreen(
+            rideId: state.pathParameters['rideId']!,
+            initialSeats:
+                int.tryParse(state.uri.queryParameters['seats'] ?? '1') ?? 1,
+          ),
         ),
       ),
       GoRoute(
         path: '/bookings/:id',
-        builder: (context, state) =>
-            BookingDetailScreen(bookingId: state.pathParameters['id']!),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          BookingDetailScreen(bookingId: state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: '/messages/:id',
-        builder: (context, state) =>
-            ChatDetailScreen(conversationId: state.pathParameters['id']!),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ChatDetailScreen(conversationId: state.pathParameters['id']!),
+        ),
       ),
 
       // Profile sub-pages
       GoRoute(
         path: AppRoutes.settings,
-        builder: (_, __) => const SettingsScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const SettingsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.support,
-        builder: (_, __) => const SupportScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const SupportScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (_, __) => const NotificationsScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const NotificationsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.reviews,
-        builder: (_, __) => const ReviewsScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const ReviewsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.wallet,
-        builder: (_, __) => const WalletScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const WalletScreen(),
+        ),
       ),
 
       // Driver
       GoRoute(
         path: AppRoutes.driverPanel,
-        builder: (_, __) => const DriverPanelScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const DriverPanelScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.driverOnboarding,
-        builder: (_, __) => const DriverOnboardingScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const DriverOnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.addVehicle,
-        builder: (_, __) => const AddVehicleScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const AddVehicleScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.driverVerification,
-        builder: (_, __) => const DriverVerificationScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const DriverVerificationScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.createRide,
-        builder: (_, __) => const CreateRideScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const CreateRideScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.myRides,
-        builder: (_, __) => const MyRidesScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MyRidesScreen(),
+        ),
       ),
       GoRoute(
         path: '${AppRoutes.myRides}/:id',
-        builder: (context, state) => ActiveRideScreen(
-          rideId: state.pathParameters['id']!,
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ActiveRideScreen(
+            rideId: state.pathParameters['id']!,
+          ),
         ),
       ),
       GoRoute(
         path: AppRoutes.passengerRequests,
-        builder: (_, __) => const PassengerRequestsScreen(),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const PassengerRequestsScreen(),
+        ),
       ),
     ],
   );

@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
-import '../../features/auth/data/app_user.dart';
-import '../../features/auth/state/auth_controller.dart';
 
 /// Bottom-navigation shell for the authenticated main app.
 ///
@@ -27,9 +25,6 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userState = ref.watch(authControllerProvider);
-    final user = userState.user;
-    final isDriver = user?.role == UserRole.driver;
     final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
@@ -47,7 +42,7 @@ class MainShell extends ConsumerWidget {
           BottomNavigationBarItem(
             icon: const Icon(Icons.home_outlined),
             activeIcon: const Icon(Icons.home),
-            label: l10n.navSearch, // Assuming Home translates to something or we can use a hardcoded 'Ana səhifə' if missing, let's use 'Ana səhifə' 
+            label: l10n.navHome,
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.search_outlined),

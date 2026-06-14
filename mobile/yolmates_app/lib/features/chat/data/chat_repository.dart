@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/network/providers.dart';
-import '../../auth/state/auth_controller.dart';
 import 'chat_models.dart';
 
 abstract class ChatRepository {

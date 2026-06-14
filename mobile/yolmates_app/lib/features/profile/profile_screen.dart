@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../auth/data/app_user.dart';
@@ -18,11 +19,12 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authControllerProvider).user;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: Text(l10n.profileTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -39,22 +41,22 @@ class ProfileScreen extends ConsumerWidget {
             items: [
               _MenuItem(
                 icon: Icons.account_balance_wallet_outlined,
-                label: 'Pul kisəsi',
+                label: l10n.profileWallet,
                 onTap: () => context.push(AppRoutes.wallet),
               ),
               _MenuItem(
                 icon: Icons.confirmation_number_outlined,
-                label: 'Rezervasiyalarım',
+                label: l10n.profileReservations,
                 onTap: () => context.go(AppRoutes.bookings),
               ),
               _MenuItem(
                 icon: Icons.star_outline,
-                label: 'Rəylər',
+                label: l10n.profileReviews,
                 onTap: () => context.push(AppRoutes.reviews),
               ),
               _MenuItem(
                 icon: Icons.notifications_outlined,
-                label: 'Bildirişlər',
+                label: l10n.profileNotifications,
                 onTap: () => context.push(AppRoutes.notifications),
               ),
             ],
@@ -65,19 +67,19 @@ class ProfileScreen extends ConsumerWidget {
               if (user?.verificationStatus == 'approved') ...[
                 _MenuItem(
                   icon: Icons.dashboard_outlined,
-                  label: 'Sürücü Paneli',
+                  label: l10n.profileDriverPanel,
                   onTap: () => context.push(AppRoutes.driverPanel),
                 ),
               ] else if (user?.verificationStatus == 'pending') ...[
                 _MenuItem(
                   icon: Icons.hourglass_empty,
-                  label: 'Sürücü statusu: Yoxlanılır',
+                  label: l10n.profileDriverPending,
                   onTap: () => context.push(AppRoutes.driverVerification),
                 ),
               ] else ...[
                 _MenuItem(
                   icon: Icons.directions_car_outlined,
-                  label: 'Sürücü olmaq istəyirsiniz?',
+                  label: l10n.profileBecomeDriver,
                   onTap: () => context.push(AppRoutes.driverOnboarding),
                 ),
               ],
@@ -88,12 +90,12 @@ class ProfileScreen extends ConsumerWidget {
             items: [
               _MenuItem(
                 icon: Icons.settings_outlined,
-                label: 'Parametrlər',
+                label: l10n.profileSettingsMenu,
                 onTap: () => context.push(AppRoutes.settings),
               ),
               _MenuItem(
                 icon: Icons.help_outline,
-                label: 'Kömək',
+                label: l10n.profileHelp,
                 onTap: () => context.push(AppRoutes.support),
               ),
             ],
@@ -103,7 +105,7 @@ class ProfileScreen extends ConsumerWidget {
             items: [
               _MenuItem(
                 icon: Icons.logout,
-                label: 'Çıxış',
+                label: l10n.profileLogoutBtn,
                 danger: true,
                 onTap: () => _confirmLogout(context, ref),
               ),
@@ -115,6 +117,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final l10n = ref.read(l10nProvider);
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
@@ -125,8 +128,8 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Çıxış etmək istəyirsiniz?',
+              Text(
+                l10n.profileLogoutConfirm,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
@@ -145,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
                   ),
-                  child: const Text('Çıxış et'),
+                  child: Text(l10n.profileLogoutBtn),
                 ),
               ),
               const SizedBox(height: 8),

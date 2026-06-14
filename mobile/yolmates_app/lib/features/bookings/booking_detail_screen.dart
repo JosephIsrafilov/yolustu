@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/error_state.dart';
+import '../../shared/widgets/status_badge.dart';
 import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
@@ -20,6 +22,7 @@ class BookingDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final booking = ref.watch(
       bookingsControllerProvider.select((s) {
         final list = s.valueOrNull;
@@ -32,12 +35,12 @@ class BookingDetailScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rezervasiya detalları')),
+      appBar: AppBar(title: Text(l10n.bookingDetailTitle)),
       body: booking == null
           ? ErrorStateView(
-              title: 'Rezervasiya tapılmadı',
+              title: l10n.bookingDetailNotFound,
               onRetry: () => context.pop(),
-              retryLabel: 'Geri qayıt',
+              retryLabel: l10n.bookingDetailGoBack,
             )
           : _Detail(booking: booking),
     );
@@ -68,20 +71,21 @@ class _DetailState extends ConsumerState<_Detail> {
   }
 
   Future<void> _cancel() async {
+    final l10n = ref.read(l10nProvider);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rezervasiyanı ləğv et'),
-        content: const Text('Bu rezervasiyanı ləğv etmək istəyirsiniz?'),
+        title: Text(l10n.bookingDetailCancelTitle),
+        content: Text(l10n.bookingDetailCancelMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('İmtina'),
+            child: Text(l10n.bookingDetailDismiss),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child:
-                Text('Ləğv et', style: TextStyle(color: Colors.red.shade600)),
+                Text(l10n.bookingDetailCancelBtn, style: TextStyle(color: Colors.red.shade600)),
           ),
         ],
       ),
@@ -91,6 +95,7 @@ class _DetailState extends ConsumerState<_Detail> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final b = widget.booking;
     final time =
         '${b.departureTime.hour.toString().padLeft(2, '0')}:${b.departureTime.minute.toString().padLeft(2, '0')}';
@@ -107,17 +112,21 @@ class _DetailState extends ConsumerState<_Detail> {
               '${b.fromCity} → ${b.toCity}',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            _StatusBadge(status: b.status),
+            StatusBadge(
+              label: b.status.label,
+              backgroundColor: b.status.colors.$1,
+              foregroundColor: b.status.colors.$2,
+            ),
           ],
         ),
         const SizedBox(height: 20),
         _InfoCard(
           rows: [
-            _InfoRow(Icons.calendar_today, 'Tarix', date),
-            _InfoRow(Icons.access_time, 'Vaxt', time),
-            _InfoRow(Icons.person, 'Sürücü', b.driverName),
-            _InfoRow(Icons.event_seat, 'Yerlər', '${b.seats}'),
-            _InfoRow(Icons.payments_outlined, 'Cəmi',
+            _InfoRow(Icons.calendar_today, l10n.bookingDetailDate, date),
+            _InfoRow(Icons.access_time, l10n.bookingDetailTime, time),
+            _InfoRow(Icons.person, l10n.bookingDetailDriver, b.driverName),
+            _InfoRow(Icons.event_seat, l10n.bookingDetailSeats, '${b.seats}'),
+            _InfoRow(Icons.payments_outlined, l10n.bookingDetailTotal,
                 '${b.total.toStringAsFixed(0)} AZN'),
           ],
         ),
@@ -132,7 +141,7 @@ class _DetailState extends ConsumerState<_Detail> {
             child: OutlinedButton.icon(
               onPressed: () => context.push('/messages/conv-${b.rideId}'),
               icon: const Icon(Icons.message_outlined),
-              label: const Text('Sürücüyə yaz'),
+              label: Text(l10n.bookingDetailMessageDriver),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.slate500,
               ),
@@ -152,7 +161,7 @@ class _DetailState extends ConsumerState<_Detail> {
                 targetName: b.driverName,
               ),
               icon: const Icon(Icons.star),
-              label: const Text('Sürücüyə rəy bildir'),
+              label: Text(l10n.bookingDetailLeaveReview),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.teal,
               ),
@@ -167,7 +176,7 @@ class _DetailState extends ConsumerState<_Detail> {
             child: OutlinedButton.icon(
               onPressed: _busy ? null : _cancel,
               icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Rezervasiyanı ləğv et'),
+              label: Text(l10n.bookingDetailCancelTitle),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red.shade600,
               ),
@@ -230,36 +239,6 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final BookingStatus status;
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      BookingStatus.pending => (Colors.orange.shade50, Colors.orange.shade700),
-      BookingStatus.confirmed => (
-          AppTheme.teal.withValues(alpha: 0.1),
-          AppTheme.tealDark
-        ),
-      BookingStatus.paid => (Colors.green.shade50, Colors.green.shade700),
-      BookingStatus.completed => (AppTheme.slate100, AppTheme.slate700),
-      BookingStatus.rejected => (Colors.red.shade50, Colors.red.shade700),
-      BookingStatus.cancelled => (Colors.red.shade50, Colors.red.shade700),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.label,
-        style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
 
 class _Timeline extends StatelessWidget {
   final BookingStatus status;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../core/theme_provider.dart';
 import '../auth/data/app_user.dart';
 import '../auth/state/auth_controller.dart';
 
@@ -22,15 +23,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailNotifications = false;
 
-  static const _languageLabels = {
-    AppLanguage.az: 'Azərbaycan',
-    AppLanguage.ru: 'Rus',
-    AppLanguage.en: 'İngilis',
-  };
-
   @override
   Widget build(BuildContext context) {
     final language = ref.watch(languageProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
@@ -38,34 +34,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spacing16),
         children: [
-          _SectionLabel('Ümumi'),
+          _SectionLabel(l10n.settingsGeneral),
           _Card(
             children: [
               ListTile(
                 leading: const Icon(Icons.language),
-                title: const Text('Dil'),
-                subtitle: Text(_languageLabels[language]!),
+                title: Text(l10n.settingsLanguageTitle),
+                subtitle: Text(_getLanguageLabel(language, l10n)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _pickLanguage(context, language),
               ),
               const _Sep(),
-              SwitchListTile.adaptive(
-                secondary: const Icon(Icons.dark_mode_outlined),
-                title: const Text('Qaranlıq rejim'),
-                subtitle: const Text('Tezliklə'),
-                value: false,
-                activeThumbColor: AppTheme.teal,
-                onChanged: null,
+              ListTile(
+                leading: const Icon(Icons.dark_mode_outlined),
+                title: Text(l10n.settingsDarkMode),
+                subtitle: Text(_themeModeLabel(themeMode, l10n)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _pickThemeMode(context, themeMode),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _SectionLabel('Bildirişlər'),
+          _SectionLabel(l10n.settingsNotifications),
           _Card(
             children: [
               SwitchListTile.adaptive(
                 secondary: const Icon(Icons.notifications_outlined),
-                title: const Text('Push bildirişləri'),
+                title: Text(l10n.settingsPushNotifications),
                 value: _pushNotifications,
                 activeThumbColor: AppTheme.teal,
                 onChanged: (v) => setState(() => _pushNotifications = v),
@@ -73,7 +68,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _Sep(),
               SwitchListTile.adaptive(
                 secondary: const Icon(Icons.email_outlined),
-                title: const Text('E-poçt bildirişləri'),
+                title: Text(l10n.settingsEmailNotifications),
                 value: _emailNotifications,
                 activeThumbColor: AppTheme.teal,
                 onChanged: (v) => setState(() => _emailNotifications = v),
@@ -81,21 +76,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          _SectionLabel('Hesab'),
+          _SectionLabel(l10n.settingsAccount),
           _Card(
             children: [
               ListTile(
                 leading: const Icon(Icons.lock_outline),
-                title: const Text('Təhlükəsizlik'),
-                subtitle: const Text('Tezliklə'),
+                title: Text(l10n.settingsSecurity),
+                subtitle: Text(l10n.settingsComingSoon),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _comingSoon(context),
               ),
               const _Sep(),
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
-                title: const Text('Məxfilik'),
-                subtitle: const Text('Tezliklə'),
+                title: Text(l10n.settingsPrivacy),
+                subtitle: Text(l10n.settingsComingSoon),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _comingSoon(context),
               ),
@@ -106,7 +101,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  String _getLanguageLabel(AppLanguage lang, AppLocalizations l10n) {
+    return switch (lang) {
+      AppLanguage.az => l10n.settingsLanguageAz,
+      AppLanguage.en => l10n.settingsLanguageEn,
+      AppLanguage.ru => l10n.settingsLanguageRu,
+    };
+  }
+
   Future<void> _pickLanguage(BuildContext context, AppLanguage current) async {
+    final l10n = ref.read(l10nProvider);
     final picked = await showModalBottomSheet<AppLanguage>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -120,7 +124,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               for (final lang in AppLanguage.values)
                 RadioListTile<AppLanguage>(
                   value: lang,
-                  title: Text(_languageLabels[lang]!),
+                  title: Text(_getLanguageLabel(lang, l10n)),
                 ),
             ],
           ),
@@ -129,7 +133,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (picked != null && picked != current) {
       ref.read(languageProvider.notifier).setLanguage(picked);
-      
+
       final user = ref.read(authControllerProvider).user;
       if (user != null) {
         await ref.read(authControllerProvider.notifier).completeProfile(
@@ -143,9 +147,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  String _themeModeLabel(ThemeMode mode, AppLocalizations l10n) {
+    return switch (mode) {
+      ThemeMode.light => l10n.settingsThemeLight,
+      ThemeMode.dark => l10n.settingsThemeDark,
+      ThemeMode.system => l10n.settingsThemeSystem,
+    };
+  }
+
+  Future<void> _pickThemeMode(BuildContext context, ThemeMode current) async {
+    final l10n = ref.read(l10nProvider);
+    final picked = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: RadioGroup<ThemeMode>(
+          groupValue: current,
+          onChanged: (v) => Navigator.of(ctx).pop(v),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Text(
+                  l10n.settingsDarkMode,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              for (final mode in ThemeMode.values)
+                RadioListTile<ThemeMode>(
+                  value: mode,
+                  title: Text(_themeModeLabel(mode, l10n)),
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null && picked != current) {
+      ref.read(themeModeProvider.notifier).setThemeMode(picked);
+    }
+  }
+
   void _comingSoon(BuildContext context) {
+    final l10n = ref.read(l10nProvider);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bu bölmə tezliklə əlçatan olacaq')),
+      SnackBar(content: Text('${l10n.settingsComingSoon}...')),
     );
   }
 }

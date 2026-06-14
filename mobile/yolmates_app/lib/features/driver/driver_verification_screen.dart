@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/status_badge.dart';
 import '../auth/data/auth_mode.dart';
 import '../auth/state/auth_controller.dart';
 import 'data/vehicle.dart';
@@ -178,7 +179,11 @@ class _VerifyTile extends StatelessWidget {
                 Text(subtitle,
                     style: TextStyle(color: AppTheme.slate500, fontSize: 13)),
                 const SizedBox(height: 8),
-                _StatusChip(status: status),
+                StatusBadge(
+                  label: status.label,
+                  backgroundColor: status.colors.$1,
+                  foregroundColor: status.colors.$2,
+                ),
               ],
             ),
           ),
@@ -188,37 +193,6 @@ class _VerifyTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final VerificationStatus status;
-  const _StatusChip({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      VerificationStatus.approved => (
-          Colors.green.shade50,
-          Colors.green.shade700
-        ),
-      VerificationStatus.pending => (
-          Colors.orange.shade50,
-          Colors.orange.shade700
-        ),
-      VerificationStatus.rejected => (Colors.red.shade50, Colors.red.shade700),
-      VerificationStatus.notSubmitted => (AppTheme.slate100, AppTheme.slate700),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(status.label,
-          style:
-              TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
 }

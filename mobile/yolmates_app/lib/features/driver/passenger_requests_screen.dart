@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/status_badge.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 
@@ -94,7 +95,11 @@ class _RequestCard extends ConsumerWidget {
                 ),
               ),
               if (request.status != RequestStatus.pending)
-                _StatusBadge(status: request.status),
+                StatusBadge(
+                  label: request.status.label,
+                  backgroundColor: request.status.colors.$1,
+                  foregroundColor: request.status.colors.$2,
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -153,31 +158,3 @@ class _RequestCard extends ConsumerWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final RequestStatus status;
-
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      RequestStatus.pending => (Colors.orange.shade50, Colors.orange.shade700),
-      RequestStatus.accepted => (
-          AppTheme.teal.withValues(alpha: 0.1),
-          AppTheme.tealDark
-        ),
-      RequestStatus.rejected => (Colors.red.shade50, Colors.red.shade700),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.label,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}

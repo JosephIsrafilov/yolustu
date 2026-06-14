@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../auth/state/auth_controller.dart';
@@ -18,6 +19,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authControllerProvider).user;
     final userStatus = user?.verificationStatus ?? 'none';
 
@@ -26,15 +28,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final IconData btnIcon;
 
     if (userStatus == 'approved') {
-      btnLabel = 'Sürücü Paneli';
+      btnLabel = l10n.homeDriverPanelBtn;
       btnAction = () => context.push(AppRoutes.driverPanel);
       btnIcon = Icons.dashboard_outlined;
     } else if (userStatus == 'pending') {
-      btnLabel = 'Sənədlər yoxlanılır';
+      btnLabel = l10n.homeDocumentsPendingBtn;
       btnAction = () => context.push(AppRoutes.driverVerification);
       btnIcon = Icons.hourglass_empty;
     } else {
-      btnLabel = 'Sürücü ol';
+      btnLabel = l10n.homeBecomeDriverBtn;
       btnAction = () => context.push(AppRoutes.driverOnboarding);
       btnIcon = Icons.directions_car;
     }
@@ -107,9 +109,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 40),
 
                       // Hero Text
-                      const Text(
-                        'Azərbaycan daxilində',
-                        style: TextStyle(
+                      Text(
+                        l10n.homeHeroTitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -118,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'yolu paylaşın',
+                        l10n.homeHeroSubtitle,
                         style: TextStyle(
                           color: AppTheme.tealLight,
                           fontSize: 32,
@@ -128,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Rahat, təhlükəsiz və ucuz səyahət',
+                        l10n.homeHeroDescription,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 16,
@@ -149,13 +151,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Column(
                           children: [
                             _buildSearchField(
-                              label: 'Haradan',
+                              label: l10n.searchFromLabel,
                               value: _from,
                               icon: Icons.location_on_outlined,
                             ),
                             const SizedBox(height: 12),
                             _buildSearchField(
-                              label: 'Hara',
+                              label: l10n.searchToLabel,
                               value: _to,
                               icon: Icons.location_on,
                             ),
@@ -174,14 +176,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.search, size: 20),
-                                    SizedBox(width: 8),
+                                    const Icon(Icons.search, size: 20),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Axtar',
-                                      style: TextStyle(
+                                      l10n.commonSearch,
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -239,9 +241,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Populyar marşrutlar',
-                    style: TextStyle(
+                  Text(
+                    l10n.homePopularRoutes,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -344,7 +346,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Gündəlik 15+ reis',
+                    ref.read(l10nProvider).homeDailyTrips,
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.slate500,

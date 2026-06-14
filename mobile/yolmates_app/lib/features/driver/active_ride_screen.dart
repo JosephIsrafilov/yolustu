@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/status_badge.dart';
 import '../trips/data/ride_tracking_repository.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import 'data/driver_controller.dart';
@@ -168,7 +169,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
                               ),
                             ],
                           ),
-                          _StatusBadge(status: ride.status, customLabel: label),
+                          StatusBadge(
+                            label: label,
+                            backgroundColor: ride.status.colors.$1,
+                            foregroundColor: ride.status.colors.$2,
+                          ),
                         ],
                       ),
                       const Spacer(),
@@ -262,31 +267,3 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final DriverRideStatus status;
-  final String customLabel;
-
-  const _StatusBadge({required this.status, required this.customLabel});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      DriverRideStatus.active => (Colors.green.shade50, Colors.green.shade700),
-      DriverRideStatus.upcoming => (Colors.blue.shade50, Colors.blue.shade700),
-      DriverRideStatus.completed => (AppTheme.slate100, AppTheme.slate700),
-      DriverRideStatus.cancelled => (Colors.red.shade50, Colors.red.shade700),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        customLabel,
-        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}

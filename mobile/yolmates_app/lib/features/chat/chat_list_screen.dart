@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/error_state.dart';
+import '../../shared/widgets/skeleton_cards.dart';
 import 'data/chat_controller.dart';
 
 /// Messages tab: conversation list.
@@ -19,6 +21,16 @@ class ChatListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.chatTitle)),
       body: conversationsAsync.when(
+        loading: () => ListView.separated(
+          itemCount: 5,
+          separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.slate100),
+          itemBuilder: (_, __) => const ChatCardSkeleton(),
+        ),
+        error: (e, _) => ErrorStateView(
+          title: 'Yüklənmədi',
+          message: e.toString(),
+          onRetry: () => ref.invalidate(conversationsProvider),
+        ),
         data: (conversations) {
           if (conversations.isEmpty) {
             return const EmptyState(
@@ -108,8 +120,6 @@ class ChatListScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text(l10n.commonError)),
       ),
     );
   }

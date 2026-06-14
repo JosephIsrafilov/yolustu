@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../auth/state/auth_controller.dart';
@@ -12,23 +13,24 @@ class DriverPanelScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authControllerProvider).user;
 
     // Safety fallback (should be guarded by routes.dart anyway)
     if (user?.verificationStatus != 'approved') {
       return Scaffold(
-        appBar: AppBar(title: const Text('Sürücü Paneli')),
+        appBar: AppBar(title: Text(l10n.driverPanelTitle)),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.lock_outline, size: 64, color: AppTheme.slate500),
               const SizedBox(height: 16),
-              const Text('Bu səhifəyə giriş qadağandır.'),
+              Text(l10n.driverPanelAccessDenied),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.pop(),
-                child: const Text('Geri qayıt'),
+                child: Text(l10n.driverPanelGoBack),
               ),
             ],
           ),
@@ -38,11 +40,11 @@ class DriverPanelScreen extends ConsumerWidget {
 
     final name = (user?.fullName.trim().isNotEmpty ?? false)
         ? user!.fullName
-        : 'Sürücü';
+        : l10n.commonPassenger;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sürücü Paneli'),
+        title: Text(l10n.driverPanelTitle),
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.navy,
         elevation: 0,
@@ -80,7 +82,7 @@ class DriverPanelScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Salam, $name',
+                          '${l10n.driverPanelHello}, $name',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -88,9 +90,9 @@ class DriverPanelScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Təsdiqlənmiş sürücü',
-                          style: TextStyle(
+                        Text(
+                          l10n.driverPanelVerified,
+                          style: const TextStyle(
                             color: AppTheme.tealLight,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -128,9 +130,9 @@ class DriverPanelScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
-            const Text(
-              'Sürətli əməliyyatlar',
-              style: TextStyle(
+            Text(
+              l10n.driverPanelQuickActions,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.navy,

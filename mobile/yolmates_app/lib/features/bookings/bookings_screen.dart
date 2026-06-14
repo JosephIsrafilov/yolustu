@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/status_badge.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -20,14 +22,15 @@ class BookingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final bookingsAsync = ref.watch(bookingsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rezervasiyalarım')),
+      appBar: AppBar(title: Text(l10n.bookingsTitle)),
       body: bookingsAsync.when(
-        loading: () => const LoadingView(message: 'Yüklənir...'),
+        loading: () => LoadingView(message: l10n.bookingsLoading),
         error: (e, _) => ErrorStateView(
-          title: 'Yüklənmədi',
+          title: l10n.bookingsLoadFailed,
           message: e.toString(),
           onRetry: () =>
               ref.read(bookingsControllerProvider.notifier).refresh(),
@@ -36,9 +39,9 @@ class BookingsScreen extends ConsumerWidget {
           if (bookings.isEmpty) {
             return EmptyState(
               icon: Icons.confirmation_number_outlined,
-              title: 'Hələ rezervasiya yoxdur',
-              message: 'Səyahət axtarın və ilk rezervasiyanızı edin.',
-              actionLabel: 'Gediş axtar',
+              title: l10n.bookingsEmpty,
+              message: l10n.bookingsEmptyMessage,
+              actionLabel: l10n.bookingsSearchTrips,
               onAction: () => context.go(AppRoutes.search),
             );
           }
@@ -95,7 +98,11 @@ class _BookingCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                _StatusBadge(status: booking.status),
+                StatusBadge(
+                  label: booking.status.label,
+                  backgroundColor: booking.status.colors.$1,
+                  foregroundColor: booking.status.colors.$2,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -137,34 +144,3 @@ class _BookingCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final BookingStatus status;
-
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      BookingStatus.pending => (Colors.orange.shade50, Colors.orange.shade700),
-      BookingStatus.confirmed => (
-          AppTheme.teal.withValues(alpha: 0.1),
-          AppTheme.tealDark
-        ),
-      BookingStatus.paid => (Colors.green.shade50, Colors.green.shade700),
-      BookingStatus.completed => (AppTheme.slate100, AppTheme.slate700),
-      BookingStatus.rejected => (Colors.red.shade50, Colors.red.shade700),
-      BookingStatus.cancelled => (Colors.red.shade50, Colors.red.shade700),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.label,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}

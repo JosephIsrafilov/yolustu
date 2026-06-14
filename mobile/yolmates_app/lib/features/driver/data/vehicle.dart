@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
+
 /// Driver vehicle (mock).
 class Vehicle {
   final String id;
@@ -54,6 +57,20 @@ extension VerificationStatusX on VerificationStatus {
         return 'Təsdiqləndi';
       case VerificationStatus.rejected:
         return 'Rədd edildi';
+    }
+  }
+
+  /// Badge colors (background, foreground).
+  (Color, Color) get colors {
+    switch (this) {
+      case VerificationStatus.approved:
+        return (AppTheme.teal.withValues(alpha: 0.1), AppTheme.tealDark);
+      case VerificationStatus.pending:
+        return (Colors.orange.shade50, Colors.orange.shade700);
+      case VerificationStatus.rejected:
+        return (Colors.red.shade50, Colors.red.shade700);
+      case VerificationStatus.notSubmitted:
+        return (AppTheme.slate100, AppTheme.slate700);
     }
   }
 }

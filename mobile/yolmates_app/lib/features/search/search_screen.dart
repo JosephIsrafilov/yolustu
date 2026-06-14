@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   String _from = 'Bakı';
   String _to = 'Gəncə';
   DateTime _date = DateTime.now();
@@ -47,23 +49,26 @@ class _SearchScreenState extends State<SearchScreen> {
       '${_weekdays[_date.weekday - 1]}, ${_date.day} ${_months[_date.month - 1]}';
 
   void _search() {
+    final l10n = ref.read(l10nProvider);
     if (_from == _to) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Çıxış və təyinat eyni ola bilməz')),
+        SnackBar(content: Text(l10n.searchSameLocationError)),
       );
       return;
     }
+    final dateStr = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
     context.push(
       '${AppRoutes.rideResults}?from=$_from&to=$_to'
-      '&passengers=$_passengers',
+      '&passengers=$_passengers&date=$dateStr',
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Səyahət axtar'),
+        title: Text(l10n.searchTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -72,15 +77,39 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             // From city
             _buildCitySelector(
-              label: 'Haradan',
+              label: l10n.searchFromLabel,
               value: _from,
               onChanged: (value) => setState(() => _from = value!),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+
+            // Swap button
+            Center(
+              child: IconButton(
+                onPressed: () => setState(() {
+                  final temp = _from;
+                  _from = _to;
+                  _to = temp;
+                }),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.teal.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.swap_vert,
+                    color: AppTheme.tealDark,
+                  ),
+                ),
+                tooltip: l10n.searchSwapTooltip,
+              ),
+            ),
+            const SizedBox(height: 8),
 
             // To city
             _buildCitySelector(
-              label: 'Hara',
+              label: l10n.searchToLabel,
               value: _to,
               onChanged: (value) => setState(() => _to = value!),
             ),
@@ -95,7 +124,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 side: BorderSide(color: AppTheme.slate200),
               ),
               leading: const Icon(Icons.calendar_today),
-              title: const Text('Tarix'),
+              title: Text(l10n.searchDateLabel),
               subtitle: Text(
                 _dateLabel,
                 style: const TextStyle(fontWeight: FontWeight.w600),
@@ -124,9 +153,9 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Sərnişin sayı',
-                    style: TextStyle(fontSize: 16),
+                  Text(
+                    l10n.searchPassengersLabel,
+                    style: const TextStyle(fontSize: 16),
                   ),
                   Row(
                     children: [
@@ -162,12 +191,12 @@ class _SearchScreenState extends State<SearchScreen> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search),
-                  SizedBox(width: 8),
-                  Text('Axtar', style: TextStyle(fontSize: 16)),
+                  const Icon(Icons.search),
+                  const SizedBox(width: 8),
+                  Text(l10n.commonSearch, style: const TextStyle(fontSize: 16)),
                 ],
               ),
             ),

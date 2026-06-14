@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
+
 /// A ride published by the current user acting as a driver (mock).
 enum DriverRideStatus { active, upcoming, completed, cancelled }
 
@@ -12,6 +15,20 @@ extension DriverRideStatusX on DriverRideStatus {
         return 'Tamamlandı';
       case DriverRideStatus.cancelled:
         return 'Ləğv edildi';
+    }
+  }
+
+  /// Badge colors (background, foreground).
+  (Color, Color) get colors {
+    switch (this) {
+      case DriverRideStatus.active:
+        return (AppTheme.teal.withValues(alpha: 0.1), AppTheme.tealDark);
+      case DriverRideStatus.upcoming:
+        return (Colors.blue.shade50, Colors.blue.shade700);
+      case DriverRideStatus.completed:
+        return (AppTheme.slate100, AppTheme.slate700);
+      case DriverRideStatus.cancelled:
+        return (Colors.red.shade50, Colors.red.shade700);
     }
   }
 }
@@ -72,6 +89,18 @@ extension RequestStatusX on RequestStatus {
         return 'Qəbul edildi';
       case RequestStatus.rejected:
         return 'Rədd edildi';
+    }
+  }
+
+  /// Badge colors (background, foreground).
+  (Color, Color) get colors {
+    switch (this) {
+      case RequestStatus.pending:
+        return (Colors.orange.shade50, Colors.orange.shade700);
+      case RequestStatus.accepted:
+        return (AppTheme.teal.withValues(alpha: 0.1), AppTheme.tealDark);
+      case RequestStatus.rejected:
+        return (Colors.red.shade50, Colors.red.shade700);
     }
   }
 }

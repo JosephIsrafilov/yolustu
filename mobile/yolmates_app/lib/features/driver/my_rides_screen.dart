@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/status_badge.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 
@@ -99,7 +100,11 @@ class _RideCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              _StatusBadge(status: ride.status),
+              StatusBadge(
+                label: ride.status.label,
+                backgroundColor: ride.status.colors.$1,
+                foregroundColor: ride.status.colors.$2,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -239,32 +244,3 @@ class _RideCard extends ConsumerWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final DriverRideStatus status;
-
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      DriverRideStatus.active => (
-          AppTheme.teal.withValues(alpha: 0.1),
-          AppTheme.tealDark
-        ),
-      DriverRideStatus.upcoming => (Colors.blue.shade50, Colors.blue.shade700),
-      DriverRideStatus.completed => (AppTheme.slate100, AppTheme.slate700),
-      DriverRideStatus.cancelled => (Colors.red.shade50, Colors.red.shade700),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.label,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
