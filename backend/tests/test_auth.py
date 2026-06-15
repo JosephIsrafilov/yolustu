@@ -6,7 +6,6 @@ from uuid import uuid4
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.main import app
 from app.domains.identity.models import User
-from app.core.limiter import limiter
 
 
 def setup_module(module):
@@ -195,53 +194,32 @@ def test_refresh_token_contract(redis_mock, db):
         redis_mock.get.return_value = previous_get_return
 
 
-def _mem_limiter():
-    from slowapi import Limiter
-    from slowapi.util import get_remote_address
-
-    lim = Limiter(key_func=get_remote_address, storage_uri="memory://")
-    lim.enabled = True
-    return lim
-
-
-def test_request_otp_rate_limit():
+def test_request_otp_rate_limit(enable_rate_limiter):
     import random
 
-    mem = _mem_limiter()
-    app.state.limiter = mem
     test_ip = f"10.1.{random.randint(0, 255)}.{random.randint(0, 255)}"
-    try:
-        responses = []
-        for _ in range(6):
-            response = client.post(
-                f"/api/v1/auth/request-otp?phone={TEST_PHONE}",
-                headers={"X-Forwarded-For": test_ip},
-            )
-            responses.append(response)
-        assert 429 in [r.status_code for r in responses]
-    finally:
-        app.state.limiter = limiter
-        limiter.enabled = False
+    responses = []
+    for _ in range(6):
+        response = client.post(
+            f"/api/v1/auth/request-otp?phone={TEST_PHONE}",
+            headers={"X-Forwarded-For": test_ip},
+        )
+        responses.append(response)
+    assert 429 in [r.status_code for r in responses]
 
 
-def test_verify_otp_rate_limit():
+def test_verify_otp_rate_limit(enable_rate_limiter):
     import random
 
-    mem = _mem_limiter()
-    app.state.limiter = mem
     test_ip = f"10.2.{random.randint(0, 255)}.{random.randint(0, 255)}"
-    try:
-        responses = []
-        for _ in range(11):
-            response = client.post(
-                f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000",
-                headers={"X-Forwarded-For": test_ip},
-            )
-            responses.append(response)
-        assert 429 in [r.status_code for r in responses]
-    finally:
-        app.state.limiter = limiter
-        limiter.enabled = False
+    responses = []
+    for _ in range(11):
+        response = client.post(
+            f"/api/v1/auth/verify-otp?phone={TEST_PHONE}&otp=000000",
+            headers={"X-Forwarded-For": test_ip},
+        )
+        responses.append(response)
+    assert 429 in [r.status_code for r in responses]
 
 
 def test_request_password_reset_unknown_email():

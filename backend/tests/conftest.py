@@ -103,3 +103,14 @@ def db():
 @pytest.fixture
 def redis_mock():
     return mock_redis_client
+
+
+@pytest.fixture
+def enable_rate_limiter():
+    app.state.limiter = limiter
+    limiter.enabled = True
+    try:
+        yield limiter
+    finally:
+        app.state.limiter = limiter
+        limiter.enabled = False

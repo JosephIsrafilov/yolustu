@@ -248,7 +248,7 @@ export default function DriverTripManagePage({
                 }
                 position={tracking.position}
                 heading={tracking.heading}
-                className="h-[300px] w-full"
+                className="h-75 w-full"
               />
             </div>
             {tracking.route.length > 0 && (
