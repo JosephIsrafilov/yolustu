@@ -181,7 +181,8 @@ class TripsService:
             return ride_to_response(ride)
         if not can_transition_ride(ride.status, RIDE_BOARDING):  # type: ignore[arg-type]
             raise HTTPException(
-                status_code=400, detail="Ride cannot enter boarding from its current state"
+                status_code=400,
+                detail="Ride cannot enter boarding from its current state",
             )
         ride.status = RIDE_BOARDING  # type: ignore[assignment]
         return ride_to_response(self.rides.save(ride))

@@ -88,7 +88,7 @@ export default function DriverTripManagePage({
   const shareUrl = useMemo(() => {
     if (!trip?.shareToken || typeof window === 'undefined') return '';
     return `${window.location.origin}/track/${trip.shareToken}`;
-  }, [trip?.shareToken]);
+  }, [trip]);
 
   const statusLabel: Record<string, string> = {
     connecting: copy.statusConnecting,

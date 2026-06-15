@@ -14,7 +14,7 @@ in-memory registry is enough.
 import asyncio
 import logging
 import math
-from typing import Any, Dict, Optional, Set
+from typing import Dict, Optional, Set
 from uuid import UUID
 
 import httpx
