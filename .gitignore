@@ -61,3 +61,8 @@ tmp_backend_*.log
 tmp_frontend_*.log
 analyze.out
 analyze.err
+
+# Firebase local config
+mobile/yolmates_app/android/app/google-services.json
+mobile/yolmates_app/ios/Runner/GoogleService-Info.plist
+
