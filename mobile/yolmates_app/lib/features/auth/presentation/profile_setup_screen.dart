@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme.dart';
 import '../data/app_user.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
-/// First-time profile setup (required after first OTP success).
-///
-/// Collects name, language and role, then calls
-/// [AuthController.completeProfile]. The router redirect carries the user into
-/// the main app once auth state becomes [AuthStatus.authenticated].
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
 
@@ -25,9 +21,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _lastName = TextEditingController();
 
   AppLanguage _language = AppLanguage.az;
-  // Role removed - all users start as passenger
-  // Driver application moved to profile/settings
-
   bool _saving = false;
   String? _error;
 
@@ -39,7 +32,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       _firstName.text = user.firstName ?? '';
       _lastName.text = user.lastName ?? '';
       _language = user.language;
-      // Role always passenger on initial setup
     }
   }
 
@@ -50,13 +42,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     super.dispose();
   }
 
-  String? _required(String? v) => v == null || v.trim().isEmpty ? 'Tələb olunur' : null;
+  String? _required(String? value) {
+    return value == null || value.trim().isEmpty
+        ? ref.read(l10nProvider).profileSetupRequired
+        : null;
+  }
 
   String _previewInitials() {
-    final f = _firstName.text.trim();
-    final l = _lastName.text.trim();
-    if (f.isEmpty && l.isEmpty) return '?';
-    return '${f.isNotEmpty ? f[0] : ''}${l.isNotEmpty ? l[0] : ''}'.toUpperCase();
+    final first = _firstName.text.trim();
+    final last = _lastName.text.trim();
+    if (first.isEmpty && last.isEmpty) return '?';
+    return '${first.isNotEmpty ? first[0] : ''}${last.isNotEmpty ? last[0] : ''}'
+        .toUpperCase();
   }
 
   Future<void> _submit() async {
@@ -72,16 +69,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       await ref.read(authControllerProvider.notifier).completeProfile(
             firstName: _firstName.text.trim(),
             lastName: _lastName.text.trim(),
-            role: UserRole.passenger, // Always start as passenger
+            role: UserRole.passenger,
             language: _language,
           );
-      // Router redirect handles navigation to the main app.
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Profil yadda saxlanmadı. Yenidən cəhd edin.');
+      setState(() => _error = ref.read(l10nProvider).profileSetupSaveError);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -89,8 +85,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil quraşdırması')),
+      appBar: AppBar(title: Text(l10n.profileSetupTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -103,12 +101,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Şəkil əlavə et (istəyə bağlı)',
+                    l10n.profileSetupAvatarHint,
                     style: TextStyle(color: AppTheme.slate500, fontSize: 13),
                   ),
                 ),
                 const SizedBox(height: 28),
-                Text('Ad', style: _labelStyle(context)),
+                Text(l10n.profileSetupFirstName, style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _firstName,
@@ -117,10 +115,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   textCapitalization: TextCapitalization.words,
                   validator: _required,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(hintText: 'Adınız'),
+                  decoration: InputDecoration(
+                    hintText: l10n.profileSetupFirstNameHint,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                Text('Soyad', style: _labelStyle(context)),
+                Text(l10n.profileSetupLastName, style: _labelStyle()),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _lastName,
@@ -129,25 +129,28 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   textCapitalization: TextCapitalization.words,
                   validator: _required,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(hintText: 'Soyadınız'),
+                  decoration: InputDecoration(
+                    hintText: l10n.profileSetupLastNameHint,
+                  ),
                   onFieldSubmitted: (_) => _submit(),
                 ),
                 const SizedBox(height: 24),
-                Text('Dil', style: _labelStyle(context)),
+                Text(l10n.profileLanguage, style: _labelStyle()),
                 const SizedBox(height: 8),
                 _LanguageSelector(
                   value: _language,
                   enabled: !_saving,
-                  onChanged: (l) => setState(() => _language = l),
+                  onChanged: (language) => setState(() => _language = language),
                 ),
-                // Role selection removed - all users start as passenger
-                // Driver registration available from profile settings
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 18, color: Colors.red.shade600),
+                      Icon(
+                        Icons.error_outline,
+                        size: 18,
+                        color: Colors.red.shade600,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -169,7 +172,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Davam et'),
+                        : Text(l10n.profileSetupContinue),
                   ),
                 ),
               ],
@@ -180,7 +183,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  TextStyle _labelStyle(BuildContext context) {
+  TextStyle _labelStyle() {
     return const TextStyle(fontSize: 15, fontWeight: FontWeight.w600);
   }
 }
@@ -228,22 +231,23 @@ class _LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: AppLanguage.values.map((lang) {
-        final selected = value == lang;
-        final label = switch (lang) {
-          AppLanguage.az => '🇦🇿 AZ',
-          AppLanguage.ru => '🇷🇺 RU',
-          AppLanguage.en => '🇬🇧 EN',
+      children: AppLanguage.values.map((language) {
+        final selected = value == language;
+        final label = switch (language) {
+          AppLanguage.az => 'AZ',
+          AppLanguage.ru => 'RU',
+          AppLanguage.en => 'EN',
         };
+
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(
-              right: lang != AppLanguage.values.last ? 8 : 0,
+              right: language != AppLanguage.values.last ? 8 : 0,
             ),
             child: _ChoiceChipBox(
               label: label,
               selected: selected,
-              onTap: enabled ? () => onChanged(lang) : null,
+              onTap: enabled ? () => onChanged(language) : null,
             ),
           ),
         );
@@ -294,4 +298,3 @@ class _ChoiceChipBox extends StatelessWidget {
     );
   }
 }
-

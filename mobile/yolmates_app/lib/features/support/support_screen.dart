@@ -1,47 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 
-/// Help & support center (mock content).
-class SupportScreen extends StatelessWidget {
+class SupportScreen extends ConsumerWidget {
   const SupportScreen({super.key});
 
-  static const _faqs = [
-    (
-      'Rezervasiyanı necə edə bilərəm?',
-      'Səyahət axtarın, uyğun reisi seçin və "Rezerv et" düyməsinə basın. '
-          'Sürücü təsdiqlədikdən sonra ödəniş edə bilərsiniz.',
-    ),
-    (
-      'Ödənişi necə edirəm?',
-      'Rezervasiya təsdiqləndikdən sonra rezervasiya detallarında ödəniş '
-          'düyməsi görünəcək. Hazırda ödəniş mock rejimindədir.',
-    ),
-    (
-      'Rezervasiyamı ləğv edə bilərəmmi?',
-      'Bəli. Səyahətdən 24 saat əvvələ qədər ödənişsiz ləğv edə bilərsiniz.',
-    ),
-    (
-      'Sürücü necə ola bilərəm?',
-      'Profil → Sürücü rejimi bölməsindən qeydiyyatdan keçin, avtomobil '
-          'əlavə edin və yoxlamadan keçin.',
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final faqs = [
+      (l10n.supportFaqBookingQuestion, l10n.supportFaqBookingAnswer),
+      (l10n.supportFaqPaymentQuestion, l10n.supportFaqPaymentAnswer),
+      (l10n.supportFaqCancelQuestion, l10n.supportFaqCancelAnswer),
+      (l10n.supportFaqDriverQuestion, l10n.supportFaqDriverAnswer),
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Kömək')),
+      appBar: AppBar(title: Text(l10n.supportTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spacing16),
         children: [
-          _ContactCard(),
+          _ContactCard(
+            supportTitle: l10n.supportContactWrite,
+            reportTitle: l10n.supportReportIssue,
+            reportSubtitle: l10n.supportReportIssueSubtitle,
+            comingSoon: l10n.supportComingSoon,
+          ),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
-              'Tez-tez verilən suallar',
+              l10n.supportFaqTitle,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -58,7 +50,7 @@ class SupportScreen extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
-                for (final faq in _faqs)
+                for (final faq in faqs)
                   ExpansionTile(
                     title: Text(
                       faq.$1,
@@ -86,6 +78,18 @@ class SupportScreen extends StatelessWidget {
 }
 
 class _ContactCard extends StatelessWidget {
+  final String supportTitle;
+  final String reportTitle;
+  final String reportSubtitle;
+  final String comingSoon;
+
+  const _ContactCard({
+    required this.supportTitle,
+    required this.reportTitle,
+    required this.reportSubtitle,
+    required this.comingSoon,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -100,15 +104,15 @@ class _ContactCard extends StatelessWidget {
           _row(
             context,
             icon: Icons.headset_mic_outlined,
-            title: 'Dəstəyə yaz',
+            title: supportTitle,
             subtitle: 'support@yolmates.az',
           ),
           Divider(height: 24, color: AppTheme.slate100),
           _row(
             context,
             icon: Icons.report_problem_outlined,
-            title: 'Problem bildir',
-            subtitle: 'Nasazlıq və ya şikayət göndərin',
+            title: reportTitle,
+            subtitle: reportSubtitle,
           ),
         ],
       ),
@@ -123,7 +127,7 @@ class _ContactCard extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tezliklə əlçatan olacaq')),
+        SnackBar(content: Text(comingSoon)),
       ),
       child: Row(
         children: [
@@ -141,11 +145,17 @@ class _ContactCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600)),
-                Text(subtitle,
-                    style: TextStyle(fontSize: 13, color: AppTheme.slate500)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: AppTheme.slate500),
+                ),
               ],
             ),
           ),

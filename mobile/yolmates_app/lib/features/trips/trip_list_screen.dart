@@ -264,7 +264,7 @@ class _FilterBar extends ConsumerWidget {
   }
 }
 
-class _TripCard extends StatelessWidget {
+class _TripCard extends ConsumerWidget {
   final Trip trip;
   final bool isSelected;
   final VoidCallback onTap;
@@ -276,7 +276,8 @@ class _TripCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final time =
         '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -355,7 +356,7 @@ class _TripCard extends StatelessWidget {
                 const SizedBox(width: 24),
                 const Icon(Icons.event_seat, size: 18),
                 const SizedBox(width: 8),
-                Text('${trip.availableSeats} boş yer',
+                Text('${trip.availableSeats} ${l10n.commonAvailableSeats}',
                     style: const TextStyle(fontSize: 15)),
                 if (isSelected) ...[
                   const Spacer(),

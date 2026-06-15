@@ -4,16 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/routes.dart';
 import '../../../core/theme.dart';
 import '../../../shared/widgets/app_logo.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
-/// Azerbaijani-first phone login.
-///
-/// Country code +994 is fixed; the user enters the 9 national digits. On
-/// success navigates to OTP verification with the full E.164 number.
 class PhoneLoginScreen extends ConsumerStatefulWidget {
   const PhoneLoginScreen({super.key});
 
@@ -36,16 +33,15 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
     super.dispose();
   }
 
-  /// 9 national digits → full E.164, e.g. 501234567 → +994501234567.
   String get _fullPhone => '$_dialCode${_controller.text.trim()}';
 
   String? _validate(String? value) {
+    final l10n = ref.read(l10nProvider);
     final digits = (value ?? '').trim();
-    if (digits.isEmpty) return 'Nömrəni daxil edin';
-    if (digits.length != 9) return 'Nömrə 9 rəqəm olmalıdır';
-    // AZ mobile prefixes start 4/5/7/9 (50/51/55/70/77/99/...).
+    if (digits.isEmpty) return l10n.phoneLoginPhoneRequired;
+    if (digits.length != 9) return l10n.phoneLoginPhoneLength;
     if (!RegExp(r'^[4579]\d{8}$').hasMatch(digits)) {
-      return 'Düzgün operator kodu daxil edin';
+      return l10n.phoneLoginPhoneOperator;
     }
     return null;
   }
@@ -69,7 +65,7 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
       setState(() => _error = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Kod göndərilə bilmədi. Yenidən cəhd edin.');
+      setState(() => _error = ref.read(l10nProvider).phoneLoginSendFailed);
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -77,6 +73,8 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -90,12 +88,12 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
                 const Center(child: AppLogo(size: 80)),
                 const SizedBox(height: 40),
                 Text(
-                  'Daxil ol',
+                  l10n.loginTitle,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Telefon nömrənizi daxil edin, sizə təsdiq kodu göndərək.',
+                  l10n.phoneLoginSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 28),
@@ -104,14 +102,18 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
                   dialCode: _dialCode,
                   validator: _validate,
                   enabled: !_sending,
+                  labelText: l10n.phoneLabel,
                   onSubmitted: (_) => _submit(),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 18, color: Colors.red.shade600),
+                      Icon(
+                        Icons.error_outline,
+                        size: 18,
+                        color: Colors.red.shade600,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -136,7 +138,7 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Text('Kod göndər'),
+                        : Text(l10n.phoneLoginSendCode),
                   ),
                 ),
               ],
@@ -151,6 +153,7 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
 class _PhoneField extends StatelessWidget {
   final TextEditingController controller;
   final String dialCode;
+  final String labelText;
   final String? Function(String?) validator;
   final bool enabled;
   final ValueChanged<String> onSubmitted;
@@ -158,6 +161,7 @@ class _PhoneField extends StatelessWidget {
   const _PhoneField({
     required this.controller,
     required this.dialCode,
+    required this.labelText,
     required this.validator,
     required this.enabled,
     required this.onSubmitted,
@@ -178,7 +182,7 @@ class _PhoneField extends StatelessWidget {
       onFieldSubmitted: onSubmitted,
       validator: validator,
       decoration: InputDecoration(
-        labelText: 'Telefon nömrəsi',
+        labelText: labelText,
         hintText: '50 123 45 67',
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -186,7 +190,7 @@ class _PhoneField extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '🇦🇿  $dialCode',
+                dialCode,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

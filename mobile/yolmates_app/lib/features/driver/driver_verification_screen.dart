@@ -197,11 +197,11 @@ class _VerifyTile extends StatelessWidget {
   }
 }
 
-class _Note extends StatelessWidget {
+class _Note extends ConsumerWidget {
   const _Note();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

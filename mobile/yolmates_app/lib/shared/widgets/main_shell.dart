@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
+import '../../features/chat/data/chat_controller.dart';
 
 /// Bottom-navigation shell for the authenticated main app.
 ///
@@ -26,6 +27,8 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    final unreadChatCount = ref.watch(unreadChatCountProvider);
+    final unreadNotificationCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
       body: navigationShell,
@@ -55,17 +58,68 @@ class MainShell extends ConsumerWidget {
             label: l10n.navTrips,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.chat_bubble_outline),
-            activeIcon: const Icon(Icons.chat_bubble),
+            icon: _NavBadgeIcon(
+              icon: Icons.chat_bubble_outline,
+              count: unreadChatCount,
+            ),
+            activeIcon: _NavBadgeIcon(
+              icon: Icons.chat_bubble,
+              count: unreadChatCount,
+            ),
             label: l10n.navChat,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline),
-            activeIcon: const Icon(Icons.person),
+            icon: _NavBadgeIcon(
+              icon: Icons.person_outline,
+              count: unreadNotificationCount,
+            ),
+            activeIcon: _NavBadgeIcon(
+              icon: Icons.person,
+              count: unreadNotificationCount,
+            ),
             label: l10n.navProfile,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NavBadgeIcon extends StatelessWidget {
+  final IconData icon;
+  final int count;
+
+  const _NavBadgeIcon({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        if (count > 0)
+          Positioned(
+            right: -8,
+            top: -6,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                count > 99 ? '99+' : '$count',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

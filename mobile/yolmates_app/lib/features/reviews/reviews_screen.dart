@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
@@ -5,7 +7,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
 
 /// User reviews summary + list (mock).
-class ReviewsScreen extends StatelessWidget {
+class ReviewsScreen extends ConsumerWidget {
   const ReviewsScreen({super.key});
 
   static const _reviews = [
@@ -15,13 +17,14 @@ class ReviewsScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     // Mock aggregate.
     const avg = 4.9;
     const count = 156;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rəylər')),
+      appBar: AppBar(title: Text(l10n.commonReviews)),
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spacing16),
         children: [

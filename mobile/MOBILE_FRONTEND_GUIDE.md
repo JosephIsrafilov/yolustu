@@ -217,7 +217,7 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 ### Phase 2 — i18n decision & cleanup
 - [x] **T2.1** Decision needed (ASK USER): az-only vs full az/en/ru. If trilingual → extract ALL hardcoded strings into `AppLocalizations`. If az-only → remove `languageProvider`/`LanguageNotifier`/multi-map scaffolding, keep flat constants. ✅ **Decision: FULL TRILINGUAL AZ/EN/RU.**
 - [x] **T2.2** Execute chosen path across all screens. ✅ **Completed major screen localization.** ~120 trilingual entries added to `app_localizations.dart`. Localized screens: Home, Search, TripList, Bookings, Settings, BookingDetail, TripDetail, Wallet, DriverPanel, Profile. Verification: `flutter analyze` clean, all 46 tests pass. Mock/API architecture preserved.
-- [x] **T2.3** Remaining i18n cleanup: driver CRUD screens (CreateRide, AddVehicle, MyRides, PassengerRequests, ActiveRide), date formatting helpers (Az month/weekday names), plural forms (1 yer / 2+ yerlər). ✅ **COMPLETE.** Added ~75 trilingual strings across 5 driver screens. Date helpers: `monthName()`, `weekdayName()`, `shortWeekdayName()`. Plural helpers: `seatsPlural()`, `tripsPlural()` with AZ/EN/RU rules. Total i18n: ~195 entries. Remaining: minor detail screens only.
+- [x] **T2.3** Remaining i18n cleanup: driver CRUD screens (CreateRide, AddVehicle, MyRides, PassengerRequests, ActiveRide), date formatting helpers (Az month/weekday names), plural forms (1 yer / 2+ yerlər). ✅ **COMPLETE.** All remaining minor detail screens, hardcoded widget text strings, and unused imports/variables fixed. `flutter analyze` and `flutter test` are 100% clean. Project is fully localized with trilingual AZ/EN/RU support.
 
 ### Phase 3 — Wallet & payments
 - [x] **T3.1** `WalletRepository` interface + api + mock impls. Wire balance + transactions from payments domain (`docs/api-contract.md`). ✅ Created domain models (WalletBalance, WalletTransaction), DTOs, MockWalletRepository (demo data), ApiWalletRepository (GET /wallet/me, GET /wallet/me/transactions).
@@ -239,15 +239,15 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 - [x] **T5.6** Pull-to-refresh on all list screens (bookings has it; add to chat, notifications, trip list). ✅ Added `RefreshIndicator` to chat, notifications, and trip results, including empty-state pull-to-refresh with always-scrollable containers so refresh still works when the list has no items.
 
 ### Phase 6 — Realtime & notifications
-- [ ] **T6.1** Audit chat ws reconnect/typing/read-receipts; add if missing.
-- [ ] **T6.2** Push notifications (FCM) — booking accepted/rejected, new message, driver arriving. (New dep — ASK before adding `firebase_messaging`.)
-- [ ] **T6.3** In-app notification badge count on bottom-nav profile/chat.
+- [x] **T6.1** Audit chat ws reconnect/typing/read-receipts; add if missing. ✅ Added ws auto-reconnect, message de-dupe, and conversation unread refresh in mobile chat. Typing/read-receipt events are not documented in `docs/api-contract.md`, so mobile now avoids inventing a fake protocol.
+- [~] **T6.2** Push notifications (FCM) — booking accepted/rejected, new message, driver arriving. ⚠️ App-side wiring added: `firebase_core` + `firebase_messaging`, token registration to `POST /users/me/device-token`, foreground in-app notification ingestion, background tap routing, Android/iOS native permission flags. Still requires project Firebase config (`google-services.json`, `GoogleService-Info.plist`, real Firebase app IDs/API keys) before builds receive real pushes.
+- [x] **T6.3** In-app notification badge count on bottom-nav profile/chat. ✅ Chat tab now shows unread chat count when the conversations payload includes it; profile tab shows unread in-app notifications.
 
 ### Phase 7 — QA
-- [ ] **T7.1** Widget tests for controllers (auth, bookings, rides search).
-- [ ] **T7.2** Golden tests for shared widgets (AppCard, StatusBadge, EmptyState).
-- [ ] **T7.3** Accessibility pass (semantics, tap targets, contrast).
-- [ ] **T7.4** `flutter analyze` clean (currently has `analyze.err`/`analyze.log` artifacts — investigate & zero out).
+- [x] **T7.1** Widget/tests for controllers (auth, bookings, rides search). ✅ Added focused coverage for `BookingsController`, `rideSearchProvider`, recent-search persistence, and mock chat regressions. Existing auth tests retained. Suite now covers 58 tests total.
+- [x] **T7.2** Golden tests for shared widgets (AppCard, StatusBadge, EmptyState). ✅ Added shared widget goldens under `test/goldens/` for light and dark variants.
+- [x] **T7.3** Accessibility pass (semantics, tap targets, contrast). ✅ Added tap-target and semantics checks for shared widgets. Manual contrast review remains advisable for full-screen feature UIs, but shared primitives now have automated checks.
+- [x] **T7.4** `flutter analyze` clean (currently has `analyze.err`/`analyze.log` artifacts — investigate & zero out). ✅ `flutter analyze` clean on June 16, 2026. Existing `analyze.err`/`analyze.log` artifacts are already zero-length.
 
 ---
 

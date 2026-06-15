@@ -1,0 +1,651 @@
+﻿
+lib\core\constants.dart:1:import 'network/api_config.dart';
+lib\core\constants.dart:2:
+lib\core\constants.dart:3:class AppConstants {
+lib\core\constants.dart:4:  // API
+lib\core\constants.dart:5:  /// @deprecated Use ApiConfig.baseUrl or apiBaseUrlProvider instead.
+lib\core\constants.dart:6:  /// This constant is kept for backward compatibility but will be removed.
+lib\core\constants.dart:7:  /// Prefer --dart-define=API_BASE_URL=... for configuration.
+lib\core\constants.dart:8:  static String get apiBaseUrl => ApiConfig.baseUrl;
+lib\core\constants.dart:9:
+lib\core\constants.dart:10:  // Cities
+lib\core\constants.dart:11:  static const List<String> cities = [
+lib\core\constants.dart:12:    'Bakı',
+lib\core\constants.dart:13:    'Gəncə',
+lib\core\constants.dart:14:    'Sumqayıt',
+lib\core\constants.dart:15:    'Mingəçevir',
+lib\core\constants.dart:16:    'Şəki',
+lib\core\constants.dart:17:    'Quba',
+lib\core\constants.dart:18:    'Lənkəran',
+lib\core\constants.dart:19:    'Şirvan',
+lib\core\constants.dart:20:    'Naxçıvan',
+lib\core\constants.dart:21:    'Ağdam',
+lib\core\constants.dart:22:  ];
+lib\core\constants.dart:23:
+lib\core\constants.dart:24:  // Status
+lib\core\constants.dart:25:  static const String statusActive = 'active';
+lib\core\constants.dart:26:  static const String statusCancelled = 'cancelled';
+lib\core\constants.dart:27:  static const String statusCompleted = 'completed';
+lib\core\constants.dart:28:
+lib\core\constants.dart:29:  // Spacing
+lib\core\constants.dart:30:  static const double spacing8 = 8.0;
+lib\core\constants.dart:31:  static const double spacing12 = 12.0;
+lib\core\constants.dart:32:  static const double spacing16 = 16.0;
+lib\core\constants.dart:33:  static const double spacing24 = 24.0;
+lib\core\constants.dart:34:  static const double spacing32 = 32.0;
+lib\core\constants.dart:35:
+lib\core\constants.dart:36:  // Border radius
+lib\core\constants.dart:37:  static const double borderRadius8 = 8.0;
+lib\core\constants.dart:38:  static const double borderRadius12 = 12.0;
+lib\core\constants.dart:39:  static const double borderRadius16 = 16.0;
+lib\core\constants.dart:40:  static const double borderRadius24 = 24.0;
+lib\core\constants.dart:41:}
+lib\core\firebase_options.dart:1:import 'package:firebase_core/firebase_core.dart';
+lib\core\firebase_options.dart:2:import 'package:flutter/foundation.dart';
+lib\core\firebase_options.dart:3:
+lib\core\firebase_options.dart:4:/// Minimal Firebase options driven by dart-defines.
+lib\core\firebase_options.dart:5:///
+lib\core\firebase_options.dart:6:/// ponytail: generated FlutterFire config would be nicer, but env-backed options
+lib\core\firebase_options.dart:7:/// keep repo secrets out and let the app compile before project-specific setup.
+lib\core\firebase_options.dart:8:class DefaultFirebaseOptions {
+lib\core\firebase_options.dart:9:  DefaultFirebaseOptions._();
+lib\core\firebase_options.dart:10:
+lib\core\firebase_options.dart:11:  static const _apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+lib\core\firebase_options.dart:12:  static const _appIdAndroid = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
+lib\core\firebase_options.dart:13:  static const _appIdIos = String.fromEnvironment('FIREBASE_IOS_APP_ID');
+lib\core\firebase_options.dart:14:  static const _messagingSenderId = String.fromEnvironment(
+lib\core\firebase_options.dart:15:    'FIREBASE_MESSAGING_SENDER_ID',
+lib\core\firebase_options.dart:16:  );
+lib\core\firebase_options.dart:17:  static const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+lib\core\firebase_options.dart:18:  static const _storageBucket = String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
+lib\core\firebase_options.dart:19:  static const _iosBundleId = String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID');
+lib\core\firebase_options.dart:20:
+lib\core\firebase_options.dart:21:  static FirebaseOptions? get currentPlatform {
+lib\core\firebase_options.dart:22:    if (_apiKey.isEmpty ||
+lib\core\firebase_options.dart:23:        _messagingSenderId.isEmpty ||
+lib\core\firebase_options.dart:24:        _projectId.isEmpty ||
+lib\core\firebase_options.dart:25:        (defaultTargetPlatform == TargetPlatform.android && _appIdAndroid.isEmpty) ||
+lib\core\firebase_options.dart:26:        (defaultTargetPlatform == TargetPlatform.iOS && _appIdIos.isEmpty)) {
+lib\core\firebase_options.dart:27:      return null;
+lib\core\firebase_options.dart:28:    }
+lib\core\firebase_options.dart:29:
+lib\core\firebase_options.dart:30:    switch (defaultTargetPlatform) {
+lib\core\firebase_options.dart:31:      case TargetPlatform.android:
+lib\core\firebase_options.dart:32:        return FirebaseOptions(
+lib\core\firebase_options.dart:33:          apiKey: _apiKey,
+lib\core\firebase_options.dart:34:          appId: _appIdAndroid,
+lib\core\firebase_options.dart:35:          messagingSenderId: _messagingSenderId,
+lib\core\firebase_options.dart:36:          projectId: _projectId,
+lib\core\firebase_options.dart:37:          storageBucket: _storageBucket.isEmpty ? null : _storageBucket,
+lib\core\firebase_options.dart:38:        );
+lib\core\firebase_options.dart:39:      case TargetPlatform.iOS:
+lib\core\firebase_options.dart:40:        return FirebaseOptions(
+lib\core\firebase_options.dart:41:          apiKey: _apiKey,
+lib\core\firebase_options.dart:42:          appId: _appIdIos,
+lib\core\firebase_options.dart:43:          messagingSenderId: _messagingSenderId,
+lib\core\firebase_options.dart:44:          projectId: _projectId,
+lib\core\firebase_options.dart:45:          storageBucket: _storageBucket.isEmpty ? null : _storageBucket,
+lib\core\firebase_options.dart:46:          iosBundleId: _iosBundleId.isEmpty ? null : _iosBundleId,
+lib\core\firebase_options.dart:47:        );
+lib\core\firebase_options.dart:48:      default:
+lib\core\firebase_options.dart:49:        return null;
+lib\core\firebase_options.dart:50:    }
+lib\core\firebase_options.dart:51:  }
+lib\core\firebase_options.dart:52:}
+lib\core\routes.dart:1:import 'package:flutter/material.dart';
+lib\core\routes.dart:2:import 'package:flutter_riverpod/flutter_riverpod.dart';
+lib\core\routes.dart:3:import 'package:go_router/go_router.dart';
+lib\core\routes.dart:4:
+lib\core\routes.dart:5:import '../features/auth/presentation/splash_screen.dart';
+lib\core\routes.dart:6:import '../features/auth/presentation/phone_login_screen.dart';
+lib\core\routes.dart:7:import '../features/auth/presentation/otp_verify_screen.dart';
+lib\core\routes.dart:8:import '../features/auth/presentation/profile_setup_screen.dart';
+lib\core\routes.dart:9:import '../features/auth/presentation/onboarding_screen.dart';
+lib\core\routes.dart:10:import '../features/auth/presentation/auth_intro_screen.dart';
+lib\core\routes.dart:11:import '../features/auth/state/auth_controller.dart';
+lib\core\routes.dart:12:import '../features/bookings/bookings_screen.dart';
+lib\core\routes.dart:13:import '../features/bookings/booking_confirm_screen.dart';
+lib\core\routes.dart:14:import '../features/bookings/booking_detail_screen.dart';
+lib\core\routes.dart:15:import '../features/chat/chat_list_screen.dart';
+lib\core\routes.dart:16:import '../features/chat/chat_detail_screen.dart';
+lib\core\routes.dart:17:import '../features/driver/driver_onboarding_screen.dart';
+lib\core\routes.dart:18:import '../features/driver/add_vehicle_screen.dart';
+lib\core\routes.dart:19:import '../features/driver/driver_verification_screen.dart';
+lib\core\routes.dart:20:import '../features/driver/create_ride_screen.dart';
+lib\core\routes.dart:21:import '../features/driver/my_rides_screen.dart';
+lib\core\routes.dart:22:import '../features/driver/passenger_requests_screen.dart';
+lib\core\routes.dart:23:import '../features/driver/active_ride_screen.dart';
+lib\core\routes.dart:24:import '../features/driver/driver_panel_screen.dart';
+lib\core\routes.dart:25:import '../features/home/home_screen.dart';
+lib\core\routes.dart:26:import '../features/notifications/notifications_screen.dart';
+lib\core\routes.dart:27:import '../features/profile/profile_screen.dart';
+lib\core\routes.dart:28:import '../features/reviews/reviews_screen.dart';
+lib\core\routes.dart:29:import '../features/search/search_screen.dart';
+lib\core\routes.dart:30:import '../features/settings/settings_screen.dart';
+lib\core\routes.dart:31:import '../features/support/support_screen.dart';
+lib\core\routes.dart:32:import '../features/trips/trip_list_screen.dart';
+lib\core\routes.dart:33:import '../features/trips/trip_detail_screen.dart';
+lib\core\routes.dart:34:import '../features/wallet/wallet_screen.dart';
+lib\core\routes.dart:35:import '../shared/widgets/main_shell.dart';
+lib\core\routes.dart:36:
+lib\core\routes.dart:37:/// Shared axis transition for secondary routes.
+lib\core\routes.dart:38:Page<T> _buildPageWithTransition<T>(
+lib\core\routes.dart:39:  BuildContext context,
+lib\core\routes.dart:40:  GoRouterState state,
+lib\core\routes.dart:41:  Widget child,
+lib\core\routes.dart:42:) {
+lib\core\routes.dart:43:  return CustomTransitionPage<T>(
+lib\core\routes.dart:44:    key: state.pageKey,
+lib\core\routes.dart:45:    child: child,
+lib\core\routes.dart:46:    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+lib\core\routes.dart:47:      const begin = Offset(0.03, 0);
+lib\core\routes.dart:48:      const end = Offset.zero;
+lib\core\routes.dart:49:      const curve = Curves.easeInOut;
+lib\core\routes.dart:50:      final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+lib\core\routes.dart:51:      final offsetAnimation = animation.drive(tween);
+lib\core\routes.dart:52:      final fadeAnimation = CurvedAnimation(parent: animation, curve: curve);
+lib\core\routes.dart:53:
+lib\core\routes.dart:54:      return SlideTransition(
+lib\core\routes.dart:55:        position: offsetAnimation,
+lib\core\routes.dart:56:        child: FadeTransition(
+lib\core\routes.dart:57:          opacity: fadeAnimation,
+lib\core\routes.dart:58:          child: child,
+lib\core\routes.dart:59:        ),
+lib\core\routes.dart:60:      );
+lib\core\routes.dart:61:    },
+lib\core\routes.dart:62:    transitionDuration: const Duration(milliseconds: 250),
+lib\core\routes.dart:63:  );
+lib\core\routes.dart:64:}
+lib\core\routes.dart:65:
+lib\core\routes.dart:66:/// Centralized route paths. Use these constants instead of raw strings.
+lib\core\routes.dart:67:
+lib\core\routes.dart:68:/// Centralized route paths. Use these constants instead of raw strings.
+lib\core\routes.dart:69:class AppRoutes {
+lib\core\routes.dart:70:  AppRoutes._();
+lib\core\routes.dart:71:
+lib\core\routes.dart:72:  // Auth (outside bottom navigation)
+lib\core\routes.dart:73:  static const splash = '/splash';
+lib\core\routes.dart:74:  static const onboarding = '/onboarding';
+lib\core\routes.dart:75:  static const authIntro = '/auth-intro';
+lib\core\routes.dart:76:  static const login = '/login';
+lib\core\routes.dart:77:  static const otp = '/otp';
+lib\core\routes.dart:78:  static const profileSetup = '/profile-setup';
+lib\core\routes.dart:79: 
+lib\core\routes.dart:80:  // Main app (bottom-nav branches)
+lib\core\routes.dart:81:  static const home = '/';
+lib\core\routes.dart:82:  static const search = '/search';
+lib\core\routes.dart:83:  static const bookings = '/bookings';
+lib\core\routes.dart:84:  static const messages = '/messages';
+lib\core\routes.dart:85:  static const profile = '/profile';
+lib\core\routes.dart:86:
+lib\core\routes.dart:87:  // Secondary / detail routes
+lib\core\routes.dart:88:  static const rideResults = '/trips-list';
+lib\core\routes.dart:89:  static const rideDetails = '/trips'; // + /:id
+lib\core\routes.dart:90:  static const bookingConfirm = '/booking/confirm'; // + /:rideId
+lib\core\routes.dart:91:  static const bookingDetails = '/bookings'; // + /:id
+lib\core\routes.dart:92:  static const chatDetails = '/messages'; // + /:id
+lib\core\routes.dart:93:
+lib\core\routes.dart:94:  // Profile sub-pages
+lib\core\routes.dart:95:  static const settings = '/settings';
+lib\core\routes.dart:96:  static const support = '/support';
+lib\core\routes.dart:97:  static const notifications = '/notifications';
+lib\core\routes.dart:98:  static const reviews = '/reviews';
+lib\core\routes.dart:99:  static const wallet = '/wallet';
+lib\core\routes.dart:100:
+lib\core\routes.dart:101:  // Driver
+lib\core\routes.dart:102:  static const driverPanel = '/driver/panel';
+lib\core\routes.dart:103:  static const driverOnboarding = '/driver';
+lib\core\routes.dart:104:  static const addVehicle = '/driver/vehicle';
+lib\core\routes.dart:105:  static const driverVerification = '/driver/verification';
+lib\core\routes.dart:106:  static const createRide = '/driver/create-ride';
+lib\core\routes.dart:107:  static const myRides = '/driver/rides';
+lib\core\routes.dart:108:  static const passengerRequests = '/driver/requests';
+lib\core\routes.dart:109:}
+lib\core\routes.dart:110:
+lib\core\routes.dart:111:/// Bridges Riverpod auth state into GoRouter's [Listenable] refresh.
+lib\core\routes.dart:112:class _AuthRefresh extends ChangeNotifier {
+lib\core\routes.dart:113:  _AuthRefresh(this._ref) {
+lib\core\routes.dart:114:    _ref.listen(authControllerProvider, (_, __) => notifyListeners());
+lib\core\routes.dart:115:  }
+lib\core\routes.dart:116:  final Ref _ref;
+lib\core\routes.dart:117:}
+lib\core\routes.dart:118:
+lib\core\routes.dart:119:final _shellKey = GlobalKey<NavigatorState>();
+lib\core\routes.dart:120:
+lib\core\routes.dart:121:final routerProvider = Provider<GoRouter>((ref) {
+lib\core\routes.dart:122:  final refresh = _AuthRefresh(ref);
+lib\core\routes.dart:123:
+lib\core\routes.dart:124:  return GoRouter(
+lib\core\routes.dart:125:    initialLocation: AppRoutes.splash,
+lib\core\routes.dart:126:    refreshListenable: refresh,
+lib\core\routes.dart:127:    redirect: (context, state) {
+lib\core\routes.dart:128:      final status = ref.read(authControllerProvider).status;
+lib\core\routes.dart:129:      final loc = state.matchedLocation;
+lib\core\routes.dart:130:
+lib\core\routes.dart:131:      const authRoutes = {AppRoutes.login, AppRoutes.otp, AppRoutes.authIntro};
+lib\core\routes.dart:132:      final onSplash = loc == AppRoutes.splash;
+lib\core\routes.dart:133:      final onAuth = authRoutes.contains(loc);
+lib\core\routes.dart:134:      final onProfileSetup = loc == AppRoutes.profileSetup;
+lib\core\routes.dart:135:      final onOnboarding = loc == AppRoutes.onboarding;
+lib\core\routes.dart:136:
+lib\core\routes.dart:137:      switch (status) {
+lib\core\routes.dart:138:        case AuthStatus.unknown:
+lib\core\routes.dart:139:        case AuthStatus.error:
+lib\core\routes.dart:140:          // Stay on splash while bootstrapping / on load error.
+lib\core\routes.dart:141:          return onSplash ? null : AppRoutes.splash;
+lib\core\routes.dart:142:
+lib\core\routes.dart:143:        case AuthStatus.onboarding:
+lib\core\routes.dart:144:          return onOnboarding ? null : AppRoutes.onboarding;
+lib\core\routes.dart:145:
+lib\core\routes.dart:146:        case AuthStatus.unauthenticated:
+lib\core\routes.dart:147:          // Only login/otp/intro allowed.
+lib\core\routes.dart:148:          return onAuth ? null : AppRoutes.authIntro;
+lib\core\routes.dart:149:
+lib\core\routes.dart:150:        case AuthStatus.incompleteProfile:
+lib\core\routes.dart:151:          // Force profile setup.
+lib\core\routes.dart:152:          return onProfileSetup ? null : AppRoutes.profileSetup;
+lib\core\routes.dart:153:
+lib\core\routes.dart:154:        case AuthStatus.authenticated:
+lib\core\routes.dart:155:          // Bounce away from auth/splash into the app.
+lib\core\routes.dart:156:          if (onSplash || onAuth || onProfileSetup || onOnboarding) return AppRoutes.home;
+lib\core\routes.dart:157:
+lib\core\routes.dart:158:          // Driver routes access control: only approved drivers can access panel routes
+lib\core\routes.dart:159:          final user = ref.read(authControllerProvider).user;
+lib\core\routes.dart:160:          final isDriverRoute = loc.startsWith('/driver');
+lib\core\routes.dart:161:          if (isDriverRoute) {
+lib\core\routes.dart:162:            if (user?.verificationStatus != 'approved') {
+lib\core\routes.dart:163:              // Allow access to onboarding and verification flow only
+lib\core\routes.dart:164:              if (loc == AppRoutes.driverOnboarding || loc == AppRoutes.driverVerification) {
+lib\core\routes.dart:165:                return null;
+lib\core\routes.dart:166:              }
+lib\core\routes.dart:167:              return AppRoutes.driverOnboarding;
+lib\core\routes.dart:168:            }
+lib\core\routes.dart:169:          }
+lib\core\routes.dart:170:          return null;
+lib\core\routes.dart:171:      }
+lib\core\routes.dart:172:    },
+lib\core\routes.dart:173:    routes: [
+lib\core\routes.dart:174:      GoRoute(
+lib\core\routes.dart:175:        path: AppRoutes.splash,
+lib\core\routes.dart:176:        builder: (_, __) => const SplashScreen(),
+lib\core\routes.dart:177:      ),
+lib\core\routes.dart:178:      GoRoute(
+lib\core\routes.dart:179:        path: AppRoutes.onboarding,
+lib\core\routes.dart:180:        builder: (_, __) => const OnboardingScreen(),
+lib\core\routes.dart:181:      ),
+lib\core\routes.dart:182:      GoRoute(
+lib\core\routes.dart:183:        path: AppRoutes.authIntro,
+lib\core\routes.dart:184:        builder: (_, __) => const AuthIntroScreen(),
+lib\core\routes.dart:185:      ),
+lib\core\routes.dart:186:      GoRoute(
+lib\core\routes.dart:187:        path: AppRoutes.login,
+lib\core\routes.dart:188:        builder: (_, __) => const PhoneLoginScreen(),
+lib\core\routes.dart:189:      ),
+lib\core\routes.dart:190:      GoRoute(
+lib\core\routes.dart:191:        path: AppRoutes.otp,
+lib\core\routes.dart:192:        builder: (context, state) {
+lib\core\routes.dart:193:          final phone = state.uri.queryParameters['phone'] ?? '';
+lib\core\routes.dart:194:          return OtpVerifyScreen(phone: phone);
+lib\core\routes.dart:195:        },
+lib\core\routes.dart:196:      ),
+lib\core\routes.dart:197:      GoRoute(
+lib\core\routes.dart:198:        path: AppRoutes.profileSetup,
+lib\core\routes.dart:199:        builder: (_, __) => const ProfileSetupScreen(),
+lib\core\routes.dart:200:      ),
+lib\core\routes.dart:201:
+lib\core\routes.dart:202:      // --- Main app shell (bottom navigation) ---
+lib\core\routes.dart:203:      StatefulShellRoute.indexedStack(
+lib\core\routes.dart:204:        builder: (context, state, navShell) =>
+lib\core\routes.dart:205:            MainShell(navigationShell: navShell),
+lib\core\routes.dart:206:        branches: [
+lib\core\routes.dart:207:          StatefulShellBranch(
+lib\core\routes.dart:208:            navigatorKey: _shellKey,
+lib\core\routes.dart:209:            routes: [
+lib\core\routes.dart:210:              GoRoute(
+lib\core\routes.dart:211:                path: AppRoutes.home,
+lib\core\routes.dart:212:                builder: (_, __) => const HomeScreen(),
+lib\core\routes.dart:213:              ),
+lib\core\routes.dart:214:            ],
+lib\core\routes.dart:215:          ),
+lib\core\routes.dart:216:          StatefulShellBranch(
+lib\core\routes.dart:217:            routes: [
+lib\core\routes.dart:218:              GoRoute(
+lib\core\routes.dart:219:                path: AppRoutes.search,
+lib\core\routes.dart:220:                builder: (_, __) => const SearchScreen(),
+lib\core\routes.dart:221:              ),
+lib\core\routes.dart:222:            ],
+lib\core\routes.dart:223:          ),
+lib\core\routes.dart:224:          StatefulShellBranch(
+lib\core\routes.dart:225:            routes: [
+lib\core\routes.dart:226:              GoRoute(
+lib\core\routes.dart:227:                path: AppRoutes.bookings,
+lib\core\routes.dart:228:                builder: (_, __) => const BookingsScreen(),
+lib\core\routes.dart:229:              ),
+lib\core\routes.dart:230:            ],
+lib\core\routes.dart:231:          ),
+lib\core\routes.dart:232:          StatefulShellBranch(
+lib\core\routes.dart:233:            routes: [
+lib\core\routes.dart:234:              GoRoute(
+lib\core\routes.dart:235:                path: AppRoutes.messages,
+lib\core\routes.dart:236:                builder: (_, __) => const ChatListScreen(),
+lib\core\routes.dart:237:              ),
+lib\core\routes.dart:238:            ],
+lib\core\routes.dart:239:          ),
+lib\core\routes.dart:240:          StatefulShellBranch(
+lib\core\routes.dart:241:            routes: [
+lib\core\routes.dart:242:              GoRoute(
+lib\core\routes.dart:243:                path: AppRoutes.profile,
+lib\core\routes.dart:244:                builder: (_, __) => const ProfileScreen(),
+lib\core\routes.dart:245:              ),
+lib\core\routes.dart:246:            ],
+lib\core\routes.dart:247:          ),
+lib\core\routes.dart:248:        ],
+lib\core\routes.dart:249:      ),
+lib\core\routes.dart:250:
+lib\core\routes.dart:251:      // --- Secondary routes (above the shell, full screen, normal back) ---
+lib\core\routes.dart:252:      GoRoute(
+lib\core\routes.dart:253:        path: '/trips/:id',
+lib\core\routes.dart:254:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:255:          context,
+lib\core\routes.dart:256:          state,
+lib\core\routes.dart:257:          TripDetailScreen(tripId: state.pathParameters['id']!),
+lib\core\routes.dart:258:        ),
+lib\core\routes.dart:259:      ),
+lib\core\routes.dart:260:      GoRoute(
+lib\core\routes.dart:261:        path: '/trips-list',
+lib\core\routes.dart:262:        pageBuilder: (context, state) {
+lib\core\routes.dart:263:          final q = state.uri.queryParameters;
+lib\core\routes.dart:264:          DateTime? date;
+lib\core\routes.dart:265:          if (q['date'] != null) {
+lib\core\routes.dart:266:            try {
+lib\core\routes.dart:267:              date = DateTime.parse(q['date']!);
+lib\core\routes.dart:268:            } catch (_) {
+lib\core\routes.dart:269:              // Invalid date format, ignore
+lib\core\routes.dart:270:            }
+lib\core\routes.dart:271:          }
+lib\core\routes.dart:272:          return _buildPageWithTransition(
+lib\core\routes.dart:273:            context,
+lib\core\routes.dart:274:            state,
+lib\core\routes.dart:275:            TripListScreen(
+lib\core\routes.dart:276:              fromCity: q['from'] ?? 'Bakı',
+lib\core\routes.dart:277:              toCity: q['to'] ?? 'Gəncə',
+lib\core\routes.dart:278:              passengers: int.tryParse(q['passengers'] ?? '1') ?? 1,
+lib\core\routes.dart:279:              date: date,
+lib\core\routes.dart:280:            ),
+lib\core\routes.dart:281:          );
+lib\core\routes.dart:282:        },
+lib\core\routes.dart:283:      ),
+lib\core\routes.dart:284:      GoRoute(
+lib\core\routes.dart:285:        path: '/booking/confirm/:rideId',
+lib\core\routes.dart:286:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:287:          context,
+lib\core\routes.dart:288:          state,
+lib\core\routes.dart:289:          BookingConfirmScreen(
+lib\core\routes.dart:290:            rideId: state.pathParameters['rideId']!,
+lib\core\routes.dart:291:            initialSeats:
+lib\core\routes.dart:292:                int.tryParse(state.uri.queryParameters['seats'] ?? '1') ?? 1,
+lib\core\routes.dart:293:          ),
+lib\core\routes.dart:294:        ),
+lib\core\routes.dart:295:      ),
+lib\core\routes.dart:296:      GoRoute(
+lib\core\routes.dart:297:        path: '/bookings/:id',
+lib\core\routes.dart:298:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:299:          context,
+lib\core\routes.dart:300:          state,
+lib\core\routes.dart:301:          BookingDetailScreen(bookingId: state.pathParameters['id']!),
+lib\core\routes.dart:302:        ),
+lib\core\routes.dart:303:      ),
+lib\core\routes.dart:304:      GoRoute(
+lib\core\routes.dart:305:        path: '/messages/:id',
+lib\core\routes.dart:306:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:307:          context,
+lib\core\routes.dart:308:          state,
+lib\core\routes.dart:309:          ChatDetailScreen(conversationId: state.pathParameters['id']!),
+lib\core\routes.dart:310:        ),
+lib\core\routes.dart:311:      ),
+lib\core\routes.dart:312:
+lib\core\routes.dart:313:      // Profile sub-pages
+lib\core\routes.dart:314:      GoRoute(
+lib\core\routes.dart:315:        path: AppRoutes.settings,
+lib\core\routes.dart:316:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:317:          context,
+lib\core\routes.dart:318:          state,
+lib\core\routes.dart:319:          const SettingsScreen(),
+lib\core\routes.dart:320:        ),
+lib\core\routes.dart:321:      ),
+lib\core\routes.dart:322:      GoRoute(
+lib\core\routes.dart:323:        path: AppRoutes.support,
+lib\core\routes.dart:324:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:325:          context,
+lib\core\routes.dart:326:          state,
+lib\core\routes.dart:327:          const SupportScreen(),
+lib\core\routes.dart:328:        ),
+lib\core\routes.dart:329:      ),
+lib\core\routes.dart:330:      GoRoute(
+lib\core\routes.dart:331:        path: AppRoutes.notifications,
+lib\core\routes.dart:332:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:333:          context,
+lib\core\routes.dart:334:          state,
+lib\core\routes.dart:335:          const NotificationsScreen(),
+lib\core\routes.dart:336:        ),
+lib\core\routes.dart:337:      ),
+lib\core\routes.dart:338:      GoRoute(
+lib\core\routes.dart:339:        path: AppRoutes.reviews,
+lib\core\routes.dart:340:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:341:          context,
+lib\core\routes.dart:342:          state,
+lib\core\routes.dart:343:          const ReviewsScreen(),
+lib\core\routes.dart:344:        ),
+lib\core\routes.dart:345:      ),
+lib\core\routes.dart:346:      GoRoute(
+lib\core\routes.dart:347:        path: AppRoutes.wallet,
+lib\core\routes.dart:348:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:349:          context,
+lib\core\routes.dart:350:          state,
+lib\core\routes.dart:351:          const WalletScreen(),
+lib\core\routes.dart:352:        ),
+lib\core\routes.dart:353:      ),
+lib\core\routes.dart:354:
+lib\core\routes.dart:355:      // Driver
+lib\core\routes.dart:356:      GoRoute(
+lib\core\routes.dart:357:        path: AppRoutes.driverPanel,
+lib\core\routes.dart:358:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:359:          context,
+lib\core\routes.dart:360:          state,
+lib\core\routes.dart:361:          const DriverPanelScreen(),
+lib\core\routes.dart:362:        ),
+lib\core\routes.dart:363:      ),
+lib\core\routes.dart:364:      GoRoute(
+lib\core\routes.dart:365:        path: AppRoutes.driverOnboarding,
+lib\core\routes.dart:366:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:367:          context,
+lib\core\routes.dart:368:          state,
+lib\core\routes.dart:369:          const DriverOnboardingScreen(),
+lib\core\routes.dart:370:        ),
+lib\core\routes.dart:371:      ),
+lib\core\routes.dart:372:      GoRoute(
+lib\core\routes.dart:373:        path: AppRoutes.addVehicle,
+lib\core\routes.dart:374:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:375:          context,
+lib\core\routes.dart:376:          state,
+lib\core\routes.dart:377:          const AddVehicleScreen(),
+lib\core\routes.dart:378:        ),
+lib\core\routes.dart:379:      ),
+lib\core\routes.dart:380:      GoRoute(
+lib\core\routes.dart:381:        path: AppRoutes.driverVerification,
+lib\core\routes.dart:382:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:383:          context,
+lib\core\routes.dart:384:          state,
+lib\core\routes.dart:385:          const DriverVerificationScreen(),
+lib\core\routes.dart:386:        ),
+lib\core\routes.dart:387:      ),
+lib\core\routes.dart:388:      GoRoute(
+lib\core\routes.dart:389:        path: AppRoutes.createRide,
+lib\core\routes.dart:390:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:391:          context,
+lib\core\routes.dart:392:          state,
+lib\core\routes.dart:393:          const CreateRideScreen(),
+lib\core\routes.dart:394:        ),
+lib\core\routes.dart:395:      ),
+lib\core\routes.dart:396:      GoRoute(
+lib\core\routes.dart:397:        path: AppRoutes.myRides,
+lib\core\routes.dart:398:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:399:          context,
+lib\core\routes.dart:400:          state,
+lib\core\routes.dart:401:          const MyRidesScreen(),
+lib\core\routes.dart:402:        ),
+lib\core\routes.dart:403:      ),
+lib\core\routes.dart:404:      GoRoute(
+lib\core\routes.dart:405:        path: '${AppRoutes.myRides}/:id',
+lib\core\routes.dart:406:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:407:          context,
+lib\core\routes.dart:408:          state,
+lib\core\routes.dart:409:          ActiveRideScreen(
+lib\core\routes.dart:410:            rideId: state.pathParameters['id']!,
+lib\core\routes.dart:411:          ),
+lib\core\routes.dart:412:        ),
+lib\core\routes.dart:413:      ),
+lib\core\routes.dart:414:      GoRoute(
+lib\core\routes.dart:415:        path: AppRoutes.passengerRequests,
+lib\core\routes.dart:416:        pageBuilder: (context, state) => _buildPageWithTransition(
+lib\core\routes.dart:417:          context,
+lib\core\routes.dart:418:          state,
+lib\core\routes.dart:419:          const PassengerRequestsScreen(),
+lib\core\routes.dart:420:        ),
+lib\core\routes.dart:421:      ),
+lib\core\routes.dart:422:    ],
+lib\core\routes.dart:423:  );
+lib\core\routes.dart:424:});
+lib\core\theme.dart:1:import 'package:flutter/material.dart';
+lib\core\theme.dart:2:import 'package:google_fonts/google_fonts.dart';
+lib\core\theme.dart:3:
+lib\core\theme.dart:4:class AppTheme {
+lib\core\theme.dart:5:  static const Color navy = Color(0xFF0F172A);
+lib\core\theme.dart:6:  static const Color teal = Color(0xFF14B8A6);
+lib\core\theme.dart:7:  static const Color tealLight = Color(0xFF5EEAD4);
+lib\core\theme.dart:8:  static const Color tealDark = Color(0xFF0D9488);
+lib\core\theme.dart:9:  static const Color slate50 = Color(0xFFF8FAFC);
+lib\core\theme.dart:10:  static const Color slate100 = Color(0xFFF1F5F9);
+lib\core\theme.dart:11:  static const Color slate200 = Color(0xFFE2E8F0);
+lib\core\theme.dart:12:  static const Color slate500 = Color(0xFF64748B);
+lib\core\theme.dart:13:  static const Color slate700 = Color(0xFF334155);
+lib\core\theme.dart:14:
+lib\core\theme.dart:15:  static ThemeData get lightTheme {
+lib\core\theme.dart:16:    return ThemeData(
+lib\core\theme.dart:17:      useMaterial3: true,
+lib\core\theme.dart:18:      colorScheme: ColorScheme.light(
+lib\core\theme.dart:19:        primary: teal,
+lib\core\theme.dart:20:        secondary: tealDark,
+lib\core\theme.dart:21:        surface: Colors.white,
+lib\core\theme.dart:22:        error: Colors.red.shade600,
+lib\core\theme.dart:23:      ),
+lib\core\theme.dart:24:      scaffoldBackgroundColor: slate50,
+lib\core\theme.dart:25:      textTheme: GoogleFonts.interTextTheme().copyWith(
+lib\core\theme.dart:26:        headlineLarge: GoogleFonts.inter(
+lib\core\theme.dart:27:          fontSize: 32,
+lib\core\theme.dart:28:          fontWeight: FontWeight.bold,
+lib\core\theme.dart:29:          color: navy,
+lib\core\theme.dart:30:        ),
+lib\core\theme.dart:31:        headlineMedium: GoogleFonts.inter(
+lib\core\theme.dart:32:          fontSize: 24,
+lib\core\theme.dart:33:          fontWeight: FontWeight.bold,
+lib\core\theme.dart:34:          color: navy,
+lib\core\theme.dart:35:        ),
+lib\core\theme.dart:36:        bodyLarge: GoogleFonts.inter(fontSize: 16, color: slate700),
+lib\core\theme.dart:37:        bodyMedium: GoogleFonts.inter(fontSize: 14, color: slate500),
+lib\core\theme.dart:38:      ),
+lib\core\theme.dart:39:      appBarTheme: AppBarTheme(
+lib\core\theme.dart:40:        backgroundColor: Colors.white,
+lib\core\theme.dart:41:        elevation: 0,
+lib\core\theme.dart:42:        iconTheme: const IconThemeData(color: navy),
+lib\core\theme.dart:43:        titleTextStyle: GoogleFonts.inter(
+lib\core\theme.dart:44:          fontSize: 18,
+lib\core\theme.dart:45:          fontWeight: FontWeight.w600,
+lib\core\theme.dart:46:          color: navy,
+lib\core\theme.dart:47:        ),
+lib\core\theme.dart:48:      ),
+lib\core\theme.dart:49:      elevatedButtonTheme: ElevatedButtonThemeData(
+lib\core\theme.dart:50:        style: ElevatedButton.styleFrom(
+lib\core\theme.dart:51:          backgroundColor: teal,
+lib\core\theme.dart:52:          foregroundColor: Colors.white,
+lib\core\theme.dart:53:          elevation: 0,
+lib\core\theme.dart:54:          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+lib\core\theme.dart:55:          shape:
+lib\core\theme.dart:56:              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+lib\core\theme.dart:57:          textStyle: GoogleFonts.inter(
+lib\core\theme.dart:58:            fontSize: 16,
+lib\core\theme.dart:59:            fontWeight: FontWeight.w600,
+lib\core\theme.dart:60:          ),
+lib\core\theme.dart:61:        ),
+lib\core\theme.dart:62:      ),
+lib\core\theme.dart:63:      cardTheme: CardThemeData(
+lib\core\theme.dart:64:        elevation: 0,
+lib\core\theme.dart:65:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+lib\core\theme.dart:66:        color: Colors.white,
+lib\core\theme.dart:67:      ),
+lib\core\theme.dart:68:      inputDecorationTheme: InputDecorationTheme(
+lib\core\theme.dart:69:        filled: true,
+lib\core\theme.dart:70:        fillColor: Colors.white,
+lib\core\theme.dart:71:        border: OutlineInputBorder(
+lib\core\theme.dart:72:          borderRadius: BorderRadius.circular(12),
+lib\core\theme.dart:73:          borderSide: BorderSide(color: slate200),
+lib\core\theme.dart:74:        ),
+lib\core\theme.dart:75:        enabledBorder: OutlineInputBorder(
+lib\core\theme.dart:76:          borderRadius: BorderRadius.circular(12),
+lib\core\theme.dart:77:          borderSide: BorderSide(color: slate200),
+lib\core\theme.dart:78:        ),
+lib\core\theme.dart:79:        focusedBorder: OutlineInputBorder(
+lib\core\theme.dart:80:          borderRadius: BorderRadius.circular(12),
+lib\core\theme.dart:81:          borderSide: BorderSide(color: teal, width: 2),
+lib\core\theme.dart:82:        ),
+lib\core\theme.dart:83:        contentPadding:
+lib\core\theme.dart:84:            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+lib\core\theme.dart:85:      ),
+lib\core\theme.dart:86:    );
+lib\core\theme.dart:87:  }
+lib\core\theme.dart:88:
+lib\core\theme.dart:89:  static ThemeData get darkTheme {
+lib\core\theme.dart:90:    // ponytail: the app still hardcodes many light-only colors; reuse the
+lib\core\theme.dart:91:    // readable palette until screens are made theme-aware.
+lib\core\theme.dart:92:    return lightTheme;
+lib\core\theme.dart:93:  }
+lib\core\theme.dart:94:}
+lib\core\theme_provider.dart:1:import 'package:flutter/material.dart';
+lib\core\theme_provider.dart:2:import 'package:flutter_riverpod/flutter_riverpod.dart';
+lib\core\theme_provider.dart:3:import '../features/auth/data/session_storage.dart';
+lib\core\theme_provider.dart:4:import '../features/auth/state/auth_controller.dart';
+lib\core\theme_provider.dart:5:
+lib\core\theme_provider.dart:6:/// Manages app theme mode (light/dark/system) with persistence.
+lib\core\theme_provider.dart:7:final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+lib\core\theme_provider.dart:8:  (ref) {
+lib\core\theme_provider.dart:9:    final storage = ref.watch(sessionStorageProvider);
+lib\core\theme_provider.dart:10:    return ThemeModeNotifier(storage);
+lib\core\theme_provider.dart:11:  },
+lib\core\theme_provider.dart:12:);
+lib\core\theme_provider.dart:13:
+lib\core\theme_provider.dart:14:class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+lib\core\theme_provider.dart:15:  final SessionStorage _storage;
+lib\core\theme_provider.dart:16:  static const _key = 'theme_mode';
+lib\core\theme_provider.dart:17:
+lib\core\theme_provider.dart:18:  ThemeModeNotifier(this._storage) : super(ThemeMode.light) {
+lib\core\theme_provider.dart:19:    _loadThemeMode();
+lib\core\theme_provider.dart:20:  }
+lib\core\theme_provider.dart:21:
+lib\core\theme_provider.dart:22:  Future<void> _loadThemeMode() async {
+lib\core\theme_provider.dart:23:    final modeStr = await _storage.read(_key);
+lib\core\theme_provider.dart:24:    if (modeStr != null) {
+lib\core\theme_provider.dart:25:      final mode = ThemeMode.values.firstWhere(
+lib\core\theme_provider.dart:26:        (e) => e.name == modeStr,
+lib\core\theme_provider.dart:27:        orElse: () => ThemeMode.light,
+lib\core\theme_provider.dart:28:      );
+lib\core\theme_provider.dart:29:      state = mode;
+lib\core\theme_provider.dart:30:    }
+lib\core\theme_provider.dart:31:  }
+lib\core\theme_provider.dart:32:
+lib\core\theme_provider.dart:33:  Future<void> setThemeMode(ThemeMode mode) async {
+lib\core\theme_provider.dart:34:    state = mode;
+lib\core\theme_provider.dart:35:    await _storage.write(_key, mode.name);
+lib\core\theme_provider.dart:36:  }
+lib\core\theme_provider.dart:37:}
+
+

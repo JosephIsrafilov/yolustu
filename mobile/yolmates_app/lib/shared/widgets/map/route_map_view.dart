@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -25,7 +26,7 @@ class RouteMapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (forceCanvas) {
+    if (forceCanvas || kIsWeb) {
       return CanvasRouteMapView(
         origin: origin,
         destination: destination,

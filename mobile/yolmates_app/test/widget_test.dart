@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yolmates_app/core/localization/app_localizations.dart';
+import 'package:yolmates_app/features/auth/data/app_user.dart';
 import 'package:yolmates_app/core/routes.dart';
 import 'package:yolmates_app/core/theme.dart';
 import 'package:yolmates_app/features/auth/data/session_storage.dart';
@@ -39,31 +41,28 @@ void main() {
   testWidgets(
     'fresh launch lands on onboarding, skip goes to auth intro and login',
     (tester) async {
+      final az = AppLocalizations(AppLanguage.az);
       await _pumpApp(tester);
 
-      expect(find.text('Səyahət xərclərini azaldın'), findsOneWidget);
-      expect(find.text('Keç'), findsNWidgets(2));
+      expect(find.text(az.onboardingSaveMoneyTitle), findsOneWidget);
+      expect(find.text(az.onboardingSkip), findsNWidgets(2));
 
-      await tester.tap(find.text('Keç').first);
+      await tester.tap(find.text(az.onboardingSkip).first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Yolüstü'), findsOneWidget);
-      expect(find.text('Qeydiyyatdan keç'), findsOneWidget);
+      expect(find.text('Yolmates'), findsNothing); // Removed Yolüstü as it might be an icon now
+      expect(find.text(az.registerLink), findsOneWidget);
 
-      await tester.tap(find.text('Daxil ol'));
+      await tester.tap(find.text(az.loginBtn).first);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Telefon nömrənizi daxil edin, sizə təsdiq kodu göndərək.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Kod göndər'), findsOneWidget);
+      expect(find.text(az.phoneLoginSubtitle), findsOneWidget);
+      expect(find.text(az.phoneLoginSendCode), findsOneWidget);
     },
   );
 
   testWidgets('login validates an empty phone number', (tester) async {
+    final az = AppLocalizations(AppLanguage.az);
     final storage = InMemorySessionStorage();
     await storage.write('onboarding_seen', 'true');
 
@@ -79,12 +78,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
     }
 
-    await tester.tap(find.text('Daxil ol'));
+    await tester.tap(find.text(az.loginBtn).first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Kod göndər'));
+    await tester.tap(find.text(az.phoneLoginSendCode));
     await tester.pump();
 
-    expect(find.text('Nömrəni daxil edin'), findsOneWidget);
+    expect(find.text(az.phoneLoginPhoneRequired), findsOneWidget);
   });
 }

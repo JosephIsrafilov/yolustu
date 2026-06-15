@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
 /// App notification (mock).
 class AppNotification {
   final String id;
@@ -68,6 +69,23 @@ class NotificationsController extends Notifier<List<AppNotification>> {
     state = [
       for (final n in state)
         if (n.id == id) n.copyWith(read: true) else n,
+    ];
+  }
+
+  void addNotification({
+    required String id,
+    required String title,
+    required String body,
+    DateTime? time,
+  }) {
+    state = [
+      AppNotification(
+        id: id,
+        title: title,
+        body: body,
+        time: time ?? DateTime.now(),
+      ),
+      ...state.where((notification) => notification.id != id),
     ];
   }
 }

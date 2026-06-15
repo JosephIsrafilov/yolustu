@@ -15,7 +15,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final SessionStorage _storage;
   static const _key = 'theme_mode';
 
-  ThemeModeNotifier(this._storage) : super(ThemeMode.system) {
+  ThemeModeNotifier(this._storage) : super(ThemeMode.light) {
     _loadThemeMode();
   }
 
@@ -24,7 +24,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     if (modeStr != null) {
       final mode = ThemeMode.values.firstWhere(
         (e) => e.name == modeStr,
-        orElse: () => ThemeMode.system,
+        orElse: () => ThemeMode.light,
       );
       state = mode;
     }

@@ -156,7 +156,7 @@ class ProfileScreen extends ConsumerWidget {
                 height: 52,
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('İmtina'),
+                  child: Text(l10n.commonDismiss),
                 ),
               ),
             ],

@@ -6,15 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
-/// OTP verification.
-///
-/// Verifies the 6-digit code for [phone]. The router redirect carries the user
-/// to profile setup or the main app once [AuthController] state advances; this
-/// screen only owns the loading/error of the verify call plus the resend timer.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   final String phone;
 
@@ -41,8 +37,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   void initState() {
     super.initState();
     _startTimer();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _focusNode.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
   }
 
   @override
@@ -56,9 +53,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   void _startTimer() {
     _timer?.cancel();
     setState(() => _secondsLeft = _resendSeconds);
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft <= 1) {
-        t.cancel();
+        timer.cancel();
         if (mounted) setState(() => _secondsLeft = 0);
       } else {
         if (mounted) setState(() => _secondsLeft--);
@@ -70,7 +67,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     FocusScope.of(context).unfocus();
     final code = _controller.text.trim();
     if (code.length != _codeLength) {
-      setState(() => _error = 'Kod $_codeLength rəqəm olmalıdır');
+      setState(() {
+        _error = ref.read(l10nProvider).otpCodeLengthError(_codeLength);
+      });
       return;
     }
 
@@ -80,17 +79,13 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     });
 
     try {
-      // On success the controller advances auth state; the router redirect
-      // moves us to profile setup or the main app automatically.
-      await ref
-          .read(authControllerProvider.notifier)
-          .verifyOtp(widget.phone, code);
+      await ref.read(authControllerProvider.notifier).verifyOtp(widget.phone, code);
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Təsdiq alınmadı. Yenidən cəhd edin.');
+      setState(() => _error = ref.read(l10nProvider).otpVerifyFailed);
     } finally {
       if (mounted) setState(() => _verifying = false);
     }
@@ -107,7 +102,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
       _startTimer();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Kod yenidən göndərilə bilmədi.');
+      setState(() => _error = ref.read(l10nProvider).otpResendFailed);
     } finally {
       if (mounted) setState(() => _resending = false);
     }
@@ -115,10 +110,10 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.pop()),
-      ),
+      appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -127,7 +122,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
             children: [
               const SizedBox(height: 8),
               Text(
-                'Kodu təsdiqləyin',
+                l10n.otpTitle,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 8),
@@ -135,7 +130,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 TextSpan(
                   style: Theme.of(context).textTheme.bodyMedium,
                   children: [
-                    const TextSpan(text: 'Kod bu nömrəyə göndərildi: '),
+                    TextSpan(text: l10n.otpSubtitlePrefix),
                     TextSpan(
                       text: widget.phone,
                       style: const TextStyle(
@@ -158,8 +153,11 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.error_outline,
-                        size: 18, color: Colors.red.shade600),
+                    Icon(
+                      Icons.error_outline,
+                      size: 18,
+                      color: Colors.red.shade600,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -184,14 +182,14 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                             valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
-                      : const Text('Təsdiqlə'),
+                      : Text(l10n.otpConfirmBtn),
                 ),
               ),
               const SizedBox(height: 16),
               Center(
                 child: _secondsLeft > 0
                     ? Text(
-                        'Kodu yenidən göndər ($_secondsLeft s)',
+                        l10n.otpResendCountdown(_secondsLeft),
                         style: TextStyle(color: AppTheme.slate500),
                       )
                     : TextButton(
@@ -200,16 +198,15 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Kodu yenidən göndər'),
+                            : Text(l10n.otpResendBtn),
                       ),
               ),
               Center(
                 child: TextButton(
                   onPressed: _verifying ? null : () => context.pop(),
-                  child: const Text('Nömrəni dəyiş'),
+                  child: Text(l10n.otpChangeNumber),
                 ),
               ),
             ],
@@ -255,8 +252,8 @@ class _OtpField extends StatelessWidget {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(length),
       ],
-      onChanged: (v) {
-        if (v.length == length) onCompleted(v);
+      onChanged: (value) {
+        if (value.length == length) onCompleted(value);
       },
       decoration: const InputDecoration(
         counterText: '',

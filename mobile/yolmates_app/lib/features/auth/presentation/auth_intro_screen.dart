@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/routes.dart';
 import '../../../core/theme.dart';
 import '../../../shared/widgets/app_logo.dart';
 
-class AuthIntroScreen extends StatelessWidget {
+class AuthIntroScreen extends ConsumerWidget {
   const AuthIntroScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -23,7 +27,7 @@ class AuthIntroScreen extends StatelessWidget {
               const Center(child: AppLogo(size: 100)),
               const SizedBox(height: 24),
               const Text(
-                'Yolüstü',
+                'Yolustu',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
@@ -32,10 +36,10 @@ class AuthIntroScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Azərbaycan daxilində rahat və ucuz carpooling platforması',
+              Text(
+                l10n.authIntroSubtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   color: AppTheme.slate500,
                 ),
@@ -43,7 +47,7 @@ class AuthIntroScreen extends StatelessWidget {
               const Spacer(),
               ElevatedButton(
                 onPressed: () => context.push(AppRoutes.login),
-                child: const Text('Daxil ol'),
+                child: Text(l10n.loginBtn),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
@@ -56,9 +60,9 @@ class AuthIntroScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Qeydiyyatdan keç',
-                  style: TextStyle(
+                child: Text(
+                  l10n.registerLink,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),

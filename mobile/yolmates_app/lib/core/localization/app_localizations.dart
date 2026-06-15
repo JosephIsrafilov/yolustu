@@ -46,1048 +46,1488 @@ class AppLocalizations {
   AppLocalizations(this.language);
 
   // Common
-  String get commonAll => _get({'az': 'BГјtГјn', 'en': 'All', 'ru': 'Р’СЃРµ'});
+  String get commonAll => _get({'az': 'Bütün', 'en': 'All', 'ru': 'Все'});
   String get commonSearch =>
-      _get({'az': 'Axtar', 'en': 'Search', 'ru': 'РќР°Р№С‚Рё'});
+      _get({'az': 'Axtar', 'en': 'Search', 'ru': 'Найти'});
   String get commonFrom =>
-      _get({'az': 'Haradan', 'en': 'From', 'ru': 'РћС‚РєСѓРґР°'});
-  String get commonTo => _get({'az': 'Haraya', 'en': 'To', 'ru': 'РљСѓРґР°'});
+      _get({'az': 'Haradan', 'en': 'From', 'ru': 'Откуда'});
+  String get commonTo => _get({'az': 'Haraya', 'en': 'To', 'ru': 'Куда'});
   String get commonDate =>
-      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Р”Р°С‚Р°'});
+      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Дата'});
   String get commonPassenger =>
-      _get({'az': 'SЙ™rniЕџin', 'en': 'Passenger', 'ru': 'РџР°СЃСЃР°Р¶РёСЂ'});
+      _get({'az': 'Sərnişin', 'en': 'Passenger', 'ru': 'Пассажир'});
   String get commonClose =>
-      _get({'az': 'BaДџla', 'en': 'Close', 'ru': 'Р—Р°РєСЂС‹С‚СЊ'});
+      _get({'az': 'Bağla', 'en': 'Close', 'ru': 'Закрыть'});
   String get commonBack =>
-      _get({'az': 'Geri', 'en': 'Back', 'ru': 'РќР°Р·Р°Рґ'});
+      _get({'az': 'Geri', 'en': 'Back', 'ru': 'Назад'});
   String get commonError => _get({
-        'az': 'XЙ™ta baЕџ verdi',
+        'az': 'Xəta baş verdi',
         'en': 'An error occurred',
-        'ru': 'РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°'
+        'ru': 'Произошла ошибка'
       });
 
   // Auth & Onboarding
   String get loginTitle =>
-      _get({'az': 'Daxil ol', 'en': 'Log in', 'ru': 'Р’РѕР№С‚Рё'});
+      _get({'az': 'Daxil ol', 'en': 'Log in', 'ru': 'Войти'});
   String get loginSubtitle => _get({
-        'az': 'HesabД±nД±za daxil olun',
+        'az': 'Hesabınıza daxil olun',
         'en': 'Log in to your account',
-        'ru': 'Р’РѕР№РґРёС‚Рµ РІ СЃРІРѕР№ Р°РєРєР°СѓРЅС‚'
+        'ru': 'Войдите в свой аккаунт'
       });
   String get phoneLabel => _get({
-        'az': 'Mobil NГ¶mrЙ™',
+        'az': 'Mobil Nömrə',
         'en': 'Phone Number',
-        'ru': 'РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°'
+        'ru': 'Номер телефона'
       });
   String get passwordLabel =>
-      _get({'az': 'ЕћifrЙ™', 'en': 'Password', 'ru': 'РџР°СЂРѕР»СЊ'});
+      _get({'az': 'Şifrə', 'en': 'Password', 'ru': 'Пароль'});
   String get loginBtn =>
-      _get({'az': 'Daxil ol', 'en': 'Log in', 'ru': 'Р’РѕР№С‚Рё'});
+      _get({'az': 'Daxil ol', 'en': 'Log in', 'ru': 'Войти'});
   String get noAccount => _get({
-        'az': 'HesabД±nД±z yoxdur?',
+        'az': 'Hesabınız yoxdur?',
         'en': 'Don\'t have an account?',
-        'ru': 'РќРµС‚ Р°РєРєР°СѓРЅС‚Р°?'
+        'ru': 'Нет аккаунта?'
       });
   String get registerLink => _get({
-        'az': 'Qeydiyyatdan keГ§in',
+        'az': 'Qeydiyyatdan keçin',
         'en': 'Sign up',
-        'ru': 'Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ'
+        'ru': 'Зарегистрироваться'
       });
   String get registerTitle => _get(
-      {'az': 'Qeydiyyat', 'en': 'Sign up', 'ru': 'Р РµРіРёСЃС‚СЂР°С†РёСЏ'});
+      {'az': 'Qeydiyyat', 'en': 'Sign up', 'ru': 'Регистрация'});
   String get fullNameLabel => _get({
-        'az': 'Ad vЙ™ Soyad',
+        'az': 'Ad və Soyad',
         'en': 'Full Name',
-        'ru': 'РРјСЏ Рё Р¤Р°РјРёР»РёСЏ'
+        'ru': 'Имя и Фамилия'
       });
   String get verifyBtn => _get(
-      {'az': 'TЙ™sdiqlЙ™', 'en': 'Verify', 'ru': 'РџРѕРґС‚РІРµСЂРґРёС‚СЊ'});
+      {'az': 'Təsdiqlə', 'en': 'Verify', 'ru': 'Подтвердить'});
 
   String get onboardingSkip =>
-      _get({'az': 'Keç', 'en': 'Skip', 'ru': 'РџСЂРѕРїСѓСЃС‚РёС‚СЊ'});
+      _get({'az': 'Keç', 'en': 'Skip', 'ru': 'Пропустить'});
   String get onboardingNext =>
-      _get({'az': 'Növbəti', 'en': 'Next', 'ru': 'Р”Р°Р»РµРµ'});
+      _get({'az': 'Növbəti', 'en': 'Next', 'ru': 'Далее'});
   String get onboardingStart =>
-      _get({'az': 'Başla', 'en': 'Start', 'ru': 'РќР°С‡Р°С‚СЊ'});
+      _get({'az': 'Başla', 'en': 'Start', 'ru': 'Начать'});
   String get onboardingSaveMoneyTitle => _get({
         'az': 'Səyahət xərclərini azaldın',
         'en': 'Save on every trip',
-        'ru': 'Р­РєРѕРЅРѕРјСЊС‚Рµ РЅР° РєР°Р¶РґРѕР№ РїРѕРµР·РґРєРµ'
+        'ru': 'Экономьте на каждой поездке'
       });
   String get onboardingSaveMoneyMessage => _get({
         'az':
             'Şəhərlərarası yolu paylaşın, biletdən daha sərfəli qiymətlə gedin.',
         'en': 'Share intercity rides and pay less than regular tickets.',
         'ru':
-            'Р”РµР»РёС‚Рµ РјРµР¶РґСѓРіРѕСЂРѕРґРЅРёРµ РїРѕРµР·РґРєРё Рё РїР»Р°С‚РёС‚Рµ РјРµРЅСЊС€Рµ, С‡РµРј Р·Р° РѕР±С‹С‡РЅС‹Рµ Р±РёР»РµС‚С‹.'
+            'Делите междугородние поездки и платите меньше, чем за обычные билеты.'
       });
   String get onboardingSafeTitle => _get({
         'az': 'Daha təhlükəsiz seçin',
         'en': 'Travel with confidence',
-        'ru': 'РџСѓС‚РµС€РµСЃС‚РІСѓР№С‚Рµ СЃРїРѕРєРѕР№РЅРµРµ'
+        'ru': 'Путешествуйте спокойнее'
       });
   String get onboardingSafeMessage => _get({
         'az':
             'Təsdiqlənmiş sürücülər, reytinqlər və dəstək ilə daha güvənli yol gedin.',
         'en': 'Verified drivers, ratings, and support help you ride safer.',
         'ru':
-            'РџСЂРѕРІРµСЂРµРЅРЅС‹Рµ РІРѕРґРёС‚РµР»Рё, СЂРµР№С‚РёРЅРіРё Рё РїРѕРґРґРµСЂР¶РєР° РґРµР»Р°СЋС‚ РїРѕРµР·РґРєСѓ Р±РµР·РѕРїР°СЃРЅРµРµ.'
+            'Проверенные водители, рейтинги и поддержка делают поездку безопаснее.'
       });
   String get onboardingEasyTitle => _get({
         'az': 'Bir neçə toxunuşla hazırdır',
         'en': 'Easy from search to chat',
-        'ru': 'Р›РµРіРєРѕ РѕС‚ РїРѕРёСЃРєР° РґРѕ С‡Р°С‚Р°'
+        'ru': 'Легко от поиска до чата'
       });
   String get onboardingEasyMessage => _get({
         'az':
             'Axtarın, bron edin və sürücü ilə söhbətə bir neçə toxunuşda başlayın.',
         'en': 'Search, book, and chat with the driver in just a few taps.',
         'ru':
-            'РС‰РёС‚Рµ, Р±СЂРѕРЅРёСЂСѓР№С‚Рµ Рё РѕР±С‰Р°Р№С‚РµСЃСЊ СЃ РІРѕРґРёС‚РµР»РµРј РІСЃРµРіРѕ РІ РЅРµСЃРєРѕР»СЊРєРѕ РєР°СЃР°РЅРёР№.'
+            'Ищите, бронируйте и общайтесь с водителем всего в несколько касаний.'
       });
 
   // Navigation
   String get navHome =>
-      _get({'az': 'Ana sЙ™hifЙ™', 'en': 'Home', 'ru': 'Р“Р»Р°РІРЅР°СЏ'});
+      _get({'az': 'Ana səhifə', 'en': 'Home', 'ru': 'Главная'});
   String get navSearch =>
-      _get({'az': 'Axtar', 'en': 'Search', 'ru': 'РџРѕРёСЃРє'});
+      _get({'az': 'Axtar', 'en': 'Search', 'ru': 'Поиск'});
   String get navTrips =>
-      _get({'az': 'GediЕџlЙ™r', 'en': 'Trips', 'ru': 'РџРѕРµР·РґРєРё'});
+      _get({'az': 'Gedişlər', 'en': 'Trips', 'ru': 'Поездки'});
   String get navChat =>
-      _get({'az': 'SГ¶hbЙ™tlЙ™r', 'en': 'Chats', 'ru': 'Р§Р°С‚С‹'});
+      _get({'az': 'Söhbətlər', 'en': 'Chats', 'ru': 'Чаты'});
   String get navProfile =>
-      _get({'az': 'Profil', 'en': 'Profile', 'ru': 'РџСЂРѕС„РёР»СЊ'});
+      _get({'az': 'Profil', 'en': 'Profile', 'ru': 'Профиль'});
   String get navDriverPanel => _get({
-        'az': 'SГјrГјcГј Paneli',
+        'az': 'Sürücü Paneli',
         'en': 'Driver Panel',
-        'ru': 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ'
+        'ru': 'Панель водителя'
       });
 
   // Chat
   String get chatTitle =>
-      _get({'az': 'SГ¶hbЙ™t', 'en': 'Chat', 'ru': 'Р§Р°С‚'});
+      _get({'az': 'Söhbət', 'en': 'Chat', 'ru': 'Чат'});
   String get chatPlaceholder => _get({
-        'az': 'MesajД±nД±zД± yazД±n...',
+        'az': 'Mesajınızı yazın...',
         'en': 'Type a message...',
-        'ru': 'Р’РІРµРґРёС‚Рµ СЃРѕРѕР±С‰РµРЅРёРµ...'
+        'ru': 'Введите сообщение...'
       });
   String get chatSend =>
-      _get({'az': 'GГ¶ndЙ™r', 'en': 'Send', 'ru': 'РћС‚РїСЂР°РІРёС‚СЊ'});
+      _get({'az': 'Göndər', 'en': 'Send', 'ru': 'Отправить'});
   String get chatSupport =>
-      _get({'az': 'DЙ™stЙ™k', 'en': 'Support', 'ru': 'РџРѕРґРґРµСЂР¶РєР°'});
+      _get({'az': 'Dəstək', 'en': 'Support', 'ru': 'Поддержка'});
   String get chatCallInApp => _get({
-        'az': 'TЙ™tbiqdaxili zЙ™ng',
+        'az': 'Tətbiqdaxili zəng',
         'en': 'In-app call',
-        'ru': 'Р—РІРѕРЅРѕРє РІ РїСЂРёР»РѕР¶РµРЅРёРё'
+        'ru': 'Звонок в приложении'
       });
   String get chatCallExternal =>
-      _get({'az': 'ZЙ™ng et', 'en': 'Call', 'ru': 'РџРѕР·РІРѕРЅРёС‚СЊ'});
+      _get({'az': 'Zəng et', 'en': 'Call', 'ru': 'Позвонить'});
   String get chatEmpty => _get({
         'az': 'Mesaj yoxdur',
         'en': 'No messages',
-        'ru': 'РќРµС‚ СЃРѕРѕР±С‰РµРЅРёР№'
+        'ru': 'Нет сообщений'
       });
   String get chatEmptyMessage => _get({
         'az':
-            'Rezerv etdikdЙ™n sonra sГјrГјcГј ilЙ™ burada yazД±Еџa bilЙ™cЙ™ksiniz.',
+            'Rezerv etdikdən sonra sürücü ilə burada yazışa biləcəksiniz.',
         'en': 'After booking, you can chat with your driver here.',
         'ru':
-            'РџРѕСЃР»Рµ Р±СЂРѕРЅРёСЂРѕРІР°РЅРёСЏ РІС‹ СЃРјРѕР¶РµС‚Рµ РѕР±С‰Р°С‚СЊСЃСЏ СЃ РІРѕРґРёС‚РµР»РµРј Р·РґРµСЃСЊ.'
+            'После бронирования вы сможете общаться с водителем здесь.'
       });
   String get chatSearchTrips => _get({
-        'az': 'SЙ™yahЙ™t axtar',
+        'az': 'Səyahət axtar',
         'en': 'Search trips',
-        'ru': 'РСЃРєР°С‚СЊ РїРѕРµР·РґРєРё'
+        'ru': 'Искать поездки'
       });
 
   // Profile & Settings
   String get profileSettings => _get({
-        'az': 'TЙ™nzimlЙ™mЙ™lЙ™r',
+        'az': 'Tənzimləmələr',
         'en': 'Settings',
-        'ru': 'РќР°СЃС‚СЂРѕР№РєРё'
+        'ru': 'Настройки'
       });
   String get profileLanguage =>
-      _get({'az': 'Dil', 'en': 'Language', 'ru': 'РЇР·С‹Рє'});
+      _get({'az': 'Dil', 'en': 'Language', 'ru': 'Язык'});
   String get profileSupport => _get({
-        'az': 'DЙ™stЙ™k Г§atД±na yaz',
+        'az': 'Dəstək çatına yaz',
         'en': 'Contact Support',
-        'ru': 'РќР°РїРёСЃР°С‚СЊ РІ РїРѕРґРґРµСЂР¶РєСѓ'
+        'ru': 'Написать в поддержку'
       });
   String get profileLogout =>
-      _get({'az': 'Г‡Д±xД±Еџ', 'en': 'Log out', 'ru': 'Р’С‹Р№С‚Рё'});
+      _get({'az': 'Çıxış', 'en': 'Log out', 'ru': 'Выйти'});
 
   // Create Ride & AI
   String get aiTitle => _get({
-        'az': 'TГ¶vsiyЙ™ edilЙ™n qiymЙ™t',
+        'az': 'Tövsiyə edilən qiymət',
         'en': 'Recommended price',
-        'ru': 'Р РµРєРѕРјРµРЅРґСѓРµРјР°СЏ С†РµРЅР°'
+        'ru': 'Рекомендуемая цена'
       });
   String get aiSuggestBtn => _get({
-        'az': 'SД° tЙ™klifi al',
+        'az': 'Sİ təklifi al',
         'en': 'Get AI suggestion',
-        'ru': 'РџРѕР»СѓС‡РёС‚СЊ РїСЂРµРґР»РѕР¶РµРЅРёРµ РР'
+        'ru': 'Получить предложение ИИ'
       });
   String get applyPrice => _get({
-        'az': 'Bu qiymЙ™ti istifadЙ™ et',
+        'az': 'Bu qiyməti istifadə et',
         'en': 'Use this price',
-        'ru': 'РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚Сѓ С†РµРЅСѓ'
+        'ru': 'Использовать эту цену'
       });
 
   // Home Screen
   String get homeHeroTitle => _get({
-        'az': 'AzЙ™rbaycan daxilindЙ™',
+        'az': 'Azərbaycan daxilində',
         'en': 'Within Azerbaijan',
-        'ru': 'Р’ РїСЂРµРґРµР»Р°С… РђР·РµСЂР±Р°Р№РґР¶Р°РЅР°'
+        'ru': 'В пределах Азербайджана'
       });
   String get homeHeroSubtitle => _get({
-        'az': 'yolu paylaЕџД±n',
+        'az': 'yolu paylaşın',
         'en': 'share your ride',
-        'ru': 'РґРµР»РёС‚РµСЃСЊ РїРѕРµР·РґРєРѕР№'
+        'ru': 'делитесь поездкой'
       });
   String get homeHeroDescription => _get({
-        'az': 'Rahat, tЙ™hlГјkЙ™siz vЙ™ ucuz sЙ™yahЙ™t',
+        'az': 'Rahat, təhlükəsiz və ucuz səyahət',
         'en': 'Comfortable, safe and affordable travel',
         'ru':
-            'РљРѕРјС„РѕСЂС‚РЅР°СЏ, Р±РµР·РѕРїР°СЃРЅР°СЏ Рё РґРѕСЃС‚СѓРїРЅР°СЏ РїРѕРµР·РґРєР°'
+            'Комфортная, безопасная и доступная поездка'
       });
   String get homeDriverPanelBtn => _get({
-        'az': 'SГјrГјcГј Paneli',
+        'az': 'Sürücü Paneli',
         'en': 'Driver Panel',
-        'ru': 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ'
+        'ru': 'Панель водителя'
       });
   String get homeDocumentsPendingBtn => _get({
-        'az': 'SЙ™nЙ™dlЙ™r yoxlanД±lД±r',
+        'az': 'Sənədlər yoxlanılır',
         'en': 'Documents under review',
-        'ru': 'Р”РѕРєСѓРјРµРЅС‚С‹ РЅР° РїСЂРѕРІРµСЂРєРµ'
+        'ru': 'Документы на проверке'
       });
   String get homeBecomeDriverBtn => _get({
-        'az': 'SГјrГјcГј ol',
+        'az': 'Sürücü ol',
         'en': 'Become a driver',
-        'ru': 'РЎС‚Р°С‚СЊ РІРѕРґРёС‚РµР»РµРј'
+        'ru': 'Стать водителем'
       });
   String get homePopularRoutes => _get({
-        'az': 'Populyar marЕџrutlar',
+        'az': 'Populyar marşrutlar',
         'en': 'Popular routes',
-        'ru': 'РџРѕРїСѓР»СЏСЂРЅС‹Рµ РјР°СЂС€СЂСѓС‚С‹'
+        'ru': 'Популярные маршруты'
       });
   String get homeDailyTrips => _get({
-        'az': 'GГјndЙ™lik 15+ reis',
+        'az': 'Gündəlik 15+ reis',
         'en': 'Daily 15+ trips',
-        'ru': 'Р•Р¶РµРґРЅРµРІРЅРѕ 15+ СЂРµР№СЃРѕРІ'
+        'ru': 'Ежедневно 15+ рейсов'
       });
 
   // Search Screen
   String get searchTitle => _get({
-        'az': 'SЙ™yahЙ™t axtar',
+        'az': 'Səyahət axtar',
         'en': 'Search trip',
-        'ru': 'РќР°Р№С‚Рё РїРѕРµР·РґРєСѓ'
+        'ru': 'Найти поездку'
       });
   String get searchFromLabel =>
-      _get({'az': 'Haradan', 'en': 'From', 'ru': 'РћС‚РєСѓРґР°'});
+      _get({'az': 'Haradan', 'en': 'From', 'ru': 'Откуда'});
   String get searchToLabel =>
-      _get({'az': 'Hara', 'en': 'To', 'ru': 'РљСѓРґР°'});
+      _get({'az': 'Hara', 'en': 'To', 'ru': 'Куда'});
   String get searchSwapTooltip => _get({
-        'az': 'ЕћЙ™hЙ™rlЙ™ri dЙ™yiЕџ',
+        'az': 'Şəhərləri dəyiş',
         'en': 'Swap cities',
-        'ru': 'РџРѕРјРµРЅСЏС‚СЊ РіРѕСЂРѕРґР°'
+        'ru': 'Поменять города'
       });
   String get searchDateLabel =>
-      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Р”Р°С‚Р°'});
+      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Дата'});
   String get searchPassengersLabel => _get({
-        'az': 'SЙ™rniЕџin sayД±',
+        'az': 'Sərnişin sayı',
         'en': 'Number of passengers',
-        'ru': 'РљРѕР»РёС‡РµСЃС‚РІРѕ РїР°СЃСЃР°Р¶РёСЂРѕРІ'
+        'ru': 'Количество пассажиров'
       });
   String get searchSameLocationError => _get({
-        'az': 'Г‡Д±xД±Еџ vЙ™ tЙ™yinat eyni ola bilmЙ™z',
+        'az': 'Çıxış və təyinat eyni ola bilməz',
         'en': 'Origin and destination cannot be the same',
         'ru':
-            'РќР°С‡Р°Р»Рѕ Рё РїСѓРЅРєС‚ РЅР°Р·РЅР°С‡РµРЅРёСЏ РЅРµ РјРѕРіСѓС‚ СЃРѕРІРїР°РґР°С‚СЊ'
+            'Начало и пункт назначения не могут совпадать'
       });
   String get searchRecentSearches => _get({
-        'az': 'Son axtarД±Еџlar',
+        'az': 'Son axtarışlar',
         'en': 'Recent searches',
-        'ru': 'РќРµРґР°РІРЅРёРµ РїРѕРёСЃРєРё'
+        'ru': 'Недавние поиски'
       });
 
   // Trip List Screen
   String get tripListSearchFailed => _get({
-        'az': 'AxtarД±Еџ alД±nmadД±',
+        'az': 'Axtarış alınmadı',
         'en': 'Search failed',
-        'ru': 'РџРѕРёСЃРє РЅРµ СѓРґР°Р»СЃСЏ'
+        'ru': 'Поиск не удался'
       });
   String get tripListNoResults => _get({
-        'az': 'SЙ™yahЙ™t tapД±lmadД±',
+        'az': 'Səyahət tapılmadı',
         'en': 'No trips found',
-        'ru': 'РџРѕРµР·РґРєРё РЅРµ РЅР°Р№РґРµРЅС‹'
+        'ru': 'Поездки не найдены'
       });
   String get tripListNoResultsMessage => _get({
         'az':
-            'Bu marЕџrut ГјГ§Гјn uyДџun reis yoxdur. Filtri dЙ™yiЕџin vЙ™ ya baЕџqa tarix seГ§in.',
+            'Bu marşrut üçün uyğun reis yoxdur. Filtri dəyişin və ya başqa tarix seçin.',
         'en':
             'No matching trips for this route. Change filters or try another date.',
         'ru':
-            'РќРµС‚ РїРѕРґС…РѕРґСЏС‰РёС… СЂРµР№СЃРѕРІ РґР»СЏ СЌС‚РѕРіРѕ РјР°СЂС€СЂСѓС‚Р°. РР·РјРµРЅРёС‚Рµ С„РёР»СЊС‚СЂС‹ РёР»Рё РІС‹Р±РµСЂРёС‚Рµ РґСЂСѓРіСѓСЋ РґР°С‚Сѓ.'
+            'Нет подходящих рейсов для этого маршрута. Измените фильтры или выберите другую дату.'
       });
   String get tripListModifySearch => _get({
-        'az': 'AxtarД±ЕџД± dЙ™yiЕџdir',
+        'az': 'Axtarışı dəyişdir',
         'en': 'Modify search',
-        'ru': 'РР·РјРµРЅРёС‚СЊ РїРѕРёСЃРє'
+        'ru': 'Изменить поиск'
       });
   String get tripListSortTime => _get(
-      {'az': 'Vaxta gГ¶rЙ™', 'en': 'By time', 'ru': 'РџРѕ РІСЂРµРјРµРЅРё'});
+      {'az': 'Vaxta görə', 'en': 'By time', 'ru': 'По времени'});
   String get tripListSortPrice =>
-      _get({'az': 'QiymЙ™tЙ™ gГ¶rЙ™', 'en': 'By price', 'ru': 'РџРѕ С†РµРЅРµ'});
+      _get({'az': 'Qiymətə görə', 'en': 'By price', 'ru': 'По цене'});
   String get tripListVerifiedOnly => _get({
-        'az': 'YalnД±z tЙ™sdiqlЙ™nmiЕџ',
+        'az': 'Yalnız təsdiqlənmiş',
         'en': 'Verified only',
-        'ru': 'РўРѕР»СЊРєРѕ РїСЂРѕРІРµСЂРµРЅРЅС‹Рµ'
+        'ru': 'Только проверенные'
       });
 
   // Bookings Screen
   String get bookingsTitle => _get({
-        'az': 'RezervasiyalarД±m',
+        'az': 'Rezervasiyalarım',
         'en': 'My Reservations',
-        'ru': 'РњРѕРё СЂРµР·РµСЂРІР°С†РёРё'
+        'ru': 'Мои резервации'
       });
   String get bookingsLoading => _get(
-      {'az': 'YГјklЙ™nir...', 'en': 'Loading...', 'ru': 'Р—Р°РіСЂСѓР·РєР°...'});
+      {'az': 'Yüklənir...', 'en': 'Loading...', 'ru': 'Загрузка...'});
   String get bookingsLoadFailed => _get({
-        'az': 'YГјklЙ™nmЙ™di',
+        'az': 'Yüklənmədi',
         'en': 'Failed to load',
-        'ru': 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ'
+        'ru': 'Не удалось загрузить'
       });
   String get bookingsEmpty => _get({
-        'az': 'HЙ™lЙ™ rezervasiya yoxdur',
+        'az': 'Hələ rezervasiya yoxdur',
         'en': 'No reservations yet',
-        'ru': 'РџРѕРєР° РЅРµС‚ СЂРµР·РµСЂРІР°С†РёР№'
+        'ru': 'Пока нет резерваций'
       });
   String get bookingsEmptyMessage => _get({
-        'az': 'SЙ™yahЙ™t axtarД±n vЙ™ ilk rezervasiyanД±zД± edin.',
+        'az': 'Səyahət axtarın və ilk rezervasiyanızı edin.',
         'en': 'Search for trips and make your first reservation.',
         'ru':
-            'РС‰РёС‚Рµ РїРѕРµР·РґРєРё Рё СЃРґРµР»Р°Р№С‚Рµ СЃРІРѕСЋ РїРµСЂРІСѓСЋ СЂРµР·РµСЂРІР°С†РёСЋ.'
+            'Ищите поездки и сделайте свою первую резервацию.'
       });
   String get bookingsSearchTrips => _get({
-        'az': 'GediЕџ axtar',
+        'az': 'Gediş axtar',
         'en': 'Search trips',
-        'ru': 'РСЃРєР°С‚СЊ РїРѕРµР·РґРєРё'
+        'ru': 'Искать поездки'
       });
 
   // Settings Screen
   String get settingsGeneral =>
-      _get({'az': 'Гњmumi', 'en': 'General', 'ru': 'РћР±С‰РёРµ'});
+      _get({'az': 'Ümumi', 'en': 'General', 'ru': 'Общие'});
   String get settingsLanguageTitle =>
-      _get({'az': 'Dil', 'en': 'Language', 'ru': 'РЇР·С‹Рє'});
+      _get({'az': 'Dil', 'en': 'Language', 'ru': 'Язык'});
   String get settingsLanguageAz => _get({
-        'az': 'AzЙ™rbaycan',
+        'az': 'Azərbaycan',
         'en': 'Azerbaijani',
-        'ru': 'РђР·РµСЂР±Р°Р№РґР¶Р°РЅСЃРєРёР№'
+        'ru': 'Азербайджанский'
       });
   String get settingsLanguageEn =>
-      _get({'az': 'Д°ngilis', 'en': 'English', 'ru': 'РђРЅРіР»РёР№СЃРєРёР№'});
+      _get({'az': 'İngilis', 'en': 'English', 'ru': 'Английский'});
   String get settingsLanguageRu =>
-      _get({'az': 'Rus', 'en': 'Russian', 'ru': 'Р СѓСЃСЃРєРёР№'});
+      _get({'az': 'Rus', 'en': 'Russian', 'ru': 'Русский'});
   String get settingsDarkMode => _get({
-        'az': 'QaranlД±q rejim',
+        'az': 'Qaranlıq rejim',
         'en': 'Dark mode',
-        'ru': 'РўС‘РјРЅС‹Р№ СЂРµР¶РёРј'
+        'ru': 'Тёмный режим'
       });
   String get settingsThemeSystem =>
-      _get({'az': 'Sistem', 'en': 'System', 'ru': 'РЎРёСЃС‚РµРјР°'});
+      _get({'az': 'Sistem', 'en': 'System', 'ru': 'Система'});
   String get settingsThemeLight =>
-      _get({'az': 'Д°ЕџД±qlД±', 'en': 'Light', 'ru': 'РЎРІРµС‚Р»Р°СЏ'});
+      _get({'az': 'İşıqlı', 'en': 'Light', 'ru': 'Светлая'});
   String get settingsThemeDark =>
-      _get({'az': 'QaranlД±q', 'en': 'Dark', 'ru': 'РўС‘РјРЅР°СЏ'});
+      _get({'az': 'Qaranlıq', 'en': 'Dark', 'ru': 'Тёмная'});
   String get settingsNotifications => _get({
-        'az': 'BildiriЕџlЙ™r',
+        'az': 'Bildirişlər',
         'en': 'Notifications',
-        'ru': 'РЈРІРµРґРѕРјР»РµРЅРёСЏ'
+        'ru': 'Уведомления'
       });
   String get settingsPushNotifications => _get({
-        'az': 'Push bildiriЕџlЙ™ri',
+        'az': 'Push bildirişləri',
         'en': 'Push notifications',
-        'ru': 'Push-СѓРІРµРґРѕРјР»РµРЅРёСЏ'
+        'ru': 'Push-уведомления'
       });
   String get settingsEmailNotifications => _get({
-        'az': 'E-poГ§t bildiriЕџlЙ™ri',
+        'az': 'E-poçt bildirişləri',
         'en': 'Email notifications',
-        'ru': 'Email-СѓРІРµРґРѕРјР»РµРЅРёСЏ'
+        'ru': 'Email-уведомления'
       });
   String get settingsAccount => _get(
-      {'az': 'Hesab', 'en': 'Account', 'ru': 'РЈС‡С‘С‚РЅР°СЏ Р·Р°РїРёСЃСЊ'});
+      {'az': 'Hesab', 'en': 'Account', 'ru': 'Учётная запись'});
   String get settingsSecurity => _get({
-        'az': 'TЙ™hlГјkЙ™sizlik',
+        'az': 'Təhlükəsizlik',
         'en': 'Security',
-        'ru': 'Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ'
+        'ru': 'Безопасность'
       });
   String get settingsPrivacy => _get({
-        'az': 'MЙ™xfilik',
+        'az': 'Məxfilik',
         'en': 'Privacy',
-        'ru': 'РљРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚СЊ'
+        'ru': 'Конфиденциальность'
       });
   String get settingsComingSoon =>
-      _get({'az': 'TezliklЙ™', 'en': 'Coming soon', 'ru': 'РЎРєРѕСЂРѕ'});
+      _get({'az': 'Tezliklə', 'en': 'Coming soon', 'ru': 'Скоро'});
 
   String get notificationsTitle => _get({
-        'az': 'BildiriЕџlЙ™r',
+        'az': 'Bildirişlər',
         'en': 'Notifications',
-        'ru': 'РЈРІРµРґРѕРјР»РµРЅРёСЏ'
+        'ru': 'Уведомления'
       });
   String get notificationsMarkAllRead => _get({
-        'az': 'HamД±sД±nД± oxu',
+        'az': 'Hamısını oxu',
         'en': 'Mark all read',
-        'ru': 'РџСЂРѕС‡РёС‚Р°С‚СЊ РІСЃРµ'
+        'ru': 'Прочитать все'
       });
   String get notificationsEmpty => _get({
-        'az': 'BildiriЕџ yoxdur',
+        'az': 'Bildiriş yoxdur',
         'en': 'No notifications',
-        'ru': 'РќРµС‚ СѓРІРµРґРѕРјР»РµРЅРёР№'
+        'ru': 'Нет уведомлений'
       });
   String get notificationsEmptyMessage => _get({
-        'az': 'Yeni bildiriЕџlЙ™r burada gГ¶rГјnЙ™cЙ™k.',
+        'az': 'Yeni bildirişlər burada görünəcək.',
         'en': 'New notifications will appear here.',
-        'ru': 'РќРѕРІС‹Рµ СѓРІРµРґРѕРјР»РµРЅРёСЏ РїРѕСЏРІСЏС‚СЃСЏ Р·РґРµСЃСЊ.'
+        'ru': 'Новые уведомления появятся здесь.'
       });
   String get notificationsCheckAgain => _get({
-        'az': 'YenidЙ™n yoxla',
+        'az': 'Yenidən yoxla',
         'en': 'Check again',
-        'ru': 'РџСЂРѕРІРµСЂРёС‚СЊ СЃРЅРѕРІР°'
+        'ru': 'Проверить снова'
       });
 
   // Booking Detail Screen
   String get bookingDetailTitle => _get({
-        'az': 'Rezervasiya detallarД±',
+        'az': 'Rezervasiya detalları',
         'en': 'Booking details',
-        'ru': 'Р”РµС‚Р°Р»Рё СЂРµР·РµСЂРІР°С†РёРё'
+        'ru': 'Детали резервации'
       });
   String get bookingDetailNotFound => _get({
-        'az': 'Rezervasiya tapД±lmadД±',
+        'az': 'Rezervasiya tapılmadı',
         'en': 'Booking not found',
-        'ru': 'Р РµР·РµСЂРІР°С†РёСЏ РЅРµ РЅР°Р№РґРµРЅР°'
+        'ru': 'Резервация не найдена'
       });
   String get bookingDetailGoBack =>
-      _get({'az': 'Geri qayД±t', 'en': 'Go back', 'ru': 'Р’РµСЂРЅСѓС‚СЊСЃСЏ'});
+      _get({'az': 'Geri qayıt', 'en': 'Go back', 'ru': 'Вернуться'});
   String get bookingDetailCancelTitle => _get({
-        'az': 'RezervasiyanД± lЙ™Дџv et',
+        'az': 'Rezervasiyanı ləğv et',
         'en': 'Cancel booking',
-        'ru': 'РћС‚РјРµРЅРёС‚СЊ СЂРµР·РµСЂРІР°С†РёСЋ'
+        'ru': 'Отменить резервацию'
       });
   String get bookingDetailCancelMessage => _get({
-        'az': 'Bu rezervasiyanД± lЙ™Дџv etmЙ™k istЙ™yirsiniz?',
+        'az': 'Bu rezervasiyanı ləğv etmək istəyirsiniz?',
         'en': 'Do you want to cancel this booking?',
-        'ru': 'Р’С‹ С…РѕС‚РёС‚Рµ РѕС‚РјРµРЅРёС‚СЊ СЌС‚Сѓ СЂРµР·РµСЂРІР°С†РёСЋ?'
+        'ru': 'Вы хотите отменить эту резервацию?'
       });
   String get bookingDetailCancelBtn =>
-      _get({'az': 'LЙ™Дџv et', 'en': 'Cancel', 'ru': 'РћС‚РјРµРЅРёС‚СЊ'});
+      _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отменить'});
   String get bookingDetailDismiss =>
-      _get({'az': 'Д°mtina', 'en': 'Dismiss', 'ru': 'РћС‚РєР»РѕРЅРёС‚СЊ'});
+      _get({'az': 'İmtina', 'en': 'Dismiss', 'ru': 'Отклонить'});
   String get bookingDetailDate =>
-      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Р”Р°С‚Р°'});
+      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Дата'});
   String get bookingDetailTime =>
-      _get({'az': 'Vaxt', 'en': 'Time', 'ru': 'Р’СЂРµРјСЏ'});
+      _get({'az': 'Vaxt', 'en': 'Time', 'ru': 'Время'});
   String get bookingDetailDriver =>
-      _get({'az': 'SГјrГјcГј', 'en': 'Driver', 'ru': 'Р’РѕРґРёС‚РµР»СЊ'});
+      _get({'az': 'Sürücü', 'en': 'Driver', 'ru': 'Водитель'});
   String get bookingDetailSeats =>
-      _get({'az': 'YerlЙ™r', 'en': 'Seats', 'ru': 'РњРµСЃС‚Р°'});
+      _get({'az': 'Yerlər', 'en': 'Seats', 'ru': 'Места'});
   String get bookingDetailTotal =>
-      _get({'az': 'CЙ™mi', 'en': 'Total', 'ru': 'РС‚РѕРіРѕ'});
+      _get({'az': 'Cəmi', 'en': 'Total', 'ru': 'Итого'});
   String get bookingDetailMessageDriver => _get({
-        'az': 'SГјrГјcГјyЙ™ yaz',
+        'az': 'Sürücüyə yaz',
         'en': 'Message driver',
-        'ru': 'РќР°РїРёСЃР°С‚СЊ РІРѕРґРёС‚РµР»СЋ'
+        'ru': 'Написать водителю'
       });
   String get bookingDetailLeaveReview => _get({
-        'az': 'RЙ™y yaz',
+        'az': 'Rəy yaz',
         'en': 'Leave review',
-        'ru': 'РћСЃС‚Р°РІРёС‚СЊ РѕС‚Р·С‹РІ'
+        'ru': 'Оставить отзыв'
       });
 
   // Trip Detail Screen
   String get tripDetailTitle => _get({
-        'az': 'SЙ™yahЙ™t detallarД±',
+        'az': 'Səyahət detalları',
         'en': 'Trip details',
-        'ru': 'Р”РµС‚Р°Р»Рё РїРѕРµР·РґРєРё'
+        'ru': 'Детали поездки'
       });
   String get tripDetailNotFound => _get({
-        'az': 'SЙ™yahЙ™t tapД±lmadД±',
+        'az': 'Səyahət tapılmadı',
         'en': 'Trip not found',
-        'ru': 'РџРѕРµР·РґРєР° РЅРµ РЅР°Р№РґРµРЅР°'
+        'ru': 'Поездка не найдена'
       });
   String get tripDetailNotFoundMessage => _get({
-        'az': 'Bu sЙ™yahЙ™t artД±q mГ¶vcud deyil.',
+        'az': 'Bu səyahət artıq mövcud deyil.',
         'en': 'This trip is no longer available.',
-        'ru': 'Р­С‚Р° РїРѕРµР·РґРєР° Р±РѕР»СЊС€Рµ РЅРµРґРѕСЃС‚СѓРїРЅР°.'
+        'ru': 'Эта поездка больше недоступна.'
       });
   String get tripDetailDuration =>
-      _get({'az': '~4 saat', 'en': '~4 hours', 'ru': '~4 С‡Р°СЃР°'});
+      _get({'az': '~4 saat', 'en': '~4 hours', 'ru': '~4 часа'});
   String get tripDetailDriverSection =>
-      _get({'az': 'SГјrГјcГј', 'en': 'Driver', 'ru': 'Р’РѕРґРёС‚РµР»СЊ'});
+      _get({'az': 'Sürücü', 'en': 'Driver', 'ru': 'Водитель'});
   String get tripDetailTripsCount =>
-      _get({'az': 'sЙ™yahЙ™t', 'en': 'trips', 'ru': 'РїРѕРµР·РґРѕРє'});
+      _get({'az': 'səyahət', 'en': 'trips', 'ru': 'поездок'});
   String get tripDetailInfoSection => _get({
-        'az': 'SЙ™yahЙ™t mЙ™lumatlarД±',
+        'az': 'Səyahət məlumatları',
         'en': 'Trip information',
-        'ru': 'РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїРѕРµР·РґРєРµ'
+        'ru': 'Информация о поездке'
       });
   String get tripDetailAvailableSeats => _get({
-        'az': 'BoЕџ yerlЙ™r',
+        'az': 'Boş yerlər',
         'en': 'Available seats',
-        'ru': 'РЎРІРѕР±РѕРґРЅС‹Рµ РјРµСЃС‚Р°'
+        'ru': 'Свободные места'
       });
   String get tripDetailSeatsUnit =>
-      _get({'az': 'yer', 'en': 'seats', 'ru': 'РјРµСЃС‚'});
+      _get({'az': 'yer', 'en': 'seats', 'ru': 'мест'});
   String get tripDetailCar =>
-      _get({'az': 'Avtomobil', 'en': 'Car', 'ru': 'РђРІС‚РѕРјРѕР±РёР»СЊ'});
+      _get({'az': 'Avtomobil', 'en': 'Car', 'ru': 'Автомобиль'});
   String get tripDetailLuggage =>
-      _get({'az': 'Baqaj', 'en': 'Luggage', 'ru': 'Р‘Р°РіР°Р¶'});
+      _get({'az': 'Baqaj', 'en': 'Luggage', 'ru': 'Багаж'});
   String get tripDetailLuggageSize => _get({
-        'az': 'Orta Г¶lГ§ГјlГј Г§amadan',
+        'az': 'Orta ölçülü çamadan',
         'en': 'Medium-sized suitcase',
-        'ru': 'Р§РµРјРѕРґР°РЅ СЃСЂРµРґРЅРµРіРѕ СЂР°Р·РјРµСЂР°'
+        'ru': 'Чемодан среднего размера'
       });
   String get tripDetailPreferences => _get({
-        'az': 'ГњstГјnlГјklЙ™r',
+        'az': 'Üstünlüklər',
         'en': 'Preferences',
-        'ru': 'РџСЂРµРґРїРѕС‡С‚РµРЅРёСЏ'
+        'ru': 'Предпочтения'
       });
   String get tripDetailNoSmoking => _get(
-      {'az': 'Siqaret yox', 'en': 'No smoking', 'ru': 'Р‘РµР· РєСѓСЂРµРЅРёСЏ'});
+      {'az': 'Siqaret yox', 'en': 'No smoking', 'ru': 'Без курения'});
   String get tripDetailMusic => _get({
         'az': 'Musiqi var',
         'en': 'Music available',
-        'ru': 'РњСѓР·С‹РєР° РґРѕСЃС‚СѓРїРЅР°'
+        'ru': 'Музыка доступна'
       });
   String get tripDetailLuggageAllowed => _get({
         'az': 'Baqaj olar',
         'en': 'Luggage allowed',
-        'ru': 'Р‘Р°РіР°Р¶ СЂР°Р·СЂРµС€РµРЅ'
+        'ru': 'Багаж разрешен'
       });
   String get tripDetailBookBtn => _get(
-      {'az': 'Rezerv et', 'en': 'Book', 'ru': 'Р—Р°Р±СЂРѕРЅРёСЂРѕРІР°С‚СЊ'});
+      {'az': 'Rezerv et', 'en': 'Book', 'ru': 'Забронировать'});
   String get tripDetailNoSeats =>
-      _get({'az': 'Yer yoxdur', 'en': 'No seats', 'ru': 'РќРµС‚ РјРµСЃС‚'});
+      _get({'az': 'Yer yoxdur', 'en': 'No seats', 'ru': 'Нет мест'});
   String get tripDetailPriceLabel =>
-      _get({'az': 'QiymЙ™t', 'en': 'Price', 'ru': 'Р¦РµРЅР°'});
+      _get({'az': 'Qiymət', 'en': 'Price', 'ru': 'Цена'});
 
   // Wallet Screen
   String get walletTitle =>
-      _get({'az': 'Pul kisЙ™si', 'en': 'Wallet', 'ru': 'РљРѕС€РµР»С‘Рє'});
+      _get({'az': 'Pul kisəsi', 'en': 'Wallet', 'ru': 'Кошелёк'});
   String get walletMockBanner => _get({
-        'az': 'Demo rejimi вЂ” Г¶dЙ™niЕџlЙ™r hЙ™lЙ™ qoЕџulmayД±b.',
-        'en': 'Demo mode вЂ” payments not yet connected.',
+        'az': 'Demo rejimi — ödənişlər hələ qoşulmayıb.',
+        'en': 'Demo mode — payments not yet connected.',
         'ru':
-            'Р”РµРјРѕ-СЂРµР¶РёРј вЂ” РїР»Р°С‚РµР¶Рё РµС‰С‘ РЅРµ РїРѕРґРєР»СЋС‡РµРЅС‹.'
+            'Демо-режим — платежи ещё не подключены.'
       });
   String get walletBalance =>
-      _get({'az': 'Balans', 'en': 'Balance', 'ru': 'Р‘Р°Р»Р°РЅСЃ'});
+      _get({'az': 'Balans', 'en': 'Balance', 'ru': 'Баланс'});
   String get walletPaymentMethod => _get({
-        'az': 'Г–dЙ™niЕџ Гјsulu',
+        'az': 'Ödəniş üsulu',
         'en': 'Payment method',
-        'ru': 'РЎРїРѕСЃРѕР± РѕРїР»Р°С‚С‹'
+        'ru': 'Способ оплаты'
       });
   String get walletNoCard => _get({
-        'az': 'Kart Й™lavЙ™ edilmЙ™yib',
+        'az': 'Kart əlavə edilməyib',
         'en': 'No card added',
-        'ru': 'РљР°СЂС‚Р° РЅРµ РґРѕР±Р°РІР»РµРЅР°'
+        'ru': 'Карта не добавлена'
       });
   String get walletAddCard =>
-      _get({'az': 'ЖЏlavЙ™ et', 'en': 'Add', 'ru': 'Р”РѕР±Р°РІРёС‚СЊ'});
+      _get({'az': 'Əlavə et', 'en': 'Add', 'ru': 'Добавить'});
   String get walletTransactions => _get(
-      {'az': 'ЖЏmЙ™liyyatlar', 'en': 'Transactions', 'ru': 'РћРїРµСЂР°С†РёРё'});
+      {'az': 'Əməliyyatlar', 'en': 'Transactions', 'ru': 'Операции'});
   String get walletTopUp => _get({
-        'az': 'Balans artД±mД±',
+        'az': 'Balans artımı',
         'en': 'Top up',
-        'ru': 'РџРѕРїРѕР»РЅРµРЅРёРµ Р±Р°Р»Р°РЅСЃР°'
+        'ru': 'Пополнение баланса'
       });
   String get walletComingSoon =>
-      _get({'az': 'TezliklЙ™', 'en': 'Coming soon', 'ru': 'РЎРєРѕСЂРѕ'});
+      _get({'az': 'Tezliklə', 'en': 'Coming soon', 'ru': 'Скоро'});
   String get walletTopUpBtn => _get({
-        'az': 'BalansД± artД±r',
+        'az': 'Balansı artır',
         'en': 'Top up balance',
-        'ru': 'РџРѕРїРѕР»РЅРёС‚СЊ Р±Р°Р»Р°РЅСЃ'
+        'ru': 'Пополнить баланс'
       });
 
   String get walletEmpty => _get({
-        'az': 'ЖЏmЙ™liyyat yoxdur',
+        'az': 'Əməliyyat yoxdur',
         'en': 'No transactions',
-        'ru': 'РќРµС‚ РѕРїРµСЂР°С†РёР№'
+        'ru': 'Нет операций'
       });
   String get walletEmptyMessage => _get({
-        'az': 'Pul kisЙ™sindЙ™ hЙ™lЙ™ heГ§ bir hЙ™rЙ™kЙ™t yoxdur.',
+        'az': 'Pul kisəsində hələ heç bir hərəkət yoxdur.',
         'en': 'Your wallet has no activity yet.',
-        'ru': 'Р’ РєРѕС€РµР»СЊРєРµ РїРѕРєР° РЅРµС‚ РѕРїРµСЂР°С†РёР№.'
+        'ru': 'В кошельке пока нет операций.'
       });
   String get walletRefresh =>
-      _get({'az': 'YenilЙ™', 'en': 'Refresh', 'ru': 'РћР±РЅРѕРІРёС‚СЊ'});
+      _get({'az': 'Yenilə', 'en': 'Refresh', 'ru': 'Обновить'});
 
   // Driver Panel Screen
   String get driverPanelTitle => _get({
-        'az': 'SГјrГјcГј Paneli',
+        'az': 'Sürücü Paneli',
         'en': 'Driver Panel',
-        'ru': 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ'
+        'ru': 'Панель водителя'
       });
   String get driverPanelAccessDenied => _get({
-        'az': 'Bu sЙ™hifЙ™yЙ™ giriЕџ qadaДџandД±r.',
+        'az': 'Bu səhifəyə giriş qadağandır.',
         'en': 'Access to this page is forbidden.',
-        'ru': 'Р”РѕСЃС‚СѓРї Рє СЌС‚РѕР№ СЃС‚СЂР°РЅРёС†Рµ Р·Р°РїСЂРµС‰С‘РЅ.'
+        'ru': 'Доступ к этой странице запрещён.'
       });
   String get driverPanelGoBack =>
-      _get({'az': 'Geri qayД±t', 'en': 'Go back', 'ru': 'Р’РµСЂРЅСѓС‚СЊСЃСЏ'});
+      _get({'az': 'Geri qayıt', 'en': 'Go back', 'ru': 'Вернуться'});
   String get driverPanelHello =>
-      _get({'az': 'Salam', 'en': 'Hello', 'ru': 'РџСЂРёРІРµС‚'});
+      _get({'az': 'Salam', 'en': 'Hello', 'ru': 'Привет'});
   String get driverPanelVerified => _get({
-        'az': 'TЙ™sdiqlЙ™nmiЕџ sГјrГјcГј',
+        'az': 'Təsdiqlənmiş sürücü',
         'en': 'Verified driver',
-        'ru': 'РџСЂРѕРІРµСЂРµРЅРЅС‹Р№ РІРѕРґРёС‚РµР»СЊ'
+        'ru': 'Проверенный водитель'
       });
   String get driverPanelQuickActions => _get({
-        'az': 'Tez Й™mЙ™liyyatlar',
+        'az': 'Tez əməliyyatlar',
         'en': 'Quick actions',
-        'ru': 'Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚РІРёСЏ'
+        'ru': 'Быстрые действия'
       });
   String get driverPanelCreateRide => _get({
-        'az': 'Yeni gediЕџ yarat',
+        'az': 'Yeni gediş yarat',
         'en': 'Create new ride',
-        'ru': 'РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РїРѕРµР·РґРєСѓ'
+        'ru': 'Создать новую поездку'
       });
   String get driverPanelMyRides => _get(
-      {'az': 'GediЕџlЙ™rim', 'en': 'My rides', 'ru': 'РњРѕРё РїРѕРµР·РґРєРё'});
+      {'az': 'Gedişlərim', 'en': 'My rides', 'ru': 'Мои поездки'});
   String get driverPanelRequests =>
-      _get({'az': 'SorДџular', 'en': 'Requests', 'ru': 'Р—Р°РїСЂРѕСЃС‹'});
+      _get({'az': 'Sorğular', 'en': 'Requests', 'ru': 'Запросы'});
   String get driverPanelActiveRide => _get({
-        'az': 'Aktiv gediЕџ',
+        'az': 'Aktiv gediş',
         'en': 'Active ride',
-        'ru': 'РђРєС‚РёРІРЅР°СЏ РїРѕРµР·РґРєР°'
+        'ru': 'Активная поездка'
       });
   String get driverPanelEarnings =>
-      _get({'az': 'GЙ™lir', 'en': 'Earnings', 'ru': 'Р”РѕС…РѕРґ'});
+      _get({'az': 'Gəlir', 'en': 'Earnings', 'ru': 'Доход'});
   String get driverPanelThisMonth => _get(
-      {'az': 'Bu ay', 'en': 'This month', 'ru': 'Р’ СЌС‚РѕРј РјРµСЃСЏС†Рµ'});
+      {'az': 'Bu ay', 'en': 'This month', 'ru': 'В этом месяце'});
   String get driverPanelVehicles => _get(
-      {'az': 'AvtomobillЙ™r', 'en': 'Vehicles', 'ru': 'РђРІС‚РѕРјРѕР±РёР»Рё'});
+      {'az': 'Avtomobillər', 'en': 'Vehicles', 'ru': 'Автомобили'});
   String get driverPanelManageVehicles => _get({
-        'az': 'AvtomobillЙ™ri idarЙ™ et',
+        'az': 'Avtomobilləri idarə et',
         'en': 'Manage vehicles',
-        'ru': 'РЈРїСЂР°РІР»СЏС‚СЊ Р°РІС‚РѕРјРѕР±РёР»СЏРјРё'
+        'ru': 'Управлять автомобилями'
       });
 
   // Profile Screen
   String get profileTitle =>
-      _get({'az': 'Profil', 'en': 'Profile', 'ru': 'РџСЂРѕС„РёР»СЊ'});
+      _get({'az': 'Profil', 'en': 'Profile', 'ru': 'Профиль'});
   String get profileWallet =>
-      _get({'az': 'Pul kisЙ™si', 'en': 'Wallet', 'ru': 'РљРѕС€РµР»С‘Рє'});
+      _get({'az': 'Pul kisəsi', 'en': 'Wallet', 'ru': 'Кошелёк'});
   String get profileReservations => _get({
-        'az': 'RezervasiyalarД±m',
+        'az': 'Rezervasiyalarım',
         'en': 'My Reservations',
-        'ru': 'РњРѕРё СЂРµР·РµСЂРІР°С†РёРё'
+        'ru': 'Мои резервации'
       });
   String get profileReviews =>
-      _get({'az': 'RЙ™ylЙ™r', 'en': 'Reviews', 'ru': 'РћС‚Р·С‹РІС‹'});
+      _get({'az': 'Rəylər', 'en': 'Reviews', 'ru': 'Отзывы'});
   String get profileNotifications => _get({
-        'az': 'BildiriЕџlЙ™r',
+        'az': 'Bildirişlər',
         'en': 'Notifications',
-        'ru': 'РЈРІРµРґРѕРјР»РµРЅРёСЏ'
+        'ru': 'Уведомления'
       });
   String get profileDriverPanel => _get({
-        'az': 'SГјrГјcГј Paneli',
+        'az': 'Sürücü Paneli',
         'en': 'Driver Panel',
-        'ru': 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ'
+        'ru': 'Панель водителя'
       });
   String get profileDriverPending => _get({
-        'az': 'SГјrГјcГј statusu: YoxlanД±lД±r',
+        'az': 'Sürücü statusu: Yoxlanılır',
         'en': 'Driver status: Under review',
-        'ru': 'РЎС‚Р°С‚СѓСЃ РІРѕРґРёС‚РµР»СЏ: РќР° РїСЂРѕРІРµСЂРєРµ'
+        'ru': 'Статус водителя: На проверке'
       });
   String get profileBecomeDriver => _get({
-        'az': 'SГјrГјcГј olmaq istЙ™yirsiniz?',
+        'az': 'Sürücü olmaq istəyirsiniz?',
         'en': 'Want to become a driver?',
-        'ru': 'РҐРѕС‚РёС‚Рµ СЃС‚Р°С‚СЊ РІРѕРґРёС‚РµР»РµРј?'
+        'ru': 'Хотите стать водителем?'
       });
   String get profileSettingsMenu => _get(
-      {'az': 'ParametrlЙ™r', 'en': 'Settings', 'ru': 'РќР°СЃС‚СЂРѕР№РєРё'});
+      {'az': 'Parametrlər', 'en': 'Settings', 'ru': 'Настройки'});
   String get profileHelp =>
-      _get({'az': 'KГ¶mЙ™k', 'en': 'Help', 'ru': 'РџРѕРјРѕС‰СЊ'});
+      _get({'az': 'Kömək', 'en': 'Help', 'ru': 'Помощь'});
   String get profileLogoutConfirm => _get({
-        'az': 'Г‡Д±xД±Еџ etmЙ™k istЙ™diyinizЙ™ Й™minsiniz?',
+        'az': 'Çıxış etmək istədiyinizə əminsiniz?',
         'en': 'Are you sure you want to log out?',
-        'ru': 'Р’С‹ СѓРІРµСЂРµРЅС‹, С‡С‚Рѕ С…РѕС‚РёС‚Рµ РІС‹Р№С‚Рё?'
+        'ru': 'Вы уверены, что хотите выйти?'
       });
   String get profileLogoutBtn =>
-      _get({'az': 'Г‡Д±xД±Еџ et', 'en': 'Log out', 'ru': 'Р’С‹Р№С‚Рё'});
+      _get({'az': 'Çıxış et', 'en': 'Log out', 'ru': 'Выйти'});
   String get profileCancel =>
-      _get({'az': 'LЙ™Дџv et', 'en': 'Cancel', 'ru': 'РћС‚РјРµРЅР°'});
+      _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отмена'});
 
   // Trust & Safety
   String get trustVerifiedDriver => _get({
-        'az': 'TЙ™sdiqlЙ™nmiЕџ sГјrГјcГј',
+        'az': 'Təsdiqlənmiş sürücü',
         'en': 'Verified driver',
-        'ru': 'РџСЂРѕРІРµСЂРµРЅРЅС‹Р№ РІРѕРґРёС‚РµР»СЊ'
+        'ru': 'Проверенный водитель'
       });
   String get trustDocumentsChecked => _get({
-        'az': 'SЙ™nЙ™dlЙ™r yoxlanД±lД±b',
+        'az': 'Sənədlər yoxlanılıb',
         'en': 'Documents verified',
-        'ru': 'Р”РѕРєСѓРјРµРЅС‚С‹ РїСЂРѕРІРµСЂРµРЅС‹'
+        'ru': 'Документы проверены'
       });
   String get trustSafetyNote => _get({
-        'az': 'ЕћЙ™xsiyyЙ™t vЙ™ sГјrГјcГјlГјk vЙ™siqЙ™si tЙ™sdiqlЙ™nib',
+        'az': 'Şəxsiyyət və sürücülük vəsiqəsi təsdiqlənib',
         'en': 'Identity and license verified',
         'ru':
-            'РЈРґРѕСЃС‚РѕРІРµСЂРµРЅРёРµ Р»РёС‡РЅРѕСЃС‚Рё Рё РїСЂР°РІР° РїСЂРѕРІРµСЂРµРЅС‹'
+            'Удостоверение личности и права проверены'
       });
   String get trustTripsCount =>
-      _get({'az': 'sЙ™yahЙ™t', 'en': 'trips', 'ru': 'РїРѕРµР·РґРѕРє'});
+      _get({'az': 'səyahət', 'en': 'trips', 'ru': 'поездок'});
   String get trustRating =>
-      _get({'az': 'Reytinq', 'en': 'Rating', 'ru': 'Р РµР№С‚РёРЅРі'});
+      _get({'az': 'Reytinq', 'en': 'Rating', 'ru': 'Рейтинг'});
 
   // Active Ride Safety
   String get safetyTitle => _get({
-        'az': 'TЙ™hlГјkЙ™sizlik',
+        'az': 'Təhlükəsizlik',
         'en': 'Safety',
-        'ru': 'Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ'
+        'ru': 'Безопасность'
       });
   String get safetyShareTrip => _get({
-        'az': 'SЙ™fЙ™ri paylaЕџ',
+        'az': 'Səfəri paylaş',
         'en': 'Share trip',
-        'ru': 'РџРѕРґРµР»РёС‚СЊСЃСЏ РїРѕРµР·РґРєРѕР№'
+        'ru': 'Поделиться поездкой'
       });
   String get safetyShareCopied => _get({
-        'az': 'MЙ™lumat kopyalandД±',
+        'az': 'Məlumat kopyalandı',
         'en': 'Trip details copied',
-        'ru': 'РРЅС„РѕСЂРјР°С†РёСЏ СЃРєРѕРїРёСЂРѕРІР°РЅР°'
+        'ru': 'Информация скопирована'
       });
   String get safetySOS => _get({
-        'az': 'TЙ™cili yardД±m (SOS)',
+        'az': 'Təcili yardım (SOS)',
         'en': 'Emergency (SOS)',
-        'ru': 'Р­РєСЃС‚СЂРµРЅРЅР°СЏ РїРѕРјРѕС‰СЊ (SOS)'
+        'ru': 'Экстренная помощь (SOS)'
       });
   String get safetySOSConfirmTitle => _get({
-        'az': 'TЙ™cili yardД±m Г§aДџД±rД±n?',
+        'az': 'Təcili yardım çağırın?',
         'en': 'Call emergency services?',
-        'ru': 'Р’С‹Р·РІР°С‚СЊ СЌРєСЃС‚СЂРµРЅРЅСѓСЋ РїРѕРјРѕС‰СЊ?'
+        'ru': 'Вызвать экстренную помощь?'
       });
   String get safetySOSConfirmMessage => _get({
         'az':
-            'TЙ™cili yardД±m nГ¶mrЙ™si: 112\n\nSЙ™fЙ™r mЙ™lumatД± buferЙ™ kopyalanacaq.',
+            'Təcili yardım nömrəsi: 112\n\nSəfər məlumatı buferə kopyalanacaq.',
         'en':
             'Emergency number: 112\n\nTrip details will be copied to clipboard.',
         'ru':
-            'Р­РєСЃС‚СЂРµРЅРЅС‹Р№ РЅРѕРјРµСЂ: 112\n\nРРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїРѕРµР·РґРєРµ Р±СѓРґРµС‚ СЃРєРѕРїРёСЂРѕРІР°РЅР°.'
+            'Экстренный номер: 112\n\nИнформация о поездке будет скопирована.'
       });
   String get safetySOSCall => _get({
-        'az': '112-yЙ™ zЙ™ng et',
+        'az': '112-yə zəng et',
         'en': 'Call 112',
-        'ru': 'РџРѕР·РІРѕРЅРёС‚СЊ 112'
+        'ru': 'Позвонить 112'
       });
   String get safetySOSCopy => _get({
-        'az': 'MЙ™lumatД± kopyala',
+        'az': 'Məlumatı kopyala',
         'en': 'Copy details',
-        'ru': 'РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РґР°РЅРЅС‹Рµ'
+        'ru': 'Скопировать данные'
       });
   String get safetyCancel =>
-      _get({'az': 'LЙ™Дџv et', 'en': 'Cancel', 'ru': 'РћС‚РјРµРЅР°'});
+      _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отмена'});
 
   // Create Ride Screen
   String get createRideTitle => _get({
-        'az': 'SЙ™yahЙ™t yarat',
+        'az': 'Səyahət yarat',
         'en': 'Create trip',
-        'ru': 'РЎРѕР·РґР°С‚СЊ РїРѕРµР·РґРєСѓ'
+        'ru': 'Создать поездку'
       });
   String get createRideFrom =>
-      _get({'az': 'Haradan', 'en': 'From', 'ru': 'РћС‚РєСѓРґР°'});
-  String get createRideTo => _get({'az': 'Hara', 'en': 'To', 'ru': 'РљСѓРґР°'});
+      _get({'az': 'Haradan', 'en': 'From', 'ru': 'Откуда'});
+  String get createRideTo => _get({'az': 'Hara', 'en': 'To', 'ru': 'Куда'});
   String get createRideDate =>
-      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Р”Р°С‚Р°'});
+      _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Дата'});
   String get createRideTime =>
-      _get({'az': 'Vaxt', 'en': 'Time', 'ru': 'Р’СЂРµРјСЏ'});
+      _get({'az': 'Vaxt', 'en': 'Time', 'ru': 'Время'});
   String get createRideSeats => _get({
-        'az': 'BoЕџ yerlЙ™r',
+        'az': 'Boş yerlər',
         'en': 'Available seats',
-        'ru': 'РЎРІРѕР±РѕРґРЅС‹Рµ РјРµСЃС‚Р°'
+        'ru': 'Свободные места'
       });
   String get createRideSeatsLabel => _get({
-        'az': 'Yer sayД±',
+        'az': 'Yer sayı',
         'en': 'Number of seats',
-        'ru': 'РљРѕР»РёС‡РµСЃС‚РІРѕ РјРµСЃС‚'
+        'ru': 'Количество мест'
       });
   String get createRidePrice => _get({
-        'az': 'Bir yer ГјГ§Гјn qiymЙ™t (AZN)',
+        'az': 'Bir yer üçün qiymət (AZN)',
         'en': 'Price per seat (AZN)',
-        'ru': 'Р¦РµРЅР° Р·Р° РјРµСЃС‚Рѕ (AZN)'
+        'ru': 'Цена за место (AZN)'
       });
   String get createRidePriceHint =>
-      _get({'az': 'mЙ™s. 15', 'en': 'e.g. 15', 'ru': 'РЅР°РїСЂ. 15'});
+      _get({'az': 'məs. 15', 'en': 'e.g. 15', 'ru': 'напр. 15'});
   String get createRidePriceRequired => _get({
-        'az': 'QiymЙ™ti daxil edin',
+        'az': 'Qiyməti daxil edin',
         'en': 'Enter price',
-        'ru': 'Р’РІРµРґРёС‚Рµ С†РµРЅСѓ'
+        'ru': 'Введите цену'
       });
   String get createRidePriceInvalid => _get({
-        'az': 'DГјzgГјn qiymЙ™t daxil edin',
+        'az': 'Düzgün qiymət daxil edin',
         'en': 'Enter valid price',
-        'ru': 'Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅСѓСЋ С†РµРЅСѓ'
+        'ru': 'Введите корректную цену'
       });
   String get createRideAiTitle => _get({
         'az': 'AI qiymət təklifi',
         'en': 'AI price suggestion',
-        'ru': 'РџСЂРµРґР»РѕР¶РµРЅРёРµ С†РµРЅС‹ РѕС‚ РР'
+        'ru': 'Предложение цены от ИИ'
       });
   String get createRideAiGetSuggestion => _get({
         'az': 'Təklif al',
         'en': 'Get suggestion',
-        'ru': 'РџРѕР»СѓС‡РёС‚СЊ РїСЂРµРґР»РѕР¶РµРЅРёРµ'
+        'ru': 'Получить предложение'
       });
   String get createRideAiRetry => _get({
         'az': 'Yenidən cəhd et',
         'en': 'Retry',
-        'ru': 'РџРѕРїСЂРѕР±РѕРІР°С‚СЊ СЃРЅРѕРІР°'
+        'ru': 'Попробовать снова'
       });
   String get createRideAiSuggestionLabel => _get({
         'az': 'Təklif olunan qiymət:',
         'en': 'Suggested price:',
-        'ru': 'РџСЂРµРґР»Р°РіР°РµРјР°СЏ С†РµРЅР°:'
+        'ru': 'Предлагаемая цена:'
       });
   String get createRideAiUsePrice => _get({
         'az': 'Bu qiyməti istifadə et',
         'en': 'Use this price',
-        'ru': 'РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚Сѓ С†РµРЅСѓ'
+        'ru': 'Использовать эту цену'
       });
   String get createRideAiError => _get({
         'az': 'Qiymət təklifi alınmadı',
         'en': 'Failed to get price suggestion',
         'ru':
-            'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РїСЂРµРґР»РѕР¶РµРЅРёРµ С†РµРЅС‹'
+            'Не удалось получить предложение цены'
       });
   String get createRidePreferences => _get({
-        'az': 'ГњstГјnlГјklЙ™r',
+        'az': 'Üstünlüklər',
         'en': 'Preferences',
-        'ru': 'РџСЂРµРґРїРѕС‡С‚РµРЅРёСЏ'
+        'ru': 'Предпочтения'
       });
   String get createRideLuggage => _get({
-        'az': 'Baqaja icazЙ™',
+        'az': 'Baqaja icazə',
         'en': 'Luggage allowed',
-        'ru': 'Р‘Р°РіР°Р¶ СЂР°Р·СЂРµС€РµРЅ'
+        'ru': 'Багаж разрешен'
       });
   String get createRideSmoking =>
-      _get({'az': 'Siqaret', 'en': 'Smoking', 'ru': 'РљСѓСЂРµРЅРёРµ'});
+      _get({'az': 'Siqaret', 'en': 'Smoking', 'ru': 'Курение'});
   String get createRideMusic =>
-      _get({'az': 'Musiqi', 'en': 'Music', 'ru': 'РњСѓР·С‹РєР°'});
+      _get({'az': 'Musiqi', 'en': 'Music', 'ru': 'Музыка'});
   String get createRideNotes => _get({
-        'az': 'Qeyd (istЙ™yЙ™ baДџlД±)',
+        'az': 'Qeyd (istəyə bağlı)',
         'en': 'Notes (optional)',
-        'ru': 'РџСЂРёРјРµС‡Р°РЅРёСЏ (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)'
+        'ru': 'Примечания (необязательно)'
       });
   String get createRideNotesHint => _get({
-        'az': 'SЙ™rniЕџinlЙ™r ГјГ§Гјn Й™lavЙ™ mЙ™lumat',
+        'az': 'Sərnişinlər üçün əlavə məlumat',
         'en': 'Additional info for passengers',
         'ru':
-            'Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ РґР»СЏ РїР°СЃСЃР°Р¶РёСЂРѕРІ'
+            'Дополнительная информация для пассажиров'
       });
   String get createRidePublish => _get(
-      {'az': 'DЙ™rc et', 'en': 'Publish', 'ru': 'РћРїСѓР±Р»РёРєРѕРІР°С‚СЊ'});
+      {'az': 'Dərc et', 'en': 'Publish', 'ru': 'Опубликовать'});
   String get createRideSameLocationError => _get({
-        'az': 'Г‡Д±xД±Еџ vЙ™ tЙ™yinat eyni ola bilmЙ™z',
+        'az': 'Çıxış və təyinat eyni ola bilməz',
         'en': 'Origin and destination cannot be the same',
         'ru':
-            'РќР°С‡Р°Р»Рѕ Рё РїСѓРЅРєС‚ РЅР°Р·РЅР°С‡РµРЅРёСЏ РЅРµ РјРѕРіСѓС‚ СЃРѕРІРїР°РґР°С‚СЊ'
+            'Начало и пункт назначения не могут совпадать'
       });
   String get createRidePublishError => _get({
-        'az': 'SЙ™yahЙ™t dЙ™rc edilЙ™ bilmЙ™di. YenidЙ™n cЙ™hd edin.',
+        'az': 'Səyahət dərc edilə bilmədi. Yenidən cəhd edin.',
         'en': 'Failed to publish trip. Please try again.',
         'ru':
-            'РќРµ СѓРґР°Р»РѕСЃСЊ РѕРїСѓР±Р»РёРєРѕРІР°С‚СЊ РїРѕРµР·РґРєСѓ. РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.'
+            'Не удалось опубликовать поездку. Попробуйте снова.'
       });
   String get createRideSuccessTitle => _get({
-        'az': 'SЙ™yahЙ™t dЙ™rc edildi',
+        'az': 'Səyahət dərc edildi',
         'en': 'Trip published',
-        'ru': 'РџРѕРµР·РґРєР° РѕРїСѓР±Р»РёРєРѕРІР°РЅР°'
+        'ru': 'Поездка опубликована'
       });
   String get createRideSuccessMessage => _get({
-        'az': 'SЙ™rniЕџinlЙ™r artД±q sizi tapa bilЙ™r.',
+        'az': 'Sərnişinlər artıq sizi tapa bilər.',
         'en': 'Passengers can now find you.',
-        'ru': 'РџР°СЃСЃР°Р¶РёСЂС‹ С‚РµРїРµСЂСЊ РјРѕРіСѓС‚ РЅР°Р№С‚Рё РІР°СЃ.'
+        'ru': 'Пассажиры теперь могут найти вас.'
       });
 
   // Add Vehicle Screen
   String get addVehicleTitle => _get({
-        'az': 'Avtomobil Й™lavЙ™ et',
+        'az': 'Avtomobil əlavə et',
         'en': 'Add vehicle',
-        'ru': 'Р”РѕР±Р°РІРёС‚СЊ Р°РІС‚РѕРјРѕР±РёР»СЊ'
+        'ru': 'Добавить автомобиль'
       });
   String get addVehicleBrand =>
-      _get({'az': 'Marka', 'en': 'Brand', 'ru': 'РњР°СЂРєР°'});
+      _get({'az': 'Marka', 'en': 'Brand', 'ru': 'Марка'});
   String get addVehicleBrandHint =>
       _get({'az': 'Toyota', 'en': 'Toyota', 'ru': 'Toyota'});
   String get addVehicleModel =>
-      _get({'az': 'Model', 'en': 'Model', 'ru': 'РњРѕРґРµР»СЊ'});
+      _get({'az': 'Model', 'en': 'Model', 'ru': 'Модель'});
   String get addVehicleModelHint =>
       _get({'az': 'Camry', 'en': 'Camry', 'ru': 'Camry'});
   String get addVehicleYear =>
-      _get({'az': 'Д°l', 'en': 'Year', 'ru': 'Р“РѕРґ'});
+      _get({'az': 'İl', 'en': 'Year', 'ru': 'Год'});
   String get addVehicleYearHint =>
       _get({'az': '2020', 'en': '2020', 'ru': '2020'});
   String get addVehicleYearInvalid => _get({
-        'az': 'Д°l daxil edin',
+        'az': 'İl daxil edin',
         'en': 'Enter year',
-        'ru': 'Р’РІРµРґРёС‚Рµ РіРѕРґ'
+        'ru': 'Введите год'
       });
   String addVehicleYearRange(int startYear, int endYear) => _get({
-        'az': '$startYearвЂ“$endYear aralД±ДџД±nda',
-        'en': 'Between $startYearвЂ“$endYear',
-        'ru': 'Р’ РґРёР°РїР°Р·РѕРЅРµ $startYearвЂ“$endYear'
+        'az': '$startYear–$endYear aralığında',
+        'en': 'Between $startYear-$endYear',
+        'ru': 'В диапазоне $startYear–$endYear'
       });
   String get addVehicleColor =>
-      _get({'az': 'RЙ™ng', 'en': 'Color', 'ru': 'Р¦РІРµС‚'});
+      _get({'az': 'Rəng', 'en': 'Color', 'ru': 'Цвет'});
   String get addVehicleColorHint =>
-      _get({'az': 'AДџ', 'en': 'White', 'ru': 'Р‘РµР»С‹Р№'});
+      _get({'az': 'Ağ', 'en': 'White', 'ru': 'Белый'});
   String get addVehiclePlate => _get({
-        'az': 'DГ¶vlЙ™t nГ¶mrЙ™si',
+        'az': 'Dövlət nömrəsi',
         'en': 'License plate',
-        'ru': 'Р“РѕСЃРЅРѕРјРµСЂ'
+        'ru': 'Госномер'
       });
   String get addVehiclePlateHint =>
       _get({'az': '90-AA-123', 'en': '90-AA-123', 'ru': '90-AA-123'});
   String get addVehicleSeatsCount => _get({
-        'az': 'Oturacaq sayД±',
+        'az': 'Oturacaq sayı',
         'en': 'Seat count',
-        'ru': 'РљРѕР»РёС‡РµСЃС‚РІРѕ РјРµСЃС‚'
+        'ru': 'Количество мест'
       });
   String get addVehicleSeatsAvailable => _get({
-        'az': 'BoЕџ oturacaqlar',
+        'az': 'Boş oturacaqlar',
         'en': 'Available seats',
-        'ru': 'РЎРІРѕР±РѕРґРЅС‹Рµ РјРµСЃС‚Р°'
+        'ru': 'Свободные места'
       });
   String get addVehicleSave =>
-      _get({'az': 'Yadda saxla', 'en': 'Save', 'ru': 'РЎРѕС…СЂР°РЅРёС‚СЊ'});
+      _get({'az': 'Yadda saxla', 'en': 'Save', 'ru': 'Сохранить'});
   String get addVehicleRequired => _get({
-        'az': 'Bu sahЙ™ tЙ™lЙ™b olunur',
+        'az': 'Bu sahə tələb olunur',
         'en': 'This field is required',
-        'ru': 'Р­С‚Рѕ РїРѕР»Рµ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ'
+        'ru': 'Это поле обязательно'
       });
   String get addVehicleSaveError => _get({
-        'az': 'Yadda saxlanmadД±. YenidЙ™n cЙ™hd edin.',
+        'az': 'Yadda saxlanmadı. Yenidən cəhd edin.',
         'en': 'Failed to save. Please try again.',
         'ru':
-            'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ. РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.'
+            'Не удалось сохранить. Попробуйте снова.'
       });
   String get addVehicleSuccessSnackbar => _get({
-        'az': 'Avtomobil yadda saxlanД±ldД±',
+        'az': 'Avtomobil yadda saxlanıldı',
         'en': 'Vehicle saved',
-        'ru': 'РђРІС‚РѕРјРѕР±РёР»СЊ СЃРѕС…СЂР°РЅС‘РЅ'
+        'ru': 'Автомобиль сохранён'
       });
 
   // My Rides Screen
   String get myRidesTitle => _get(
-      {'az': 'SЙ™fЙ™rlЙ™rim', 'en': 'My rides', 'ru': 'РњРѕРё РїРѕРµР·РґРєРё'});
+      {'az': 'Səfərlərim', 'en': 'My rides', 'ru': 'Мои поездки'});
   String get myRidesNewRide => _get({
-        'az': 'Yeni sЙ™fЙ™r',
+        'az': 'Yeni səfər',
         'en': 'New ride',
-        'ru': 'РќРѕРІР°СЏ РїРѕРµР·РґРєР°'
+        'ru': 'Новая поездка'
       });
   String get myRidesLoading => _get(
-      {'az': 'YГјklЙ™nir...', 'en': 'Loading...', 'ru': 'Р—Р°РіСЂСѓР·РєР°...'});
+      {'az': 'Yüklənir...', 'en': 'Loading...', 'ru': 'Загрузка...'});
   String get myRidesLoadFailed => _get({
-        'az': 'YГјklЙ™nmЙ™di',
+        'az': 'Yüklənmədi',
         'en': 'Failed to load',
-        'ru': 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ'
+        'ru': 'Не удалось загрузить'
       });
   String get myRidesEmpty => _get({
-        'az': 'HЙ™lЙ™ sЙ™fЙ™r yoxdur',
+        'az': 'Hələ səfər yoxdur',
         'en': 'No rides yet',
-        'ru': 'РџРѕРєР° РЅРµС‚ РїРѕРµР·РґРѕРє'
+        'ru': 'Пока нет поездок'
       });
   String get myRidesEmptyMessage => _get({
-        'az': 'Д°lk sЙ™fЙ™rinizi yaradД±n vЙ™ sЙ™rniЕџin tapД±n.',
+        'az': 'İlk səfərinizi yaradın və sərnişin tapın.',
         'en': 'Create your first ride and find passengers.',
         'ru':
-            'РЎРѕР·РґР°Р№С‚Рµ СЃРІРѕСЋ РїРµСЂРІСѓСЋ РїРѕРµР·РґРєСѓ Рё РЅР°Р№РґРёС‚Рµ РїР°СЃСЃР°Р¶РёСЂРѕРІ.'
+            'Создайте свою первую поездку и найдите пассажиров.'
       });
   String get myRidesCreateAction => _get({
-        'az': 'SЙ™fЙ™r yarat',
+        'az': 'Səfər yarat',
         'en': 'Create ride',
-        'ru': 'РЎРѕР·РґР°С‚СЊ РїРѕРµР·РґРєСѓ'
+        'ru': 'Создать поездку'
       });
   String get myRidesSeatsLabel =>
-      _get({'az': 'yer', 'en': 'seats', 'ru': 'РјРµСЃС‚'});
+      _get({'az': 'yer', 'en': 'seats', 'ru': 'мест'});
   String get myRidesActionRequests =>
-      _get({'az': 'SorДџular', 'en': 'Requests', 'ru': 'Р—Р°РїСЂРѕСЃС‹'});
+      _get({'az': 'Sorğular', 'en': 'Requests', 'ru': 'Запросы'});
   String get myRidesActionDuplicate => _get(
-      {'az': 'Dublikat', 'en': 'Duplicate', 'ru': 'Р”СѓР±Р»РёСЂРѕРІР°С‚СЊ'});
+      {'az': 'Dublikat', 'en': 'Duplicate', 'ru': 'Дублировать'});
   String get myRidesActionCancel =>
-      _get({'az': 'LЙ™Дџv et', 'en': 'Cancel', 'ru': 'РћС‚РјРµРЅРёС‚СЊ'});
+      _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отменить'});
   String get myRidesDuplicateSuccess => _get({
-        'az': 'SЙ™fЙ™r dublikat edildi',
+        'az': 'Səfər dublikat edildi',
         'en': 'Ride duplicated',
-        'ru': 'РџРѕРµР·РґРєР° РґСѓР±Р»РёСЂРѕРІР°РЅР°'
+        'ru': 'Поездка дублирована'
       });
   String get myRidesCancelTitle => _get({
-        'az': 'SЙ™fЙ™ri lЙ™Дџv et',
+        'az': 'Səfəri ləğv et',
         'en': 'Cancel ride',
-        'ru': 'РћС‚РјРµРЅРёС‚СЊ РїРѕРµР·РґРєСѓ'
+        'ru': 'Отменить поездку'
       });
   String get myRidesCancelMessage => _get({
-        'az': 'Bu sЙ™fЙ™ri lЙ™Дџv etmЙ™k istЙ™yirsiniz?',
+        'az': 'Bu səfəri ləğv etmək istəyirsiniz?',
         'en': 'Do you want to cancel this ride?',
-        'ru': 'Р’С‹ С…РѕС‚РёС‚Рµ РѕС‚РјРµРЅРёС‚СЊ СЌС‚Сѓ РїРѕРµР·РґРєСѓ?'
+        'ru': 'Вы хотите отменить эту поездку?'
       });
   String get myRidesCancelConfirm =>
-      _get({'az': 'LЙ™Дџv et', 'en': 'Cancel', 'ru': 'РћС‚РјРµРЅРёС‚СЊ'});
+      _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отменить'});
   String get myRidesCancelDismiss =>
-      _get({'az': 'Д°mtina', 'en': 'Dismiss', 'ru': 'РћС‚РєР»РѕРЅРёС‚СЊ'});
+      _get({'az': 'İmtina', 'en': 'Dismiss', 'ru': 'Отклонить'});
 
   // Passenger Requests Screen
   String get passengerRequestsTitle => _get({
-        'az': 'SЙ™rniЕџin sorДџularД±',
+        'az': 'Sərnişin sorğuları',
         'en': 'Passenger requests',
-        'ru': 'Р—Р°РїСЂРѕСЃС‹ РїР°СЃСЃР°Р¶РёСЂРѕРІ'
+        'ru': 'Запросы пассажиров'
       });
   String get passengerRequestsEmpty => _get({
-        'az': 'SorДџu yoxdur',
+        'az': 'Sorğu yoxdur',
         'en': 'No requests',
-        'ru': 'РќРµС‚ Р·Р°РїСЂРѕСЃРѕРІ'
+        'ru': 'Нет запросов'
       });
   String get passengerRequestsEmptyMessage => _get({
-        'az': 'Yeni sЙ™rniЕџin sorДџularД± burada gГ¶rГјnЙ™cЙ™k.',
+        'az': 'Yeni sərnişin sorğuları burada görünəcək.',
         'en': 'New passenger requests will appear here.',
         'ru':
-            'РќРѕРІС‹Рµ Р·Р°РїСЂРѕСЃС‹ РїР°СЃСЃР°Р¶РёСЂРѕРІ РїРѕСЏРІСЏС‚СЃСЏ Р·РґРµСЃСЊ.'
+            'Новые запросы пассажиров появятся здесь.'
       });
   String get passengerRequestsSeatsLabel =>
-      _get({'az': 'yer', 'en': 'seats', 'ru': 'РјРµСЃС‚'});
+      _get({'az': 'yer', 'en': 'seats', 'ru': 'мест'});
   String get passengerRequestsReject =>
-      _get({'az': 'RЙ™dd et', 'en': 'Reject', 'ru': 'РћС‚РєР»РѕРЅРёС‚СЊ'});
+      _get({'az': 'Rədd et', 'en': 'Reject', 'ru': 'Отклонить'});
   String get passengerRequestsAccept =>
-      _get({'az': 'QЙ™bul et', 'en': 'Accept', 'ru': 'РџСЂРёРЅСЏС‚СЊ'});
+      _get({'az': 'Qəbul et', 'en': 'Accept', 'ru': 'Принять'});
 
   // Active Ride Screen
   String get activeRideTitle => _get({
-        'az': 'SЙ™fЙ™r Д°darЙ™etmЙ™',
+        'az': 'Səfər İdarəetmə',
         'en': 'Ride Management',
-        'ru': 'РЈРїСЂР°РІР»РµРЅРёРµ РїРѕРµР·РґРєРѕР№'
+        'ru': 'Управление поездкой'
       });
   String get activeRideError => _get({
-        'az': 'XЙ™ta baЕџ verdi',
+        'az': 'Xəta baş verdi',
         'en': 'An error occurred',
-        'ru': 'РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°'
+        'ru': 'Произошла ошибка'
       });
   String get activeRideCompleted => _get({
-        'az': 'SЙ™fЙ™r tamamlandД±!',
+        'az': 'Səfər tamamlandı!',
         'en': 'Ride completed!',
-        'ru': 'РџРѕРµР·РґРєР° Р·Р°РІРµСЂС€РµРЅР°!'
+        'ru': 'Поездка завершена!'
       });
   String get activeRideStartButton => _get({
-        'az': 'SЙ™fЙ™rЙ™ baЕџla',
+        'az': 'Səfərə başla',
         'en': 'Start ride',
-        'ru': 'РќР°С‡Р°С‚СЊ РїРѕРµР·РґРєСѓ'
+        'ru': 'Начать поездку'
       });
   String get activeRideCompleteButton => _get({
-        'az': 'SЙ™fЙ™ri bitir',
+        'az': 'Səfəri bitir',
         'en': 'Complete ride',
-        'ru': 'Р—Р°РІРµСЂС€РёС‚СЊ РїРѕРµР·РґРєСѓ'
+        'ru': 'Завершить поездку'
       });
   String get activeRideGoBack =>
-      _get({'az': 'Geri qayД±t', 'en': 'Go back', 'ru': 'Р’РµСЂРЅСѓС‚СЊСЃСЏ'});
+      _get({'az': 'Geri qayıt', 'en': 'Go back', 'ru': 'Вернуться'});
 
+  String get authIntroSubtitle => _get({
+        'az': 'Az?rbaycan daxilind? rahat v? ucuz carpooling platformas?',
+        'en': 'Comfortable and affordable carpooling across Azerbaijan',
+        'ru': '??????? ? ????????? ????????? ??? ?????????? ?? ????????????'
+      });
+  String get phoneLoginSubtitle => _get({
+        'az': 'Telefon n?mr?nizi daxil edin, siz? t?sdiq kodu g?nd?r?k.',
+        'en': 'Enter your phone number and we will send you a verification code.',
+        'ru': '??????? ????? ????????, ? ?? ???????? ??? ??? ?????????????.'
+      });
+  String get phoneLoginPhoneRequired => _get({
+        'az': 'N?mr?ni daxil edin',
+        'en': 'Enter your phone number',
+        'ru': '??????? ????? ????????'
+      });
+  String get phoneLoginPhoneLength => _get({
+        'az': 'N?mr? 9 r?q?m olmal?d?r',
+        'en': 'Phone number must be 9 digits',
+        'ru': '????? ???????? ?????? ???????? ?? 9 ????'
+      });
+  String get phoneLoginPhoneOperator => _get({
+        'az': 'D?zg?n operator kodu daxil edin',
+        'en': 'Enter a valid operator code',
+        'ru': '??????? ?????????? ??? ?????????'
+      });
+  String get phoneLoginSendFailed => _get({
+        'az': 'Kod g?nd?ril? bilm?di. Yenid?n c?hd edin.',
+        'en': 'Failed to send the code. Please try again.',
+        'ru': '?? ??????? ????????? ???. ?????????? ?????.'
+      });
+  String get phoneLoginSendCode => _get({
+        'az': 'Kod g?nd?r',
+        'en': 'Send code',
+        'ru': '????????? ???'
+      });
+  String get otpTitle => _get({
+        'az': 'Kodu t?sdiql?yin',
+        'en': 'Verify the code',
+        'ru': '??????????? ???'
+      });
+  String get otpSubtitlePrefix => _get({
+        'az': 'Kod bu n?mr?y? g?nd?rildi: ',
+        'en': 'The code was sent to: ',
+        'ru': '??? ????????? ?? ?????: '
+      });
+  String otpCodeLengthError(int length) => _get({
+        'az': 'Kod $length r?q?m olmal?d?r',
+        'en': 'The code must be $length digits',
+        'ru': '??? ?????? ???????? ?? $length ????'
+      });
+  String get otpVerifyFailed => _get({
+        'az': 'T?sdiq al?nmad?. Yenid?n c?hd edin.',
+        'en': 'Verification failed. Please try again.',
+        'ru': '?? ??????? ??????????? ???. ?????????? ?????.'
+      });
+  String get otpResendFailed => _get({
+        'az': 'Kod yenid?n g?nd?ril? bilm?di.',
+        'en': 'Failed to resend the code.',
+        'ru': '?? ??????? ????????? ??? ????????.'
+      });
+  String get otpConfirmBtn => _get({
+        'az': 'T?sdiql?',
+        'en': 'Verify',
+        'ru': '???????????'
+      });
+  String otpResendCountdown(int seconds) => _get({
+        'az': 'Kodu yenid?n g?nd?r ($seconds s)',
+        'en': 'Resend code ($seconds s)',
+        'ru': '????????? ??? ????? ($seconds ?)'
+      });
+  String get otpResendBtn => _get({
+        'az': 'Kodu yenid?n g?nd?r',
+        'en': 'Resend code',
+        'ru': '????????? ??? ?????'
+      });
+  String get otpChangeNumber => _get({
+        'az': 'N?mr?ni d?yi?',
+        'en': 'Change number',
+        'ru': '???????? ?????'
+      });
+  String get profileSetupTitle => _get({
+        'az': 'Profil qura?d?rmas?',
+        'en': 'Profile setup',
+        'ru': '????????? ???????'
+      });
+  String get profileSetupRequired => _get({
+        'az': 'T?l?b olunur',
+        'en': 'Required',
+        'ru': '???????????'
+      });
+  String get profileSetupSaveError => _get({
+        'az': 'Profil yadda saxlanmad?. Yenid?n c?hd edin.',
+        'en': 'Failed to save the profile. Please try again.',
+        'ru': '?? ??????? ????????? ???????. ?????????? ?????.'
+      });
+  String get profileSetupAvatarHint => _get({
+        'az': '??kil ?lav? et (ist?y? ba?l?)',
+        'en': 'Add a photo (optional)',
+        'ru': '???????? ???? (?????????????)'
+      });
+  String get profileSetupFirstName => _get({
+        'az': 'Ad',
+        'en': 'First name',
+        'ru': '???'
+      });
+  String get profileSetupFirstNameHint => _get({
+        'az': 'Ad?n?z',
+        'en': 'Your first name',
+        'ru': '???? ???'
+      });
+  String get profileSetupLastName => _get({
+        'az': 'Soyad',
+        'en': 'Last name',
+        'ru': '???????'
+      });
+  String get profileSetupLastNameHint => _get({
+        'az': 'Soyad?n?z',
+        'en': 'Your last name',
+        'ru': '???? ???????'
+      });
+  String get profileSetupContinue => _get({
+        'az': 'Davam et',
+        'en': 'Continue',
+        'ru': '??????????'
+      });
+  String get bookingCreateFailed => _get({
+        'az': 'Rezervasiya yarad?la bilm?di. Yenid?n c?hd edin.',
+        'en': 'Failed to create the booking. Please try again.',
+        'ru': '?? ??????? ??????? ????????????. ?????????? ?????.'
+      });
+  String get bookingSuccessTitle => _get({
+        'az': 'Rezervasiya g?nd?rildi',
+        'en': 'Booking sent',
+        'ru': '???????????? ??????????'
+      });
+  String get bookingSuccessSubtitle => _get({
+        'az': 'S?r?c?n?n t?sdiqini g?zl?yin.',
+        'en': 'Wait for the driver to confirm.',
+        'ru': '????????? ????????????? ?? ????????.'
+      });
+  String get bookingConfirmTitle => _get({
+        'az': 'Rezervasiyan? t?sdiql?',
+        'en': 'Confirm booking',
+        'ru': '??????????? ????????????'
+      });
+  String get bookingRideNotFound => _get({
+        'az': 'S?yah?t tap?lmad?',
+        'en': 'Trip not found',
+        'ru': '??????? ?? ???????'
+      });
+  String get bookingRideUnavailable => _get({
+        'az': 'Bu s?yah?t art?q m?vcud deyil.',
+        'en': 'This trip is no longer available.',
+        'ru': '??? ??????? ?????? ??????????.'
+      });
+  String get bookingCreateLoading => _get({
+        'az': 'Rezervasiya yarad?l?r...',
+        'en': 'Creating booking...',
+        'ru': '??????? ????????????...'
+      });
+  String get bookingDriverSection => _get({
+        'az': 'S?r?c?',
+        'en': 'Driver',
+        'ru': '????????'
+      });
+  String get bookingPassengerCount => _get({
+        'az': 'S?rni?in say?',
+        'en': 'Passenger count',
+        'ru': '?????????? ??????????'
+      });
+  String get bookingDetailsSection => _get({
+        'az': 'Detallar',
+        'en': 'Details',
+        'ru': '??????'
+      });
+  String get bookingVehicleLabel => _get({
+        'az': 'Avtomobil',
+        'en': 'Vehicle',
+        'ru': '??????????'
+      });
+  String get bookingLuggageLabel => _get({
+        'az': 'Baqaj',
+        'en': 'Luggage',
+        'ru': '?????'
+      });
+  String get bookingLuggageValue => _get({
+        'az': 'Orta ?l??l?',
+        'en': 'Medium size',
+        'ru': '??????? ??????'
+      });
+  String get bookingPerSeatLabel => _get({
+        'az': 'Bir yer',
+        'en': 'Per seat',
+        'ru': '?? ?????'
+      });
+  String get bookingPriceSection => _get({
+        'az': 'Qiym?t',
+        'en': 'Price',
+        'ru': '????'
+      });
+  String bookingPriceBreakdown(String price, int seats, String currency) => _get({
+        'az': '$price $currency ? $seats yer',
+        'en': '$price $currency ? $seats seats',
+        'ru': '$price $currency ? $seats ????'
+      });
+  String get bookingPlatformFee => _get({
+        'az': 'Platforma xidm?t haqq? (10%)',
+        'en': 'Platform service fee (10%)',
+        'ru': '????????? ???? ????????? (10%)'
+      });
+  String get bookingTotalLabel => _get({
+        'az': 'C?mi',
+        'en': 'Total',
+        'ru': '?????'
+      });
+  String get bookingFreeCancelNote => _get({
+        'az': 'S?yah?td?n 24 saat ?vv?l? q?d?r ?d?ni?siz l??v.',
+        'en': 'Free cancellation up to 24 hours before the trip.',
+        'ru': '?????????? ?????? ?? ??????? ??? ?? 24 ???? ?? ???????.'
+      });
+  String get bookingConfirmBtn => _get({
+        'az': 'T?sdiql?',
+        'en': 'Confirm',
+        'ru': '???????????'
+      });
+  String get supportTitle => _get({
+        'az': 'K?m?k',
+        'en': 'Help',
+        'ru': '??????'
+      });
+  String get supportFaqTitle => _get({
+        'az': 'Tez-tez veril?n suallar',
+        'en': 'Frequently asked questions',
+        'ru': '????? ?????????? ???????'
+      });
+  String get supportFaqBookingQuestion => _get({
+        'az': 'Rezervasiyan? nec? ed? bil?r?m?',
+        'en': 'How can I make a booking?',
+        'ru': '??? ???????? ?????????????'
+      });
+  String get supportFaqBookingAnswer => _get({
+        'az': 'S?yah?t axtar?n, uy?un reisi se?in v? "Rezerv et" d?ym?sin? bas?n. S?r?c? t?sdiql?dikd?n sonra ?d?ni? ed? bil?rsiniz.',
+        'en': 'Search for a trip, choose a suitable ride, and tap "Book". Once the driver confirms, you can pay.',
+        'ru': '??????? ???????, ???????? ?????????? ???? ? ??????? ???????????????. ????? ????????????? ???????? ????? ????????.'
+      });
+  String get supportFaqPaymentQuestion => _get({
+        'az': '?d?ni?i nec? edir?m?',
+        'en': 'How do I pay?',
+        'ru': '??? ?????????'
+      });
+  String get supportFaqPaymentAnswer => _get({
+        'az': 'Rezervasiya t?sdiql?ndikd?n sonra rezervasiya detallar?nda ?d?ni? d?ym?si g?r?n?c?k. Haz?rda ?d?ni? mock rejimind?dir.',
+        'en': 'After the booking is confirmed, a payment button will appear in the booking details. Payments are currently in mock mode.',
+        'ru': '????? ????????????? ???????????? ? ??????? ???????? ?????? ??????. ?????? ??????? ???????? ? mock-??????.'
+      });
+  String get supportFaqCancelQuestion => _get({
+        'az': 'Rezervasiyam? l??v ed? bil?r?mmi?',
+        'en': 'Can I cancel my booking?',
+        'ru': '???? ?? ? ???????? ?????????????'
+      });
+  String get supportFaqCancelAnswer => _get({
+        'az': 'B?li. S?yah?td?n 24 saat ?vv?l? q?d?r ?d?ni?siz l??v ed? bil?rsiniz.',
+        'en': 'Yes. You can cancel free of charge up to 24 hours before the trip.',
+        'ru': '??. ?? ?????? ???????? ????????? ?? ??????? ??? ?? 24 ???? ?? ???????.'
+      });
+  String get supportFaqDriverQuestion => _get({
+        'az': 'S?r?c? nec? ola bil?r?m?',
+        'en': 'How can I become a driver?',
+        'ru': '??? ????? ??????????'
+      });
+  String get supportFaqDriverAnswer => _get({
+        'az': 'Profil ? S?r?c? rejimi b?lm?sind?n qeydiyyatdan ke?in, avtomobil ?lav? edin v? yoxlamadan ke?in.',
+        'en': 'Go to Profile ? Driver mode, register, add a vehicle, and complete verification.',
+        'ru': '???????? ??????? ? ????? ????????, ?????????????????, ???????? ?????????? ? ???????? ????????.'
+      });
+  String get supportContactWrite => _get({
+        'az': 'D?st?y? yaz',
+        'en': 'Contact support',
+        'ru': '???????? ? ?????????'
+      });
+  String get supportReportIssue => _get({
+        'az': 'Problem bildir',
+        'en': 'Report an issue',
+        'ru': '???????? ? ????????'
+      });
+  String get supportReportIssueSubtitle => _get({
+        'az': 'Nasazl?q v? ya ?ikay?t g?nd?rin',
+        'en': 'Send a bug report or complaint',
+        'ru': '????????? ????????? ? ????????????? ??? ??????'
+      });
+  String get supportComingSoon => _get({
+        'az': 'Tezlikl? ?l?atan olacaq',
+        'en': 'Coming soon',
+        'ru': '????? ????? ????????'
+      });
+  String driverVerificationUploadSent(String docType) => _get({
+        'az': '$docType t?sdiq ???n g?nd?rildi',
+        'en': '$docType sent for verification',
+        'ru': '$docType ????????? ?? ????????'
+      });
+  String driverVerificationError(String error) => _get({
+        'az': 'X?ta ba? verdi: $error',
+        'en': 'An error occurred: $error',
+        'ru': '????????? ??????: $error'
+      });
+  String get driverVerificationMockApproved => _get({
+        'az': 'S?r?c? statusu t?sdiql?ndi (MOCK)',
+        'en': 'Driver status approved (MOCK)',
+        'ru': '?????? ???????? ??????????? (MOCK)'
+      });
+  String get driverVerificationTitle => _get({
+        'az': 'T?sdiql?m?',
+        'en': 'Verification',
+        'ru': '????????'
+      });
+  String get driverVerificationIdentityTitle => _get({
+        'az': '??xsiyy?t v?siq?si',
+        'en': 'Identity card',
+        'ru': '????????????? ????????'
+      });
+  String get driverVerificationIdentitySubtitle => _get({
+        'az': '?n v? arxa t?r?f',
+        'en': 'Front and back side',
+        'ru': '??????? ? ???????? ???????'
+      });
+  String get driverVerificationSelfieTitle => _get({
+        'az': 'Selfi t?sdiqi',
+        'en': 'Selfie verification',
+        'ru': '???????? ?????'
+      });
+  String get driverVerificationSelfieSubtitle => _get({
+        'az': '?z tan?ma ???n',
+        'en': 'For face verification',
+        'ru': '??? ???????? ????'
+      });
+  String get driverVerificationLicenseTitle => _get({
+        'az': 'S?r?c?l?k v?siq?si',
+        'en': 'Driver license',
+        'ru': '???????????? ?????????????'
+      });
+  String get driverVerificationLicenseSubtitle => _get({
+        'az': 'Etibarl? s?r?c?l?k v?siq?si',
+        'en': 'Valid driver license',
+        'ru': '??????????? ???????????? ?????????????'
+      });
+  String get driverVerificationMockApproveBtn => _get({
+        'az': 'Mock T?sdiql? (Geli?tirici)',
+        'en': 'Mock approve (Developer)',
+        'ru': 'Mock-????????????? (???????????)'
+      });
+  String get driverVerificationApprovedLabel => _get({
+        'az': 'T?sdiq',
+        'en': 'Approved',
+        'ru': '????????????'
+      });
+  String get driverVerificationUploadLabel => _get({
+        'az': 'Y?kl?',
+        'en': 'Upload',
+        'ru': '?????????'
+      });
+  String get driverVerificationNote => _get({
+        'az': 'T?sdiq prosesi bir ne?? d?qiq? ??k? bil?r. Status yenil?ndikd? S?r?c? Paneli aktivl???c?k.',
+        'en': 'Verification may take a few minutes. The Driver Panel will unlock once the status updates.',
+        'ru': '???????? ????? ?????? ????????? ?????. ?????? ???????? ?????? ???????? ????? ?????????? ???????.'
+      });
+  String get chatStartConversation => _get({
+        'az': 'S?hb?t? ba?lay?n',
+        'en': 'Start the conversation',
+        'ru': '??????? ????????'
+      });
+  String get chatPhotoSoon => _get({
+        'az': 'Foto??kil se?imi tezlikl?',
+        'en': 'Photo picker coming soon',
+        'ru': '????? ???? ????? ????????'
+      });
+  String get chatVoiceSoon => _get({
+        'az': 'S?s yaz?s? tezlikl?',
+        'en': 'Voice messages coming soon',
+        'ru': '????????? ????????? ????? ????????'
+      });
+  String get reviewSuccess => _get({
+        'az': 'R?yiniz u?urla g?nd?rildi. T???kk?r edirik!',
+        'en': 'Your review was sent successfully. Thank you!',
+        'ru': '??? ????? ??????? ?????????. ???????!'
+      });
+  String reviewTitle(String name) => _get({
+        'az': '$name ???n r?y bildirin',
+        'en': 'Leave a review for $name',
+        'ru': '???????? ????? ??? $name'
+      });
+  String get reviewRateTrip => _get({
+        'az': 'S?yah?ti qiym?tl?ndirin:',
+        'en': 'Rate the trip:',
+        'ru': '??????? ???????:'
+      });
+  String get reviewCommentHint => _get({
+        'az': '??rhl?riniz (ist?y? ba?l?)...',
+        'en': 'Your comments (optional)...',
+        'ru': '???? ??????????? (?????????????)...'
+      });
+  String get reviewCancelBtn => _get({
+        'az': '?mtina',
+        'en': 'Cancel',
+        'ru': '??????'
+      });
+  String get reviewSendBtn => _get({
+        'az': 'G?nd?r',
+        'en': 'Send',
+        'ru': '?????????'
+      });
+  String get notificationsWelcomeTitle => _get({
+        'az': 'Xo? g?ldiniz!',
+        'en': 'Welcome!',
+        'ru': '????? ??????????!'
+      });
+  String get notificationsWelcomeBody => _get({
+        'az': 'Yolmates-? qo?uldu?unuz ???n t???kk?r edirik.',
+        'en': 'Thanks for joining Yolmates.',
+        'ru': '???????, ??? ?????????????? ? Yolmates.'
+      });
+  String get notificationsCompleteProfileTitle => _get({
+        'az': 'Profilinizi tamamlay?n',
+        'en': 'Complete your profile',
+        'ru': '????????? ???????'
+      });
+  String get notificationsCompleteProfileBody => _get({
+        'az': 'Daha ?ox s?r?c? il? ?laq? ???n profilinizi doldurun.',
+        'en': 'Complete your profile to connect with more drivers.',
+        'ru': '????????? ???????, ????? ????????? ? ??????? ?????? ?????????.'
+      });
+  String get notificationsSafetyTipTitle => _get({
+        'az': 'T?hl?k?sizlik m?sl?h?ti',
+        'en': 'Safety tip',
+        'ru': '????? ?? ????????????'
+      });
+  String get notificationsSafetyTipBody => _get({
+        'az': 'S?yah?td?n ?vv?l s?r?c?n?n reytinqini yoxlay?n.',
+        'en': 'Check the driver rating before the trip.',
+        'ru': '????????? ??????? ???????? ????? ????????.'
+      });
   // Date Formatting Helpers
   String monthName(int month) {
     final months = {
@@ -1097,8 +1537,8 @@ class AppLocalizations {
         'Mart',
         'Aprel',
         'May',
-        'Д°yun',
-        'Д°yul',
+        'İyun',
+        'İyul',
         'Avqust',
         'Sentyabr',
         'Oktyabr',
@@ -1120,18 +1560,18 @@ class AppLocalizations {
         'December'
       ],
       'ru': [
-        'РЇРЅРІР°СЂСЊ',
-        'Р¤РµРІСЂР°Р»СЊ',
-        'РњР°СЂС‚',
-        'РђРїСЂРµР»СЊ',
-        'РњР°Р№',
-        'РСЋРЅСЊ',
-        'РСЋР»СЊ',
-        'РђРІРіСѓСЃС‚',
-        'РЎРµРЅС‚СЏР±СЂСЊ',
-        'РћРєС‚СЏР±СЂСЊ',
-        'РќРѕСЏР±СЂСЊ',
-        'Р”РµРєР°Р±СЂСЊ'
+        'Январь',
+        'Февраль',
+        'Март',
+        'Апрель',
+        'Май',
+        'Июнь',
+        'Июль',
+        'Август',
+        'Сентябрь',
+        'Октябрь',
+        'Ноябрь',
+        'Декабрь'
       ],
     };
     return months[language.name]![month - 1];
@@ -1140,12 +1580,12 @@ class AppLocalizations {
   String weekdayName(int weekday) {
     final weekdays = {
       'az': [
-        'Bazar ertЙ™si',
-        'Г‡Й™rЕџЙ™nbЙ™ axЕџamД±',
-        'Г‡Й™rЕџЙ™nbЙ™',
-        'CГјmЙ™ axЕџamД±',
-        'CГјmЙ™',
-        'ЕћЙ™nbЙ™',
+        'Bazar ertəsi',
+        'Çərşənbə axşamı',
+        'Çərşənbə',
+        'Cümə axşamı',
+        'Cümə',
+        'Şənbə',
         'Bazar'
       ],
       'en': [
@@ -1158,13 +1598,13 @@ class AppLocalizations {
         'Sunday'
       ],
       'ru': [
-        'РџРѕРЅРµРґРµР»СЊРЅРёРє',
-        'Р’С‚РѕСЂРЅРёРє',
-        'РЎСЂРµРґР°',
-        'Р§РµС‚РІРµСЂРі',
-        'РџСЏС‚РЅРёС†Р°',
-        'РЎСѓР±Р±РѕС‚Р°',
-        'Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ'
+        'Понедельник',
+        'Вторник',
+        'Среда',
+        'Четверг',
+        'Пятница',
+        'Суббота',
+        'Воскресенье'
       ],
     };
     return weekdays[language.name]![weekday - 1];
@@ -1172,9 +1612,9 @@ class AppLocalizations {
 
   String shortWeekdayName(int weekday) {
     final weekdays = {
-      'az': ['B.e', 'Г‡.a', 'Г‡', 'C.a', 'C', 'Ећ', 'B'],
+      'az': ['B.e', 'Ç.a', 'Ç', 'C.a', 'C', 'Ş', 'B'],
       'en': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      'ru': ['РџРЅ', 'Р’С‚', 'РЎСЂ', 'Р§С‚', 'РџС‚', 'РЎР±', 'Р’СЃ'],
+      'ru': ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
     };
     return weekdays[language.name]![weekday - 1];
   }
@@ -1182,41 +1622,62 @@ class AppLocalizations {
   // Plural Form Helpers
   String seatsPlural(int count) {
     if (language == AppLanguage.az) {
-      return count == 1 ? 'yer' : 'yerlЙ™r';
+      return count == 1 ? 'yer' : 'yerlər';
     } else if (language == AppLanguage.en) {
       return count == 1 ? 'seat' : 'seats';
     } else {
       // Russian: 1 РјРµСЃС‚Рѕ, 2-4 РјРµСЃС‚Р°, 5+ РјРµСЃС‚
       if (count % 10 == 1 && count % 100 != 11) {
-        return 'РјРµСЃС‚Рѕ';
+        return 'место';
       }
       if ([2, 3, 4].contains(count % 10) &&
           ![12, 13, 14].contains(count % 100)) {
-        return 'РјРµСЃС‚Р°';
+        return 'места';
       }
-      return 'РјРµСЃС‚';
+      return 'мест';
     }
   }
 
   String tripsPlural(int count) {
     if (language == AppLanguage.az) {
-      return 'sЙ™yahЙ™t';
+      return 'səyahət';
     } else if (language == AppLanguage.en) {
       return count == 1 ? 'trip' : 'trips';
     } else {
       // Russian: 1 РїРѕРµР·РґРєР°, 2-4 РїРѕРµР·РґРєРё, 5+ РїРѕРµР·РґРѕРє
       if (count % 10 == 1 && count % 100 != 11) {
-        return 'РїРѕРµР·РґРєР°';
+        return 'поездка';
       }
       if ([2, 3, 4].contains(count % 10) &&
           ![12, 13, 14].contains(count % 100)) {
-        return 'РїРѕРµР·РґРєРё';
+        return 'поездки';
       }
-      return 'РїРѕРµР·РґРѕРє';
+      return 'поездок';
     }
   }
 
   String _get(Map<String, String> translations) {
     return translations[language.name] ?? translations['az'] ?? '';
   }
+
+  // Driver Verification
+  String get verificationTitle => _get({'az': 'Təsdiqləmə', 'en': 'Verification', 'ru': 'Верификация'});
+  String get verificationSent => _get({'az': 'təsdiq üçün göndərildi', 'en': 'sent for verification', 'ru': 'отправлено на проверку'});
+  String get verificationMockApproved => _get({'az': 'Sürücü statusu təsdiqləndi (MOCK)', 'en': 'Driver status approved (MOCK)', 'ru': 'Статус водителя подтвержден (MOCK)'});
+  String get verificationMockBtn => _get({'az': 'Mock Təsdiqlə (Geliştirici)', 'en': 'Mock Approve (Dev)', 'ru': 'Mock Подтвердить (Дев)'});
+  String get verificationApproveBtn => _get({'az': 'Təsdiq', 'en': 'Approved', 'ru': 'Подтверждено'});
+  String get verificationUploadBtn => _get({'az': 'Yüklə', 'en': 'Upload', 'ru': 'Загрузить'});
+  
+  String get verificationIdCard => _get({'az': 'Şəxsiyyət vəsiqəsi', 'en': 'ID Card', 'ru': 'Удостоверение личности'});
+  String get verificationIdCardDesc => _get({'az': 'Ön və arxa tərəf', 'en': 'Front and back side', 'ru': 'Лицевая и обратная сторона'});
+  String get verificationSelfie => _get({'az': 'Selfi təsdiqi', 'en': 'Selfie verification', 'ru': 'Селфи верификация'});
+  String get verificationSelfieDesc => _get({'az': 'Üz tanıma üçün', 'en': 'For facial recognition', 'ru': 'Для распознавания лиц'});
+  String get verificationLicense => _get({'az': 'Sürücülük vəsiqəsi', 'en': 'Driver license', 'ru': 'Водительские права'});
+  String get verificationLicenseDesc => _get({'az': 'Etibarlı sürücülük vəsiqəsi', 'en': 'Valid driver license', 'ru': 'Действительные водительские права'});
+  String get verificationNote => _get({'az': 'Təsdiq prosesi bir neçə dəqiqə çəkə bilər. Status yeniləndikdə Sürücü Paneli aktivləşəcək.', 'en': 'The verification process may take a few minutes. Driver Panel will be activated when the status is updated.', 'ru': 'Процесс верификации может занять несколько минут. Панель водителя будет активирована при обновлении статуса.'});
+
+  // Common Extras
+  String get commonDismiss => _get({'az': 'İmtina', 'en': 'Dismiss', 'ru': 'Отклонить'});
+  String get commonReviews => _get({'az': 'Rəylər', 'en': 'Reviews', 'ru': 'Отзывы'});
+  String get commonAvailableSeats => _get({'az': 'boş yer', 'en': 'available seats', 'ru': 'свободных мест'});
 }
