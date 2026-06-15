@@ -46,7 +46,7 @@ class AppLocalizations {
   AppLocalizations(this.language);
 
   // Common
-  String get commonAll => _get({'az': 'Bütün', 'en': 'All', 'ru': 'Все'});
+  String get commonAll => _get({'az': 'Bütün', 'en': 'All', 'ru': 'Всё'});
   String get commonSearch =>
       _get({'az': 'Axtar', 'en': 'Search', 'ru': 'Найти'});
   String get commonFrom =>
@@ -620,6 +620,19 @@ class AppLocalizations {
       });
   String get walletRefresh =>
       _get({'az': 'Yenilə', 'en': 'Refresh', 'ru': 'Обновить'});
+
+
+  // Driver Onboarding & Verification Extras
+  String get commonContinue => _get({'az': 'Davam et', 'en': 'Continue', 'ru': 'Продолжить'});
+  String get commonErrorPrefix => _get({'az': 'Xəta baş verdi', 'en': 'An error occurred', 'ru': 'Произошла ошибка'});
+  String get driverVerificationSentSuffix => _get({'az': 'təsdiq üçün göndərildi', 'en': 'sent for verification', 'ru': 'отправлен на проверку'});
+  String get driverVerificationMockSuccess => _get({'az': 'Sürücü statusu təsdiqləndi (MOCK)', 'en': 'Driver status verified (MOCK)', 'ru': 'Статус водителя подтвержден (MOCK)'});
+  String get driverVerificationTitle => _get({'az': 'Təsdiqləmə', 'en': 'Verification', 'ru': 'Верификация'});
+  String get driverVerificationMockBtn => _get({'az': 'Mock Təsdiqlə (Geliştirici)', 'en': 'Mock Verify (Dev)', 'ru': 'Mock Подтвердить (Дев)'});
+  String get driverOnboardingTitle => _get({'az': 'Sürücü rejimi', 'en': 'Driver mode', 'ru': 'Режим водителя'});
+  String get driverOnboardingBenefits => _get({'az': 'Üstünlüklər', 'en': 'Benefits', 'ru': 'Преимущества'});
+  String get driverOnboardingRequirements => _get({'az': 'Tələblər', 'en': 'Requirements', 'ru': 'Требования'});
+  String get driverOnboardingCheckStatus => _get({'az': 'Təsdiq statusuna bax', 'en': 'Check verification status', 'ru': 'Проверить статус'});
 
   // Driver Panel Screen
   String get driverPanelTitle => _get({
@@ -1398,11 +1411,7 @@ class AppLocalizations {
         'en': 'Driver status approved (MOCK)',
         'ru': '?????? ???????? ??????????? (MOCK)'
       });
-  String get driverVerificationTitle => _get({
-        'az': 'T?sdiql?m?',
-        'en': 'Verification',
-        'ru': '????????'
-      });
+  
   String get driverVerificationIdentityTitle => _get({
         'az': '??xsiyy?t v?siq?si',
         'en': 'Identity card',
@@ -1680,4 +1689,7 @@ class AppLocalizations {
   String get commonDismiss => _get({'az': 'İmtina', 'en': 'Dismiss', 'ru': 'Отклонить'});
   String get commonReviews => _get({'az': 'Rəylər', 'en': 'Reviews', 'ru': 'Отзывы'});
   String get commonAvailableSeats => _get({'az': 'boş yer', 'en': 'available seats', 'ru': 'свободных мест'});
+
+  String get settingsThemePreparing => _get({'az': 'Qaranlıq mövzu hazırlanır', 'en': 'Dark theme is being prepared', 'ru': 'Тёмная тема готовится'});
+  String get settingsThemeNote => _get({'az': 'Hazırda tətbiq sabit açıq mövzuda işləyir.', 'en': 'The app currently uses the stable light theme.', 'ru': 'Сейчас приложение использует стабильную светлую тему.'});
 }

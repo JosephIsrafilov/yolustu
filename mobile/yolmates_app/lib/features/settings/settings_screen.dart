@@ -48,9 +48,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ListTile(
                 leading: const Icon(Icons.dark_mode_outlined),
                 title: Text(l10n.settingsDarkMode),
-                subtitle: Text(_themeModeLabel(themeMode, l10n)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _pickThemeMode(context, themeMode),
+                subtitle: Text(l10n.settingsThemePreparing),
+                trailing: const Icon(Icons.info_outline),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.settingsThemeNote)),
+                  );
+                },
               ),
             ],
           ),

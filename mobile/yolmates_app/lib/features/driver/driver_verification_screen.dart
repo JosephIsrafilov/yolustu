@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/localization/app_localizations.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
@@ -52,6 +53,7 @@ class _DriverVerificationScreenState extends ConsumerState<DriverVerificationScr
   }
 
   Future<void> _mockApprove() async {
+    final l10n = ref.read(l10nProvider);
     setState(() => _submitting = true);
     try {
       await ref.read(authControllerProvider.notifier).mockApproveDriver();

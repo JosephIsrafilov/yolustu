@@ -12,7 +12,7 @@ void main() {
 
     expect(az.commonAll, 'Bütün');
     expect(en.commonAll, 'All');
-    expect(ru.commonAll, 'Все');
+    expect(ru.commonAll, 'Всё');
     expect(az.walletMockBanner, 'Demo rejimi — ödənişlər hələ qoşulmayıb.');
     expect(en.walletMockBanner, 'Demo mode — payments not yet connected.');
     expect(ru.walletMockBanner, 'Демо-режим — платежи ещё не подключены.');
@@ -28,10 +28,32 @@ void main() {
       expect(value.runes.any((r) => r >= 0x80 && r <= 0x9F), isFalse);
     }
 
-    expect(text.contains('Гј'), isFalse);
-    expect(text.contains('Р’С'), isFalse);
-    expect(text.contains('вЂ”'), isFalse);
+    expect(text.contains('Г¶'), isFalse);
+    expect(text.contains('Й™'), isFalse);
+    expect(text.contains('Д±'), isFalse);
     expect(AppLocalizations(AppLanguage.en).addVehicleYearRange(2000, 2020),
         'Between 2000-2020');
+  });
+
+  test('theme and driver settings strings exist in AZ/EN/RU', () {
+    final az = AppLocalizations(AppLanguage.az);
+    final en = AppLocalizations(AppLanguage.en);
+    final ru = AppLocalizations(AppLanguage.ru);
+
+    expect(az.settingsThemePreparing, isNotEmpty);
+    expect(en.settingsThemePreparing, isNotEmpty);
+    expect(ru.settingsThemePreparing, isNotEmpty);
+
+    expect(az.settingsThemeNote, isNotEmpty);
+    expect(en.settingsThemeNote, isNotEmpty);
+    expect(ru.settingsThemeNote, isNotEmpty);
+
+    expect(az.driverOnboardingTitle, isNotEmpty);
+    expect(en.driverOnboardingTitle, isNotEmpty);
+    expect(ru.driverOnboardingTitle, isNotEmpty);
+
+    expect(az.driverVerificationSentSuffix, isNotEmpty);
+    expect(en.driverVerificationSentSuffix, isNotEmpty);
+    expect(ru.driverVerificationSentSuffix, isNotEmpty);
   });
 }

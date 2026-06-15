@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 
@@ -9,13 +11,15 @@ import '../../core/theme.dart';
 ///
 /// Explains benefits/requirements and routes the user to add a vehicle. All
 /// content is static; verification and vehicle data come later.
-class DriverOnboardingScreen extends StatelessWidget {
+class DriverOnboardingScreen extends ConsumerWidget {
   const DriverOnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Sürücü rejimi')),
+      appBar: AppBar(title: Text(l10n.driverOnboardingTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -53,7 +57,7 @@ class DriverOnboardingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Üstünlüklər', style: _h(context)),
+            Text(l10n.driverOnboardingBenefits, style: _h(context)),
             const SizedBox(height: 12),
             const _Bullet(
               icon: Icons.savings_outlined,
@@ -71,7 +75,7 @@ class DriverOnboardingScreen extends StatelessWidget {
               subtitle: 'Yoxlanılmış sərnişinlərlə səyahət et.',
             ),
             const SizedBox(height: 24),
-            Text('Tələblər', style: _h(context)),
+            Text(l10n.driverOnboardingRequirements, style: _h(context)),
             const SizedBox(height: 12),
             const _Bullet(
               icon: Icons.badge_outlined,
@@ -88,14 +92,14 @@ class DriverOnboardingScreen extends StatelessWidget {
               height: 52,
               child: ElevatedButton(
                 onPressed: () => context.push(AppRoutes.addVehicle),
-                child: const Text('Davam et'),
+                child: Text(l10n.commonContinue),
               ),
             ),
             const SizedBox(height: 12),
             Center(
               child: TextButton(
                 onPressed: () => context.push(AppRoutes.driverVerification),
-                child: const Text('Təsdiq statusuna bax'),
+                child: Text(l10n.driverOnboardingCheckStatus),
               ),
             ),
           ],

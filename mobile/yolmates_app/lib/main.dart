@@ -55,7 +55,7 @@ class _YolmatesAppState extends ConsumerState<YolmatesApp> {
       title: 'Yolmates',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      themeMode: ThemeMode.light, // Forced light theme
       routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,
     );
