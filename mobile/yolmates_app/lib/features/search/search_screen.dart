@@ -5,6 +5,7 @@ import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import 'data/recent_searches_repository.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -48,7 +49,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String get _dateLabel =>
       '${_weekdays[_date.weekday - 1]}, ${_date.day} ${_months[_date.month - 1]}';
 
-  void _search() {
+  void _search() async {
     final l10n = ref.read(l10nProvider);
     if (_from == _to) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,11 +57,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
       return;
     }
+
+    // Persist to recent searches
+    final repo = ref.read(recentSearchesRepositoryProvider);
+    await repo.addSearch(_from, _to);
+    ref.invalidate(recentSearchesProvider);
+
     final dateStr = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
-    context.push(
-      '${AppRoutes.rideResults}?from=$_from&to=$_to'
-      '&passengers=$_passengers&date=$dateStr',
-    );
+    if (mounted) {
+      context.push(
+        '${AppRoutes.rideResults}?from=$_from&to=$_to'
+        '&passengers=$_passengers&date=$dateStr',
+      );
+    }
   }
 
   @override
@@ -75,6 +84,81 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Recent Searches
+            Consumer(
+              builder: (context, ref, _) {
+                final recentAsync = ref.watch(recentSearchesProvider);
+                return recentAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (searches) {
+                    if (searches.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.searchRecentSearches,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.navy,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: searches.map((search) {
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _from = search.fromCity;
+                                  _to = search.toCity;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.teal.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppTheme.teal.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.history,
+                                      size: 14,
+                                      color: AppTheme.tealDark,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${search.fromCity} → ${search.toCity}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.tealDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+
             // From city
             _buildCitySelector(
               label: l10n.searchFromLabel,

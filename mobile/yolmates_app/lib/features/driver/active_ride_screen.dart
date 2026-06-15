@@ -69,11 +69,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   }
 
   Future<void> _completeRide(DriverRide ride) async {
+    final l10n = ref.read(l10nProvider);
     _stopTracking();
     await ref.read(driverRidesProvider.notifier).setStatus(ride.id, DriverRideStatus.completed);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Səfər tamamlandı!')),
+        SnackBar(content: Text(l10n.activeRideCompleted)),
       );
     }
   }
@@ -152,10 +153,10 @@ Təcili yardım: 112
     final ridesAsync = ref.watch(driverRidesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Səfər İdarəetmə')),
+      appBar: AppBar(title: Text(l10n.activeRideTitle)),
       body: ridesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Xəta baş verdi: $e')),
+        error: (e, _) => Center(child: Text('${l10n.activeRideError}: $e')),
         data: (rides) {
           // Find the ride or generate a fallback mock one if not found (e.g. direct deep link)
           DriverRide? ride;
@@ -348,7 +349,7 @@ Təcili yardım: 112
                           child: ElevatedButton.icon(
                             onPressed: () => _startRide(ride!),
                             icon: const Icon(Icons.play_arrow),
-                            label: const Text('Səfərə başla'),
+                            label: Text(l10n.activeRideStartButton),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.teal,
                             ),
@@ -360,7 +361,7 @@ Təcili yardım: 112
                           child: ElevatedButton.icon(
                             onPressed: () => _completeRide(ride!),
                             icon: const Icon(Icons.done_all),
-                            label: const Text('Səfəri bitir'),
+                            label: Text(l10n.activeRideCompleteButton),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green.shade600,
                             ),
@@ -371,7 +372,7 @@ Təcili yardım: 112
                           height: 52,
                           child: OutlinedButton(
                             onPressed: () => context.pop(),
-                            child: const Text('Geri qayıt'),
+                            child: Text(l10n.activeRideGoBack),
                           ),
                         ),
                     ],

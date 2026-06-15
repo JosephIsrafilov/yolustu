@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
@@ -18,23 +19,24 @@ class MyRidesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final ridesAsync = ref.watch(driverRidesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Səfərlərim'),
+        title: Text(l10n.myRidesTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Yeni səfər',
+            tooltip: l10n.myRidesNewRide,
             onPressed: () => context.push(AppRoutes.createRide),
           ),
         ],
       ),
       body: ridesAsync.when(
-        loading: () => const LoadingView(message: 'Yüklənir...'),
+        loading: () => LoadingView(message: l10n.myRidesLoading),
         error: (e, _) => ErrorStateView(
-          title: 'Yüklənmədi',
+          title: l10n.myRidesLoadFailed,
           message: e.toString(),
           onRetry: () => ref.invalidate(driverRidesProvider),
         ),
@@ -42,9 +44,9 @@ class MyRidesScreen extends ConsumerWidget {
           if (rides.isEmpty) {
             return EmptyState(
               icon: Icons.directions_car_outlined,
-              title: 'Hələ səfər yoxdur',
-              message: 'İlk səfərinizi yaradın və sərnişin tapın.',
-              actionLabel: 'Səfər yarat',
+              title: l10n.myRidesEmpty,
+              message: l10n.myRidesEmptyMessage,
+              actionLabel: l10n.myRidesCreateAction,
               onAction: () => context.push(AppRoutes.createRide),
             );
           }
@@ -70,6 +72,7 @@ class _RideCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final time =
         '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
     final date =
@@ -132,8 +135,8 @@ class _RideCard extends ConsumerWidget {
             children: [
               Icon(Icons.event_seat, size: 16, color: AppTheme.slate500),
               const SizedBox(width: 6),
-              Text('${ride.seats} yer',
-                  style: TextStyle(color: AppTheme.slate500)),
+              Text('${ride.seats} ${l10n.myRidesSeatsLabel}',
+                  style: const TextStyle(color: AppTheme.slate500)),
             ],
           ),
           if (ride.status == DriverRideStatus.active ||
@@ -143,19 +146,19 @@ class _RideCard extends ConsumerWidget {
               children: [
                 _action(
                   icon: Icons.people_outline,
-                  label: 'Sorğular',
+                  label: l10n.myRidesActionRequests,
                   onTap: () => context.push(AppRoutes.passengerRequests),
                 ),
                 _action(
                   icon: Icons.copy_outlined,
-                  label: 'Dublikat',
-                  onTap: () => _duplicate(context, ref),
+                  label: l10n.myRidesActionDuplicate,
+                  onTap: () => _duplicate(context, ref, l10n),
                 ),
                 _action(
                   icon: Icons.close,
-                  label: 'Ləğv et',
+                  label: l10n.myRidesActionCancel,
                   color: Colors.red.shade600,
-                  onTap: () => _cancel(context, ref),
+                  onTap: () => _cancel(context, ref, l10n),
                 ),
               ],
             ),
@@ -196,7 +199,7 @@ class _RideCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _duplicate(BuildContext context, WidgetRef ref) async {
+  Future<void> _duplicate(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     final copy = DriverRide(
       id: 'dr-${DateTime.now().millisecondsSinceEpoch}',
       fromCity: ride.fromCity,
@@ -212,26 +215,26 @@ class _RideCard extends ConsumerWidget {
     await ref.read(driverRidesProvider.notifier).publish(copy);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Səfər dublikat edildi')),
+        SnackBar(content: Text(l10n.myRidesDuplicateSuccess)),
       );
     }
   }
 
-  Future<void> _cancel(BuildContext context, WidgetRef ref) async {
+  Future<void> _cancel(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Səfəri ləğv et'),
-        content: const Text('Bu səfəri ləğv etmək istəyirsiniz?'),
+        title: Text(l10n.myRidesCancelTitle),
+        content: Text(l10n.myRidesCancelMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('İmtina'),
+            child: Text(l10n.myRidesCancelDismiss),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child:
-                Text('Ləğv et', style: TextStyle(color: Colors.red.shade600)),
+                Text(l10n.myRidesCancelConfirm, style: TextStyle(color: Colors.red.shade600)),
           ),
         ],
       ),

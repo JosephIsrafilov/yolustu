@@ -35,11 +35,13 @@ class WalletScreen extends ConsumerWidget {
           final transactions = walletState.transactions;
 
           return RefreshIndicator(
-            onRefresh: () => ref.read(walletControllerProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(walletControllerProvider.notifier).refresh(),
             child: ListView(
               padding: const EdgeInsets.all(AppConstants.spacing16),
               children: [
-                if (!AuthMode.isApi) _MockBanner(message: l10n.walletMockBanner),
+                if (!AuthMode.isApi)
+                  _MockBanner(message: l10n.walletMockBanner),
                 if (!AuthMode.isApi) const SizedBox(height: 16),
                 _BalanceCard(
                   balanceLabel: l10n.walletBalance,
@@ -61,7 +63,7 @@ class WalletScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(AppConstants.spacing16),
                   child: Row(
                     children: [
-                      Icon(Icons.credit_card, color: AppTheme.slate500),
+                      const Icon(Icons.credit_card, color: AppTheme.slate500),
                       const SizedBox(width: 12),
                       Expanded(child: Text(l10n.walletNoCard)),
                       TextButton(
@@ -73,7 +75,10 @@ class WalletScreen extends ConsumerWidget {
                             const SizedBox(width: 4),
                             Text(
                               '(${l10n.walletComingSoon})',
-                              style: TextStyle(fontSize: 11, color: AppTheme.slate500),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.slate500,
+                              ),
                             ),
                           ],
                         ),
@@ -91,10 +96,12 @@ class WalletScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 if (transactions.isEmpty)
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.receipt_long_outlined,
-                    title: 'Əməliyyat yoxdur',
-                    message: 'Hələ heç bir əməliyyat edilməyib',
+                    title: l10n.walletEmpty,
+                    message: l10n.walletEmptyMessage,
+                    actionLabel: l10n.walletRefresh,
+                    onAction: () => ref.invalidate(walletControllerProvider),
                   )
                 else
                   ...transactions.map((txn) => _TxnRow(transaction: txn)),
@@ -109,6 +116,7 @@ class WalletScreen extends ConsumerWidget {
 
 class _MockBanner extends StatelessWidget {
   final String message;
+
   const _MockBanner({required this.message});
 
   @override
@@ -166,8 +174,10 @@ class _BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(balanceLabel,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+          Text(
+            balanceLabel,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+          ),
           const SizedBox(height: 8),
           Text(
             '${amount.toStringAsFixed(2)} $currency',
@@ -193,14 +203,18 @@ class _BalanceCard extends StatelessWidget {
                   Text(topUpLabel),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       comingSoonLabel,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -249,9 +263,16 @@ class _TxnRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(label,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(date, style: TextStyle(fontSize: 12, color: AppTheme.slate500)),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.slate500,
+                  ),
+                ),
               ],
             ),
           ),

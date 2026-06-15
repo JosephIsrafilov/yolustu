@@ -5,6 +5,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../auth/state/auth_controller.dart';
+import 'data/popular_routes_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -249,11 +250,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildRouteCard('Bakı', 'Gəncə', '15 AZN'),
-                  const SizedBox(height: 12),
-                  _buildRouteCard('Bakı', 'Quba', '10 AZN'),
-                  const SizedBox(height: 12),
-                  _buildRouteCard('Bakı', 'Lənkəran', '12 AZN'),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final routesAsync = ref.watch(popularRoutesProvider);
+                      return routesAsync.when(
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        error: (e, _) => Center(
+                          child: Text(
+                            'Failed to load routes',
+                            style: TextStyle(color: Colors.red.shade600),
+                          ),
+                        ),
+                        data: (routes) => Column(
+                          children: [
+                            for (var i = 0; i < routes.length && i < 5; i++) ...[
+                              if (i > 0) const SizedBox(height: 12),
+                              _buildRouteCard(
+                                routes[i].fromCity,
+                                routes[i].toCity,
+                                '${routes[i].averagePrice.toStringAsFixed(0)} AZN',
+                                l10n.homeDailyTrips.replaceAll('15+', '${routes[i].dailyTrips}+'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -313,7 +341,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildRouteCard(String from, String to, String price) {
+  Widget _buildRouteCard(String from, String to, String price, String dailyTrips) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -346,8 +374,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    ref.read(l10nProvider).homeDailyTrips,
-                    style: TextStyle(
+                    dailyTrips,
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppTheme.slate500,
                     ),

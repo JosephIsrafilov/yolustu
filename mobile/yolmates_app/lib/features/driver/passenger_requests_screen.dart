@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'data/driver_ride.dart';
@@ -14,15 +15,18 @@ class PassengerRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final requests = ref.watch(passengerRequestsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sərnişin sorğuları')),
+      appBar: AppBar(title: Text(l10n.passengerRequestsTitle)),
       body: requests.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.inbox_outlined,
-              title: 'Sorğu yoxdur',
-              message: 'Yeni sərnişin sorğuları burada görünəcək.',
+              title: l10n.passengerRequestsEmpty,
+              message: l10n.passengerRequestsEmptyMessage,
+              actionLabel: l10n.commonBack,
+              onAction: () => Navigator.of(context).maybePop(),
             )
           : ListView.separated(
               padding: const EdgeInsets.all(AppConstants.spacing16),
@@ -41,6 +45,7 @@ class _RequestCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final time =
         '${request.departureTime.hour.toString().padLeft(2, '0')}:${request.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -84,7 +89,7 @@ class _RequestCard extends ConsumerWidget {
                         const SizedBox(width: 4),
                         Text(
                           request.rating.toStringAsFixed(1),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 13,
                             color: AppTheme.slate500,
                           ),
@@ -120,8 +125,8 @@ class _RequestCard extends ConsumerWidget {
             children: [
               Icon(Icons.event_seat, size: 16, color: AppTheme.slate500),
               const SizedBox(width: 6),
-              Text('${request.seats} yer',
-                  style: TextStyle(color: AppTheme.slate500)),
+              Text('${request.seats} ${l10n.passengerRequestsSeatsLabel}',
+                  style: const TextStyle(color: AppTheme.slate500)),
             ],
           ),
           if (request.status == RequestStatus.pending) ...[
@@ -137,7 +142,7 @@ class _RequestCard extends ConsumerWidget {
                       foregroundColor: Colors.red.shade600,
                       side: BorderSide(color: Colors.red.shade200),
                     ),
-                    child: const Text('Rədd et'),
+                    child: Text(l10n.passengerRequestsReject),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -146,7 +151,7 @@ class _RequestCard extends ConsumerWidget {
                     onPressed: () => ref
                         .read(passengerRequestsProvider.notifier)
                         .setStatus(request.id, RequestStatus.accepted),
-                    child: const Text('Qəbul et'),
+                    child: Text(l10n.passengerRequestsAccept),
                   ),
                 ),
               ],
@@ -157,4 +162,3 @@ class _RequestCard extends ConsumerWidget {
     );
   }
 }
-

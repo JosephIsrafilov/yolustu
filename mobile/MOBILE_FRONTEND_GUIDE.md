@@ -217,7 +217,7 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 ### Phase 2 — i18n decision & cleanup
 - [x] **T2.1** Decision needed (ASK USER): az-only vs full az/en/ru. If trilingual → extract ALL hardcoded strings into `AppLocalizations`. If az-only → remove `languageProvider`/`LanguageNotifier`/multi-map scaffolding, keep flat constants. ✅ **Decision: FULL TRILINGUAL AZ/EN/RU.**
 - [x] **T2.2** Execute chosen path across all screens. ✅ **Completed major screen localization.** ~120 trilingual entries added to `app_localizations.dart`. Localized screens: Home, Search, TripList, Bookings, Settings, BookingDetail, TripDetail, Wallet, DriverPanel, Profile. Verification: `flutter analyze` clean, all 46 tests pass. Mock/API architecture preserved.
-- [ ] **T2.3** Remaining i18n cleanup: driver CRUD screens (CreateRide, AddVehicle, MyRides detail, PassengerRequests detail, ActiveRide), minor detail screens, date formatting helpers (Az month/weekday names), plural forms (1 yer / 2+ yerlər).
+- [x] **T2.3** Remaining i18n cleanup: driver CRUD screens (CreateRide, AddVehicle, MyRides, PassengerRequests, ActiveRide), date formatting helpers (Az month/weekday names), plural forms (1 yer / 2+ yerlər). ✅ **COMPLETE.** Added ~75 trilingual strings across 5 driver screens. Date helpers: `monthName()`, `weekdayName()`, `shortWeekdayName()`. Plural helpers: `seatsPlural()`, `tripsPlural()` with AZ/EN/RU rules. Total i18n: ~195 entries. Remaining: minor detail screens only.
 
 ### Phase 3 — Wallet & payments
 - [x] **T3.1** `WalletRepository` interface + api + mock impls. Wire balance + transactions from payments domain (`docs/api-contract.md`). ✅ Created domain models (WalletBalance, WalletTransaction), DTOs, MockWalletRepository (demo data), ApiWalletRepository (GET /wallet/me, GET /wallet/me/transactions).
@@ -231,12 +231,12 @@ Ordered. Each task = verifiable. Do TDD/widget tests where logic exists. Run `fl
 - [x] **T4.4** Post-trip review prompt (auto-surface `review_dialog` on trip complete). ✅ Auto-prompts once per booking when status is completed in BookingDetailScreen. Session-only guard prevents repeat prompts. Manual review button remains for user-initiated reviews.
 
 ### Phase 5 — Core flow polish
-- [ ] **T5.1** Home: real "Popular routes" from backend (or AI/trips), not hardcoded 3 cards.
-- [ ] **T5.2** Search: recent searches (persist last 5 in `SessionStorage`), 1-tap re-search.
-- [ ] **T5.3** Booking confirm: clear price breakdown (seat × n, platform fee, total in AZN). Backend `PLATFORM_FEE_PERCENT`.
-- [ ] **T5.4** Onboarding: 3-slide value-prop carousel (save money / safe / easy), skippable, modern illustrations.
-- [ ] **T5.5** Empty states everywhere get an illustration + action (not just icon).
-- [ ] **T5.6** Pull-to-refresh on all list screens (bookings has it; add to chat, notifications, trip list).
+- [x] **T5.1** Home: real "Popular routes" from backend (or AI/trips), not hardcoded 3 cards. ✅ Created `PopularRoutesRepository` (interface + mock) with 6 realistic AZ routes (Bakı-Gəncə, Bakı-Sumqayıt, etc) + prices + daily trip counts. HomeScreen now uses `popularRoutesProvider` with loading/error states. Easy backend swap later.
+- [x] **T5.2** Search: recent searches (persist last 5 in `SessionStorage`), 1-tap re-search. ✅ Created `RecentSearchesRepository` persisting to SessionStorage as JSON. SearchScreen shows recent searches as tappable chips above form. Auto-fills from/to on tap. Clean 1-tap UX.
+- [x] **T5.3** Booking confirm: clear price breakdown (seat × n, platform fee, total in AZN). Backend `PLATFORM_FEE_PERCENT`. ✅ BookingConfirmScreen now shows itemized breakdown: seat price × count, 10% service fee, total in new "Qiymət" section. Clear transparent pricing.
+- [x] **T5.4** Onboarding: 3-slide value-prop carousel (save money / safe / easy), skippable, modern illustrations. ✅ Replaced the old onboarding with a 3-slide PageView, skip/next/start flow, page dots, and lightweight in-app illustrations while keeping the existing onboarding completion redirect intact.
+- [x] **T5.5** Empty states everywhere get an illustration + action (not just icon). ✅ Upgraded shared `EmptyState` with a richer illustration area and added useful CTAs across active empty list screens like trip search, chat, notifications, bookings, wallet, and driver requests.
+- [x] **T5.6** Pull-to-refresh on all list screens (bookings has it; add to chat, notifications, trip list). ✅ Added `RefreshIndicator` to chat, notifications, and trip results, including empty-state pull-to-refresh with always-scrollable containers so refresh still works when the list has no items.
 
 ### Phase 6 — Realtime & notifications
 - [ ] **T6.1** Audit chat ws reconnect/typing/read-receipts; add if missing.

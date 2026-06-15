@@ -17,7 +17,6 @@ Future<void> _pumpApp(WidgetTester tester) async {
       child: const _TestApp(),
     ),
   );
-  // Bootstrap is async; pump a few frames past the mock latency.
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 200));
   }
@@ -37,33 +36,36 @@ class _TestApp extends ConsumerWidget {
 }
 
 void main() {
-  testWidgets('fresh launch lands on onboarding, skip goes to auth intro and login', (tester) async {
-    await _pumpApp(tester);
+  testWidgets(
+    'fresh launch lands on onboarding, skip goes to auth intro and login',
+    (tester) async {
+      await _pumpApp(tester);
 
-    // Fresh launch lands on onboarding screen
-    expect(find.text('Yol yoldaşı tap'), findsOneWidget);
-    expect(find.text('Keç'), findsOneWidget);
+      expect(find.text('Səyahət xərclərini azaldın'), findsOneWidget);
+      expect(find.text('Keç'), findsNWidgets(2));
 
-    // Tap "Keç" to skip onboarding
-    await tester.tap(find.text('Keç'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Keç').first);
+      await tester.pumpAndSettle();
 
-    // Now on AuthIntroScreen
-    expect(find.text('Yolüstü'), findsOneWidget);
-    expect(find.text('Qeydiyyatdan keç'), findsOneWidget);
+      expect(find.text('Yolüstü'), findsOneWidget);
+      expect(find.text('Qeydiyyatdan keç'), findsOneWidget);
 
-    // Tap "Daxil ol"
-    await tester.tap(find.text('Daxil ol'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Daxil ol'));
+      await tester.pumpAndSettle();
 
-    // Now on PhoneLoginScreen
-    expect(find.text('Telefon nömrənizi daxil edin, sizə təsdiq kodu göndərək.'), findsOneWidget);
-    expect(find.text('Kod göndər'), findsOneWidget);
-  });
+      expect(
+        find.text(
+          'Telefon nömrənizi daxil edin, sizə təsdiq kodu göndərək.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Kod göndər'), findsOneWidget);
+    },
+  );
 
   testWidgets('login validates an empty phone number', (tester) async {
     final storage = InMemorySessionStorage();
-    await storage.write('onboarding_seen', 'true'); // bypass onboarding
+    await storage.write('onboarding_seen', 'true');
 
     await tester.pumpWidget(
       ProviderScope(
@@ -76,8 +78,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 200));
     }
-    
-    // Tap "Daxil ol" from AuthIntroScreen to get to login
+
     await tester.tap(find.text('Daxil ol'));
     await tester.pumpAndSettle();
 

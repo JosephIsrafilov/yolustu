@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../core/localization/app_localizations.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 import 'data/ai_pricing_repository.dart';
@@ -51,17 +52,19 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   }
 
   String? _validatePrice(String? v) {
+    final l10n = ref.read(l10nProvider);
     final value = (v ?? '').trim();
-    if (value.isEmpty) return 'Qiyməti daxil edin';
+    if (value.isEmpty) return l10n.createRidePriceRequired;
     final parsed = double.tryParse(value);
-    if (parsed == null || parsed <= 0) return 'Düzgün qiymət daxil edin';
+    if (parsed == null || parsed <= 0) return l10n.createRidePriceInvalid;
     return null;
   }
 
   Future<void> _fetchAiPrice() async {
+    final l10n = ref.read(l10nProvider);
     FocusScope.of(context).unfocus();
     if (_from == _to) {
-      setState(() => _aiError = 'Çıxış və təyinat eyni ola bilməz');
+      setState(() => _aiError = l10n.createRideSameLocationError);
       return;
     }
     setState(() {
@@ -88,7 +91,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _aiError = 'Qiymət təklifi alınmadı');
+        setState(() => _aiError = l10n.createRideAiError);
       }
     } finally {
       if (mounted) {
@@ -98,10 +101,11 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   }
 
   Future<void> _publish() async {
+    final l10n = ref.read(l10nProvider);
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
     if (_from == _to) {
-      setState(() => _error = 'Çıxış və təyinat eyni ola bilməz');
+      setState(() => _error = l10n.createRideSameLocationError);
       return;
     }
 
@@ -132,13 +136,14 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       context.go(AppRoutes.myRides);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Səyahət dərc edilə bilmədi. Yenidən cəhd edin.');
+      setState(() => _error = l10n.createRidePublishError);
     } finally {
       if (mounted) setState(() => _publishing = false);
     }
   }
 
   Future<void> _showSuccess() {
+    final l10n = ref.read(l10nProvider);
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -148,18 +153,18 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
           children: [
             const Icon(Icons.check_circle, color: AppTheme.tealDark, size: 48),
             const SizedBox(height: 16),
-            const Text('Səyahət dərc edildi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(l10n.createRideSuccessTitle,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text('Sərnişinlər artıq sizi tapa bilər.',
+            Text(l10n.createRideSuccessMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.slate500)),
+                style: const TextStyle(color: AppTheme.slate500)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Bağla'),
+            child: Text(l10n.commonClose),
           ),
         ],
       ),
@@ -168,21 +173,22 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Səyahət yarat')),
+      appBar: AppBar(title: Text(l10n.createRideTitle)),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppConstants.spacing24),
             children: [
-              _label('Haradan'),
+              _label(l10n.createRideFrom),
               _CityDropdown(
                 value: _from,
                 onChanged: (v) => setState(() => _from = v),
               ),
               const SizedBox(height: 16),
-              _label('Hara'),
+              _label(l10n.createRideTo),
               _CityDropdown(
                 value: _to,
                 onChanged: (v) => setState(() => _to = v),
@@ -207,7 +213,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                   Expanded(
                     child: _PickerTile(
                       icon: Icons.calendar_today,
-                      label: 'Tarix',
+                      label: l10n.createRideDate,
                       value: '${_date.day}.${_date.month}.${_date.year}',
                       onTap: _pickDate,
                     ),
@@ -216,7 +222,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                   Expanded(
                     child: _PickerTile(
                       icon: Icons.access_time,
-                      label: 'Vaxt',
+                      label: l10n.createRideTime,
                       value: _time.format(context),
                       onTap: _pickTime,
                     ),
@@ -224,20 +230,21 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _label('Boş yerlər'),
+              _label(l10n.createRideSeats),
               _SeatsStepper(
                 seats: _seats,
                 onChanged: (s) => setState(() => _seats = s),
+                label: l10n.createRideSeatsLabel,
               ),
               const SizedBox(height: 16),
-              _label('Bir yer üçün qiymət (AZN)'),
+              _label(l10n.createRidePrice),
               TextFormField(
                 controller: _price,
                 enabled: !_publishing,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 validator: _validatePrice,
-                decoration: const InputDecoration(hintText: 'məs. 15'),
+                decoration: InputDecoration(hintText: l10n.createRidePriceHint),
               ),
               const SizedBox(height: 16),
 
@@ -256,10 +263,10 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                       children: [
                         const Icon(Icons.auto_awesome, color: AppTheme.tealDark, size: 20),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'AI qiymət təklifi',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.navy),
+                            l10n.createRideAiTitle,
+                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.navy),
                           ),
                         ),
                         if (!_loadingAi && _aiSuggestion == null)
@@ -269,7 +276,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                               visualDensity: VisualDensity.compact,
                               foregroundColor: AppTheme.tealDark,
                             ),
-                            child: const Text('Təklif al'),
+                            child: Text(l10n.createRideAiGetSuggestion),
                           ),
                       ],
                     ),
@@ -293,7 +300,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                             Expanded(child: Text(_aiError!, style: TextStyle(color: Colors.red.shade600, fontSize: 13))),
                             TextButton(
                               onPressed: _fetchAiPrice,
-                              child: const Text('Yenidən cəhd et', style: TextStyle(fontSize: 13)),
+                              child: Text(l10n.createRideAiRetry, style: const TextStyle(fontSize: 13)),
                             )
                           ],
                         ),
@@ -305,13 +312,13 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Təklif olunan qiymət: ${_aiSuggestion!.suggestedPrice} AZN',
+                              '${l10n.createRideAiSuggestionLabel} ${_aiSuggestion!.suggestedPrice} AZN',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.tealDark),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _aiSuggestion!.reasoning,
-                              style: TextStyle(color: AppTheme.slate500, fontSize: 13),
+                              style: const TextStyle(color: AppTheme.slate500, fontSize: 13),
                             ),
                             const SizedBox(height: 12),
                             SizedBox(
@@ -330,7 +337,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                                   side: const BorderSide(color: AppTheme.tealDark),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                child: const Text('Bu qiyməti istifadə et'),
+                                child: Text(l10n.createRideAiUsePrice),
                               ),
                             ),
                           ],
@@ -340,30 +347,30 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              _label('Üstünlüklər'),
+              _label(l10n.createRidePreferences),
               _PrefSwitch(
-                title: 'Baqaja icazə',
+                title: l10n.createRideLuggage,
                 value: _allowLuggage,
                 onChanged: (v) => setState(() => _allowLuggage = v),
               ),
               _PrefSwitch(
-                title: 'Siqaret',
+                title: l10n.createRideSmoking,
                 value: _allowSmoking,
                 onChanged: (v) => setState(() => _allowSmoking = v),
               ),
               _PrefSwitch(
-                title: 'Musiqi',
+                title: l10n.createRideMusic,
                 value: _allowMusic,
                 onChanged: (v) => setState(() => _allowMusic = v),
               ),
               const SizedBox(height: 16),
-              _label('Qeyd (istəyə bağlı)'),
+              _label(l10n.createRideNotes),
               TextFormField(
                 controller: _description,
                 enabled: !_publishing,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                    hintText: 'Sərnişinlər üçün əlavə məlumat'),
+                decoration: InputDecoration(
+                    hintText: l10n.createRideNotesHint),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
@@ -393,7 +400,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                             valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
-                      : const Text('Dərc et'),
+                      : Text(l10n.createRidePublish),
                 ),
               ),
               const SizedBox(height: 12),
@@ -497,8 +504,9 @@ class _PickerTile extends StatelessWidget {
 class _SeatsStepper extends StatelessWidget {
   final int seats;
   final ValueChanged<int> onChanged;
+  final String label;
 
-  const _SeatsStepper({required this.seats, required this.onChanged});
+  const _SeatsStepper({required this.seats, required this.onChanged, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +519,7 @@ class _SeatsStepper extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Yer sayı', style: TextStyle(fontSize: 16)),
+          Text(label, style: const TextStyle(fontSize: 16)),
           Row(
             children: [
               IconButton(

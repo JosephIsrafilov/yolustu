@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../core/localization/app_localizations.dart';
 import 'data/vehicle.dart';
 import 'data/driver_controller.dart';
 
@@ -40,18 +41,22 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     super.dispose();
   }
 
-  String? _req(String? v) =>
-      (v ?? '').trim().isEmpty ? 'Bu sahə tələb olunur' : null;
+  String? _req(String? v) {
+    final l10n = ref.read(l10nProvider);
+    return (v ?? '').trim().isEmpty ? l10n.addVehicleRequired : null;
+  }
 
   String? _yearValidator(String? v) {
+    final l10n = ref.read(l10nProvider);
     final n = int.tryParse((v ?? '').trim());
-    if (n == null) return 'İl daxil edin';
+    if (n == null) return l10n.addVehicleYearInvalid;
     final now = DateTime.now().year;
-    if (n < 1980 || n > now + 1) return '1980–${now + 1} aralığında';
+    if (n < 1980 || n > now + 1) return l10n.addVehicleYearRange(1980, now + 1);
     return null;
   }
 
   Future<void> _save() async {
+    final l10n = ref.read(l10nProvider);
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
@@ -73,12 +78,12 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Avtomobil yadda saxlanıldı')),
+        SnackBar(content: Text(l10n.addVehicleSuccessSnackbar)),
       );
       context.pop();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Yadda saxlanmadı. Yenidən cəhd edin.');
+      setState(() => _error = l10n.addVehicleSaveError);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -86,8 +91,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Avtomobil əlavə et')),
+      appBar: AppBar(title: Text(l10n.addVehicleTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -96,10 +102,10 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(_brand, 'Marka', 'Toyota', _req,
+                _field(_brand, l10n.addVehicleBrand, l10n.addVehicleBrandHint, _req,
                     cap: TextCapitalization.words),
                 const SizedBox(height: 16),
-                _field(_model, 'Model', 'Camry', _req,
+                _field(_model, l10n.addVehicleModel, l10n.addVehicleModelHint, _req,
                     cap: TextCapitalization.words),
                 const SizedBox(height: 16),
                 Row(
@@ -107,8 +113,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                     Expanded(
                       child: _field(
                         _year,
-                        'İl',
-                        '2020',
+                        l10n.addVehicleYear,
+                        l10n.addVehicleYearHint,
                         _yearValidator,
                         keyboard: TextInputType.number,
                         formatters: [
@@ -119,7 +125,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: _field(_color, 'Rəng', 'Ağ', _req,
+                      child: _field(_color, l10n.addVehicleColor, l10n.addVehicleColorHint, _req,
                           cap: TextCapitalization.words),
                     ),
                   ],
@@ -127,18 +133,19 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                 const SizedBox(height: 16),
                 _field(
                   _plate,
-                  'Dövlət nömrəsi',
-                  '90-AA-123',
+                  l10n.addVehiclePlate,
+                  l10n.addVehiclePlateHint,
                   _req,
                   cap: TextCapitalization.characters,
                 ),
                 const SizedBox(height: 24),
-                Text('Oturacaq sayı', style: _label()),
+                Text(l10n.addVehicleSeatsCount, style: _label()),
                 const SizedBox(height: 8),
                 _SeatStepper(
                   value: _seats,
                   enabled: !_saving,
                   onChanged: (v) => setState(() => _seats = v),
+                  label: l10n.addVehicleSeatsAvailable,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
@@ -158,7 +165,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Text('Yadda saxla'),
+                        : Text(l10n.addVehicleSave),
                   ),
                 ),
               ],
@@ -207,11 +214,13 @@ class _SeatStepper extends StatelessWidget {
   final int value;
   final bool enabled;
   final ValueChanged<int> onChanged;
+  final String label;
 
   const _SeatStepper({
     required this.value,
     required this.enabled,
     required this.onChanged,
+    required this.label,
   });
 
   @override
@@ -225,7 +234,7 @@ class _SeatStepper extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Boş oturacaqlar', style: TextStyle(fontSize: 16)),
+          Text(label, style: const TextStyle(fontSize: 16)),
           Row(
             children: [
               IconButton(

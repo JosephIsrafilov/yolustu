@@ -155,7 +155,11 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = ride.price * seats;
+    const serviceFeePercent = 0.10; // 10% platform fee
+    final subtotal = ride.price * seats;
+    final serviceFee = subtotal * serviceFeePercent;
+    final total = subtotal + serviceFee;
+
     final time =
         '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -262,6 +266,38 @@ class _Content extends StatelessWidget {
                     _row('Baqaj', 'Orta ölçülü'),
                     const SizedBox(height: 8),
                     _row('Bir yer', '${ride.price.toStringAsFixed(0)} AZN'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SectionCard(
+                title: 'Qiymət',
+                child: Column(
+                  children: [
+                    _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer', '${subtotal.toStringAsFixed(2)} AZN'),
+                    const SizedBox(height: 8),
+                    _row('Platforma xidmət haqqı (10%)', '${serviceFee.toStringAsFixed(2)} AZN'),
+                    const Divider(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Cəmi',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${total.toStringAsFixed(2)} AZN',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.tealDark,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

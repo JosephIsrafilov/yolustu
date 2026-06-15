@@ -42,6 +42,11 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
   bool _verifiedOnly = false;
   int _selectedIndex = 0;
 
+  Future<void> _refresh(RideSearchParams params) async {
+    ref.invalidate(rideSearchProvider(params));
+    await ref.read(rideSearchProvider(params).future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
@@ -56,7 +61,8 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
         ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
         : '';
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.fromCity} → ${widget.toCity}$dateLabel')),
+      appBar: AppBar(
+          title: Text('${widget.fromCity} → ${widget.toCity}$dateLabel')),
       body: ridesAsync.when(
         loading: () => Column(
           children: [
@@ -92,7 +98,8 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
         filtered.sort((a, b) => a.price.compareTo(b.price));
     }
 
-    final activeIndex = _selectedIndex.clamp(0, filtered.isEmpty ? 0 : filtered.length - 1);
+    final activeIndex =
+        _selectedIndex.clamp(0, filtered.isEmpty ? 0 : filtered.length - 1);
     final selectedTrip = filtered.isNotEmpty ? filtered[activeIndex] : null;
 
     return Column(
@@ -120,31 +127,48 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
           ),
         ],
         Expanded(
-          child: filtered.isEmpty
-              ? EmptyState(
-                  icon: Icons.search_off,
-                  title: ref.read(l10nProvider).tripListNoResults,
-                  message: ref.read(l10nProvider).tripListNoResultsMessage,
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(AppConstants.spacing16),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final isSelected = i == activeIndex;
-                    return _TripCard(
-                      trip: filtered[i],
-                      isSelected: isSelected,
-                      onTap: () {
-                        if (isSelected) {
-                          context.push('${AppRoutes.rideDetails}/${filtered[i].id}');
-                        } else {
-                          setState(() => _selectedIndex = i);
-                        }
-                      },
-                    );
-                  },
-                ),
+          child: RefreshIndicator(
+            onRefresh: () => _refresh(
+              RideSearchParams(
+                fromCity: widget.fromCity,
+                toCity: widget.toCity,
+                passengers: widget.passengers,
+              ),
+            ),
+            child: filtered.isEmpty
+                ? EmptyState(
+                    icon: Icons.search_off,
+                    title: ref.read(l10nProvider).tripListNoResults,
+                    message: ref.read(l10nProvider).tripListNoResultsMessage,
+                    actionLabel: ref.read(l10nProvider).tripListModifySearch,
+                    onAction: () => context.pop(),
+                    scrollable: true,
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.all(AppConstants.spacing16),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, i) {
+                      final isSelected = i == activeIndex;
+                      return _TripCard(
+                        trip: filtered[i],
+                        isSelected: isSelected,
+                        onTap: () {
+                          if (isSelected) {
+                            context.push(
+                              '${AppRoutes.rideDetails}/${filtered[i].id}',
+                            );
+                          } else {
+                            setState(() => _selectedIndex = i);
+                          }
+                        },
+                      );
+                    },
+                  ),
+          ),
         ),
       ],
     );
@@ -343,7 +367,8 @@ class _TripCard extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const Icon(Icons.chevron_right, size: 16, color: AppTheme.tealDark),
+                  const Icon(Icons.chevron_right,
+                      size: 16, color: AppTheme.tealDark),
                 ],
               ],
             ),
