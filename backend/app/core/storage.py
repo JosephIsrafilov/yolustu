@@ -50,11 +50,6 @@ class StorageBackend(ABC):
         """Delete a file (best-effort, does not raise on missing)."""
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Local (development)
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class LocalStorage(StorageBackend):
     """
     Stores files on the local filesystem.
@@ -95,11 +90,6 @@ class LocalStorage(StorageBackend):
         # Legacy fallback — files uploaded before bucket separation
         legacy = UPLOADS_DIR / filename
         return legacy if legacy.is_file() else None
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Supabase Storage (production)
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class SupabaseStorage(StorageBackend):
@@ -168,11 +158,6 @@ class SupabaseStorage(StorageBackend):
             ).raise_for_status()
         except Exception:
             pass  # Best-effort — don't crash on delete failures
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Factory
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 def get_storage() -> StorageBackend:

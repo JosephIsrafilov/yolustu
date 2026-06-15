@@ -25,7 +25,6 @@ def generate_cache_key(prefix: str, **kwargs: Any) -> str:
     Returns:
         A formatted cache key string
     """
-    # Filter out None values and sort for consistency
     params = {k: v for k, v in sorted(kwargs.items()) if v is not None}
     param_str = ":".join(f"{k}={v}" for k, v in params.items())
     return f"{prefix}:{param_str}" if param_str else prefix
@@ -55,14 +54,12 @@ def cache_response(
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
-            # Skip Request objects when building cache key
             cache_kwargs = {
                 k: str(v)
                 for k, v in kwargs.items()
                 if not isinstance(v, (Request, type(None)))
             }
 
-            # Use custom key builder if provided, otherwise use default
             if key_builder:
                 cache_key = key_builder(*args, **kwargs)
             else:
@@ -71,23 +68,19 @@ def cache_response(
             try:
                 redis_client = get_redis()
 
-                # Try to get from cache
                 cached_data = redis_client.get(cache_key)
                 if cached_data:
                     logger.debug(f"Cache hit: {cache_key}")
                     return json.loads(cached_data)
 
-                # Cache miss - execute function
                 logger.debug(f"Cache miss: {cache_key}")
                 result = func(*args, **kwargs)
 
-                # Store in cache
                 redis_client.setex(cache_key, ttl, json.dumps(result, default=str))
 
                 return result
 
             except Exception as e:
-                # If Redis fails, log and continue without caching
                 logger.warning(f"Cache error for {cache_key}: {e}")
                 return func(*args, **kwargs)
 

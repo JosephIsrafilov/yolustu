@@ -177,9 +177,6 @@ def _validate_and_read_file(
     return file_bytes, filename, content_type
 
 
-# ── Legacy helper (kept for any callers outside this module) ─────────────────
-
-
 def _store_uploaded_file(
     file: UploadFile,
     *,

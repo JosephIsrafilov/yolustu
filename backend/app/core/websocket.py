@@ -26,10 +26,6 @@ from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Channel helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 def _ride_channel(ride_id: UUID) -> str:
     return f"ws:ride:{ride_id}"
@@ -43,11 +39,6 @@ def _user_channel(user_id: UUID) -> str:
     return f"ws:user:{user_id}"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ConnectionManager
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class ConnectionManager:
     """
     Manages WebSocket connections across multiple Uvicorn workers via Redis.
@@ -57,22 +48,13 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        # Local connections — only the sockets connected to *this* worker.
-        self.active_connections: Dict[
-            UUID, Set[WebSocket]
-        ] = {}  # ride/conv id → sockets
-        self.user_connections: Dict[UUID, Set[WebSocket]] = {}  # user id → sockets
-
-        # Asyncio event loop — set by main.py lifespan before start().
+        self.active_connections: Dict[UUID, Set[WebSocket]] = {}
+        self.user_connections: Dict[UUID, Set[WebSocket]] = {}
         self.loop: Optional[asyncio.AbstractEventLoop] = None
-
-        # Redis clients created lazily in start().
-        self._pub: Any = None  # redis.asyncio.Redis (publisher)
-        self._sub: Any = None  # redis.asyncio.client.PubSub
+        self._pub: Any = None
+        self._sub: Any = None
         self._subscriber_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
         self._redis_available: bool = False
-
-    # ── Lifecycle ──────────────────────────────────────────────────────────
 
     async def start(self) -> None:
         """Start the Redis subscriber background task.  Called from app lifespan."""
@@ -83,10 +65,8 @@ class ConnectionManager:
             self._pub = aioredis.Redis.from_url(
                 settings.REDIS_URL, decode_responses=True
             )
-            # Verify connection
             await self._pub.ping()  # type: ignore[union-attr]
             self._sub = self._pub.pubsub()  # type: ignore[union-attr]
-            # Subscribe to a worker-local wildcard pattern
             await self._sub.psubscribe("ws:*")  # type: ignore[union-attr]
             self._subscriber_task = asyncio.create_task(self._listen())
             self._redis_available = True
@@ -119,8 +99,6 @@ class ConnectionManager:
                 pass
         logger.info("WebSocket Redis Pub/Sub subscriber stopped")
 
-    # ── Redis subscriber loop ──────────────────────────────────────────────
-
     async def _listen(self) -> None:
         """Background task: receive messages from Redis and forward locally."""
         try:
@@ -133,7 +111,6 @@ class ConnectionManager:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-                # Dispatch based on channel prefix
                 if channel.startswith("ws:ride:"):
                     ride_id = UUID(channel[len("ws:ride:") :])
                     await self._broadcast_local(
@@ -169,8 +146,6 @@ class ConnectionManager:
         for ws in dead:
             sockets.discard(ws)
 
-    # ── Publish helpers ────────────────────────────────────────────────────
-
     async def _publish(self, channel: str, payload: dict) -> None:
         """Publish to Redis, falling back to local delivery if Redis is down."""
         if self._redis_available and self._pub:
@@ -198,8 +173,6 @@ class ConnectionManager:
             await self._broadcast_local(
                 payload, self.user_connections.get(user_id, set())
             )
-
-    # ── Connection management (unchanged public API) ───────────────────────
 
     async def connect(self, websocket: WebSocket, ride_id: UUID) -> None:
         await websocket.accept()
@@ -232,8 +205,6 @@ class ConnectionManager:
             bucket.discard(websocket)
             if not bucket:
                 del self.user_connections[user_id]
-
-    # ── Message delivery (unchanged public API) ───────────────────────────
 
     async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
         await websocket.send_text(message)
