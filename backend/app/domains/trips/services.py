@@ -9,6 +9,7 @@ from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.lifecycle import (
     RIDE_ACTIVE,
+    RIDE_BOARDING,
     RIDE_CANCELLED,
     RIDE_COMPLETED,
     can_transition_ride,
@@ -16,10 +17,13 @@ from app.domains.lifecycle import (
 from app.domains.trips.models import Ride, Vehicle
 from app.domains.trips.repositories import RideRepository, VehicleRepository
 from app.domains.trips.schemas import (
+    PublicTrackResponse,
     RideCreate,
     RideResponse,
     RideSearch,
     VehicleCreate,
+    geometry_to_location,
+    ride_to_public_track,
     ride_to_response,
 )
 from app.domains.gamification.services import check_and_award_badge
@@ -167,6 +171,68 @@ class TripsService:
                 check_and_award_badge(self.db, driver.id, "veteran")  # type: ignore[arg-type]
 
         return ride_to_response(saved_ride)
+
+    def start_boarding(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
+        """Transition a ride to BOARDING so the driver can mark passengers."""
+        ride = self.get_ride_model(ride_id)
+        if ride.driver_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if ride.status == RIDE_BOARDING:
+            return ride_to_response(ride)
+        if not can_transition_ride(ride.status, RIDE_BOARDING):  # type: ignore[arg-type]
+            raise HTTPException(
+                status_code=400, detail="Ride cannot enter boarding from its current state"
+            )
+        ride.status = RIDE_BOARDING  # type: ignore[assignment]
+        return ride_to_response(self.rides.save(ride))
+
+    def get_simulation_endpoints(
+        self, ride_id: UUID, current_user: CurrentUser
+    ) -> tuple[tuple[float, float], tuple[float, float]]:
+        """Authorize the driver and return ((o_lat, o_lng), (d_lat, d_lng)).
+
+        The actual asyncio simulation task is owned by the router (it needs the
+        running event loop); the service only validates and hands back coords.
+        """
+        ride = self.get_ride_model(ride_id)
+        if ride.driver_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if ride.status not in (RIDE_ACTIVE, RIDE_BOARDING):
+            raise HTTPException(
+                status_code=400, detail="Ride must be active or boarding to simulate"
+            )
+        origin = geometry_to_location(ride.origin_location)
+        dest = geometry_to_location(ride.destination_location)
+        if not isinstance(origin, dict) or not isinstance(dest, dict):
+            raise HTTPException(
+                status_code=400, detail="Ride is missing valid coordinates"
+            )
+        return (
+            (float(origin["lat"]), float(origin["lon"])),
+            (float(dest["lat"]), float(dest["lon"])),
+        )
+
+    def end_trip(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
+        """Mark the ride completed. Caller (router) stops the simulation."""
+        ride = self.get_ride_model(ride_id)
+        if ride.driver_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if ride.status == RIDE_COMPLETED:
+            return ride_to_response(ride)
+        if not can_transition_ride(ride.status, RIDE_COMPLETED):  # type: ignore[arg-type]
+            raise HTTPException(status_code=400, detail="Ride cannot be completed")
+        ride.status = RIDE_COMPLETED  # type: ignore[assignment]
+        return ride_to_response(self.rides.save(ride))
+
+    def get_public_track(self, share_token: str) -> PublicTrackResponse:
+        ride = self.rides.get_by_share_token(share_token)
+        if not ride:
+            raise HTTPException(status_code=404, detail="Tracking link not found")
+        return ride_to_public_track(ride)
+
+    def verify_share_token(self, ride_id: UUID, share_token: str) -> bool:
+        ride = self.rides.get(ride_id)
+        return ride is not None and ride.share_token == share_token
 
     def create_vehicle(
         self, vehicle_in: VehicleCreate, current_user: CurrentUser

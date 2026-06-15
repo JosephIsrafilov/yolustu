@@ -29,6 +29,7 @@ from app.domains.engagement.reviews_router import router as reviews_router
 from app.domains.identity.auth_router import router as auth_router
 from app.domains.identity.users_router import router as users_router
 from app.domains.trips.rides_router import router as rides_router
+from app.domains.trips.tracking_router import router as tracking_router
 from app.domains.trips.vehicles_router import router as vehicles_router
 from app.domains.payments.router import router as payments_router
 from app.domains.payments.wallet_router import router as wallet_router
@@ -136,6 +137,7 @@ v1_router = APIRouter(prefix="/api/v1")
 v1_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 v1_router.include_router(users_router, prefix="/users", tags=["users"])
 v1_router.include_router(rides_router, prefix="/rides", tags=["rides"])
+v1_router.include_router(tracking_router, tags=["tracking"])
 v1_router.include_router(bookings_router, prefix="/bookings", tags=["bookings"])
 v1_router.include_router(vehicles_router, prefix="/vehicles", tags=["vehicles"])
 v1_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])

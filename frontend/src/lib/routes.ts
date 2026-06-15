@@ -19,6 +19,7 @@ export const ROUTES = {
   driverApply: '/driver/apply',
   createTrip: '/driver/create-trip',
   myTrips: '/driver/my-trips',
+  driverTripManage: (id: string) => `/driver/my-trips/${id}`,
   driverRequests: '/driver/requests',
   driverVehicle: '/driver/vehicle',
   driverDocuments: '/driver/documents',

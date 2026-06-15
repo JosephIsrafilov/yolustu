@@ -36,4 +36,14 @@ export const apiBookingsService: BookingsService = {
     const response = await apiClient.post<ApiBooking>(`/bookings/${bookingId}/cancel`);
     return mapApiBookingToBooking(response);
   },
+
+  async markBoarded(bookingId) {
+    const response = await apiClient.post<ApiBooking>(`/bookings/${bookingId}/board`);
+    return mapApiBookingToBooking(response);
+  },
+
+  async markNoShow(bookingId) {
+    const response = await apiClient.post<ApiBooking>(`/bookings/${bookingId}/no-show`);
+    return mapApiBookingToBooking(response);
+  },
 };

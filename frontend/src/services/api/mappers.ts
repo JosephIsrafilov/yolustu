@@ -67,6 +67,7 @@ export interface ApiTrip {
   description?: string | null;
   status: Trip['status'];
   created_at: string;
+  share_token?: string | null;
   meeting_point?: string | null;
   dropoff_point?: string | null;
   origin_location?: { lat: number; lon: number };
@@ -155,6 +156,7 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     comment: apiTrip.description ?? undefined,
     status: apiTrip.status,
     createdAt: apiTrip.created_at,
+    shareToken: apiTrip.share_token ?? undefined,
     origin: apiTrip.origin_location ? { lat: apiTrip.origin_location.lat, lng: apiTrip.origin_location.lon } : undefined,
     destination: apiTrip.destination_location ? { lat: apiTrip.destination_location.lat, lng: apiTrip.destination_location.lon } : undefined,
     driver: apiTrip.driver ? mapApiUserToUser(apiTrip.driver) : undefined,

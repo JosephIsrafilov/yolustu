@@ -138,5 +138,39 @@ export const createBookingSlice: StateCreator<
       return false;
     }
   },
+
+  markBoarded: async (bookingId) => {
+    try {
+      const booking = await bookingsService.markBoarded(bookingId);
+      set((state) => ({
+        bookings: state.bookings.map((b) =>
+          b.id === bookingId ? { ...b, ...booking } : b
+        ),
+        lastError: null,
+      }));
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to mark passenger as boarded.' });
+      return false;
+    }
+  },
+
+  markNoShow: async (bookingId) => {
+    try {
+      const booking = await bookingsService.markNoShow(bookingId);
+      set((state) => ({
+        bookings: state.bookings.map((b) =>
+          b.id === bookingId ? { ...b, ...booking } : b
+        ),
+        lastError: null,
+      }));
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to mark passenger as no-show.' });
+      return false;
+    }
+  },
   });
 };

@@ -52,6 +52,9 @@ export interface TripSlice {
   createTrip: (data: CreateTripData) => Promise<string>;
   cancelTrip: (tripId: string) => Promise<boolean>;
   completeTrip: (tripId: string) => Promise<boolean>;
+  startBoarding: (tripId: string) => Promise<boolean>;
+  simulateTrip: (tripId: string) => Promise<boolean>;
+  endTrip: (tripId: string) => Promise<boolean>;
   deleteTrip: (tripId: string) => Promise<boolean>;
 }
 
@@ -64,6 +67,8 @@ export interface BookingSlice {
   acceptBooking: (bookingId: string) => Promise<boolean>;
   rejectBooking: (bookingId: string) => Promise<boolean>;
   cancelBooking: (bookingId: string) => Promise<boolean>;
+  markBoarded: (bookingId: string) => Promise<boolean>;
+  markNoShow: (bookingId: string) => Promise<boolean>;
 }
 
 export interface ReviewSlice {

@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api-client';
-import type { TripsService, PaginatedResponse } from '@/services/contracts/trips-service';
+import type { TripsService, PaginatedResponse, PublicTrackInfo } from '@/services/contracts/trips-service';
 import type { TripSearchFilters } from '@/types';
 import { getCityCoordinates } from '@/lib/utils';
 import {
@@ -9,6 +9,17 @@ import {
   type ApiTrip,
   type ApiVehicle,
 } from './mappers';
+
+interface ApiPublicTrack {
+  ride_id: string;
+  status: string;
+  origin_city: string;
+  destination_city: string;
+  origin_location: { lat: number; lon: number };
+  destination_location: { lat: number; lon: number };
+  driver_name?: string | null;
+  car_model?: string | null;
+}
 
 interface ApiPaginatedResponse<T> {
   items: T[];
@@ -117,5 +128,33 @@ export const apiTripsService: TripsService = {
   async completeTrip(tripId) {
     const response = await apiClient.patch<ApiTrip>(`/rides/${tripId}/complete`);
     return mapApiTripToTrip(response);
+  },
+
+  async startBoarding(tripId) {
+    const response = await apiClient.post<ApiTrip>(`/rides/${tripId}/board`);
+    return mapApiTripToTrip(response);
+  },
+
+  async simulateTrip(tripId) {
+    await apiClient.post(`/rides/${tripId}/simulate`);
+  },
+
+  async endTrip(tripId) {
+    const response = await apiClient.post<ApiTrip>(`/rides/${tripId}/end`);
+    return mapApiTripToTrip(response);
+  },
+
+  async getPublicTrack(shareToken): Promise<PublicTrackInfo> {
+    const response = await apiClient.get<ApiPublicTrack>(`/rides/track/${shareToken}`);
+    return {
+      rideId: response.ride_id,
+      status: response.status,
+      originCity: response.origin_city,
+      destinationCity: response.destination_city,
+      origin: { lat: response.origin_location.lat, lng: response.origin_location.lon },
+      destination: { lat: response.destination_location.lat, lng: response.destination_location.lon },
+      driverName: response.driver_name ?? undefined,
+      carModel: response.car_model ?? undefined,
+    };
   },
 };

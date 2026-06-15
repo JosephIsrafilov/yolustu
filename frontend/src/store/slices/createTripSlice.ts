@@ -72,6 +72,50 @@ export const createTripSlice: StateCreator<
     }
   },
 
+  startBoarding: async (tripId) => {
+    try {
+      const trip = await tripsService.startBoarding(tripId);
+      set((state) => ({
+        trips: state.trips.map((t) => (t.id === tripId ? { ...t, ...trip } : t)),
+        myTrips: state.myTrips.map((t) => (t.id === tripId ? { ...t, ...trip } : t)),
+        lastError: null,
+      }));
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to start boarding.' });
+      return false;
+    }
+  },
+
+  simulateTrip: async (tripId) => {
+    try {
+      await tripsService.simulateTrip(tripId);
+      set({ lastError: null });
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to start the trip.' });
+      return false;
+    }
+  },
+
+  endTrip: async (tripId) => {
+    try {
+      const trip = await tripsService.endTrip(tripId);
+      set((state) => ({
+        trips: state.trips.map((t) => (t.id === tripId ? { ...t, ...trip } : t)),
+        myTrips: state.myTrips.map((t) => (t.id === tripId ? { ...t, ...trip } : t)),
+        lastError: null,
+      }));
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      set({ lastError: apiError.message || 'Failed to end the trip.' });
+      return false;
+    }
+  },
+
   deleteTrip: async (tripId) => {
     try {
 

@@ -98,6 +98,7 @@ class RideResponse(RideBase):
     driver_id: UUID
     vehicle_id: UUID
     created_at: datetime
+    share_token: Optional[str] = None
     origin_location: Location
     destination_location: Location
     vehicle: Optional[VehicleResponse] = None
@@ -191,6 +192,7 @@ def ride_to_response(ride: Any) -> RideResponse:
         driver_id=ride.driver_id,
         vehicle_id=ride.vehicle_id,
         created_at=ride.created_at,
+        share_token=getattr(ride, "share_token", None),
         departure_time=ride.departure_time,
         total_seats=ride.total_seats,
         available_seats=ride.available_seats,
@@ -208,4 +210,41 @@ def ride_to_response(ride: Any) -> RideResponse:
         destination_location=geometry_to_location(ride.destination_location),
         vehicle=ride.vehicle,
         driver=ride.driver,
+    )
+
+
+class PublicTrackResponse(BaseModel):
+    """Minimal, non-sensitive ride view for the public tracking page.
+
+    Resolves a share_token to the ride id (needed to open the WS) plus just
+    enough context to render the map. Deliberately omits driver phone, exact
+    user ids, pricing, and seat data.
+    """
+
+    ride_id: UUID
+    status: str
+    origin_city: str
+    destination_city: str
+    origin_location: Location
+    destination_location: Location
+    driver_name: Optional[str] = None
+    car_model: Optional[str] = None
+
+
+def ride_to_public_track(ride: Any) -> PublicTrackResponse:
+    driver_name = None
+    if ride.driver is not None:
+        driver_name = getattr(ride.driver, "first_name", None)
+    car_model = None
+    if ride.vehicle is not None:
+        car_model = f"{ride.vehicle.brand} {ride.vehicle.model}".strip()
+    return PublicTrackResponse(
+        ride_id=ride.id,
+        status=ride.status,
+        origin_city=ride.origin_city,
+        destination_city=ride.destination_city,
+        origin_location=geometry_to_location(ride.origin_location),  # type: ignore[arg-type]
+        destination_location=geometry_to_location(ride.destination_location),  # type: ignore[arg-type]
+        driver_name=driver_name,
+        car_model=car_model,
     )

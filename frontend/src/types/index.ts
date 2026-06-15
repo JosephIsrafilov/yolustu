@@ -63,7 +63,7 @@ export interface Profile {
   reviewsCount: number;
 }
 
-export type TripStatus = 'active' | 'cancelled' | 'completed';
+export type TripStatus = 'active' | 'boarding' | 'cancelled' | 'completed';
 
 export interface Trip {
   id: string;
@@ -81,6 +81,7 @@ export interface Trip {
   comment?: string;
   status: TripStatus;
   createdAt: string;
+  shareToken?: string;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
   driver?: User;
@@ -92,7 +93,7 @@ export interface Trip {
   availableSpots?: string[];
 }
 
-export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'completed' | 'expired';
+export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'boarded' | 'no_show' | 'completed' | 'expired';
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'refunded';
 export type WalletTransactionType =
   | 'passenger_payment'

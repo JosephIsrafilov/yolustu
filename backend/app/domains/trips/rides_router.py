@@ -10,8 +10,13 @@ from app.core.cache import cache_response
 from app.core.database import get_db
 from app.core.pagination import PaginatedResponse
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.trips.schemas import RideCreate, RideResponse
+from app.domains.trips.schemas import (
+    PublicTrackResponse,
+    RideCreate,
+    RideResponse,
+)
 from app.domains.trips.services import TripsService
+from app.domains.trips.tracking import tracking_manager
 
 router = APIRouter()
 
@@ -77,6 +82,12 @@ def get_my_rides(
     return TripsService(db).get_my_rides(current_user, limit=limit, offset=offset)
 
 
+@router.get("/track/{share_token}", response_model=PublicTrackResponse)
+def get_public_track(share_token: str, db: Session = Depends(get_db)):
+    """Public, unauthenticated: resolve a share token to a trackable ride."""
+    return TripsService(db).get_public_track(share_token)
+
+
 @router.get("/{ride_id}", response_model=RideResponse)
 @cache_response(prefix="ride", ttl=300)  # 5 minutes cache for individual rides
 def get_ride(ride_id: UUID, db: Session = Depends(get_db)):
@@ -99,3 +110,42 @@ def complete_ride(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return TripsService(db).complete_ride(ride_id, current_user)
+
+
+@router.post("/{ride_id}/board", response_model=RideResponse)
+def start_boarding(
+    ride_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Driver opens boarding: ride -> BOARDING."""
+    return TripsService(db).start_boarding(ride_id, current_user)
+
+
+@router.post("/{ride_id}/simulate")
+async def simulate_trip(
+    ride_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Start the live-tracking simulation as a background asyncio task.
+
+    Returns immediately; coordinates stream over WS /ws/tracking/{ride_id}.
+    """
+    origin, destination = TripsService(db).get_simulation_endpoints(
+        ride_id, current_user
+    )
+    tracking_manager.start_simulation(ride_id, origin, destination)
+    return {"status": "started", "ride_id": str(ride_id)}
+
+
+@router.post("/{ride_id}/end", response_model=RideResponse)
+def end_trip(
+    ride_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Stop the simulation and mark the ride completed."""
+    result = TripsService(db).end_trip(ride_id, current_user)
+    tracking_manager.stop_simulation(ride_id)
+    return result

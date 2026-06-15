@@ -60,3 +60,21 @@ def cancel_booking(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return BookingsService(db).cancel_booking(booking_id, current_user)
+
+
+@router.post("/{booking_id}/board", response_model=BookingResponse)
+def mark_boarded(
+    booking_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return BookingsService(db).mark_boarded(booking_id, current_user)
+
+
+@router.post("/{booking_id}/no-show", response_model=BookingResponse)
+def mark_no_show(
+    booking_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return BookingsService(db).mark_no_show(booking_id, current_user)

@@ -109,6 +109,16 @@ class RideRepository:
             .first()
         )
 
+    def get_by_share_token(self, share_token: str) -> Ride | None:
+        from sqlalchemy.orm import joinedload
+
+        return (
+            self.db.query(Ride)
+            .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
+            .filter(Ride.share_token == share_token)
+            .first()
+        )
+
     def get_for_update(self, ride_id: UUID) -> Ride | None:
         from sqlalchemy.orm import joinedload
 

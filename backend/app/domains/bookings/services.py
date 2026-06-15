@@ -14,8 +14,10 @@ from app.domains.bookings.schemas import (
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
+    BOOKING_BOARDED,
     BOOKING_CANCELLED,
     BOOKING_COMPLETED,
+    BOOKING_NO_SHOW,
     BOOKING_PAID,
     BOOKING_PENDING,
     BOOKING_REJECTED,
@@ -199,6 +201,38 @@ class BookingsService:
             data={"booking_id": str(booking.id), "type": "booking_cancelled"},
         )
 
+        return booking_to_response(booking)
+
+    def mark_boarded(
+        self, booking_id: UUID, current_user: CurrentUser
+    ) -> BookingResponse:
+        """Driver marks a passenger as physically in the car."""
+        return self._set_boarding_status(booking_id, current_user, BOOKING_BOARDED)
+
+    def mark_no_show(
+        self, booking_id: UUID, current_user: CurrentUser
+    ) -> BookingResponse:
+        """Driver marks a passenger as a no-show."""
+        return self._set_boarding_status(booking_id, current_user, BOOKING_NO_SHOW)
+
+    def _set_boarding_status(
+        self, booking_id: UUID, current_user: CurrentUser, target: str
+    ) -> BookingResponse:
+        booking = self._get_booking_for_update(booking_id)
+        ride = self._get_booking_ride_for_update(booking)
+        if ride.driver_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(
+                status_code=403, detail="Only the driver can update boarding status"
+            )
+        if booking.status == target:
+            return booking_to_response(booking)
+        if not can_transition_booking(booking.status, target):  # type: ignore[arg-type]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot mark booking as {target} from {booking.status}",
+            )
+        booking.status = target  # type: ignore[assignment]
+        self.bookings.save(booking)
         return booking_to_response(booking)
 
     def _get_booking(self, booking_id: UUID) -> Booking:

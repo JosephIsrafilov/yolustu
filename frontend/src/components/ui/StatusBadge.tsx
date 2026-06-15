@@ -10,12 +10,15 @@ const bookingStatusConfig: Record<BookingStatus, { variant: 'warning' | 'success
   rejected: { variant: 'danger' },
   cancelled: { variant: 'muted' },
   paid: { variant: 'success' },
+  boarded: { variant: 'brand' },
+  no_show: { variant: 'danger' },
   completed: { variant: 'brand' },
   expired: { variant: 'muted' },
 };
 
-const tripStatusConfig: Record<TripStatus, { variant: 'success' | 'muted' | 'brand' }> = {
+const tripStatusConfig: Record<TripStatus, { variant: 'success' | 'muted' | 'brand' | 'warning' }> = {
   active: { variant: 'success' },
+  boarding: { variant: 'warning' },
   cancelled: { variant: 'muted' },
   completed: { variant: 'brand' },
 };
@@ -27,6 +30,8 @@ const bookingStatusLabels = {
     rejected: 'Rədd edildi',
     cancelled: 'Ləğv edildi',
     paid: 'Ödənildi',
+    boarded: 'Mindi',
+    no_show: 'Gəlmədi',
     completed: 'Tamamlandı',
     expired: 'Vaxtı bitdi',
   },
@@ -36,6 +41,8 @@ const bookingStatusLabels = {
     rejected: 'Отклонено',
     cancelled: 'Отменено',
     paid: 'Оплачено',
+    boarded: 'В машине',
+    no_show: 'Не явился',
     completed: 'Завершено',
     expired: 'Просрочено',
   },
@@ -45,6 +52,8 @@ const bookingStatusLabels = {
     rejected: 'Rejected',
     cancelled: 'Cancelled',
     paid: 'Paid',
+    boarded: 'Boarded',
+    no_show: 'No show',
     completed: 'Completed',
     expired: 'Expired',
   }
@@ -53,16 +62,19 @@ const bookingStatusLabels = {
 const tripStatusLabels = {
   az: {
     active: 'Aktiv',
+    boarding: 'Minişdə',
     cancelled: 'Ləğv edildi',
     completed: 'Tamamlandı',
   },
   ru: {
     active: 'Активно',
+    boarding: 'Посадка',
     cancelled: 'Отменено',
     completed: 'Завершено',
   },
   en: {
     active: 'Active',
+    boarding: 'Boarding',
     cancelled: 'Cancelled',
     completed: 'Completed',
   }

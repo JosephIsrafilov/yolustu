@@ -1,3 +1,6 @@
+# Next.js (accidentally run from this dir)
+.next/
+
 # Environments
 .env
 !.env.example
@@ -61,6 +64,7 @@ coverage.xml
 .pytest_cache/
 .ruff_cache/
 cover/
+alembic/
 
 # Jupyter Notebook
 .ipynb_checkpoints

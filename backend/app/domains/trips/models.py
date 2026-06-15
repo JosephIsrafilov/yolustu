@@ -1,3 +1,4 @@
+import secrets
 import uuid
 
 from geoalchemy2 import Geometry
@@ -53,6 +54,13 @@ class Ride(Base):
     available_seats = Column(Integer, nullable=False)
     price_per_seat = Column(Numeric(12, 2), nullable=False)
     status = Column(String(20), default="active")
+    # Public, unguessable handle for read-only live-tracking share links.
+    share_token = Column(
+        String(64),
+        unique=True,
+        nullable=False,
+        default=lambda: secrets.token_urlsafe(16),
+    )
     description = Column(Text, nullable=True)
     smoking_allowed = Column(Boolean, default=False)
     pets_allowed = Column(Boolean, default=False)
@@ -74,4 +82,5 @@ Index("ix_rides_origin_city", Ride.origin_city)
 Index("ix_rides_destination_city", Ride.destination_city)
 Index("ix_rides_status_departure", Ride.status, Ride.departure_time)
 Index("ix_rides_available_seats", Ride.available_seats)
+Index("ix_rides_share_token", Ride.share_token, unique=True)
 Index("ix_vehicles_user_id", Vehicle.user_id)
