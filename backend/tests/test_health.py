@@ -27,9 +27,6 @@ class FakeEngine:
 
 
 class FakeRedis:
-    def __init__(self, connection_pool):
-        self.connection_pool = connection_pool
-
     def ping(self):
         return True
 
@@ -41,7 +38,7 @@ class FailingRedis(FakeRedis):
 
 def test_health_reports_dependency_checks(monkeypatch):
     monkeypatch.setattr(app_main, "engine", FakeEngine())
-    monkeypatch.setattr(app_main, "Redis", FakeRedis)
+    monkeypatch.setattr(app_main, "get_redis", lambda: FakeRedis())
 
     response = client.get("/health")
 
@@ -55,7 +52,7 @@ def test_health_reports_dependency_checks(monkeypatch):
 
 def test_health_reports_degraded_redis(monkeypatch):
     monkeypatch.setattr(app_main, "engine", FakeEngine())
-    monkeypatch.setattr(app_main, "Redis", FailingRedis)
+    monkeypatch.setattr(app_main, "get_redis", lambda: FailingRedis())
 
     response = client.get("/health")
 

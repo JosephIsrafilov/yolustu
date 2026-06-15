@@ -7,12 +7,11 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from redis import Redis
 from sqlalchemy import text
 
 from app.core.config import UPLOADS_DIR, settings
 from app.core.database import engine
-from app.core.redis import redis_pool
+from app.core.redis import get_redis
 from app.core.csrf import validate_csrf_request
 from app.core.logging_config import setup_logging
 from app.core.limiter import limiter
@@ -179,7 +178,7 @@ def health_check():
         checks["database"] = {"status": "unavailable"}
 
     try:
-        Redis(connection_pool=redis_pool).ping()
+        get_redis().ping()
     except Exception:
         logging.exception("Redis health check failed")
         checks["redis"] = {"status": "unavailable"}
