@@ -211,12 +211,12 @@ To populate your local PostgreSQL database with demo data (users, vehicles, trip
 cd backend
 python seed.py
 ```
-This will create standard test users with the password `password123` and `is_verified=True`:
-- Elvin (Driver): `+994501234567`
-- Murad (Driver): `+994703456789`
-- Kamran (Driver): `+994775678901`
-- Aysel (Passenger): `+994552345678`
-- Sanan (Admin): `+994708901234`
+This will create standard test users with the password `StrongPass1!`:
+- Elvin (Driver): `+994501110001`
+- Murad (Driver): `+994501110003`
+- Kamran (Driver): `+994501110005`
+- Aysel (Passenger): `+994501110002`
+- Sanan (Admin): `+994501110012`
 
 ---
 

@@ -19,6 +19,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.websocket import manager
 from app.core.scheduler import start_scheduler, shutdown_scheduler
+import app.domains.models as _models  # noqa: F401
 from app.domains.admin.router import router as admin_router
 from app.domains.bookings.router import router as bookings_router
 from app.domains.engagement.chats_router import router as chats_router
@@ -71,15 +72,17 @@ if settings.ENVIRONMENT == "production":
         allow_headers=["*"],
     )
 else:
-    # Development: allow localhost and 127.0.0.1 on any port
+    # Development: allow the known local frontend origins explicitly.
     origins = [
         settings.FRONTEND_URL,
+        "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
     ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
-        allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
+        allow_origins=list(dict.fromkeys(origins)),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

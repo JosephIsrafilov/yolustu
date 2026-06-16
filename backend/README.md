@@ -28,6 +28,7 @@ What the seed creates:
 - active, completed, and cancelled rides across Azerbaijan routes
 - bookings in pending, accepted, paid, rejected, cancelled, and completed states
 - reviews, ride chat messages, and sample payments
+- seeded account password: `StrongPass1!`
 
 Safety:
 - seed is idempotent and uses deterministic IDs

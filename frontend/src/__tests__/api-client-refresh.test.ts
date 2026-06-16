@@ -33,6 +33,7 @@ describe('apiClient refresh flow', () => {
   });
 
   it('uses cookie refresh and retries original request with credentials', async () => {
+    document.cookie = 'csrf_token=csrf-123; path=/';
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce(
@@ -88,6 +89,7 @@ describe('apiClient refresh flow', () => {
   });
 
   it('shares one refresh request across concurrent unauthorized requests', async () => {
+    document.cookie = 'csrf_token=csrf-123; path=/';
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce(createJsonResponse(401, { detail: 'Unauthorized' }) as unknown as Response)
@@ -114,6 +116,7 @@ describe('apiClient refresh flow', () => {
   });
 
   it('invalidates the session once when refresh fails and does not retry refresh', async () => {
+    document.cookie = 'csrf_token=csrf-123; path=/';
     const onSessionExpired = jest.fn();
     setSessionExpiredHandler(onSessionExpired);
     const fetchMock = jest
@@ -128,5 +131,31 @@ describe('apiClient refresh flow', () => {
 
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/auth/refresh'))).toHaveLength(1);
+  });
+
+  it('does not attempt refresh without a session hint cookie', async () => {
+    const onSessionExpired = jest.fn();
+    setSessionExpiredHandler(onSessionExpired);
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse(401, { detail: 'Unauthorized' }) as unknown as Response);
+    (globalThis as { fetch?: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiClient.get('/users/me')).rejects.toMatchObject({ status: 401 });
+
+    expect(onSessionExpired).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/auth/refresh'))).toHaveLength(0);
+  });
+
+  it('does not attempt refresh for public rides endpoints', async () => {
+    document.cookie = 'csrf_token=csrf-123; path=/';
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse(401, { detail: 'Unauthorized' }) as unknown as Response);
+    (globalThis as { fetch?: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiClient.get('/rides/search?limit=20&offset=0')).rejects.toMatchObject({ status: 401 });
+
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/auth/refresh'))).toHaveLength(0);
   });
 });

@@ -4,6 +4,16 @@ import { adminService, authService } from '@/services';
 import { toApiError } from '@/services/api-error';
 import { getUserCapabilities } from '@/lib/access-control';
 
+function hasSessionHint() {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+
+  return document.cookie
+    .split('; ')
+    .some((entry) => entry.startsWith('csrf_token='));
+}
+
 export const createAuthSlice: StateCreator<
   AppState,
   [],
@@ -202,6 +212,11 @@ export const createAuthSlice: StateCreator<
   },
 
   initAuth: async () => {
+    if (!hasSessionHint()) {
+      get().clearSession();
+      return;
+    }
+
     try {
       set({ authStatus: 'loading' });
       const user = await authService.getCurrentUser();

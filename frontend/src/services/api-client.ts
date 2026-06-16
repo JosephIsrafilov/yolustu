@@ -122,7 +122,27 @@ function extractErrorMessage(responseBody: unknown, status: number): string {
 }
 
 function shouldAttemptRefresh(path: string): boolean {
-  return !path.startsWith('/auth/');
+  if (path.startsWith('/auth/')) {
+    return false;
+  }
+
+  if (path === '/rides/search') {
+    return false;
+  }
+
+  if (/^\/rides\/track\/[^/]+$/.test(path)) {
+    return false;
+  }
+
+  if (/^\/rides\/[^/]+$/.test(path)) {
+    return false;
+  }
+
+  return true;
+}
+
+function hasSessionHint(): boolean {
+  return getCookie('csrf_token') !== null;
 }
 
 let sessionExpiredHandler: (() => void) | null = null;
@@ -184,6 +204,7 @@ class ApiClient {
         response.status === 401 &&
         allowRefresh &&
         !this.sessionInvalid &&
+        hasSessionHint() &&
         typeof window !== 'undefined' &&
         shouldAttemptRefresh(path)
       ) {
@@ -279,6 +300,7 @@ class ApiClient {
     if (
       response.status === 401 &&
       !this.sessionInvalid &&
+      hasSessionHint() &&
       typeof window !== 'undefined' &&
       shouldAttemptRefresh(path)
     ) {
