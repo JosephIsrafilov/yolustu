@@ -117,14 +117,16 @@ async def upload_attachment(
         "image/webp": {".webp"},
     }
 
-    file_bytes, filename, content_type = await _validate_and_read_file(
-        file, allowed_types=ALLOWED_TYPES
+    file_bytes, filename, content_type = _validate_and_read_file(
+        file,
+        filename_prefix="chat_",
+        allowed_types=ALLOWED_TYPES,
     )
     url = storage.upload(
         file_bytes,
         filename,
-        content_type=content_type,
-        folder="chat_attachments",
+        content_type,
+        "chat_attachments",
     )
     return {"url": url}
 
