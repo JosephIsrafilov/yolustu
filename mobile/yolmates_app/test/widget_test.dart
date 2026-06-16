@@ -50,7 +50,7 @@ void main() {
       await tester.tap(find.text(az.onboardingSkip).first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Yolmates'), findsNothing); // Removed Yolüstü as it might be an icon now
+      expect(find.text('Yolmates'), findsNothing); // Removed old name as it might be an icon now
       expect(find.text(az.registerLink), findsOneWidget);
 
       await tester.tap(find.text(az.loginBtn).first);

@@ -45,7 +45,7 @@ class RouteMapView extends StatelessWidget {
   }
 }
 
-/// Interactive Canvas Map view for Yolüstü routes (Fallback).
+/// Interactive Canvas Map view for Yolmates routes (Fallback).
 ///
 /// Draws Azerbaijani geographic bounds, Caspean sea, routes, markers, and an animated car.
 class CanvasRouteMapView extends StatefulWidget {

@@ -27,7 +27,7 @@ class AuthIntroScreen extends ConsumerWidget {
               const Center(child: AppLogo(size: 100)),
               const SizedBox(height: 24),
               const Text(
-                'Yolustu',
+                'Yolmates',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
