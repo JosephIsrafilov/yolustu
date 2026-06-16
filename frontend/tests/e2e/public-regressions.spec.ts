@@ -23,7 +23,7 @@ const BASE_USER = {
 const PHASE = process.env.QA_PHASE ?? 'before';
 
 async function seedStore(page: Page, language: 'az' | 'ru' | 'en', authenticated = false) {
-  const cookies = [
+  const cookies: { name: string; value: string; url: string }[] = [
     {
       name: 'NEXT_LOCALE',
       value: language,

@@ -110,13 +110,13 @@ async def upload_attachment(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     from app.domains.identity.users_router import _validate_and_read_file
-    
+
     ALLOWED_TYPES = {
         "image/jpeg": {".jpg", ".jpeg"},
         "image/png": {".png"},
         "image/webp": {".webp"},
     }
-    
+
     file_bytes, filename, content_type = await _validate_and_read_file(
         file, allowed_types=ALLOWED_TYPES
     )

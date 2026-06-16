@@ -367,14 +367,20 @@ def _fallback_support_reply(message: str, language: str, should_handoff: bool) -
             return "По бронированию: отправьте запрос со страницы поездки и следите за статусом в разделе бронирований. Оплата доступна после подтверждения водителем."
         return "For bookings, send the request from the trip page and track it in Bookings. Payment becomes available after the driver accepts."
 
-    if any(term in lowered for term in ["payment", "wallet", "ödə", "cüzdan", "оплат", "кошел"]):
+    if any(
+        term in lowered
+        for term in ["payment", "wallet", "ödə", "cüzdan", "оплат", "кошел"]
+    ):
         if language == "az":
             return "Ödəniş və cüzdan məsələlərində əvvəlcə Rezervlər və Cüzdan bölməsini yoxlayın. Problem davam edərsə sizi canlı dəstəyə yönləndirə bilərəm."
         if language == "ru":
             return "По оплате и кошельку сначала проверьте разделы Бронирования и Кошелек. Если проблема остается, я могу перевести вас в живую поддержку."
         return "For payment or wallet issues, first check Bookings and Wallet. If the issue remains, I can hand you over to live support."
 
-    if any(term in lowered for term in ["driver", "sürücü", "водител", "trip", "ride", "gediş", "poezd"]):
+    if any(
+        term in lowered
+        for term in ["driver", "sürücü", "водител", "trip", "ride", "gediş", "poezd"]
+    ):
         if language == "az":
             return "Sürücü və səfər mövzularında mən rezerv, çat, ödəniş, qiymət tövsiyəsi və profil yoxlaması ilə bağlı suallara kömək edə bilərəm."
         if language == "ru":
@@ -440,7 +446,9 @@ async def support_assistant(
         ai_handoff = data.get("should_handoff")
 
         return SupportAssistantResponse(
-            reply=reply.strip() if isinstance(reply, str) and reply.strip() else fallback_reply,
+            reply=reply.strip()
+            if isinstance(reply, str) and reply.strip()
+            else fallback_reply,
             should_handoff=bool(ai_handoff) or should_handoff,
         )
     except Exception as exc:

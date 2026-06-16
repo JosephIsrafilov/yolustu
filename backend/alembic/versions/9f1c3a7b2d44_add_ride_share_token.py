@@ -19,7 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("rides", sa.Column("share_token", sa.String(length=64), nullable=True))
+    op.add_column(
+        "rides", sa.Column("share_token", sa.String(length=64), nullable=True)
+    )
     op.execute(
         """
         UPDATE rides
@@ -27,7 +29,9 @@ def upgrade() -> None:
         WHERE share_token IS NULL
         """
     )
-    op.alter_column("rides", "share_token", existing_type=sa.String(length=64), nullable=False)
+    op.alter_column(
+        "rides", "share_token", existing_type=sa.String(length=64), nullable=False
+    )
     op.create_index("ix_rides_share_token", "rides", ["share_token"], unique=True)
 
 
