@@ -126,7 +126,7 @@ class RideRepository:
             self.db.query(Ride)
             .options(joinedload(Ride.driver), joinedload(Ride.vehicle))
             .filter(Ride.id == ride_id)
-            .with_for_update()
+            .with_for_update(of=Ride)
             .first()
         )
 

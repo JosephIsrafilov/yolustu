@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/localization/app_localizations.dart';
-
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/status_badge.dart';
@@ -13,10 +11,12 @@ class DriverVerificationScreen extends ConsumerStatefulWidget {
   const DriverVerificationScreen({super.key});
 
   @override
-  ConsumerState<DriverVerificationScreen> createState() => _DriverVerificationScreenState();
+  ConsumerState<DriverVerificationScreen> createState() =>
+      _DriverVerificationScreenState();
 }
 
-class _DriverVerificationScreenState extends ConsumerState<DriverVerificationScreen> {
+class _DriverVerificationScreenState
+    extends ConsumerState<DriverVerificationScreen> {
   bool _submitting = false;
 
   VerificationStatus _mapStatus(String statusStr) {
@@ -35,7 +35,9 @@ class _DriverVerificationScreenState extends ConsumerState<DriverVerificationScr
   Future<void> _submit(String docType) async {
     setState(() => _submitting = true);
     try {
-      await ref.read(authControllerProvider.notifier).submitVerification('mock_path/$docType');
+      await ref
+          .read(authControllerProvider.notifier)
+          .submitVerification('mock_path/$docType');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$docType təsdiq üçün göndərildi')),
@@ -53,7 +55,6 @@ class _DriverVerificationScreenState extends ConsumerState<DriverVerificationScr
   }
 
   Future<void> _mockApprove() async {
-    final l10n = ref.read(l10nProvider);
     setState(() => _submitting = true);
     try {
       await ref.read(authControllerProvider.notifier).mockApproveDriver();

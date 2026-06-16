@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/skeleton_cards.dart';
+import '../auth/state/auth_controller.dart';
 import 'data/chat_controller.dart';
 
 /// Messages tab: conversation list.
@@ -23,6 +26,8 @@ class ChatListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final conversationsAsync = ref.watch(conversationsProvider);
     final l10n = ref.watch(l10nProvider);
+    final authState = ref.watch(authControllerProvider);
+    final currentUserId = authState.user?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.chatTitle)),
@@ -58,13 +63,18 @@ class ChatListScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final c = conversations[index];
                     final hasUnread = c.unreadCount > 0;
-                    final name =
-                        c.type == 'support' ? l10n.chatSupport : l10n.chatTitle;
-                    final initial = name.isNotEmpty ? name[0] : '?';
+                    final otherName = c.getOtherParticipantName(currentUserId);
+                    final name = c.type == 'support'
+                        ? l10n.chatSupport
+                        : (otherName.isNotEmpty ? otherName : l10n.chatTitle);
+                    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
                     final lastMsg = c.lastMessage?.content ?? '';
                     final timeStr = c.lastMessage != null
                         ? '${c.lastMessage!.createdAt.hour.toString().padLeft(2, '0')}:${c.lastMessage!.createdAt.minute.toString().padLeft(2, '0')}'
                         : '';
+                    
+                    final avatarUrl = c.getOtherParticipantAvatar(currentUserId);
+
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -74,13 +84,18 @@ class ChatListScreen extends ConsumerWidget {
                       leading: CircleAvatar(
                         radius: 24,
                         backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
-                        child: Text(
-                          initial,
-                          style: const TextStyle(
-                            color: AppTheme.tealDark,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                            ? CachedNetworkImageProvider(avatarUrl)
+                            : null,
+                        child: avatarUrl == null || avatarUrl.isEmpty
+                            ? Text(
+                                initial,
+                                style: const TextStyle(
+                                  color: AppTheme.tealDark,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
                       title: Text(
                         name,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/city_dropdown.dart';
 import '../auth/state/auth_controller.dart';
 import 'data/popular_routes_provider.dart';
 
@@ -15,8 +16,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final String _from = 'Bakı';
-  final String _to = 'Gəncə';
+  String _from = 'Bakı';
+  String _to = 'Gəncə';
 
   @override
   Widget build(BuildContext context) {
@@ -70,23 +71,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           Row(
                             children: [
-                              Container(
+                              Image.asset(
+                                'assets/logo.png',
                                 width: 40,
                                 height: 40,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.teal,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Y',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                               ),
                               const SizedBox(width: 12),
                               const Text(
@@ -151,16 +139,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         child: Column(
                           children: [
-                            _buildSearchField(
+                            CityDropdown(
                               label: l10n.searchFromLabel,
                               value: _from,
                               icon: Icons.location_on_outlined,
+                              isDark: true,
+                              onChanged: (val) => setState(() => _from = val),
                             ),
                             const SizedBox(height: 12),
-                            _buildSearchField(
+                            CityDropdown(
                               label: l10n.searchToLabel,
                               value: _to,
                               icon: Icons.location_on,
+                              isDark: true,
+                              onChanged: (val) => setState(() => _to = val),
                             ),
                             const SizedBox(height: 16),
                             SizedBox(
@@ -285,56 +277,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchField({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.tealLight, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.keyboard_arrow_down,
-            color: Colors.white.withValues(alpha: 0.5),
           ),
         ],
       ),

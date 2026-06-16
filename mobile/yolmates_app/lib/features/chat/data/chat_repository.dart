@@ -14,6 +14,7 @@ abstract class ChatRepository {
   Future<ChatMessage> sendMessage(String conversationId, String content, {String type = 'text', List<String> attachments = const []});
   Future<void> markAsRead(String conversationId);
   WebSocketChannel? connectWebSocket(String conversationId, String token);
+  Future<String> uploadAttachment(String filePath);
 }
 
 class ApiChatRepository implements ChatRepository {
@@ -70,6 +71,14 @@ class ApiChatRepository implements ChatRepository {
     final baseUrl = _dio.options.baseUrl.replaceFirst('http', 'ws');
     final url = '$baseUrl/chats/ws/$conversationId?token=$token';
     return WebSocketChannel.connect(Uri.parse(url));
+  }
+
+  @override
+  Future<String> uploadAttachment(String filePath) async {
+    final file = await MultipartFile.fromFile(filePath);
+    final formData = FormData.fromMap({'file': file});
+    final response = await _dio.post('/chats/attachments', data: formData);
+    return response.data['url'] as String;
   }
 }
 
@@ -218,6 +227,12 @@ class MockChatRepository implements ChatRepository {
 
   @override
   WebSocketChannel? connectWebSocket(String conversationId, String token) => null;
+
+  @override
+  Future<String> uploadAttachment(String filePath) async {
+    await Future.delayed(_latency);
+    return 'https://via.placeholder.com/300';
+  }
 
   ChatMessage? _lastMessageFor(String conversationId) {
     final messages = _messagesByConversation[conversationId];

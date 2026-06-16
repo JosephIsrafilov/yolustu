@@ -8,11 +8,14 @@ from fastapi import (
     Query,
     WebSocket,
     WebSocketDisconnect,
+    File,
+    UploadFile,
 )
 from sqlalchemy.orm import Session
 from starlette import status
 
 from app.core.database import get_db
+from app.core.storage import StorageBackend, get_storage
 from app.core.websocket import manager
 from app.domains.engagement.schemas import (
     ChatMessageCreate,
@@ -98,6 +101,32 @@ def mark_chat_read(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return EngagementService(db).mark_conversation_read(conversation_id, current_user)
+
+
+@router.post("/attachments", response_model=dict[str, str])
+async def upload_attachment(
+    file: UploadFile = File(...),
+    storage: StorageBackend = Depends(get_storage),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    from app.domains.identity.users_router import _validate_and_read_file
+    
+    ALLOWED_TYPES = {
+        "image/jpeg": {".jpg", ".jpeg"},
+        "image/png": {".png"},
+        "image/webp": {".webp"},
+    }
+    
+    file_bytes, filename, content_type = await _validate_and_read_file(
+        file, allowed_types=ALLOWED_TYPES
+    )
+    url = storage.upload(
+        file_bytes,
+        filename,
+        content_type=content_type,
+        folder="chat_attachments",
+    )
+    return {"url": url}
 
 
 @router.websocket("/ws/{conversation_id}")

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/city_dropdown.dart';
 import 'data/recent_searches_repository.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -20,8 +20,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String _to = 'Gəncə';
   DateTime _date = DateTime.now();
   int _passengers = 1;
-
-  final List<String> _cities = AppConstants.cities;
 
   void _search() async {
     final l10n = ref.read(l10nProvider);
@@ -134,10 +132,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 );
               },
             ),
-            _buildCitySelector(
+            CityDropdown(
               label: l10n.searchFromLabel,
               value: _from,
-              onChanged: (value) => setState(() => _from = value!),
+              icon: Icons.location_on_outlined,
+              onChanged: (value) => setState(() => _from = value),
             ),
             const SizedBox(height: 8),
             Center(
@@ -162,10 +161,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildCitySelector(
+            CityDropdown(
               label: l10n.searchToLabel,
               value: _to,
-              onChanged: (value) => setState(() => _to = value!),
+              icon: Icons.location_on,
+              onChanged: (value) => setState(() => _to = value),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -251,24 +251,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCitySelector({
-    required String label,
-    required String value,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.location_on),
-      ),
-      items: _cities.map((city) {
-        return DropdownMenuItem(value: city, child: Text(city));
-      }).toList(),
-      onChanged: onChanged,
     );
   }
 }

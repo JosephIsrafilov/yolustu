@@ -78,6 +78,16 @@ class ConversationParticipant(Base):
     conversation = relationship("Conversation", back_populates="participants")
     user = relationship("User")
 
+    @property
+    def user_name(self) -> str:
+        if self.user:
+            return f"{self.user.first_name} {self.user.last_name}".strip()
+        return "User"
+
+    @property
+    def user_avatar_url(self) -> str | None:
+        return self.user.avatar_url if self.user else None
+
 
 class Message(Base):
     __tablename__ = "messages"

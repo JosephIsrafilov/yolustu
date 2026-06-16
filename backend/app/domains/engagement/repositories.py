@@ -58,7 +58,7 @@ class ConversationRepository:
     def get(self, conversation_id: UUID) -> Conversation | None:
         return (
             self.db.query(Conversation)
-            .options(joinedload(Conversation.participants))
+            .options(joinedload(Conversation.participants).joinedload(ConversationParticipant.user))
             .filter(Conversation.id == conversation_id)
             .first()
         )
@@ -66,7 +66,7 @@ class ConversationRepository:
     def get_ride_conversation(self, booking_id: UUID) -> Conversation | None:
         return (
             self.db.query(Conversation)
-            .options(joinedload(Conversation.participants))
+            .options(joinedload(Conversation.participants).joinedload(ConversationParticipant.user))
             .filter(
                 Conversation.type == "ride",
                 Conversation.booking_id == booking_id,
@@ -77,7 +77,7 @@ class ConversationRepository:
     def get_open_support_conversation(self, user_id: UUID) -> Conversation | None:
         return (
             self.db.query(Conversation)
-            .options(joinedload(Conversation.participants))
+            .options(joinedload(Conversation.participants).joinedload(ConversationParticipant.user))
             .filter(
                 Conversation.type == "support",
                 Conversation.created_by_user_id == user_id,
@@ -105,7 +105,7 @@ class ConversationRepository:
         return (
             self.db.query(Conversation)
             .join(ConversationParticipant)
-            .options(joinedload(Conversation.participants))
+            .options(joinedload(Conversation.participants).joinedload(ConversationParticipant.user))
             .filter(ConversationParticipant.user_id == user_id)
             .order_by(Conversation.updated_at.desc())
             .all()
@@ -117,7 +117,7 @@ class ConversationRepository:
         query = (
             self.db.query(Conversation)
             .outerjoin(ConversationParticipant)
-            .options(joinedload(Conversation.participants))
+            .options(joinedload(Conversation.participants).joinedload(ConversationParticipant.user))
         )
         if user_role == "admin":
             query = query.filter(

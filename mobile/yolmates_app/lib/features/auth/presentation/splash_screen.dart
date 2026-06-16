@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme.dart';
 import '../../../shared/widgets/app_logo.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../../shared/widgets/tire_loader.dart';
 import '../state/auth_controller.dart';
 
 /// Startup session gate.
@@ -46,14 +46,7 @@ class _SplashBranding extends StatelessWidget {
         children: [
           const AppLogo(size: 96),
           const SizedBox(height: 40),
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation(AppTheme.teal),
-            ),
-          ),
+          const TireLoader(size: 132),
         ],
       ),
     );

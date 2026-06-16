@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme.dart';
 import '../data/reviews_repository.dart';
 
@@ -68,12 +67,14 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rəyiniz uğurla göndərildi. Təşəkkür edirik!')),
+          const SnackBar(
+              content: Text('Rəyiniz uğurla göndərildi. Təşəkkür edirik!')),
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e.toString().replaceAll('Exception:', '').trim());
+        setState(
+            () => _error = e.toString().replaceAll('Exception:', '').trim());
       }
     } finally {
       if (mounted) {
@@ -88,7 +89,8 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         '${widget.targetName} üçün rəy bildirin',
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.navy),
+        style: const TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.navy),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -151,7 +153,9 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white)),
                 )
               : const Text('Göndər'),
         ),

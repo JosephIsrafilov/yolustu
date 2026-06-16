@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme.dart';
+import 'tire_loader.dart';
 
 /// Centered loading indicator with an optional message.
 ///
@@ -15,14 +17,7 @@ class LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation(AppTheme.teal),
-            ),
-          ),
+          const TireLoader(size: 116),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(

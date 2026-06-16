@@ -103,35 +103,46 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       setState(() => _currentPage = index),
                   itemBuilder: (context, index) {
                     final slide = slides[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.spacing24,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          slide.illustration,
-                          const SizedBox(height: 32),
-                          Text(
-                            slide.title,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(height: 1.15),
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.spacing24,
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            slide.description,
-                            textAlign: TextAlign.center,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: AppTheme.slate500,
-                                      height: 1.5,
-                                    ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                slide.illustration,
+                                const SizedBox(height: 24),
+                                Text(
+                                  slide.title,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(height: 1.15),
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  slide.description,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
+                                        color: AppTheme.slate500,
+                                        height: 1.5,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -211,11 +222,15 @@ class _OnboardingImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final imageWidth = screenWidth < 360 ? screenWidth - 48 : 300.0;
+    final imageHeight = screenWidth < 360 ? 220.0 : 320.0;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: SizedBox(
-        width: 300,
-        height: 320,
+        width: imageWidth,
+        height: imageHeight,
         child: Stack(
           fit: StackFit.expand,
           children: [

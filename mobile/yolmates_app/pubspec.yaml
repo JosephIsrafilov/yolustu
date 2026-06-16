@@ -25,6 +25,8 @@ dependencies:
   record: ^7.1.0
   path_provider: ^2.1.5
   url_launcher: ^6.3.2
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
