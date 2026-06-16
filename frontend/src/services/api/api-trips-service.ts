@@ -29,6 +29,10 @@ interface ApiPaginatedResponse<T> {
   pages: number;
 }
 
+function isPaginatedResponse<T>(value: T[] | ApiPaginatedResponse<T>): value is ApiPaginatedResponse<T> {
+  return !Array.isArray(value);
+}
+
 async function resolveVehicleId(input: Parameters<TripsService['createTrip']>[0]): Promise<string> {
   if (input.vehicleId) return input.vehicleId;
 
@@ -84,14 +88,26 @@ function buildSearchQuery(filters: TripSearchFilters & { limit?: number; offset?
 
 export const apiTripsService: TripsService = {
   async searchTrips(filters, options) {
-    const response = await apiClient.get<ApiPaginatedResponse<ApiTrip>>(
+    const response = await apiClient.get<ApiTrip[] | ApiPaginatedResponse<ApiTrip>>(
       `/rides/search${buildSearchQuery(filters)}`,
       options,
     );
-    const allItems = response.items.map(mapApiTripToTrip);
+    const rawItems = isPaginatedResponse(response) ? response.items : response;
+    const allItems = rawItems.map(mapApiTripToTrip);
     const filteredItems = typeof filters.maxPrice === 'number'
       ? allItems.filter((trip) => trip.pricePerSeat <= filters.maxPrice!)
       : allItems;
+
+    if (!isPaginatedResponse(response)) {
+      return {
+        items: filteredItems,
+        total: filteredItems.length,
+        page: 1,
+        size: filteredItems.length,
+        pages: 1,
+      };
+    }
+
     return {
       items: filteredItems,
       total: response.total,

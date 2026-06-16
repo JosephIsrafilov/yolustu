@@ -19,6 +19,8 @@ import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
 import FadeInOnScroll from '@/components/ui/FadeInOnScroll';
 import { useTripsPage } from '@/hooks/useTrips';
+import { apiAiService, type PricingSuggestionResponse } from '@/services/api/api-ai-service';
+import Button from '@/components/ui/Button';
 
 const MapContainer = dynamic(() => import('@/components/ui/Map').then(mod => ({ default: mod.MapContainer })), {
   ssr: false,
@@ -43,6 +45,14 @@ function TripsContent() {
   const [searchFrom, setSearchFrom] = useState(filters.departureCity || '');
   const [searchTo, setSearchTo] = useState(filters.arrivalCity || '');
   const [searchDate, setSearchDate] = useState(filters.date || '');
+  const [priceSuggestion, setPriceSuggestion] = useState<PricingSuggestionResponse | null>(null);
+  const [isPriceLoading, setIsPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  const resetPriceSuggestion = () => {
+    setPriceSuggestion(null);
+    setPriceError(null);
+  };
 
   // React Query — replaces Zustand fetchTrips
   const { data: trips = [], isLoading: isLoadingTrips, error: queryError } = useTripsPage(filters);
@@ -77,6 +87,36 @@ function TripsContent() {
     router.replace(`/trips?${params.toString()}`);
   };
 
+  const fetchPriceSuggestion = async () => {
+    if (!searchFrom || !searchTo || isPriceLoading) return;
+    setIsPriceLoading(true);
+    setPriceError(null);
+
+    try {
+      const originCoords = getCityCoordinatesByName(searchFrom);
+      const destinationCoords = getCityCoordinatesByName(searchTo);
+      const result = await apiAiService.getSmartPricingSuggestion({
+        origin: searchFrom,
+        destination: searchTo,
+        departure_time: '09:00',
+        departure_date: searchDate || undefined,
+        language,
+        origin_coords: originCoords
+          ? { lat: originCoords.lat, lng: originCoords.lng }
+          : undefined,
+        destination_coords: destinationCoords
+          ? { lat: destinationCoords.lat, lng: destinationCoords.lng }
+          : undefined,
+      });
+      setPriceSuggestion(result);
+    } catch {
+      setPriceError(copy.createTrip.aiError);
+      setPriceSuggestion(null);
+    } finally {
+      setIsPriceLoading(false);
+    }
+  };
+
   const handleMapMarkerClick = (cityCanonicalName: string) => {
     let nextFrom = searchFrom;
     let nextTo = searchTo;
@@ -96,6 +136,7 @@ function TripsContent() {
 
     setSearchFrom(nextFrom);
     setSearchTo(nextTo);
+    resetPriceSuggestion();
 
     setFilters((p) => ({
       ...p,
@@ -114,6 +155,8 @@ function TripsContent() {
   const updateMinSeats = (nextSeats: number) => {
     setFilters((p) => ({ ...p, minSeats: nextSeats > 1 ? nextSeats : undefined }));
   };
+
+  const aiPriceReady = Boolean(searchFrom && searchTo);
 
   const activeFilters = [
     filters.departureCity && `${copy.tripsPage.filterFrom}: ${getLocalizedCityName(filters.departureCity, language)}`,
@@ -347,7 +390,10 @@ function TripsContent() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_auto] md:items-end">
                 <Select
                   value={searchFrom}
-                  onChange={(value) => setSearchFrom(String(value))}
+                  onChange={(value) => {
+                    setSearchFrom(String(value));
+                    resetPriceSuggestion();
+                  }}
                   options={[
                     { value: '', label: copy.common.allCities },
                     ...cityOptions,
@@ -360,7 +406,10 @@ function TripsContent() {
 
                 <Select
                   value={searchTo}
-                  onChange={(value) => setSearchTo(String(value))}
+                  onChange={(value) => {
+                    setSearchTo(String(value));
+                    resetPriceSuggestion();
+                  }}
                   options={[
                     { value: '', label: copy.common.allCities },
                     ...cityOptions,
@@ -373,7 +422,10 @@ function TripsContent() {
 
                 <DatePicker
                   value={searchDate}
-                  onChange={(newDate) => setSearchDate(newDate || '')}
+                  onChange={(newDate) => {
+                    setSearchDate(newDate || '');
+                    resetPriceSuggestion();
+                  }}
                   label={copy.common.date}
                   placeholder={copy.common.selectDate}
                 />
@@ -388,6 +440,45 @@ function TripsContent() {
                   <span className="ml-2 font-semibold md:hidden">{copy.common.search}</span>
                 </button>
               </div>
+
+              {aiPriceReady ? (
+                <div className="mt-4 rounded-2xl border border-teal-100 bg-teal-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-teal-800">
+                        <Icon name="sparkles" size={14} />
+                        <span>{copy.home.aiRecommended}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-teal-700/80">
+                        {getLocalizedCityName(searchFrom, language)} <span className="mx-1">→</span>
+                        {getLocalizedCityName(searchTo, language)}
+                      </p>
+                    </div>
+
+                    {!priceSuggestion ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={isPriceLoading}
+                        onClick={fetchPriceSuggestion}
+                        className="border-teal-200 bg-white text-teal-700 hover:bg-teal-50"
+                      >
+                        <Icon name="sparkles" size={14} />
+                        <span>{copy.createTrip.aiSuggestBtn}</span>
+                      </Button>
+                    ) : (
+                      <div className="text-left sm:text-right">
+                        <div className="text-2xl font-bold text-teal-800">{formatPrice(priceSuggestion.suggested_price)}</div>
+                        <div className="text-xs text-teal-700/80">{priceSuggestion.reasoning}</div>
+                      </div>
+                    )}
+                  </div>
+                  {priceError ? (
+                    <div className="mt-2 text-xs text-danger-600">{priceError}</div>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           </FadeInOnScroll>
 
@@ -411,6 +502,7 @@ function TripsContent() {
                         setSearchFrom('');
                         setSearchTo('');
                         setSearchDate('');
+                        resetPriceSuggestion();
                       }}
                       className="text-xs font-semibold text-slate-400 hover:text-navy transition-colors cursor-pointer uppercase tracking-wider"
                     >
@@ -581,6 +673,7 @@ function TripsContent() {
                           onClick={() => {
                             setSearchFrom('');
                             setSearchTo('');
+                            resetPriceSuggestion();
                             setFilters((p) => ({
                               ...p,
                               departureCity: undefined,

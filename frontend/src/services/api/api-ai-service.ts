@@ -37,9 +37,22 @@ export interface DescriptionGenerationResponse {
   description: string;
 }
 
+export interface SupportAssistantRequest {
+  message: string;
+  language?: string;
+}
+
+export interface SupportAssistantResponse {
+  reply: string;
+  should_handoff: boolean;
+}
+
 export const apiAiService = {
   getSmartPricingSuggestion: async (data: PricingSuggestionRequest) => {
     return apiClient.post<PricingSuggestionResponse>('/ai/pricing-suggestion', data);
+  },
+  askSupportAssistant: async (data: SupportAssistantRequest) => {
+    return apiClient.post<SupportAssistantResponse>('/ai/support-assistant', data);
   },
   generateTripDescription: async (data: DescriptionGenerationRequest) => {
     return apiClient.post<DescriptionGenerationResponse>('/ai/generate-description', data);

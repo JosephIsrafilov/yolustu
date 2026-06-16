@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -114,16 +115,24 @@ export default function BookingCard({
 
         {driver && (
           <div className="grid grid-cols-[28px_1fr] gap-2 py-2 border-t border-border items-center h-11">
-            <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shrink-0 flex-none">
-              {driver.fullName.charAt(0)}
-            </div>
-            <div className="min-w-0 grid grid-rows-2">
-              <p className="text-xs font-medium text-text truncate block w-full leading-4">{driver.fullName}</p>
-              <p className="flex items-center gap-1 text-[10px] text-text-muted leading-3 h-3">
-                <Icon name="star" size={10} className="text-accent-500 shrink-0 flex-none" fill="currentColor" />
-                <span className="truncate">{driver.rating.toFixed(1)}</span>
-              </p>
-            </div>
+            <Link
+              href={ROUTES.profileDetails(driver.id)}
+              className="contents"
+              aria-label={driver.fullName}
+            >
+              <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shrink-0 flex-none">
+                {driver.fullName.charAt(0)}
+              </div>
+              <div className="min-w-0 grid grid-rows-2">
+                <p className="text-xs font-medium text-text truncate block w-full leading-4 hover:text-brand-600">
+                  {driver.fullName}
+                </p>
+                <p className="flex items-center gap-1 text-[10px] text-text-muted leading-3 h-3">
+                  <Icon name="star" size={10} className="text-accent-500 shrink-0 flex-none" fill="currentColor" />
+                  <span className="truncate">{driver.rating.toFixed(1)}</span>
+                </p>
+              </div>
+            </Link>
           </div>
         )}
 

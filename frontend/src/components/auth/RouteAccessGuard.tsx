@@ -40,7 +40,7 @@ export default function RouteAccessGuard() {
 
     if (!isAuthenticated || !currentUser) {
       if (needsAuth) {
-        router.replace(ROUTES.login);
+        window.location.replace(ROUTES.login);
       }
       return;
     }

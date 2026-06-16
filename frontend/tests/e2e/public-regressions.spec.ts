@@ -7,7 +7,7 @@ const BASE_USER = {
   last_name: 'Mammadov',
   phone: '+994501234567',
   email: 'elvin@example.com',
-  city: 'Bakı',
+  city: 'Baki',
   avatarUrl: '',
   rating: 4.8,
   totalTrips: 12,
@@ -23,39 +23,59 @@ const BASE_USER = {
 const PHASE = process.env.QA_PHASE ?? 'before';
 
 async function seedStore(page: Page, language: 'az' | 'ru' | 'en', authenticated = false) {
-  await page.context().addCookies([
+  const cookies = [
     {
       name: 'NEXT_LOCALE',
       value: language,
       url: 'http://localhost:3000',
     },
-  ]);
+  ];
+
+  if (authenticated) {
+    cookies.push(
+      {
+        name: 'access_token',
+        value: 'Bearer public-e2e-access',
+        url: 'http://localhost:3000',
+      },
+      {
+        name: 'refresh_token',
+        value: 'public-e2e-refresh',
+        url: 'http://localhost:3000',
+      },
+      {
+        name: 'csrf_token',
+        value: 'public-e2e-csrf',
+        url: 'http://localhost:3000',
+      },
+    );
+  }
+
+  await page.context().addCookies(cookies);
   await page.addInitScript(
-    ({ language, authenticated, user }) => {
+    ({ locale, signedIn, user }) => {
       window.localStorage.setItem(
         'yolustu-storage',
         JSON.stringify({
           state: {
-            language,
-            isAuthenticated: authenticated,
-            currentUser: authenticated ? user : null,
-            activeMode: authenticated ? 'driver' : 'passenger',
-            activeRole: authenticated ? 'driver' : 'passenger',
+            language: locale,
+            isAuthenticated: signedIn,
+            currentUser: signedIn ? user : null,
+            activeMode: signedIn ? 'driver' : 'passenger',
+            activeRole: signedIn ? 'driver' : 'passenger',
             unreadRides: [],
           },
           version: 2,
         }),
       );
     },
-    { language, authenticated, user: BASE_USER },
+    { locale: language, signedIn: authenticated, user: BASE_USER },
   );
 }
 
 async function mockApi(page: Page) {
   await page.route('**/api/v1/**', async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const path = url.pathname;
+    const path = new URL(route.request().url()).pathname;
 
     if (path.endsWith('/users/me')) {
       await route.fulfill({
@@ -100,7 +120,7 @@ async function mockApi(page: Page) {
       return;
     }
 
-    if (path.includes('/support') || path.includes('/messages')) {
+    if (path.includes('/support') || path.includes('/messages') || path.includes('/chats')) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -131,15 +151,12 @@ test.describe('Public regression QA', () => {
       await expect(page.locator('header')).toBeVisible();
       await saveShot(page, `${language}-home.png`);
 
-      const homeFromTrigger = page.getByRole('button', { name: new RegExp(`^${language === 'ru' ? 'Откуда' : language === 'az' ? 'Haradan' : 'From'}`, 'i') }).first();
+      const homeFromTrigger = page
+        .getByRole('button', { name: new RegExp(`^${language === 'ru' ? 'Откуда' : language === 'az' ? 'Haradan' : 'From'}`, 'i') })
+        .first();
       await homeFromTrigger.click();
       await page.waitForTimeout(200);
       await saveShot(page, `${language}-home-dropdown.png`);
-
-      const supportButton = page.getByRole('button', { name: /support|поддерж|dəstək/i }).last();
-      await supportButton.hover();
-      await page.waitForTimeout(250);
-      await saveShot(page, `${language}-home-support-hover.png`);
 
       await page.goto('/trips');
       await expect(page.locator('h1')).toBeVisible();

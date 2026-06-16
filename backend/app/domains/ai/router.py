@@ -4,6 +4,7 @@ from openai import OpenAI
 import httpx
 import json
 import logging
+import re
 
 from app.core.config import settings
 from app.domains.identity.dependencies import CurrentUser, get_current_user
@@ -49,6 +50,16 @@ class DescriptionGenerationResponse(BaseModel):
     description: str
 
 
+class SupportAssistantRequest(BaseModel):
+    message: str
+    language: str = "az"
+
+
+class SupportAssistantResponse(BaseModel):
+    reply: str
+    should_handoff: bool = False
+
+
 async def get_driving_route(origin: LocationCoords, destination: LocationCoords):
     """Fetch exact driving distance and duration from OSRM"""
     try:
@@ -73,7 +84,6 @@ async def get_driving_route(origin: LocationCoords, destination: LocationCoords)
 @router.post("/pricing-suggestion", response_model=PricingSuggestionResponse)
 async def get_smart_pricing_suggestion(
     request: PricingSuggestionRequest,
-    current_user: CurrentUser = Depends(get_current_user),
 ):
     distance_km, duration_min = None, None
     if request.origin_coords and request.destination_coords:
@@ -281,8 +291,6 @@ async def get_smart_pricing_suggestion(
 
             response_content = (completion.choices[0].message.content or "").strip()
 
-            import re
-
             clean_text = (
                 response_content.replace("```json", "").replace("```", "").strip()
             )
@@ -316,6 +324,131 @@ async def get_smart_pricing_suggestion(
     return PricingSuggestionResponse(
         suggested_price=suggested_price, reasoning=reasoning
     )
+
+
+def _support_handoff_requested(message: str) -> bool:
+    lowered = message.lower()
+    handoff_keywords = [
+        "human",
+        "agent",
+        "support worker",
+        "real person",
+        "customer service",
+        "operator",
+        "live support",
+        "insan",
+        "operatorla",
+        "canli destek",
+        "dəstək işçisi",
+        "destek iscisi",
+        "real destek",
+        "человек",
+        "оператор",
+        "сотрудник",
+        "живая поддержка",
+    ]
+    return any(keyword in lowered for keyword in handoff_keywords)
+
+
+def _fallback_support_reply(message: str, language: str, should_handoff: bool) -> str:
+    lowered = message.lower()
+
+    if should_handoff:
+        if language == "az":
+            return "Sizi canlı dəstək söhbətinə yönləndirə bilərəm. Aşağıdakı düymə ilə support işçisinə keçin."
+        if language == "ru":
+            return "Я могу перевести вас в чат с живой поддержкой. Нажмите кнопку ниже, чтобы обратиться к сотруднику."
+        return "I can hand this over to a live support agent. Use the button below to open the support conversation."
+
+    if any(term in lowered for term in ["booking", "rezerv", "бронь", "book"]):
+        if language == "az":
+            return "Rezervlə bağlı kömək üçün səfər səhifəsindən sorğu göndərin və statusu Rezervlər bölməsində izləyin. Sorğu qəbul olunandan sonra ödəniş edə bilərsiniz."
+        if language == "ru":
+            return "По бронированию: отправьте запрос со страницы поездки и следите за статусом в разделе бронирований. Оплата доступна после подтверждения водителем."
+        return "For bookings, send the request from the trip page and track it in Bookings. Payment becomes available after the driver accepts."
+
+    if any(term in lowered for term in ["payment", "wallet", "ödə", "cüzdan", "оплат", "кошел"]):
+        if language == "az":
+            return "Ödəniş və cüzdan məsələlərində əvvəlcə Rezervlər və Cüzdan bölməsini yoxlayın. Problem davam edərsə sizi canlı dəstəyə yönləndirə bilərəm."
+        if language == "ru":
+            return "По оплате и кошельку сначала проверьте разделы Бронирования и Кошелек. Если проблема остается, я могу перевести вас в живую поддержку."
+        return "For payment or wallet issues, first check Bookings and Wallet. If the issue remains, I can hand you over to live support."
+
+    if any(term in lowered for term in ["driver", "sürücü", "водител", "trip", "ride", "gediş", "poezd"]):
+        if language == "az":
+            return "Sürücü və səfər mövzularında mən rezerv, çat, ödəniş, qiymət tövsiyəsi və profil yoxlaması ilə bağlı suallara kömək edə bilərəm."
+        if language == "ru":
+            return "По поездкам и водителям я могу помочь с вопросами о бронировании, чате, оплате, рекомендованной цене и проверке профиля."
+        return "For driver and trip topics, I can help with booking, chat, payment, recommended pricing, and profile verification questions."
+
+    if language == "az":
+        return "Mən yalnız Yolmates dəstək mövzularına cavab verirəm: rezervlər, ödənişlər, sürücü/sərnişin profilləri, çatlar və səfərlər. İstəsəniz sizi canlı dəstəyə yönləndirə bilərəm."
+    if language == "ru":
+        return "Я отвечаю только по темам поддержки Yolmates: бронирования, платежи, профили водителей и пассажиров, чаты и поездки. При необходимости переведу вас к сотруднику."
+    return "I only handle Yolmates support topics: bookings, payments, driver or passenger profiles, chats, and trips. If needed, I can hand you over to a human support agent."
+
+
+@router.post("/support-assistant", response_model=SupportAssistantResponse)
+async def support_assistant(
+    request: SupportAssistantRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    lang = request.language.lower()
+    should_handoff = _support_handoff_requested(request.message)
+    fallback_reply = _fallback_support_reply(request.message, lang, should_handoff)
+
+    if not settings.NVIDIA_API_KEY:
+        return SupportAssistantResponse(
+            reply=fallback_reply,
+            should_handoff=should_handoff,
+        )
+
+    try:
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=settings.NVIDIA_API_KEY,
+        )
+
+        prompt = (
+            "You are the Yolmates support assistant.\n"
+            "Your scope is limited to Yolmates support for passengers and drivers: bookings, trips, payments, wallet, chat, account, verification, pricing suggestion, and platform rules.\n"
+            "If the user asks for anything outside Yolmates support, say you only handle Yolmates support.\n"
+            "If the user asks for a human support worker, set should_handoff to true and briefly tell them to open the live support chat.\n"
+            "Keep the answer concise, practical, and in the requested language.\n"
+            "Return ONLY valid JSON with this shape:\n"
+            '{ "reply": "<string>", "should_handoff": <true_or_false> }\n'
+            f"Requested language: {lang}\n"
+            f"User role: {current_user.role}\n"
+            f"User message: {request.message}"
+        )
+
+        completion = client.chat.completions.create(
+            model="meta/llama-3.1-8b-instruct",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=220,
+            timeout=3.0,
+            stream=False,
+        )
+
+        response_content = (completion.choices[0].message.content or "").strip()
+        clean_text = response_content.replace("```json", "").replace("```", "").strip()
+        match = re.search(r"\{.*\}", clean_text, re.DOTALL)
+        data = json.loads(match.group(0) if match else clean_text)
+
+        reply = data.get("reply")
+        ai_handoff = data.get("should_handoff")
+
+        return SupportAssistantResponse(
+            reply=reply.strip() if isinstance(reply, str) and reply.strip() else fallback_reply,
+            should_handoff=bool(ai_handoff) or should_handoff,
+        )
+    except Exception as exc:
+        logger.warning("Support assistant failed, falling back: %s", exc)
+        return SupportAssistantResponse(
+            reply=fallback_reply,
+            should_handoff=should_handoff,
+        )
 
 
 @router.post("/generate-description", response_model=DescriptionGenerationResponse)
