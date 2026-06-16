@@ -79,13 +79,21 @@ function Ensure-FrontendEnv {
 function Start-DevProcessWindow {
     param(
         [string]$Title,
-        [string]$Command
+        [string]$Command,
+        [hashtable]$Environment = @{}
     )
+
+    $envAssignments = @()
+    foreach ($key in $Environment.Keys) {
+        $value = $Environment[$key].Replace("'", "''")
+        $envAssignments += "`$env:$key = '$value'"
+    }
+    $envPrefix = if ($envAssignments.Count -gt 0) { ($envAssignments -join "; ") + "; " } else { "" }
 
     $arguments = @(
         "-NoExit",
         "-Command",
-        "`$Host.UI.RawUI.WindowTitle = '$Title'; $Command"
+        "`$Host.UI.RawUI.WindowTitle = '$Title'; $envPrefix$Command"
     )
 
     Start-Process -FilePath "powershell.exe" -ArgumentList $arguments | Out-Null
@@ -207,6 +215,11 @@ if ($runFrontend) {
 }
 
 $venvPython = $null
+$backendEnv = @{
+    DATABASE_URL = "postgresql://yolustu_user:yolustu_password@127.0.0.1:5433/yolustu_db"
+    DIRECT_DATABASE_URL = "postgresql://yolustu_user:yolustu_password@127.0.0.1:5433/yolustu_db"
+    REDIS_URL = "redis://127.0.0.1:6379/0"
+}
 if ($runBackend) {
     Require-Command -Name "python" -Hint "Install Python 3.11+."
     Write-Step "[check] Python found"
@@ -246,6 +259,9 @@ if ($runBackend) {
     for ($attempt = 1; $attempt -le 20; $attempt++) {
         Push-Location $backendDir
         try {
+            foreach ($key in $backendEnv.Keys) {
+                Set-Item -Path "Env:$key" -Value $backendEnv[$key]
+            }
             & $venvPython -m alembic upgrade head
             if ($LASTEXITCODE -eq 0) {
                 $migrationSucceeded = $true
@@ -268,6 +284,9 @@ if ($runBackend) {
         Write-Step "[backend] Running scripts/seed_dev_data.py"
         Push-Location $backendDir
         try {
+            foreach ($key in $backendEnv.Keys) {
+                Set-Item -Path "Env:$key" -Value $backendEnv[$key]
+            }
             & $venvPython scripts/seed_dev_data.py
             if ($LASTEXITCODE -ne 0) {
                 throw "[error] scripts/seed_dev_data.py failed"
@@ -285,7 +304,7 @@ $skippedFrontendPortBusy = $false
 if ($runBackend) {
     $backendCommand = "Set-Location '$backendDir'; & '$venvPython' -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
     Write-Step "[backend] Starting API"
-    Start-DevProcessWindow -Title "Yolmates Backend" -Command $backendCommand
+    Start-DevProcessWindow -Title "Yolmates Backend" -Command $backendCommand -Environment $backendEnv
     $startedBackend = $true
 }
 
