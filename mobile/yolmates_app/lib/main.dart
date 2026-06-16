@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/localization/app_localizations.dart';
 import 'core/routes.dart';
 import 'core/theme.dart';
 import 'core/theme_provider.dart';
@@ -50,12 +51,19 @@ class _YolmatesAppState extends ConsumerState<YolmatesApp> {
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final appLanguage = ref.watch(languageProvider);
 
     return MaterialApp.router(
       title: 'Yolmates',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Forced light theme
+      themeMode: themeMode == ThemeMode.system ? ThemeMode.light : themeMode,
+      locale: Locale(appLanguage.name),
+      supportedLocales: const [
+        Locale('az'),
+        Locale('en'),
+        Locale('ru'),
+      ],
       routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,
     );

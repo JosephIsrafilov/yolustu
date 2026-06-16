@@ -59,6 +59,8 @@ class ApiRidesRepository implements RidesRepository {
 
       if (data is List) {
         rides = data;
+      } else if (data is Map<String, dynamic> && data['items'] is List) {
+        rides = data['items'] as List<dynamic>;
       } else if (data is Map<String, dynamic> && data['data'] is List) {
         rides = data['data'] as List<dynamic>;
       } else {

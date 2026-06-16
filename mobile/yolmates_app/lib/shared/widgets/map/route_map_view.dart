@@ -14,6 +14,7 @@ class RouteMapView extends StatelessWidget {
   final double progress; // 0.0 to 1.0 to animate the car along the route.
   final bool showCar;
   final bool forceCanvas;
+  final bool preferGoogleMap;
 
   const RouteMapView({
     required this.origin,
@@ -21,12 +22,13 @@ class RouteMapView extends StatelessWidget {
     this.progress = 0.0,
     this.showCar = false,
     this.forceCanvas = false,
+    this.preferGoogleMap = false,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (forceCanvas || kIsWeb) {
+    if (forceCanvas || kIsWeb || !preferGoogleMap) {
       return CanvasRouteMapView(
         origin: origin,
         destination: destination,
