@@ -125,3 +125,70 @@ def test_ride_response_handles_null_values():
     assert response.pets_allowed is False
     assert response.music_allowed is True
     assert response.female_only is False
+
+
+def test_geometry_to_location_other_type():
+    from app.domains.trips.schemas import geometry_to_location
+
+    assert geometry_to_location(42) == 42
+
+
+def test_wkt_point_to_location_invalid_format():
+    from app.domains.trips.schemas import geometry_to_location
+
+    element = WKTElement("INVALID POINT(1 2)", srid=4326)
+    assert geometry_to_location(element) == element
+
+
+def test_wkb_point_to_location_invalid_hex():
+    from app.domains.trips.schemas import _wkb_point_to_location
+
+    assert _wkb_point_to_location("invalidhex") is None
+
+
+def test_wkb_point_to_location_invalid_hex_with_prefix():
+    from app.domains.trips.schemas import _wkb_point_to_location
+
+    assert _wkb_point_to_location("\\xinvalid") is None
+
+
+def test_wkb_point_to_location_too_short():
+    from app.domains.trips.schemas import geometry_to_location
+
+    element = WKBElement(b"\x01\x01\x00\x00\x00", srid=4326)
+    assert geometry_to_location(element) == element
+
+
+def test_wkb_point_to_location_invalid_byte_order():
+    from app.domains.trips.schemas import geometry_to_location
+
+    data = b"\x02" + b"\x00" * 30
+    element = WKBElement(data, srid=4326)
+    assert geometry_to_location(element) == element
+
+
+def test_wkb_point_to_location_invalid_geometry_type():
+    from app.domains.trips.schemas import geometry_to_location
+
+    data = b"\x01\x02\x00\x00\x00" + b"\x00" * 30
+    element = WKBElement(data, srid=4326)
+    assert geometry_to_location(element) == element
+
+
+def test_wkb_point_to_location_offset_too_short():
+    from app.domains.trips.schemas import geometry_to_location
+
+    data = b"\x01\x01\x00\x00\x20\x00\x00\x00\x00" + b"\x00" * 10
+    element = WKBElement(data, srid=4326)
+    assert geometry_to_location(element) == element
+
+
+def test_wkb_point_to_location_bytes_input():
+    from app.domains.trips.schemas import geometry_to_location
+
+    data = bytes.fromhex("0101000020e6100000492eff21fdee48405c2041f163344440")
+    element = WKBElement(data, srid=4326)
+    loc = geometry_to_location(element)
+    assert loc is not None
+    assert loc["lat"] == 40.4093
+    assert loc["lon"] == 49.8671

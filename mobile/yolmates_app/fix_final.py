@@ -7,9 +7,17 @@ with open(path, "r", encoding="utf-8") as f:
     text = f.read()
 
 # remove unused l10n from _DriverVerificationScreenState.build (around line 77)
-text = re.sub(r"Widget build\(BuildContext context\) \{\s*final l10n = ref\.watch\(l10nProvider\);", "Widget build(BuildContext context) {", text)
+text = re.sub(
+    r"Widget build\(BuildContext context\) \{\s*final l10n = ref\.watch\(l10nProvider\);",
+    "Widget build(BuildContext context) {",
+    text,
+)
 # remove unused l10n from _Note.build (around line 207)
-text = re.sub(r"Widget build\(BuildContext context, WidgetRef ref\) \{\s*final l10n = ref\.watch\(l10nProvider\);", "Widget build(BuildContext context, WidgetRef ref) {", text)
+text = re.sub(
+    r"Widget build\(BuildContext context, WidgetRef ref\) \{\s*final l10n = ref\.watch\(l10nProvider\);",
+    "Widget build(BuildContext context, WidgetRef ref) {",
+    text,
+)
 
 with open(path, "w", encoding="utf-8") as f:
     f.write(text)
@@ -21,7 +29,11 @@ with open(path, "r", encoding="utf-8") as f:
     text = f.read()
 
 # Fix ReviewsScreen.build signature and add l10n
-text = re.sub(r"class ReviewsScreen extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{", r"class ReviewsScreen extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {\n    final l10n = ref.watch(l10nProvider);", text)
+text = re.sub(
+    r"class ReviewsScreen extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{",
+    r"class ReviewsScreen extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {\n    final l10n = ref.watch(l10nProvider);",
+    text,
+)
 
 with open(path, "w", encoding="utf-8") as f:
     f.write(text)
@@ -33,8 +45,16 @@ with open(path, "r", encoding="utf-8") as f:
     text = f.read()
 
 # Fix _FilterBar and _TripCard signatures
-text = re.sub(r"class _FilterBar extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{", r"class _FilterBar extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {", text)
-text = re.sub(r"class _TripCard extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{", r"class _TripCard extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {", text)
+text = re.sub(
+    r"class _FilterBar extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{",
+    r"class _FilterBar extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {",
+    text,
+)
+text = re.sub(
+    r"class _TripCard extends ConsumerWidget \{([\s\S]*?)Widget build\(BuildContext context\) \{",
+    r"class _TripCard extends ConsumerWidget {\1Widget build(BuildContext context, WidgetRef ref) {",
+    text,
+)
 
 with open(path, "w", encoding="utf-8") as f:
     f.write(text)
