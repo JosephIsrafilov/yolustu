@@ -22,9 +22,9 @@ const HEADER_MODE_I18N = {
     driverDashboard: 'Surucu paneli',
   },
   ru: {
-    adminPanel: 'РђРґРјРёРЅ-РїР°РЅРµР»СЊ',
-    wallet: 'Р‘Р°Р»Р°РЅСЃ',
-    driverDashboard: 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ',
+    adminPanel: 'Админ-панель',
+    wallet: 'Кошелек',
+    driverDashboard: 'Панель водителя',
   },
   en: {
     adminPanel: 'Admin panel',
