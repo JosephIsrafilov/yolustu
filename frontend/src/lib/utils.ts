@@ -67,6 +67,24 @@ export const AZ_CITIES = [
 
 export type AZCity = (typeof AZ_CITIES)[number];
 
+// Maps Nominatim city name variants (lowercase) → canonical AZCity
+const CITY_ALIASES: Record<string, AZCity> = {
+  'baku': 'Bakı', 'baki': 'Bakı', 'баку': 'Bakı',
+  'ganja': 'Gəncə', 'gence': 'Gəncə', 'гянджа': 'Gəncə',
+  'sumqayit': 'Sumqayıt', 'sumgait': 'Sumqayıt', 'сумгаит': 'Sumqayıt', 'sumqayıt': 'Sumqayıt',
+  'shaki': 'Şəki', 'şəki': 'Şəki', 'шеки': 'Şəki',
+  'quba': 'Quba', 'куба': 'Quba',
+  'lankaran': 'Lənkəran', 'lenkaran': 'Lənkəran', 'lənkəran': 'Lənkəran', 'ленкорань': 'Lənkəran',
+  'shamakhi': 'Şamaxı', 'şamaxı': 'Şamaxı', 'шемаха': 'Şamaxı',
+  'mingachevir': 'Mingəçevir', 'mingəçevir': 'Mingəçevir', 'мингечевир': 'Mingəçevir',
+  'naftalan': 'Naftalan', 'нафталан': 'Naftalan',
+  'goychay': 'Göyçay', 'göyçay': 'Göyçay', 'геокчай': 'Göyçay',
+};
+
+export function normalizeNominatimCity(nominatimCity: string): AZCity | null {
+  return CITY_ALIASES[nominatimCity.toLowerCase()] ?? null;
+}
+
 export interface Coordinates {
   lat: number;
   lng: number;

@@ -305,7 +305,6 @@ export default function TripDetailsPage() {
             </div>
           </Card>
           {trip.comment && (<Card padding="md"><div className="flex items-start gap-3"><Icon name="message-square" size={16} className="text-text-muted mt-0.5 shrink-0" /><p className="text-sm text-text-secondary">{trip.comment}</p></div></Card>)}
-          <StatusBadge status={trip.status} type="trip" />
           {tripReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.driverReviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{tripReviews.slice(0, 4).map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
         </div>
         <div className="lg:col-span-1 min-w-0">

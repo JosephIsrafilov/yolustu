@@ -66,3 +66,4 @@ analyze.err
 mobile/yolmates_app/android/app/google-services.json
 mobile/yolmates_app/ios/Runner/GoogleService-Info.plist
 
+backend/alembic/versions/a1b2c3d4e5f6_add_share_token_and_boarding.py

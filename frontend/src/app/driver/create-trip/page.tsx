@@ -18,7 +18,7 @@ import Select from '@/components/ui/Select';
 import Icon from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan } from '@/lib/utils';
+import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, normalizeNominatimCity } from '@/lib/utils';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
@@ -348,7 +348,9 @@ export default function CreateTripPage() {
     })();
   };
 
-  const reverseGeocode = async (lat: number, lng: number, field: 'meetingPoint' | 'dropoffPoint') => {
+  // ponytail: coords committed only after city validation passes — prevents race where eager setValue saves wrong-city coords
+  const reverseGeocode = async (pos: { lat: number; lng: number }, field: 'meetingPoint' | 'dropoffPoint') => {
+    const { lat, lng } = pos;
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
       const data = await res.json();
@@ -359,15 +361,24 @@ export default function CreateTripPage() {
 
         if (countryCode && countryCode.toLowerCase() !== 'az') {
           setError(coordField, { type: 'manual', message: copy.onlyAzerbaijanError });
-          setValue(coordField, undefined);
+          setValue(field, '');
+          return;
+        }
+
+        const nominatimCity = data.address.city || data.address.town || data.address.village || '';
+        const normalized = normalizeNominatimCity(nominatimCity);
+        const expectedCity = isMeeting ? getValues('departureCity') : getValues('arrivalCity');
+        if (expectedCity && normalized && normalized !== expectedCity) {
+          setError(coordField, { type: 'manual', message: copy.dropoffCityMismatchError });
           setValue(field, '');
           return;
         }
 
         clearErrors(coordField);
+        setValue(coordField, pos);
         const addr = data.address;
-        const shortName = addr.road 
-          ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}` 
+        const shortName = addr.road
+          ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}`
           : data.display_name.split(',').slice(0, 2).join(',');
         setValue(field, shortName.replace(/,\s*$/, '').trim());
       }
@@ -528,14 +539,14 @@ export default function CreateTripPage() {
                               setError('origin', { type: 'manual', message: copy.onlyAzerbaijanError });
                               return;
                             }
-                            clearErrors('origin'); setValue('origin', pos); reverseGeocode(pos.lat, pos.lng, 'meetingPoint'); 
+                            clearErrors('origin'); reverseGeocode(pos, 'meetingPoint');
                           }}
-                          onSelectDestination={(pos) => { 
+                          onSelectDestination={(pos) => {
                             if (!isWithinAzerbaijan(pos.lat, pos.lng)) {
                               setError('destination', { type: 'manual', message: copy.onlyAzerbaijanError });
                               return;
                             }
-                            clearErrors('destination'); setValue('destination', pos); reverseGeocode(pos.lat, pos.lng, 'dropoffPoint'); 
+                            clearErrors('destination'); reverseGeocode(pos, 'dropoffPoint');
                           }}
                         />
                       </MapContainer>

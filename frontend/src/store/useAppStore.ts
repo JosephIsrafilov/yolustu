@@ -21,7 +21,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'yolustu-storage',
       version: 2,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => window.localStorage),
       partialize: (state) => ({
         currentUser: state.currentUser,
         isAuthenticated: state.isAuthenticated,
