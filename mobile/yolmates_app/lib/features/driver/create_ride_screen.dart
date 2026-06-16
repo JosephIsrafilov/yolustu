@@ -10,6 +10,7 @@ import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 import 'data/ai_pricing_repository.dart';
 import '../../shared/widgets/map/route_map_view.dart';
+import '../../shared/widgets/city_dropdown.dart';
 
 /// Single-screen create-ride form (mock publish).
 ///
@@ -182,15 +183,17 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppConstants.spacing24),
             children: [
-              _label(l10n.createRideFrom),
-              _CityDropdown(
+              CityDropdown(
+                label: l10n.createRideFrom,
                 value: _from,
+                icon: Icons.location_on_outlined,
                 onChanged: (v) => setState(() => _from = v),
               ),
               const SizedBox(height: 16),
-              _label(l10n.createRideTo),
-              _CityDropdown(
+              CityDropdown(
+                label: l10n.createRideTo,
                 value: _to,
+                icon: Icons.location_on,
                 onChanged: (v) => setState(() => _to = v),
               ),
               const SizedBox(height: 16),
@@ -436,26 +439,6 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       );
 }
 
-class _CityDropdown extends StatelessWidget {
-  final String value;
-  final ValueChanged<String> onChanged;
-
-  const _CityDropdown({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: const InputDecoration(prefixIcon: Icon(Icons.location_on)),
-      items: AppConstants.cities
-          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-          .toList(),
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
-    );
-  }
-}
 
 class _PickerTile extends StatelessWidget {
   final IconData icon;

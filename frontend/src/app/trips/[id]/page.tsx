@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import WebLayout from '@/components/layout/WebLayout';
 import RouteTimeline from '@/components/trips/RouteTimeline';
@@ -320,11 +321,15 @@ export default function TripDetailsPage() {
             )}
             {driver && (
               <Card>
-                <div className="flex items-center gap-3">
+                <Link
+                  href={ROUTES.profileDetails(driver.id)}
+                  className="flex items-center gap-3"
+                  aria-label={driver.fullName}
+                >
                   <UserAvatar name={driver.fullName} avatarUrl={driver.avatarUrl} size={48} />
                   <div className="flex-1">
                     <p className="text-base font-semibold text-text flex items-center gap-1">
-                      <span>{driver.fullName}</span>
+                      <span className="hover:text-brand-600">{driver.fullName}</span>
                       {driver.verificationStatus === 'approved' && (
                         <span title={preferenceCopy.verifiedDriver}>
                           <Icon name="shield-check" size={16} className="text-green-600 shrink-0" />
@@ -340,7 +345,7 @@ export default function TripDetailsPage() {
                       <span>{getLocalizedCityName(driver.city, language)}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               </Card>
             )}
             {isOwnTrip && (<Card padding="sm" className="bg-amber-50 border-amber-200"><div className="flex items-center gap-2 text-sm text-amber-700"><Icon name="alert-triangle" size={16} />{copy.ownTripWarning}</div></Card>)}

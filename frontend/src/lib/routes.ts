@@ -7,6 +7,7 @@ export const ROUTES = {
   passwordReset: '/auth/forgot-password',
   profileSetup: '/profile/setup',
   profile: '/profile',
+  profileDetails: (id: string) => `/profile/${id}`,
   wallet: '/wallet',
   search: '/trips',
   trips: '/trips',

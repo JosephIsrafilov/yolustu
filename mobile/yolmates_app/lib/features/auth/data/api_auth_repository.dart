@@ -124,10 +124,28 @@ class ApiAuthRepository implements AuthRepository {
     AppLanguage? language,
   }) async {
     try {
+      String? remoteAvatarUrl = avatarUrl;
+      
+      if (avatarUrl != null && !avatarUrl.startsWith('http')) {
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            avatarUrl,
+            filename: avatarUrl.split('/').last,
+          ),
+        });
+        
+        final uploadResp = await _client.post(
+          '/users/me/avatar',
+          data: formData,
+        );
+        final uploadData = uploadResp.data as Map<String, dynamic>;
+        remoteAvatarUrl = uploadData['avatar_url'] as String?;
+      }
+
       final response = await _client.put('/users/me', data: {
         'first_name': firstName,
         'last_name': lastName,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (remoteAvatarUrl != null) 'avatar_url': remoteAvatarUrl,
         if (role != null) 'role': role.name,
         if (language != null) 'language': language.name,
       });

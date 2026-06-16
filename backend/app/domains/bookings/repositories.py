@@ -61,7 +61,7 @@ class BookingRepository:
                 joinedload(Booking.passenger),
             )
             .filter(Booking.id == booking_id)
-            .with_for_update()
+            .with_for_update(of=Booking)
             .first()
         )
 

@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/providers.dart';
 import '../../features/auth/data/auth_mode.dart';
-import '../../shared/models/trip.dart';
 import '../../shared/data/mock_data.dart';
+import '../../shared/models/trip.dart';
 import 'api_rides_repository.dart';
 
 /// Search/detail contract for rides. Backend swap point.
@@ -19,7 +19,7 @@ abstract class RidesRepository {
 }
 
 class MockRidesRepository implements RidesRepository {
-  static const Duration _latency = Duration(milliseconds: 600);
+  static const Duration _latency = Duration(milliseconds: 120);
 
   @override
   Future<List<Trip>> search({
@@ -44,32 +44,29 @@ class MockRidesRepository implements RidesRepository {
   }
 }
 
-// --- Providers ---------------------------------------------------------------
-
-/// Binds to real API or mock based on --dart-define=API_MODE.
 final ridesRepositoryProvider = Provider<RidesRepository>(
   (ref) {
     if (AuthMode.isApi) {
       return ApiRidesRepository(ref.read(apiClientProvider));
-    } else {
-      return MockRidesRepository();
     }
+    return MockRidesRepository();
   },
 );
 
 /// Search parameters used as the [rideSearchProvider] family key.
 ///
-/// A plain class (not a record carrying a [DateTime]) so the key is stable
-/// across rebuilds — a fresh `DateTime.now()` in the key would mint a new
-/// provider every build and re-trigger the search forever.
+/// Keep the date normalized to day precision so rebuilds do not churn provider
+/// instances for the same search.
 class RideSearchParams {
   final String fromCity;
   final String toCity;
   final int passengers;
+  final DateTime date;
 
   const RideSearchParams({
     required this.fromCity,
     required this.toCity,
+    required this.date,
     this.passengers = 1,
   });
 
@@ -78,20 +75,22 @@ class RideSearchParams {
       other is RideSearchParams &&
       other.fromCity == fromCity &&
       other.toCity == toCity &&
-      other.passengers == passengers;
+      other.passengers == passengers &&
+      other.date.year == date.year &&
+      other.date.month == date.month &&
+      other.date.day == date.day;
 
   @override
-  int get hashCode => Object.hash(fromCity, toCity, passengers);
+  int get hashCode =>
+      Object.hash(fromCity, toCity, passengers, date.year, date.month, date.day);
 }
 
-/// Async search results for a route. The UI watches this and renders the
-/// shared loading/error/empty states off its [AsyncValue].
 final rideSearchProvider =
     FutureProvider.family<List<Trip>, RideSearchParams>((ref, params) {
   return ref.read(ridesRepositoryProvider).search(
         fromCity: params.fromCity,
         toCity: params.toCity,
-        date: DateTime.now(),
+        date: DateTime(params.date.year, params.date.month, params.date.day),
         passengers: params.passengers,
       );
 });

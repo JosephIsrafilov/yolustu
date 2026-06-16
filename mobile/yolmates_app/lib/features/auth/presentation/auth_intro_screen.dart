@@ -25,16 +25,6 @@ class AuthIntroScreen extends ConsumerWidget {
             children: [
               const Spacer(),
               const Center(child: AppLogo(size: 100)),
-              const SizedBox(height: 24),
-              const Text(
-                'Yolustu',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.navy,
-                ),
-              ),
               const SizedBox(height: 8),
               Text(
                 l10n.authIntroSubtitle,

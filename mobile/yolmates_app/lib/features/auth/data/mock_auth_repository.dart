@@ -14,7 +14,7 @@ class MockAuthRepository implements AuthRepository {
 
   static const String _userKey = 'auth_user';
   static const String _validCode = '123456';
-  static const Duration _latency = Duration(milliseconds: 700);
+  static const Duration _latency = Duration(milliseconds: 180);
 
   MockAuthRepository(this._storage);
 

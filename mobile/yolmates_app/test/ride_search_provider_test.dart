@@ -50,31 +50,49 @@ void main() {
   group('rideSearchProvider', () {
     test('passes route params to repository and returns rides', () async {
       final repo = _FakeRidesRepository();
+      final searchDate = DateTime(2026, 6, 16);
       final container = ProviderContainer(
         overrides: [ridesRepositoryProvider.overrideWithValue(repo)],
       );
       addTearDown(container.dispose);
 
-      final before = DateTime.now();
       final rides = await container.read(
         rideSearchProvider(
-          const RideSearchParams(fromCity: 'Baku', toCity: 'Ganja', passengers: 2),
+          RideSearchParams(
+            fromCity: 'Baku',
+            toCity: 'Ganja',
+            passengers: 2,
+            date: searchDate,
+          ),
         ).future,
       );
-      final after = DateTime.now();
 
       expect(rides, hasLength(1));
       expect(repo.fromCity, 'Baku');
       expect(repo.toCity, 'Ganja');
       expect(repo.passengers, 2);
-      expect(repo.date!.isAfter(before.subtract(const Duration(seconds: 1))), isTrue);
-      expect(repo.date!.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+      expect(repo.date, DateTime(2026, 6, 16));
     });
 
     test('RideSearchParams equality is stable for provider keys', () {
-      const a = RideSearchParams(fromCity: 'Baku', toCity: 'Ganja', passengers: 2);
-      const b = RideSearchParams(fromCity: 'Baku', toCity: 'Ganja', passengers: 2);
-      const c = RideSearchParams(fromCity: 'Baku', toCity: 'Quba', passengers: 2);
+      final a = RideSearchParams(
+        fromCity: 'Baku',
+        toCity: 'Ganja',
+        passengers: 2,
+        date: DateTime(2026, 6, 16),
+      );
+      final b = RideSearchParams(
+        fromCity: 'Baku',
+        toCity: 'Ganja',
+        passengers: 2,
+        date: DateTime(2026, 6, 16),
+      );
+      final c = RideSearchParams(
+        fromCity: 'Baku',
+        toCity: 'Quba',
+        passengers: 2,
+        date: DateTime(2026, 6, 16),
+      );
 
       expect(a, b);
       expect(a.hashCode, b.hashCode);

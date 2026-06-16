@@ -4,19 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/repositories/rides_repository.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
-import '../../core/repositories/rides_repository.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
-import '../../shared/widgets/skeleton_cards.dart';
 import '../../shared/widgets/map/route_map_view.dart';
+import '../../shared/widgets/skeleton_cards.dart';
 
-/// Search results for a route, backed by [rideSearchProvider].
-///
-/// Supports client-side sort (time/price) and a verified-only filter. Shows
-/// loading, empty and error states from the shared widgets.
 class TripListScreen extends ConsumerStatefulWidget {
   final String fromCity;
   final String toCity;
@@ -53,16 +49,18 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final params = RideSearchParams(
       fromCity: widget.fromCity,
       toCity: widget.toCity,
+      date: widget.date ?? DateTime.now(),
       passengers: widget.passengers,
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
-
     final dateLabel = widget.date != null
         ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
         : '';
+
     return Scaffold(
       appBar: AppBar(
-          title: Text('${widget.fromCity} → ${widget.toCity}$dateLabel')),
+        title: Text('${widget.fromCity} → ${widget.toCity}$dateLabel'),
+      ),
       body: ridesAsync.when(
         loading: () => Column(
           children: [
@@ -110,7 +108,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
           onSort: (s) => setState(() => _sort = s),
           onVerified: (v) => setState(() => _verifiedOnly = v),
         ),
-        if (selectedTrip != null) ...[
+        if (selectedTrip != null)
           Container(
             height: 180,
             width: double.infinity,
@@ -125,13 +123,13 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
               destination: selectedTrip.toCity,
             ),
           ),
-        ],
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _refresh(
               RideSearchParams(
                 fromCity: widget.fromCity,
                 toCity: widget.toCity,
+                date: widget.date ?? DateTime.now(),
                 passengers: widget.passengers,
               ),
             ),
@@ -197,27 +195,30 @@ class _FilterBar extends ConsumerWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: AppTheme.slate200)),
       ),
-      child: Row(
-        children: [
-          _chip(
-            label: l10n.tripListSortTime,
-            selected: sort == _Sort.timeAsc,
-            onTap: () => onSort(_Sort.timeAsc),
-          ),
-          const SizedBox(width: 8),
-          _chip(
-            label: l10n.tripListSortPrice,
-            selected: sort == _Sort.priceAsc,
-            onTap: () => onSort(_Sort.priceAsc),
-          ),
-          const Spacer(),
-          _chip(
-            label: l10n.tripListVerifiedOnly,
-            icon: Icons.verified,
-            selected: verifiedOnly,
-            onTap: () => onVerified(!verifiedOnly),
-          ),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _chip(
+              label: l10n.tripListSortTime,
+              selected: sort == _Sort.timeAsc,
+              onTap: () => onSort(_Sort.timeAsc),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: l10n.tripListSortPrice,
+              selected: sort == _Sort.priceAsc,
+              onTap: () => onSort(_Sort.priceAsc),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: l10n.tripListVerifiedOnly,
+              icon: Icons.verified,
+              selected: verifiedOnly,
+              onTap: () => onVerified(!verifiedOnly),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -244,9 +245,11 @@ class _FilterBar extends ConsumerWidget {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon,
-                  size: 14,
-                  color: selected ? AppTheme.tealDark : AppTheme.slate500),
+              Icon(
+                icon,
+                size: 14,
+                color: selected ? AppTheme.tealDark : AppTheme.slate500,
+              ),
               const SizedBox(width: 4),
             ],
             Text(
@@ -326,7 +329,7 @@ class _TripCard extends ConsumerWidget {
                           const Icon(Icons.star, size: 14, color: Colors.amber),
                           const SizedBox(width: 4),
                           Text(
-                            '${trip.driver.rating.toStringAsFixed(1)} · ${trip.driver.tripCount} səyahət',
+                            '${trip.driver.rating.toStringAsFixed(1)} · ${trip.driver.tripCount} ${l10n.tripsPlural(trip.driver.tripCount)}',
                             style: TextStyle(
                               fontSize: 13,
                               color: AppTheme.slate500,
@@ -348,29 +351,50 @@ class _TripCard extends ConsumerWidget {
               ],
             ),
             Divider(height: 24, color: AppTheme.slate100),
-            Row(
+            Wrap(
+              spacing: 18,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const Icon(Icons.access_time, size: 18),
-                const SizedBox(width: 8),
-                Text(time, style: const TextStyle(fontSize: 15)),
-                const SizedBox(width: 24),
-                const Icon(Icons.event_seat, size: 18),
-                const SizedBox(width: 8),
-                Text('${trip.availableSeats} ${l10n.commonAvailableSeats}',
-                    style: const TextStyle(fontSize: 15)),
-                if (isSelected) ...[
-                  const Spacer(),
-                  Text(
-                    'Detallara baxmaq üçün yenidən toxunun',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.tealDark,
-                      fontWeight: FontWeight.w500,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.access_time, size: 18),
+                    const SizedBox(width: 8),
+                    Text(time, style: const TextStyle(fontSize: 15)),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.event_seat, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${trip.availableSeats} ${l10n.commonAvailableSeats}',
+                      style: const TextStyle(fontSize: 15),
                     ),
+                  ],
+                ),
+                if (isSelected)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Detallara baxmaq üçün yenidən toxunun',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.tealDark,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: AppTheme.tealDark,
+                      ),
+                    ],
                   ),
-                  const Icon(Icons.chevron_right,
-                      size: 16, color: AppTheme.tealDark),
-                ],
               ],
             ),
           ],

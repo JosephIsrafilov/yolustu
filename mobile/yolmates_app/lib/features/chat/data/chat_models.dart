@@ -1,13 +1,22 @@
 class ConversationParticipant {
   final String userId;
   final String role;
+  final String userName;
+  final String? userAvatarUrl;
 
-  ConversationParticipant({required this.userId, required this.role});
+  ConversationParticipant({
+    required this.userId,
+    required this.role,
+    this.userName = 'User',
+    this.userAvatarUrl,
+  });
 
   factory ConversationParticipant.fromJson(Map<String, dynamic> json) {
     return ConversationParticipant(
       userId: json['user_id'] as String,
       role: json['role'] as String,
+      userName: json['user_name'] as String? ?? 'User',
+      userAvatarUrl: json['user_avatar_url'] as String?,
     );
   }
 }
@@ -53,6 +62,26 @@ class Conversation {
               .toList() ??
           [],
     );
+  }
+
+  String getOtherParticipantName(String currentUserId) {
+    if (type == 'support') return '';
+    try {
+      final other = participants.firstWhere((p) => p.userId != currentUserId);
+      return other.userName;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String? getOtherParticipantAvatar(String currentUserId) {
+    if (type == 'support') return null;
+    try {
+      final other = participants.firstWhere((p) => p.userId != currentUserId);
+      return other.userAvatarUrl;
+    } catch (_) {
+      return null;
+    }
   }
 }
 

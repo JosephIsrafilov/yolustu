@@ -54,6 +54,8 @@ class ConversationParticipantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_id: UUID
     role: str
+    user_name: str = "User"
+    user_avatar_url: Optional[str] = None
 
 
 class ConversationResponse(BaseModel):

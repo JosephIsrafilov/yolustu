@@ -122,6 +122,21 @@ class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessa
       rethrow;
     }
   }
+
+  Future<void> sendImageMessage(String filePath) async {
+    final repo = ref.read(chatRepositoryProvider);
+    final prev = state.value ?? [];
+    try {
+      final url = await repo.uploadAttachment(filePath);
+      final msg = await repo.sendMessage(arg, '', type: 'photo', attachments: [url]);
+      if (!prev.any((e) => e.id == msg.id)) {
+        state = AsyncData([...prev, msg]);
+      }
+      ref.invalidate(conversationsProvider);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 final chatMessagesProvider = AsyncNotifierProvider.autoDispose.family<ChatMessagesNotifier, List<ChatMessage>, String>(

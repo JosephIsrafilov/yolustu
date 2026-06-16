@@ -49,7 +49,7 @@ export default function ChatsPage() {
     messagesService
       .getChats()
       .then((data) => {
-        if (!cancelled) setConversations(data);
+        if (!cancelled) setConversations(data.filter((conversation) => conversation.type !== 'support'));
       })
       .catch(() => {
         if (!cancelled) setError(t.failed);

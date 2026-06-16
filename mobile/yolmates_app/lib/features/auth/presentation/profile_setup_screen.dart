@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -19,10 +22,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
+  final _imagePicker = ImagePicker();
 
   AppLanguage _language = AppLanguage.az;
   bool _saving = false;
   String? _error;
+  String? _avatarPath;
 
   @override
   void initState() {
@@ -32,6 +37,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       _firstName.text = user.firstName ?? '';
       _lastName.text = user.lastName ?? '';
       _language = user.language;
+      _avatarPath = user.avatarUrl;
     }
   }
 
@@ -56,6 +62,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         .toUpperCase();
   }
 
+  Future<void> _pickAvatar() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 82,
+    );
+    if (image == null || !mounted) return;
+    setState(() => _avatarPath = image.path);
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
@@ -66,9 +82,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     });
 
     try {
+      await ref.read(languageProvider.notifier).setLanguage(_language);
       await ref.read(authControllerProvider.notifier).completeProfile(
             firstName: _firstName.text.trim(),
             lastName: _lastName.text.trim(),
+            avatarUrl: _avatarPath,
             role: UserRole.passenger,
             language: _language,
           );
@@ -97,12 +115,21 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(child: _AvatarPlaceholder(initials: _previewInitials())),
+                Center(
+                  child: GestureDetector(
+                    onTap: _saving ? null : _pickAvatar,
+                    child: _AvatarPlaceholder(
+                      initials: _previewInitials(),
+                      imagePath: _avatarPath,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Center(
-                  child: Text(
-                    l10n.profileSetupAvatarHint,
-                    style: TextStyle(color: AppTheme.slate500, fontSize: 13),
+                  child: TextButton.icon(
+                    onPressed: _saving ? null : _pickAvatar,
+                    icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                    label: Text(l10n.profileSetupAvatarHint),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -140,7 +167,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                 _LanguageSelector(
                   value: _language,
                   enabled: !_saving,
-                  onChanged: (language) => setState(() => _language = language),
+                  onChanged: (language) async {
+                    setState(() => _language = language);
+                    await ref.read(languageProvider.notifier).setLanguage(language);
+                  },
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
@@ -190,8 +220,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
 class _AvatarPlaceholder extends StatelessWidget {
   final String initials;
+  final String? imagePath;
 
-  const _AvatarPlaceholder({required this.initials});
+  const _AvatarPlaceholder({
+    required this.initials,
+    this.imagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -202,17 +236,25 @@ class _AvatarPlaceholder extends StatelessWidget {
         color: AppTheme.slate50,
         shape: BoxShape.circle,
         border: Border.all(color: AppTheme.slate200, width: 2),
+        image: imagePath != null && imagePath!.isNotEmpty
+            ? DecorationImage(
+                image: FileImage(File(imagePath!)),
+                fit: BoxFit.cover,
+              )
+            : null,
       ),
-      child: Center(
-        child: Text(
-          initials,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.slate500,
-          ),
-        ),
-      ),
+      child: imagePath == null || imagePath!.isEmpty
+          ? Center(
+              child: Text(
+                initials,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.slate500,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

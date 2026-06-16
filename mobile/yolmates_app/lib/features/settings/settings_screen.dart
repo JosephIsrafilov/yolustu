@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
-import '../../core/theme_provider.dart';
 import '../auth/data/app_user.dart';
 import '../auth/state/auth_controller.dart';
 
@@ -26,7 +25,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final language = ref.watch(languageProvider);
-    final themeMode = ref.watch(themeModeProvider);
     final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
@@ -148,52 +146,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               language: picked,
             );
       }
-    }
-  }
-
-  String _themeModeLabel(ThemeMode mode, AppLocalizations l10n) {
-    return switch (mode) {
-      ThemeMode.light => l10n.settingsThemeLight,
-      ThemeMode.dark => l10n.settingsThemeDark,
-      ThemeMode.system => l10n.settingsThemeSystem,
-    };
-  }
-
-  Future<void> _pickThemeMode(BuildContext context, ThemeMode current) async {
-    final l10n = ref.read(l10nProvider);
-    final picked = await showModalBottomSheet<ThemeMode>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: RadioGroup<ThemeMode>(
-          groupValue: current,
-          onChanged: (v) => Navigator.of(ctx).pop(v),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                child: Text(
-                  l10n.settingsDarkMode,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              for (final mode in ThemeMode.values)
-                RadioListTile<ThemeMode>(
-                  value: mode,
-                  title: Text(_themeModeLabel(mode, l10n)),
-                ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (picked != null && picked != current) {
-      ref.read(themeModeProvider.notifier).setThemeMode(picked);
     }
   }
 

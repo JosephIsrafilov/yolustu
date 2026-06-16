@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,11 +11,6 @@ import '../../core/theme.dart';
 import '../auth/data/app_user.dart';
 import '../auth/state/auth_controller.dart';
 
-/// Profile tab: user header, navigation to sub-pages, and logout.
-///
-/// Reads the authenticated [AppUser] from [authControllerProvider]; logout is
-/// confirmed via a bottom sheet then clears the mock session (the router
-/// redirect returns the user to login).
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -131,12 +128,11 @@ class ProfileScreen extends ConsumerWidget {
               Text(
                 l10n.profileLogoutConfirm,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
-                'Hesabınızdan çıxacaqsınız. Yenidən daxil olmaq üçün '
-                'nömrənizi təsdiqləməlisiniz.',
+                'You will be signed out from this device.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppTheme.slate500),
               ),
@@ -166,7 +162,6 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      // Clears the session; the router redirect lands us back on login.
       await ref.read(authControllerProvider.notifier).logout();
     }
   }
@@ -181,9 +176,16 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (user?.fullName.trim().isNotEmpty ?? false)
         ? user!.fullName
-        : 'İstifadəçi';
+        : 'User';
     final phone = user?.phone ?? '';
-    final roleLabel = user?.role == UserRole.driver ? 'Sürücü' : 'Sərnişin';
+    final roleLabel = user?.role == UserRole.driver ? 'Driver' : 'Passenger';
+    final avatarUrl = user?.avatarUrl;
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final avatarImage = hasAvatar
+        ? (avatarUrl.startsWith('http')
+            ? NetworkImage(avatarUrl) as ImageProvider
+            : FileImage(File(avatarUrl)))
+        : null;
 
     return Container(
       padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -196,14 +198,17 @@ class _Header extends StatelessWidget {
           CircleAvatar(
             radius: 32,
             backgroundColor: AppTheme.teal.withValues(alpha: 0.25),
-            child: Text(
-              user?.initials ?? '?',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-              ),
-            ),
+            backgroundImage: avatarImage,
+            child: hasAvatar
+                ? null
+                : Text(
+                    user?.initials ?? '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
+                  ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -222,8 +227,7 @@ class _Header extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     phone,
-                    style:
-                        TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                   ),
                 ],
                 const SizedBox(height: 8),

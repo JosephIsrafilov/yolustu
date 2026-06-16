@@ -6,7 +6,7 @@ import '../../../core/theme.dart';
 import '../../data/city_coordinates.dart';
 import '../../data/city_routes.dart';
 
-/// Real Google Maps integration for Yolüstü routes.
+/// Real Google Maps integration for Yolmates routes.
 class GoogleRouteMapView extends StatefulWidget {
   final String origin;
   final String destination;

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants.dart';
+
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/city_dropdown.dart';
 import 'data/recent_searches_repository.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -20,35 +21,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   DateTime _date = DateTime.now();
   int _passengers = 1;
 
-  final List<String> _cities = AppConstants.cities;
-
-  static const _months = [
-    'Yan',
-    'Fev',
-    'Mar',
-    'Apr',
-    'May',
-    'İyn',
-    'İyl',
-    'Avq',
-    'Sen',
-    'Okt',
-    'Noy',
-    'Dek',
-  ];
-  static const _weekdays = [
-    'B.e',
-    'Ç.a',
-    'Çər',
-    'C.a',
-    'Cüm',
-    'Şən',
-    'Baz',
-  ];
-
-  String get _dateLabel =>
-      '${_weekdays[_date.weekday - 1]}, ${_date.day} ${_months[_date.month - 1]}';
-
   void _search() async {
     final l10n = ref.read(l10nProvider);
     if (_from == _to) {
@@ -58,12 +30,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       return;
     }
 
-    // Persist to recent searches
     final repo = ref.read(recentSearchesRepositoryProvider);
     await repo.addSearch(_from, _to);
     ref.invalidate(recentSearchesProvider);
 
-    final dateStr = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
     if (mounted) {
       context.push(
         '${AppRoutes.rideResults}?from=$_from&to=$_to'
@@ -75,6 +47,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
+    final dateLabel =
+        '${l10n.shortWeekdayName(_date.weekday)}, ${_date.day} ${l10n.monthName(_date.month)}';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.searchTitle),
@@ -84,7 +59,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Recent Searches
             Consumer(
               builder: (context, ref, _) {
                 final recentAsync = ref.watch(recentSearchesProvider);
@@ -158,16 +132,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 );
               },
             ),
-
-            // From city
-            _buildCitySelector(
+            CityDropdown(
               label: l10n.searchFromLabel,
               value: _from,
-              onChanged: (value) => setState(() => _from = value!),
+              icon: Icons.location_on_outlined,
+              onChanged: (value) => setState(() => _from = value),
             ),
             const SizedBox(height: 8),
-
-            // Swap button
             Center(
               child: IconButton(
                 onPressed: () => setState(() {
@@ -190,16 +161,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             const SizedBox(height: 8),
-
-            // To city
-            _buildCitySelector(
+            CityDropdown(
               label: l10n.searchToLabel,
               value: _to,
-              onChanged: (value) => setState(() => _to = value!),
+              icon: Icons.location_on,
+              onChanged: (value) => setState(() => _to = value),
             ),
             const SizedBox(height: 16),
-
-            // Date
             ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -210,7 +178,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               leading: const Icon(Icons.calendar_today),
               title: Text(l10n.searchDateLabel),
               subtitle: Text(
-                _dateLabel,
+                dateLabel,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               onTap: () async {
@@ -226,8 +194,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               },
             ),
             const SizedBox(height: 16),
-
-            // Passengers
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
@@ -268,8 +234,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // Search button
             ElevatedButton(
               onPressed: _search,
               style: ElevatedButton.styleFrom(
@@ -287,24 +251,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCitySelector({
-    required String label,
-    required String value,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.location_on),
-      ),
-      items: _cities.map((city) {
-        return DropdownMenuItem(value: city, child: Text(city));
-      }).toList(),
-      onChanged: onChanged,
     );
   }
 }

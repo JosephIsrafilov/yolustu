@@ -53,7 +53,7 @@ const DRIVER_LAYOUT_I18N = {
 
 export default function DriverLayout({ children, narrow }: { children: React.ReactNode; narrow?: boolean }) {
   const pathname = usePathname();
-  const { language, currentUser, isAuthenticated, activeMode, switchRole } = useAppStore();
+  const { language, currentUser, isAuthenticated, activeMode } = useAppStore();
   const t = DRIVER_LAYOUT_I18N[language];
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
 
@@ -82,19 +82,6 @@ export default function DriverLayout({ children, narrow }: { children: React.Rea
           </div>
           <div className="flex items-center gap-3">
             {capabilities.canAccessDriverDashboard && <RoleSwitch />}
-            {capabilities.canAccessDriverDashboard && activeMode === 'driver' ? (
-              <button
-                type="button"
-                onClick={() => switchRole('passenger')}
-                className="text-sm font-semibold text-brand-700 hover:underline"
-              >
-                {t.toPassenger}
-              </button>
-            ) : (
-              <Link href={ROUTES.search} className="text-sm font-semibold text-brand-700 hover:underline">
-                {t.toPassenger}
-              </Link>
-            )}
           </div>
         </div>
       </header>

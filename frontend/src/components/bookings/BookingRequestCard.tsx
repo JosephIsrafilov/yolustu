@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Icon from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { getLocalizedCityName } from '@/lib/cities';
+import { ROUTES } from '@/lib/routes';
 import type { Booking, Trip, User } from '@/types';
 
 interface BookingRequestCardProps {
@@ -35,15 +37,21 @@ export default function BookingRequestCard({
   return (
     <Card className="animate-fade-in min-h-[160px] flex flex-col justify-between">
       <div className="grid grid-cols-[1fr_auto] gap-4 mb-3 items-start h-12">
-        <div className="grid grid-cols-[40px_1fr] gap-2 items-center min-w-0">
+        <Link
+          href={ROUTES.profileDetails(passenger.id)}
+          className="grid grid-cols-[40px_1fr] gap-2 items-center min-w-0"
+          aria-label={passenger.fullName}
+        >
           <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold shrink-0 flex-none">
             {passenger.fullName.charAt(0)}
           </div>
           <div className="min-w-0 grid grid-rows-2">
-            <p className="text-sm font-semibold text-text truncate block w-full leading-5">{passenger.fullName}</p>
+            <p className="text-sm font-semibold text-text truncate block w-full leading-5 hover:text-brand-600">
+              {passenger.fullName}
+            </p>
             <p className="text-xs text-text-muted truncate block w-full leading-4">{passenger.city}</p>
           </div>
-        </div>
+        </Link>
         <div className="shrink-0 flex-none h-6 flex items-center">
           <StatusBadge status={booking.status} />
         </div>

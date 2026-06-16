@@ -7,17 +7,13 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../chat/data/chat_repository.dart';
 import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
-/// Session-only set of booking IDs that have already shown review prompt.
 final _reviewPromptedBookingsProvider = StateProvider<Set<String>>((ref) => {});
 
-/// Detail view for a single booking.
-///
-/// Reads the booking reactively from [bookingsControllerProvider]; exposes
-/// cancel and (when confirmed) a mock payment action.
 class BookingDetailScreen extends ConsumerWidget {
   final String bookingId;
 
@@ -65,7 +61,6 @@ class _DetailState extends ConsumerState<_Detail> {
   @override
   void initState() {
     super.initState();
-    // Schedule review prompt check after first frame
     if (widget.booking.status == BookingStatus.completed) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptReview());
     }
@@ -75,10 +70,11 @@ class _DetailState extends ConsumerState<_Detail> {
     final prompted = ref.read(_reviewPromptedBookingsProvider);
     if (prompted.contains(widget.booking.id)) return;
 
-    // Mark as prompted
-    ref.read(_reviewPromptedBookingsProvider.notifier).state = {...prompted, widget.booking.id};
+    ref.read(_reviewPromptedBookingsProvider.notifier).state = {
+      ...prompted,
+      widget.booking.id,
+    };
 
-    // Show dialog
     ReviewDialog.show(
       context,
       targetId: widget.booking.driverId,
@@ -98,6 +94,24 @@ class _DetailState extends ConsumerState<_Detail> {
     }
   }
 
+  Future<void> _startChat() async {
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final conversation =
+          await repo.getOrCreateRideConversation(widget.booking.id);
+      if (mounted) context.push('/messages/${conversation.id}');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Xeta: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _cancel() async {
     final l10n = ref.read(l10nProvider);
     final ok = await showDialog<bool>(
@@ -112,8 +126,10 @@ class _DetailState extends ConsumerState<_Detail> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child:
-                Text(l10n.bookingDetailCancelBtn, style: TextStyle(color: Colors.red.shade600)),
+            child: Text(
+              l10n.bookingDetailCancelBtn,
+              style: TextStyle(color: Colors.red.shade600),
+            ),
           ),
         ],
       ),
@@ -154,21 +170,29 @@ class _DetailState extends ConsumerState<_Detail> {
             _InfoRow(Icons.access_time, l10n.bookingDetailTime, time),
             _InfoRow(Icons.person, l10n.bookingDetailDriver, b.driverName),
             _InfoRow(Icons.event_seat, l10n.bookingDetailSeats, '${b.seats}'),
-            _InfoRow(Icons.payments_outlined, l10n.bookingDetailTotal,
-                '${b.total.toStringAsFixed(0)} AZN'),
+            _InfoRow(
+              Icons.payments_outlined,
+              l10n.bookingDetailTotal,
+              '${b.total.toStringAsFixed(0)} AZN',
+            ),
           ],
         ),
         const SizedBox(height: 20),
         _Timeline(status: b.status),
         const SizedBox(height: 24),
-        // Chat button - only show for confirmed/paid bookings in mock mode
-        // In API mode, chat not implemented yet
-        if (b.status == BookingStatus.confirmed || b.status == BookingStatus.paid) ...[
+        if (b.status == BookingStatus.confirmed ||
+            b.status == BookingStatus.paid) ...[
           SizedBox(
             height: 52,
             child: OutlinedButton.icon(
-              onPressed: () => context.push('/messages/conv-${b.rideId}'),
-              icon: const Icon(Icons.message_outlined),
+              onPressed: _busy ? null : _startChat,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.message_outlined),
               label: Text(l10n.bookingDetailMessageDriver),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.slate500,
@@ -177,7 +201,6 @@ class _DetailState extends ConsumerState<_Detail> {
           ),
           const SizedBox(height: 12),
         ],
-        // Review button - show when completed
         if (b.status == BookingStatus.completed) ...[
           SizedBox(
             height: 52,
@@ -197,7 +220,6 @@ class _DetailState extends ConsumerState<_Detail> {
           ),
           const SizedBox(height: 12),
         ],
-        // Cancel button - only for active bookings
         if (b.status.isActive) ...[
           SizedBox(
             height: 52,
@@ -211,14 +233,13 @@ class _DetailState extends ConsumerState<_Detail> {
             ),
           ),
         ],
-        // Back to bookings button - always visible
         const SizedBox(height: 12),
         SizedBox(
           height: 52,
           child: OutlinedButton.icon(
             onPressed: () => context.go('/bookings'),
             icon: const Icon(Icons.arrow_back),
-            label: const Text('Rezervasiyalara qayıt'),
+            label: const Text('Rezervasiyalara qayit'),
           ),
         ),
       ],
@@ -230,11 +251,13 @@ class _InfoRow {
   final IconData icon;
   final String label;
   final String value;
+
   const _InfoRow(this.icon, this.label, this.value);
 }
 
 class _InfoCard extends StatelessWidget {
   final List<_InfoRow> rows;
+
   const _InfoCard({required this.rows});
 
   @override
@@ -256,8 +279,10 @@ class _InfoCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(rows[i].label, style: TextStyle(color: AppTheme.slate500)),
                 const Spacer(),
-                Text(rows[i].value,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  rows[i].value,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ],
@@ -267,14 +292,14 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-
 class _Timeline extends StatelessWidget {
   final BookingStatus status;
+
   const _Timeline({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final steps = ['Göndərildi', 'Təsdiq', 'Ödəniş', 'Tamamlandı'];
+    final steps = ['Gonderildi', 'Tesdiq', 'Odenis', 'Tamamlandi'];
     final reached = switch (status) {
       BookingStatus.pending => 1,
       BookingStatus.confirmed => 2,
@@ -283,6 +308,7 @@ class _Timeline extends StatelessWidget {
       BookingStatus.rejected => 1,
       BookingStatus.cancelled => 1,
     };
+
     return Container(
       padding: const EdgeInsets.all(AppConstants.spacing16),
       decoration: BoxDecoration(
@@ -294,7 +320,7 @@ class _Timeline extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tarixçə',
+            'Tarixce',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,

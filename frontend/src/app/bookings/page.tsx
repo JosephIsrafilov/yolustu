@@ -57,6 +57,16 @@ export default function BookingsPage() {
             </button>
           ))}
         </div>
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => router.push(ROUTES.chats)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-text hover:bg-surface-muted"
+          >
+            <Icon name="message-square" size={16} />
+            <span>{language === 'az' ? 'Sohbetler' : language === 'ru' ? 'Чаты' : 'Chats'}</span>
+          </button>
+        </div>
         {current.length > 0 ? (
           <div className="stagger-children grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {current.map((booking) => {
