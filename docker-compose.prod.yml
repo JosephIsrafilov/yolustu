@@ -45,18 +45,36 @@ services:
     env_file: .env.prod
     environment:
       WEB_CONCURRENCY: "2"
-    ports:
-      - "8000:8000"
+    # Not published to the host — Caddy reaches it over the compose network.
+    expose:
+      - "8000"
 
   frontend:
     image: ${ECR_REGISTRY}/yolmates/frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    # NEXT_PUBLIC_* are baked at build time (see Dockerfile build args); no
+    # runtime env needed. Not published to the host — Caddy proxies it.
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://${EC2_PUBLIC_IP}:8000/api/v1
-      NEXT_PUBLIC_WS_URL: ws://${EC2_PUBLIC_IP}:8000
+      DOMAIN: ${DOMAIN}
     ports:
-      - "3000:3000"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
 
 volumes:
   pgdata:
   redisdata:
+  caddydata:
+  caddyconfig:

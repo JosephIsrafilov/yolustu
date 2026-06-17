@@ -1,0 +1,16 @@
+# Reverse proxy with automatic HTTPS (Let's Encrypt / ZeroSSL).
+# DOMAIN is injected from the environment (e.g. 18.197.122.178.nip.io).
+# Single origin: /api/* and /health -> backend, everything else -> frontend.
+# WebSocket upgrades are proxied transparently by reverse_proxy.
+{$DOMAIN} {
+	encode gzip
+
+	@backend path /api/* /health
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     # calls. Set COOKIE_SAMESITE=none in that deployment.
     COOKIE_SAMESITE: str = "lax"  # lax | strict | none
 
+    # Whether auth cookies carry the Secure flag (HTTPS-only). Browsers refuse
+    # to store Secure cookies over plain http://, so a bare-IP HTTP deployment
+    # must set COOKIE_SECURE=false. "auto" = Secure only in production (the
+    # historical default; correct for any TLS-terminated deployment).
+    COOKIE_SECURE: str = "auto"  # auto | true | false
+
     SMTP_SERVER: str = ""
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""

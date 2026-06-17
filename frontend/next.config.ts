@@ -51,6 +51,12 @@ const nextConfig: NextConfig = {
         port: "8000",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "wxqfugferbtjlutaitcb.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/**",
+      },
     ],
     qualities: [75],
     unoptimized: process.env.NODE_ENV === 'development',

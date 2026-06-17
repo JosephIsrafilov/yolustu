@@ -215,4 +215,11 @@ def _use_secure_cookies() -> bool:
     # cross-site deployments must serve over HTTPS regardless of ENVIRONMENT.
     if _cookie_samesite() == "none":
         return True
+    # Explicit override for deployments served over plain http:// (e.g. a
+    # bare-IP demo box). "auto" preserves the historical production default.
+    override = settings.COOKIE_SECURE.strip().lower()
+    if override == "true":
+        return True
+    if override == "false":
+        return False
     return settings.ENVIRONMENT.lower() == "production"
