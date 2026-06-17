@@ -100,6 +100,7 @@ jobs:
           username: ubuntu
           key_path: /tmp/ec2_key.pem
           envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
+          command_timeout: 45m
           script: |
             set -e
 
@@ -132,6 +133,17 @@ jobs:
             export EC2_PUBLIC_IP=$EC2_PUBLIC_IP
             export DOMAIN="${EC2_PUBLIC_IP}.nip.io"
             export POSTGRES_PASSWORD=$(grep ^POSTGRES_PASSWORD .env.prod | cut -d= -f2-)
+
+            echo "Disk before deploy:"
+            df -h
+
+            echo "Memory before deploy:"
+            free -h
+
+            echo "Docker usage before deploy:"
+            docker system df || true
+
+            docker image prune -af || true
 
             docker pull $ECR_REGISTRY/yolmates/backend:$IMAGE_TAG
             docker pull $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG
