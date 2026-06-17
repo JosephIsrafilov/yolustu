@@ -57,7 +57,10 @@ jobs:
             --group-id sg-01491cea79a36c060 \
             --region eu-central-1 \
             --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" \
-            2>/dev/null || echo "rule may already exist, continuing"
+            || echo "rule may already exist, continuing"
+          # ponytail: SG rules aren't enforced the instant authorize returns;
+          # wait so the scp/ssh connect doesn't race rule propagation.
+          sleep 15
 
       - name: Decode SSH key
         run: |
