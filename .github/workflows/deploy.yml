@@ -53,7 +53,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
-        script: |
+          script: |
             set -e
 
             ECR_REGISTRY="529349714028.dkr.ecr.eu-central-1.amazonaws.com"
@@ -84,6 +84,6 @@ jobs:
             docker compose -f docker-compose.prod.yml run --rm migrate
 
             docker compose -f docker-compose.prod.yml up -d \
-              --no-deps backend frontend
+              postgres redis backend frontend
 
             docker image prune -f
