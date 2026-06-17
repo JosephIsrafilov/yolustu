@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: yolustu_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: yolustu_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yolustu_user -d yolustu_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  migrate:
+    image: ${ECR_REGISTRY}/yolmates/backend:${IMAGE_TAG:-latest}
+    env_file: .env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python -m alembic upgrade head
+    restart: "no"
+
+  backend:
+    image: ${ECR_REGISTRY}/yolmates/backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env.prod
+    environment:
+      WEB_CONCURRENCY: "2"
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: ${ECR_REGISTRY}/yolmates/frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://${EC2_PUBLIC_IP}:8000/api/v1
+      NEXT_PUBLIC_WS_URL: ws://${EC2_PUBLIC_IP}:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  redisdata:

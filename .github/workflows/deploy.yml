@@ -1,0 +1,89 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/yolmates/backend:$IMAGE_TAG ./backend
+          docker push $ECR_REGISTRY/yolmates/backend:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/yolmates/backend:$IMAGE_TAG $ECR_REGISTRY/yolmates/backend:latest
+          docker push $ECR_REGISTRY/yolmates/backend:latest
+
+      - name: Build and push frontend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG ./frontend
+          docker push $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG $ECR_REGISTRY/yolmates/frontend:latest
+          docker push $ECR_REGISTRY/yolmates/frontend:latest
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
+        script: |
+            set -e
+
+            ECR_REGISTRY="529349714028.dkr.ecr.eu-central-1.amazonaws.com"
+            IMAGE_TAG="${{ github.sha }}"
+            EC2_PUBLIC_IP="${{ secrets.EC2_HOST }}"
+
+            aws ecr get-login-password --region eu-central-1 | \
+              docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            cd /opt/yolmates
+
+            aws ssm get-parameters-by-path \
+              --path /yolmates/prod \
+              --with-decryption \
+              --region eu-central-1 \
+              --query 'Parameters[*].[Name,Value]' \
+              --output text | \
+              awk '{split($1,a,"/"); print a[4]"="$2}' > .env.prod
+
+            export ECR_REGISTRY=$ECR_REGISTRY
+            export IMAGE_TAG=$IMAGE_TAG
+            export EC2_PUBLIC_IP=$EC2_PUBLIC_IP
+            export POSTGRES_PASSWORD=$(grep ^POSTGRES_PASSWORD .env.prod | cut -d= -f2-)
+
+            docker pull $ECR_REGISTRY/yolmates/backend:$IMAGE_TAG
+            docker pull $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG
+
+            docker compose -f docker-compose.prod.yml run --rm migrate
+
+            docker compose -f docker-compose.prod.yml up -d \
+              --no-deps backend frontend
+
+            docker image prune -f

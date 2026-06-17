@@ -3,9 +3,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
-  turbopack: {
+  turbopack: process.env.NODE_ENV !== 'production' ? {
     root: path.resolve(process.cwd(), '..'),
-  },
+  } : undefined,
   images: {
     remotePatterns: [
       {
@@ -42,6 +42,12 @@ const nextConfig: NextConfig = {
       {
         protocol: "http",
         hostname: "127.0.0.1",
+        port: "8000",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "18.197.122.178",
         port: "8000",
         pathname: "/uploads/**",
       },
