@@ -54,6 +54,15 @@ jobs:
             --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" \
             2>/dev/null || echo "rule may already exist, continuing"
 
+      - name: Decode SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d | tr -d '\r' > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
+          # fail fast with a clear message if the secret was empty/mangled
+          ssh-keygen -y -f /tmp/ec2_key.pem >/dev/null \
+            && echo "SSH key decoded and valid" \
+            || { echo "ERROR: EC2_SSH_KEY did not decode to a valid private key"; exit 1; }
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
         env:
@@ -63,7 +72,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: /tmp/ec2_key.pem
           envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
           script: |
             set -e
