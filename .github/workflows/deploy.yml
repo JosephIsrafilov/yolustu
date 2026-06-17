@@ -53,11 +53,20 @@ jobs:
           RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
           echo "runner_ip=$RUNNER_IP" >> "$GITHUB_OUTPUT"
           echo "Authorizing $RUNNER_IP/32 on port 22"
-          aws ec2 authorize-security-group-ingress \
+          # Capture stderr so we can distinguish duplicate-rule (benign) from
+          # AccessDenied / wrong SG ID (fatal). The || echo pattern swallows
+          # everything — this doesn't.
+          AUTHORIZE_OUT=$(aws ec2 authorize-security-group-ingress \
             --group-id sg-01491cea79a36c060 \
             --region eu-central-1 \
-            --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" \
-            || echo "rule may already exist, continuing"
+            --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" 2>&1) || {
+            if echo "$AUTHORIZE_OUT" | grep -q "InvalidPermission.Duplicate"; then
+              echo "Rule already exists, continuing"
+            else
+              echo "FATAL: $AUTHORIZE_OUT"
+              exit 1
+            fi
+          }
           # ponytail: SG rules aren't enforced the instant authorize returns;
           # wait so the scp/ssh connect doesn't race rule propagation.
           sleep 15
