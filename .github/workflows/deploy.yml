@@ -42,6 +42,18 @@ jobs:
           docker tag $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG $ECR_REGISTRY/yolmates/frontend:latest
           docker push $ECR_REGISTRY/yolmates/frontend:latest
 
+      - name: Allowlist runner IP for SSH
+        id: allowlist
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "runner_ip=$RUNNER_IP" >> "$GITHUB_OUTPUT"
+          echo "Authorizing $RUNNER_IP/32 on port 22"
+          aws ec2 authorize-security-group-ingress \
+            --group-id sg-01491cea79a36c060 \
+            --region eu-central-1 \
+            --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" \
+            2>/dev/null || echo "rule may already exist, continuing"
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
         env:
@@ -87,3 +99,14 @@ jobs:
               postgres redis backend frontend
 
             docker image prune -f
+
+      - name: Revoke runner IP from SSH
+        if: always() && steps.allowlist.outputs.runner_ip != ''
+        run: |
+          RUNNER_IP="${{ steps.allowlist.outputs.runner_ip }}"
+          echo "Revoking $RUNNER_IP/32 from port 22"
+          aws ec2 revoke-security-group-ingress \
+            --group-id sg-01491cea79a36c060 \
+            --region eu-central-1 \
+            --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" \
+            2>/dev/null || echo "rule already absent, continuing"
