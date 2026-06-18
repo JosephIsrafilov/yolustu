@@ -17,7 +17,7 @@ def _is_remote_postgres_url(url: str) -> bool:
         return False
 
     host = (parsed.hostname or "").lower()
-    if host in {"", "localhost", "127.0.0.1", "::1", "db"}:
+    if host in {"", "localhost", "127.0.0.1", "::1", "db", "postgres"}:
         return False
     return True
 
