@@ -124,36 +124,103 @@ class EngagementService:
         return created
 
     def get_or_create_ride_conversation(
-        self, booking_id: UUID, current_user: CurrentUser
+        self,
+        ride_id: UUID | None,
+        current_user: CurrentUser,
+        booking_id: UUID | None = None,
     ) -> Conversation:
-        booking = self.db.query(Booking).filter(Booking.id == booking_id).first()
-        if not booking:
-            raise HTTPException(status_code=404, detail="Booking not found")
+        booking = None
+        if booking_id:
+            booking = self.db.query(Booking).filter(Booking.id == booking_id).first()
+            if not booking:
+                raise HTTPException(status_code=404, detail="Booking not found")
+            ride_id = booking.ride_id  # type: ignore[assignment]
 
-        ride = self.rides.get_ride(booking.ride_id)  # type: ignore[arg-type]
+        if not ride_id:
+            raise HTTPException(status_code=400, detail="ride_id or booking_id required")
+
+        ride = self.rides.get_ride(ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
 
-        if current_user.id not in (booking.passenger_id, ride.driver_id):
+        if booking:
+            if current_user.id not in (booking.passenger_id, ride.driver_id):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Not authorized to access this booking chat",
+                )
+
+            existing = self.conversations.get_ride_conversation(
+                booking.id  # type: ignore[arg-type]
+            )
+            if existing:
+                return existing
+
+            conv = Conversation(
+                type="ride",
+                ride_id=ride.id,
+                booking_id=booking.id,
+                created_by_user_id=booking.passenger_id,
+                status="open",
+            )
+            self.conversations.create(conv)
+            self.db.flush()
+            self.conversations.add_participant(
+                conv.id, booking.passenger_id, "passenger"  # type: ignore[arg-type]
+            )
+            self.conversations.add_participant(
+                conv.id, ride.driver_id, "driver"  # type: ignore[arg-type]
+            )
+            self.db.commit()
+            self.db.refresh(conv)
+            created = self.conversations.get(conv.id)  # type: ignore[arg-type]
+            if created is None:
+                raise HTTPException(
+                    status_code=500, detail="Conversation was not created"
+                )
+            return created
+
+        # In Yolustu, any user can start a chat with the driver to ask questions before booking
+        # However, a driver can only see chats that passengers initiated
+        if current_user.id == ride.driver_id:
+            # Driver cannot initiate a chat to an unknown passenger via this endpoint
             raise HTTPException(
-                status_code=403, detail="Not authorized to access this booking chat"
+                status_code=400,
+                detail=(
+                    "Drivers cannot initiate a general ride chat without a "
+                    "specific passenger"
+                ),
             )
 
-        existing = self.conversations.get_ride_conversation(booking_id)
+        # Try to find an existing conversation between this user and the driver for this ride
+        existing = (
+            self.conversations.db.query(Conversation)
+            .filter(
+                Conversation.type == "ride",
+                Conversation.ride_id == ride_id,
+                Conversation.created_by_user_id == current_user.id,
+                Conversation.booking_id.is_(None),
+            )
+            .first()
+        )
+
         if existing:
             return existing
 
         conv = Conversation(
             type="ride",
             ride_id=ride.id,
-            booking_id=booking.id,
             created_by_user_id=current_user.id,
             status="open",
         )
         self.conversations.create(conv)
         self.db.flush()
-        self.conversations.add_participant(conv.id, booking.passenger_id, "passenger")  # type: ignore[arg-type]
-        self.conversations.add_participant(conv.id, ride.driver_id, "driver")  # type: ignore[arg-type]
+        self.conversations.add_participant(
+            conv.id, current_user.id, "passenger"  # type: ignore[arg-type]
+        )
+        self.conversations.add_participant(
+            conv.id, ride.driver_id, "driver"  # type: ignore[arg-type]
+        )
         self.db.commit()
         self.db.refresh(conv)
         created = self.conversations.get(conv.id)  # type: ignore[arg-type]

@@ -6,6 +6,7 @@ from fastapi import (
     BackgroundTasks,
     HTTPException,
 )
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -56,7 +57,7 @@ def reset_password(
 
 
 @router.post("/request-otp")
-@limiter.limit("3/1 hour")
+@limiter.limit("20/minute")
 def request_otp(
     request: Request,
     phone: str,
@@ -136,18 +137,25 @@ def login(
     return session_data
 
 
+class RefreshTokenInput(BaseModel):
+    refresh_token: str | None = None
+
+
 @router.post("/refresh", response_model=AuthSessionResponse)
 @limiter.limit("20/minute")
 def refresh_token(
     request: Request,
     response: Response,
+    payload: RefreshTokenInput | None = None,
     db: Session = Depends(get_db),
     redis_client=Depends(get_redis),
 ):
-    refresh_token_cookie = request.cookies.get("refresh_token")
-    if not refresh_token_cookie:
+    token = (payload.refresh_token if payload else None) or request.cookies.get(
+        "refresh_token"
+    )
+    if not token:
         raise HTTPException(status_code=401, detail="Refresh token missing")
-    session_data = IdentityService(db).refresh_token(refresh_token_cookie, redis_client)
+    session_data = IdentityService(db).refresh_token(token, redis_client)
     _set_auth_cookies(
         response, session_data["accessToken"], session_data["refreshToken"]
     )

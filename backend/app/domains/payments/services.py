@@ -390,10 +390,20 @@ class PaymentService:
         wallet = self.wallets.get_or_create_for_update(
             current_user.id, settings.PAYMENT_CURRENCY
         )
-        if wallet.available_balance < amount:
-            raise HTTPException(status_code=400, detail="Insufficient wallet balance")
-
-        wallet.available_balance = money(wallet.available_balance - amount)  # type: ignore[assignment,arg-type]
+        if wallet.pending_balance < amount:
+            # Fallback if somehow pending balance is less than amount
+            if wallet.available_balance + wallet.pending_balance < amount:
+                raise HTTPException(
+                    status_code=400, detail="Insufficient wallet balance"
+                )
+            # Pull remaining from available
+            remaining = amount - wallet.pending_balance
+            wallet.available_balance = money(wallet.available_balance - remaining)
+            wallet.pending_balance = money(0)
+        else:
+            wallet.pending_balance = money(  # type: ignore[assignment,arg-type]
+                wallet.pending_balance - amount
+            )
 
         fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
         service_fee = money(amount * fee_percent / Decimal("100"))
@@ -635,7 +645,7 @@ class PaymentService:
         self,
         *,
         user_id: UUID | None,
-        payment: Payment,
+        payment: Payment | None,
         booking_id: UUID,
         ride_id: UUID,
         tx_type: str,
@@ -652,7 +662,10 @@ class PaymentService:
         if self.wallets.get_transaction_by_idempotency_key(idempotency_key):
             return
         amount = money(amount)
-        wallet = self.wallets.get_or_create_for_update(user_id, payment.currency)  # type: ignore[arg-type]
+        currency = payment.currency if payment else settings.PAYMENT_CURRENCY
+        wallet = self.wallets.get_or_create_for_update(
+            user_id, currency  # type: ignore[arg-type]
+        )
         sign = Decimal("1") if direction == "credit" else Decimal("-1")
         if balance_bucket == "pending":
             wallet.pending_balance = money(wallet.pending_balance + amount * sign)  # type: ignore[assignment,arg-type]
@@ -664,13 +677,13 @@ class PaymentService:
         self.wallets.add_transaction(
             WalletTransaction(
                 user_id=user_id,
-                payment_id=payment.id,
+                payment_id=payment.id if payment else None,
                 booking_id=booking_id,
                 ride_id=ride_id,
                 type=tx_type,
                 direction=direction,
                 amount=amount,
-                currency=payment.currency,
+                currency=currency,
                 status=status,
                 description=description,
                 idempotency_key=idempotency_key,
