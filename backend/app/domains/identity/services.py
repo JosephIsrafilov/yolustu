@@ -61,7 +61,10 @@ class IdentityService:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         user = self.users.create(user_in, get_password_hash(user_in.password))
-        self._send_otp(user.phone, redis_client)  # type: ignore[arg-type]
+        # MVP: phone OTP gating removed. Accounts are active on registration;
+        # email verification happens separately on the profile page. The SMS OTP
+        # machinery (_send_otp / request_otp / verify_otp) is left intact for
+        # later re-enablement.
         return self._create_auth_session(user, redis_client)
 
     def login(self, login_data: LoginInput, redis_client):

@@ -80,7 +80,7 @@ export default function RegisterPage() {
       setLoading(false);
 
       if (ok) {
-        router.push(`/auth/verify?phone=${encodeURIComponent(normalizedPhone)}&from=register`);
+        router.push(ROUTES.profileSetup);
       } else {
         setSubmitError(useAppStore.getState().lastError || copy.common.error);
       }

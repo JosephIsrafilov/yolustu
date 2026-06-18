@@ -113,10 +113,14 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       const user = await authService.register(data);
+      // MVP: registration no longer gates on SMS OTP. The /auth/register
+      // response already carries an authenticated session (cookies set
+      // server-side), so the account is active immediately. Email
+      // verification is an opt-in step on the profile page.
       set({
         currentUser: user,
-        isAuthenticated: false,
-        authStatus: 'pending_verification',
+        isAuthenticated: true,
+        authStatus: 'authenticated',
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
         activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
