@@ -31,7 +31,7 @@ export interface AuthService {
   register(input: RegisterInput): Promise<User>;
   requestOtp(phone: string): Promise<void>;
   verifyOtp(input: VerifyOtpInput): Promise<void>;
-  requestPasswordReset(email: string): Promise<string>;
+  requestPasswordReset(email: string): Promise<void>;
   resetPassword(email: string, otp: string, newPassword: string): Promise<void>;
   requestEmailVerification(): Promise<void>;
   verifyEmail(otp: string): Promise<User>;

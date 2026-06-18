@@ -57,8 +57,7 @@ export const apiAuthService: AuthService = {
   },
 
   async requestPasswordReset(email: string) {
-    const res = await apiClient.post<{otp?: string}>('/auth/request-password-reset', { email });
-    return res.otp || '';
+    await apiClient.post<unknown>('/auth/request-password-reset', { email });
   },
 
   async resetPassword(email: string, otp: string, newPassword: string) {

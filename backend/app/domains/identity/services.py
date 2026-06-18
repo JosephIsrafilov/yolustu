@@ -242,10 +242,9 @@ class IdentityService:
                 status_code=404, detail="No account found with this email."
             )
 
-        otp = self._send_email_code(email, redis_client)
+        self._send_email_code(email, redis_client)
         return {
-            "message": "If this email is registered, you will receive a reset code.",
-            "otp": otp,
+            "message": "If this email is registered, you will receive a reset code."
         }
 
     def reset_password(self, email: str, code: str, new_password: str, redis_client):
@@ -275,17 +274,19 @@ class IdentityService:
 
     @staticmethod
     def _send_email_code(email: str, redis_client):
+        from app.core.email import send_email
+
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"pwd_reset:{email}", 600, otp)  # 10 mins expiry
 
-        # send_email(
-        #     to_email=email,
-        #     subject=subject,
-        #     html_content=html_content,
-        #     text_content=text_content,
-        # )
+        send_email(
+            to_email=email,
+            subject="Yolmates - Password Reset Code",
+            html_content=f"<p>Your password reset code is: <strong>{otp}</strong></p><p>This code expires in 10 minutes.</p>",
+            text_content=f"Your password reset code is: {otp}\n\nThis code expires in 10 minutes.",
+        )
 
-        logger.info("Password reset email simulation for %s: %s", email, otp)
+        logger.info("Password reset OTP generated for %s", email)
         return otp
 
     def request_email_verification(

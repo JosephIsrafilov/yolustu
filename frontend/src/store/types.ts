@@ -17,7 +17,7 @@ export interface AuthSlice {
   login: (phone: string, password: string) => Promise<boolean>;
   requestOtp: (phone: string) => Promise<boolean>;
   verifyAccount: (phone: string, otp: string) => Promise<boolean>;
-  requestPasswordReset: (email: string) => Promise<string | null>;
+  requestPasswordReset: (email: string) => Promise<boolean>;
   resetPassword: (email: string, otp: string, newPassword: string) => Promise<boolean>;
   requestEmailVerification: () => Promise<boolean>;
   verifyEmail: (otp: string) => Promise<boolean>;
