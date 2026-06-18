@@ -73,7 +73,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       // Navigate to chat and send automated message
       final chatRepo = ref.read(chatRepositoryProvider);
       final conversation =
-          await chatRepo.getOrCreateRideConversation(created.id);
+          await chatRepo.getOrCreateRideConversation(created.rideId);
 
       final time =
           '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
