@@ -83,13 +83,6 @@ export default function GoogleMapRenderer({
             key={i}
             position={{ lat: m.position[0], lng: m.position[1] }}
             onClick={m.onClick}
-            icon={
-              m.type === 'origin'
-                ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
-                : m.type === 'destination'
-                ? 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                : undefined
-            }
           />
         ))}
         {children}
