@@ -33,7 +33,7 @@ from app.domains.identity.dependencies import (
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ConversationResponse])
+@router.get("", response_model=list[ConversationResponse])
 def list_chats(
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),

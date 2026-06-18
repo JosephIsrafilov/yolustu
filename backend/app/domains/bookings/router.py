@@ -12,7 +12,7 @@ from app.domains.identity.dependencies import CurrentUser, get_current_user
 router = APIRouter()
 
 
-@router.post("/", response_model=BookingResponse)
+@router.post("", response_model=BookingResponse)
 def create_booking(
     booking_in: BookingCreate,
     db: Session = Depends(get_db),

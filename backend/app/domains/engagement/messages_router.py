@@ -25,7 +25,7 @@ from app.domains.identity.dependencies import (
 router = APIRouter()
 
 
-@router.post("/", response_model=MessageResponse)
+@router.post("", response_model=MessageResponse)
 async def send_message(
     message_in: MessageCreate,
     db: Session = Depends(get_db),

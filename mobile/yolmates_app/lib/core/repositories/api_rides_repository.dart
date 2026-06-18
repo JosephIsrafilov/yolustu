@@ -115,6 +115,26 @@ class ApiRidesRepository implements RidesRepository {
     }
   }
 
+  @override
+  Future<void> startBoarding(String rideId) async {
+    try {
+      await _client.post('/rides/$rideId/board');
+    } on DioException catch (e) {
+      final apiError = e.error as ApiException;
+      throw Exception(apiError.message);
+    }
+  }
+
+  @override
+  Future<void> endTrip(String rideId) async {
+    try {
+      await _client.post('/rides/$rideId/end');
+    } on DioException catch (e) {
+      final apiError = e.error as ApiException;
+      throw Exception(apiError.message);
+    }
+  }
+
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }

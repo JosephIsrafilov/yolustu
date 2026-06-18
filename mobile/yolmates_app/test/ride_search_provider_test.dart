@@ -14,6 +14,12 @@ class _FakeRidesRepository implements RidesRepository {
   Future<Trip?> rideById(String id) async => null;
 
   @override
+  Future<void> startBoarding(String rideId) async {}
+
+  @override
+  Future<void> endTrip(String rideId) async {}
+
+  @override
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,

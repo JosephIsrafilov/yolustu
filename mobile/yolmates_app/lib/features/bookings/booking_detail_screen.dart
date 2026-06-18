@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../chat/data/chat_repository.dart';
+import '../chat/data/chat_controller.dart';
 import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
@@ -99,7 +100,8 @@ class _DetailState extends ConsumerState<_Detail> {
     try {
       final repo = ref.read(chatRepositoryProvider);
       final conversation =
-          await repo.getOrCreateRideConversation(widget.booking.id);
+          await repo.getOrCreateRideConversation(widget.booking.rideId, bookingId: widget.booking.id);
+      ref.invalidate(conversationsProvider);
       if (mounted) context.push('/messages/${conversation.id}');
     } catch (e) {
       if (mounted) {

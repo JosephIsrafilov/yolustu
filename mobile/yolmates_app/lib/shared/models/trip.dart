@@ -43,9 +43,9 @@ class Trip {
       totalSeats: json['total_seats'] as int,
       status: json['status'] as String,
       femaleOnly: json['female_only'] as bool? ?? false,
-      allowSmoking: json['allow_smoking'] as bool? ?? false,
-      allowPets: json['allow_pets'] as bool? ?? false,
-      allowMusic: json['allow_music'] as bool? ?? true,
+      allowSmoking: json['smoking_allowed'] as bool? ?? false,
+      allowPets: json['pets_allowed'] as bool? ?? false,
+      allowMusic: json['music_allowed'] as bool? ?? true,
     );
   }
 

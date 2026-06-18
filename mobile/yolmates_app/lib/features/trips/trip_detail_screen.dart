@@ -13,6 +13,7 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../auth/state/auth_controller.dart';
 import '../chat/data/chat_repository.dart';
+import '../chat/data/chat_controller.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
@@ -70,6 +71,7 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    final currentUser = ref.watch(authControllerProvider).user;
     final time =
         '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -107,7 +109,6 @@ class _Body extends ConsumerWidget {
             child: RouteMapView(
               origin: ride.fromCity,
               destination: ride.toCity,
-              forceCanvas: true,
             ),
           ),
 
@@ -126,15 +127,15 @@ class _Body extends ConsumerWidget {
                 DriverTrustCard(
                   driver: ride.driver,
                   showVerificationBadge: true,
-                  showMessageButton: true,
+                  showMessageButton: currentUser?.id != ride.driver.id,
                   onMessageTap: () async {
                     // Create or get the conversation for this ride
                     final repo = ref.read(chatRepositoryProvider);
                     try {
                       // Note: getOrCreateRideConversation expects a booking ID or ride ID depending on backend implementation.
                       // The backend route is POST /chats/ride. If it takes booking_id but we just have ride, we might pass ride.id.
-                      // Wait, let's just pass ride.id since we might not have booked it yet!
                       final conv = await repo.getOrCreateRideConversation(ride.id);
+                      ref.invalidate(conversationsProvider);
                       if (context.mounted) {
                         context.push('/messages/${conv.id}');
                       }
@@ -304,6 +305,7 @@ class _BookingBar extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
     final currentUser = ref.watch(authControllerProvider).user;
     final isOwnRide = currentUser?.id == ride.driver.id;
+    final isDriverMode = ref.watch(driverModeProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -344,16 +346,41 @@ class _BookingBar extends ConsumerWidget {
                 flex: 2,
                 child: SizedBox(
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: (ride.availableSeats > 0 && !isOwnRide)
-                        ? () => context.push('/booking/confirm/${ride.id}')
-                        : null,
-                    child: Text(isOwnRide
-                        ? 'Sizin gedişiniz'
-                        : (ride.availableSeats > 0
-                            ? l10n.tripDetailBookBtn
-                            : l10n.tripDetailNoSeats)),
-                  ),
+                  child: isOwnRide
+                      ? (isDriverMode
+                          ? ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  await ref
+                                      .read(ridesRepositoryProvider)
+                                      .startBoarding(ride.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Səyahət başladıldı!')),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                }
+                              },
+                              child: const Text('Gedişi başlat'),
+                            )
+                          : ElevatedButton(
+                              onPressed: null,
+                              child: const Text('Sizin gedişinizdir'),
+                            ))
+                      : ElevatedButton(
+                          onPressed: ride.availableSeats > 0
+                              ? () => context.push('/booking/confirm/${ride.id}')
+                              : null,
+                          child: Text(ride.availableSeats > 0
+                              ? l10n.tripDetailBookBtn
+                              : l10n.tripDetailNoSeats),
+                        ),
                 ),
               ),
             ],

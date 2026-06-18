@@ -63,7 +63,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
         status: BookingStatus.pending,
         createdAt: DateTime.now(),
       );
-      final created = await ref
+      await ref
           .read(bookingsControllerProvider.notifier)
           .createBooking(booking);
       if (!mounted) return;
@@ -73,7 +73,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       // Navigate to chat and send automated message
       final chatRepo = ref.read(chatRepositoryProvider);
       final conversation =
-          await chatRepo.getOrCreateRideConversation(created.id);
+          await chatRepo.getOrCreateRideConversation(ride.id);
 
       final time =
           '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
@@ -82,7 +82,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       await chatRepo.sendMessage(conversation.id, msg);
 
       if (!mounted) return;
-      context.go('${AppRoutes.messages}/${conversation.id}');
+      context.go(AppRoutes.bookings);
     } catch (e) {
       if (!mounted) return;
       setState(

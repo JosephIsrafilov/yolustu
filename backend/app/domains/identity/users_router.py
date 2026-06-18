@@ -99,16 +99,18 @@ async def submit_verification(
 
     return user
 
-
 @router.post("/me/mock-verify", response_model=UserResponse)
 def mock_verify_user(
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Mocks the verification process. Sets user to approved instantly."""
+    """Mocks the verification process. Sets user to approved and driver role instantly."""
+    if settings.ENVIRONMENT == "production":
+        raise HTTPException(status_code=403, detail="Forbidden")
     user = IdentityService(db).get_current_user_model(current_user)
     user.is_verified = True  # type: ignore[assignment]
     user.verification_status = "approved"  # type: ignore[assignment]
+    user.role = "driver"
     db.commit()
     db.refresh(user)
     return user

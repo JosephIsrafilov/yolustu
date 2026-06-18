@@ -34,8 +34,8 @@ class ApiErrorMapper {
 
     // Try backend error envelope first.
     if (data is Map<String, dynamic>) {
-      final errorObj = data['error'];
-      if (errorObj is Map<String, dynamic>) {
+      if (data.containsKey('error') && data['error'] is Map<String, dynamic>) {
+        final errorObj = data['error'];
         return ApiException(
           statusCode: response?.statusCode,
           code: errorObj['code'] as String? ?? 'UNKNOWN_ERROR',
@@ -43,18 +43,25 @@ class ApiErrorMapper {
           details: errorObj,
         );
       }
+      
+      // Standalone FastAPI detail string
+      if (data.containsKey('detail') && data['detail'] is String) {
+        return ApiException(
+          statusCode: response?.statusCode,
+          code: 'HTTP_EXCEPTION',
+          message: data['detail'] as String,
+        );
+      }
 
-      // FastAPI validation error.
-      if (data['detail'] != null) {
-        final detail = data['detail'];
+      // FastAPI validation error array
+      if (data.containsKey('detail') && data['detail'] is List) {
+        final detailList = data['detail'] as List;
         String message = 'Məlumat doğrulanması uğursuz oldu';
-        if (detail is List && detail.isNotEmpty) {
-          final first = detail.first;
-          if (first is Map<String, dynamic>) {
-            message = first['msg'] as String? ?? message;
+        if (detailList.isNotEmpty) {
+          final first = detailList.first;
+          if (first is Map<String, dynamic> && first.containsKey('msg')) {
+            message = first['msg'] as String;
           }
-        } else if (detail is String) {
-          message = detail;
         }
         return ApiException.validation(message);
       }

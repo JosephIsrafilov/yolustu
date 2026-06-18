@@ -17,6 +17,8 @@ abstract class RidesRepository {
   });
 
   Future<Trip?> rideById(String id);
+  Future<void> startBoarding(String rideId);
+  Future<void> endTrip(String rideId);
 }
 
 class MockRidesRepository implements RidesRepository {
@@ -43,6 +45,16 @@ class MockRidesRepository implements RidesRepository {
   Future<Trip?> rideById(String id) async {
     await Future.delayed(_latency);
     return MockData.rideById(id);
+  }
+
+  @override
+  Future<void> startBoarding(String rideId) async {
+    await Future.delayed(_latency);
+  }
+
+  @override
+  Future<void> endTrip(String rideId) async {
+    await Future.delayed(_latency);
   }
 }
 

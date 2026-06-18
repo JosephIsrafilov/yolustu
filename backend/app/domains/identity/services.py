@@ -173,9 +173,9 @@ class IdentityService:
 
     @staticmethod
     def _send_otp_simulation(phone: str, redis_client):
-        otp = str(secrets.randbelow(900000) + 100000)
-        redis_client.setex(f"otp:{phone}", 300, otp)
         if settings.SMS_ENABLED:
+            otp = str(secrets.randbelow(900000) + 100000)
+            redis_client.setex(f"otp:{phone}", 300, otp)
             try:
                 import boto3
 
@@ -188,9 +188,11 @@ class IdentityService:
                 sns.publish(PhoneNumber=phone, Message=f"Your Yolmates OTP: {otp}")
             except Exception as e:
                 logger.error("SNS SMS failed for %s: %s", phone, e)
-                raise HTTPException(status_code=500, detail="Failed to send OTP")
+                raise HTTPException(status_code=500, detail="SMS is not available")
         else:
-            # ponytail: dev fallback — OTP visible in CloudWatch/stdout logs
+            # dev fallback — OTP is always 123456
+            otp = "123456"
+            redis_client.setex(f"otp:{phone}", 300, otp)
             logger.info("SMS OTP (dev) for %s: %s", phone, otp)
         return otp
 

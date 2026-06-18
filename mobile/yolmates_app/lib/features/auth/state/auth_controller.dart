@@ -144,6 +144,7 @@ class AuthController extends Notifier<AuthState> {
   /// Throws [AuthException] on failure; UI handles loading/error.
   Future<void> verifyOtp(String phone, String code) async {
     final user = await _repo.verifyOtp(phone, code);
+    await ref.read(driverModeProvider.notifier).toggle(false);
     state = _resolve(user);
   }
 
@@ -225,6 +226,7 @@ class AuthController extends Notifier<AuthState> {
   /// Clear session and return to login.
   Future<void> logout() async {
     await _repo.logout();
+    await ref.read(driverModeProvider.notifier).toggle(false);
     state = const AuthState.unauthenticated();
   }
 

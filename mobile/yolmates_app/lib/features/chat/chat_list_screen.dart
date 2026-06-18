@@ -40,13 +40,16 @@ class ChatListScreen extends ConsumerWidget {
               Divider(height: 1, color: AppTheme.slate100),
           itemBuilder: (_, __) => const ChatCardSkeleton(),
         ),
-        error: (e, _) => ErrorStateView(
-          title: l10n.commonError,
-          message: e is ApiException
-              ? l10n.apiErrorMessage(e.code, e.message)
-              : l10n.commonError,
-          onRetry: () => ref.invalidate(conversationsProvider),
-        ),
+        error: (e, trace) {
+          debugPrint('ChatListScreen error: $e\n$trace');
+          return ErrorStateView(
+            title: l10n.commonError,
+            message: e is ApiException
+                ? l10n.apiErrorMessage(e.code, e.message)
+                : e.toString(),
+            onRetry: () => ref.invalidate(conversationsProvider),
+          );
+        },
         data: (conversations) {
           final body = conversations.isEmpty
               ? EmptyState(

@@ -169,7 +169,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                       return _TripCard(
                         trip: filtered[i],
                         isSelected: isSelected,
-                        showDate: widget.date == null || widget.dateTo != null,
+                        showDate: true,
                         onTap: () {
                           if (isSelected) {
                             context.push(
@@ -348,6 +348,7 @@ class _TripCard extends ConsumerWidget {
             Row(
               children: [
                 Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     CircleAvatar(
                       backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
@@ -363,8 +364,8 @@ class _TripCard extends ConsumerWidget {
                     ),
                     if (trip.driver.isVerified)
                       Positioned(
-                        right: 0,
-                        bottom: 0,
+                        right: -4,
+                        bottom: -4,
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: const BoxDecoration(
@@ -374,7 +375,7 @@ class _TripCard extends ConsumerWidget {
                           child: const Icon(
                             Icons.verified,
                             color: AppTheme.teal,
-                            size: 14,
+                            size: 16,
                           ),
                         ),
                       ),

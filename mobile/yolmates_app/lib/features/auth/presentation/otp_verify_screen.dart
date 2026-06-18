@@ -149,6 +149,23 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.tealLight.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.tealLight),
+                ),
+                child: const Text(
+                  'Sınaq məqsədi ilə OTP kodu olaraq 123456 daxil edin.',
+                  style: TextStyle(
+                    color: AppTheme.tealLight,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               const SizedBox(height: 28),
               _OtpField(
                 controller: _controller,

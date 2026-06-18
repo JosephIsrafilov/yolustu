@@ -10,7 +10,7 @@ import 'chat_models.dart';
 abstract class ChatRepository {
   Future<List<Conversation>> getConversations();
   Future<Conversation> getOrCreateSupportConversation();
-  Future<Conversation> getOrCreateRideConversation(String rideId);
+  Future<Conversation> getOrCreateRideConversation(String rideId, {String? bookingId});
   Future<List<ChatMessage>> getMessages(String conversationId);
   Future<ChatMessage> sendMessage(String conversationId, String content,
       {String type = 'text', List<String> attachments = const []});
@@ -42,9 +42,12 @@ class ApiChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation> getOrCreateRideConversation(String rideId) async {
-    final response =
-        await _client.post('/chats/ride', data: {'ride_id': rideId});
+  Future<Conversation> getOrCreateRideConversation(String rideId, {String? bookingId}) async {
+    final data = <String, dynamic>{'ride_id': rideId};
+    if (bookingId != null) {
+      data['booking_id'] = bookingId;
+    }
+    final response = await _client.post('/chats/ride', data: data);
     return Conversation.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -85,7 +88,7 @@ class ApiChatRepository implements ChatRepository {
     final url = base.replace(
       scheme: scheme,
       path: '${base.path}/chats/ws/$conversationId',
-      queryParameters: {'token': Uri.encodeQueryComponent(token)},
+      queryParameters: {'token': token},
     );
     return WebSocketChannel.connect(url);
   }
@@ -149,15 +152,16 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation> getOrCreateRideConversation(String rideId) async {
+  Future<Conversation> getOrCreateRideConversation(String rideId, {String? bookingId}) async {
     await Future.delayed(_latency);
     return _conversations.firstWhere(
-      (c) => c.rideId == rideId,
+      (c) => c.rideId == rideId && (bookingId == null || c.bookingId == bookingId),
       orElse: () {
         final c = Conversation(
           id: 'ride-mock',
           type: 'ride',
           rideId: rideId,
+          bookingId: bookingId,
           status: 'open',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
