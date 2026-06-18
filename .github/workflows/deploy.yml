@@ -42,6 +42,8 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=https://$DOMAIN/api/v1 \
             --build-arg NEXT_PUBLIC_WS_URL=wss://$DOMAIN \
+            --build-arg NEXT_PUBLIC_MAP_PROVIDER=fallback \
+            --build-arg NEXT_PUBLIC_DATA_MODE=api \
             -t $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG ./frontend
           docker push $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG
           docker tag $ECR_REGISTRY/yolmates/frontend:$IMAGE_TAG $ECR_REGISTRY/yolmates/frontend:latest

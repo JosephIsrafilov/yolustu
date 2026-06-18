@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
@@ -54,7 +55,10 @@ class NotificationsScreen extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final n = items[i];
                   return ListTile(
-                    onTap: () => controller.markRead(n.id),
+                    onTap: () {
+                      controller.markRead(n.id);
+                      context.push('/notifications/${n.id}');
+                    },
                     leading: Container(
                       width: 44,
                       height: 44,

@@ -22,7 +22,7 @@ class RouteMapView extends StatelessWidget {
     this.progress = 0.0,
     this.showCar = false,
     this.forceCanvas = false,
-    this.preferGoogleMap = false,
+    this.preferGoogleMap = true,
     super.key,
   });
 
@@ -66,7 +66,7 @@ class CanvasRouteMapView extends StatefulWidget {
   State<CanvasRouteMapView> createState() => _CanvasRouteMapViewState();
 }
 
-class _CanvasRouteMapViewState extends State<CanvasRouteMapView> with SingleTickerProviderStateMixin {
+class _CanvasRouteMapViewState extends State<CanvasRouteMapView> {
   late List<LatLon> _routePoints;
 
   @override
@@ -78,7 +78,8 @@ class _CanvasRouteMapViewState extends State<CanvasRouteMapView> with SingleTick
   @override
   void didUpdateWidget(CanvasRouteMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.origin != widget.origin || oldWidget.destination != widget.destination) {
+    if (oldWidget.origin != widget.origin ||
+        oldWidget.destination != widget.destination) {
       _loadRoute();
     }
   }
@@ -111,7 +112,8 @@ class _CanvasRouteMapViewState extends State<CanvasRouteMapView> with SingleTick
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(8),
@@ -188,7 +190,8 @@ class _MapPainter extends CustomPainter {
     Offset toOffset(LatLon pt) {
       final x = ((pt.lon - minLon) / (maxLon - minLon)) * size.width;
       // Invert Y because canvas Y starts from top
-      final y = size.height - (((pt.lat - minLat) / (maxLat - minLat)) * size.height);
+      final y =
+          size.height - (((pt.lat - minLat) / (maxLat - minLat)) * size.height);
       return Offset(x, y);
     }
 
@@ -255,7 +258,8 @@ class _MapPainter extends CustomPainter {
       // Find position of the car on the path based on progress
       final totalSegments = routeOffsets.length - 1;
       final currentSegmentVal = progress * totalSegments;
-      final segmentIndex = currentSegmentVal.floor().clamp(0, totalSegments - 1);
+      final segmentIndex =
+          currentSegmentVal.floor().clamp(0, totalSegments - 1);
       final segmentProgress = currentSegmentVal - segmentIndex;
 
       final p1 = routeOffsets[segmentIndex];

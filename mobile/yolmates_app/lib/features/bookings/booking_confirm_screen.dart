@@ -5,18 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
-import '../../shared/data/mock_data.dart';
+import '../../core/repositories/rides_repository.dart';
 import '../../shared/models/trip.dart';
+import '../wallet/data/wallet_controller.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../chat/data/chat_repository.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
 /// Booking confirmation for a selected ride.
-///
-/// Resolves the ride from the mock dataset, lets the user pick a seat count,
-/// and on confirm creates a booking via [bookingsControllerProvider] then
-/// routes to its detail screen.
 class BookingConfirmScreen extends ConsumerStatefulWidget {
   final String rideId;
   final int initialSeats;
@@ -38,13 +36,23 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
   String? _error;
 
   Future<void> _confirm(Trip ride) async {
+    // Check wallet balance before booking
+    const serviceFeePercent = 0.10;
+    final total = ride.price * _seats * (1 + serviceFeePercent);
+    final walletState = ref.read(walletControllerProvider).valueOrNull;
+    if (walletState != null && walletState.balance.passengerBalance < total) {
+      setState(() => _error =
+          'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.passengerBalance.toStringAsFixed(2)} AZN var.');
+      return;
+    }
+
     setState(() {
       _submitting = true;
       _error = null;
     });
     try {
       final booking = Booking(
-        id: 'bk-${DateTime.now().millisecondsSinceEpoch}',
+        id: '',
         rideId: ride.id,
         fromCity: ride.fromCity,
         toCity: ride.toCity,
@@ -61,11 +69,24 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       if (!mounted) return;
       await _showSuccess();
       if (!mounted) return;
-      context.go('${AppRoutes.bookings}/${created.id}');
-    } catch (_) {
+
+      // Navigate to chat and send automated message
+      final chatRepo = ref.read(chatRepositoryProvider);
+      final conversation =
+          await chatRepo.getOrCreateRideConversation(created.id);
+
+      final time =
+          '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+      final msg =
+          'Sifariş detalı:\nMarşrut: ${ride.fromCity} - ${ride.toCity}\nVaxt: ${ride.departureTime.day.toString().padLeft(2, '0')}.${ride.departureTime.month.toString().padLeft(2, '0')} $time\nYer sayı: $_seats\nQiymət: ${ride.price.toStringAsFixed(0)} AZN/yer';
+      await chatRepo.sendMessage(conversation.id, msg);
+
+      if (!mounted) return;
+      context.go('${AppRoutes.messages}/${conversation.id}');
+    } catch (e) {
       if (!mounted) return;
       setState(
-          () => _error = 'Rezervasiya yaradıla bilmədi. Yenidən cəhd edin.');
+          () => _error = 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -114,26 +135,35 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ride = MockData.rideById(widget.rideId);
+    final rideAsync = ref.watch(rideByIdProvider(widget.rideId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rezervasiyanı təsdiqlə')),
-      body: ride == null
-          ? ErrorStateView(
-              title: 'Səyahət tapılmadı',
-              message: 'Bu səyahət artıq mövcud deyil.',
-              onRetry: () => context.pop(),
-              retryLabel: 'Geri qayıt',
-            )
-          : _submitting
-              ? const LoadingView(message: 'Rezervasiya yaradılır...')
-              : _Content(
-                  ride: ride,
-                  seats: _seats,
-                  error: _error,
-                  onSeatsChanged: (s) => setState(() => _seats = s),
-                  onConfirm: () => _confirm(ride),
-                ),
+      body: rideAsync.when(
+        loading: () => const LoadingView(message: 'Yüklənir...'),
+        error: (_, __) => ErrorStateView(
+          title: 'Səyahət tapılmadı',
+          message: 'Bu səyahət artıq mövcud deyil.',
+          onRetry: () => context.pop(),
+          retryLabel: 'Geri qayıt',
+        ),
+        data: (ride) => ride == null
+            ? ErrorStateView(
+                title: 'Səyahət tapılmadı',
+                message: 'Bu səyahət artıq mövcud deyil.',
+                onRetry: () => context.pop(),
+                retryLabel: 'Geri qayıt',
+              )
+            : _submitting
+                ? const LoadingView(message: 'Rezervasiya yaradılır...')
+                : _Content(
+                    ride: ride,
+                    seats: _seats,
+                    error: _error,
+                    onSeatsChanged: (s) => setState(() => _seats = s),
+                    onConfirm: () => _confirm(ride),
+                  ),
+      ),
     );
   }
 }
@@ -274,9 +304,11 @@ class _Content extends StatelessWidget {
                 title: 'Qiymət',
                 child: Column(
                   children: [
-                    _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer', '${subtotal.toStringAsFixed(2)} AZN'),
+                    _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer',
+                        '${subtotal.toStringAsFixed(2)} AZN'),
                     const SizedBox(height: 8),
-                    _row('Platforma xidmət haqqı (10%)', '${serviceFee.toStringAsFixed(2)} AZN'),
+                    _row('Platforma xidmət haqqı (10%)',
+                        '${serviceFee.toStringAsFixed(2)} AZN'),
                     const Divider(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

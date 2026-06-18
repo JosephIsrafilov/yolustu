@@ -3,6 +3,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/data/auth_mode.dart';
+import '../../auth/state/auth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Review {
@@ -29,6 +30,8 @@ abstract class ReviewsRepository {
     required int rating,
     String? comment,
   });
+
+  Future<List<Review>> getReviews(String userId);
 }
 
 class MockReviewsRepository implements ReviewsRepository {
@@ -47,6 +50,34 @@ class MockReviewsRepository implements ReviewsRepository {
       throw Exception('Bu səfər üçün artıq rəy bildirmisiniz.');
     }
     _reviewedRides.add(rideId);
+  }
+
+  @override
+  Future<List<Review>> getReviews(String userId) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      Review(
+        id: '1',
+        authorName: 'Aysel',
+        rating: 5,
+        comment: 'Çox yaxşı sürücü, maşın təmiz idi.',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      Review(
+        id: '2',
+        authorName: 'Kamil',
+        rating: 4,
+        comment: 'Yaxşı idi, amma bir az gecikdi.',
+        createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+      Review(
+        id: '3',
+        authorName: 'Rauf',
+        rating: 5,
+        comment: 'Təhlükəsiz və rahat səyahət.',
+        createdAt: DateTime.now().subtract(const Duration(days: 12)),
+      ),
+    ];
   }
 }
 
@@ -74,6 +105,26 @@ class ApiReviewsRepository implements ReviewsRepository {
       throw Exception(apiError.message);
     }
   }
+
+  @override
+  Future<List<Review>> getReviews(String userId) async {
+    try {
+      final response = await _client.get('/reviews/user/$userId');
+      final data = response.data as List;
+      return data
+          .map((e) => Review(
+                id: e['id'] as String,
+                authorName: e['author_name'] as String? ?? 'Sərnişin',
+                rating: e['rating'] as int,
+                comment: e['comment'] as String? ?? '',
+                createdAt: DateTime.parse(e['created_at'] as String),
+              ))
+          .toList();
+    } on DioException catch (e) {
+      final apiError = e.error as ApiException;
+      throw Exception(apiError.message);
+    }
+  }
 }
 
 // --- Providers ---------------------------------------------------------------
@@ -84,4 +135,11 @@ final reviewsRepositoryProvider = Provider<ReviewsRepository>((ref) {
   } else {
     return MockReviewsRepository();
   }
+});
+
+final userReviewsProvider =
+    FutureProvider.autoDispose<List<Review>>((ref) async {
+  final authState = ref.watch(authControllerProvider);
+  if (authState.user == null) return [];
+  return ref.read(reviewsRepositoryProvider).getReviews(authState.user!.id);
 });

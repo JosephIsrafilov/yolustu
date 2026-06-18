@@ -49,11 +49,45 @@ function normalizeApiBaseUrl(baseUrl: string): string {
       url.hostname = pageHost;
       return url.toString().replace(/\/+$/, '');
     }
+
+    if (
+      window.location.protocol === 'https:' &&
+      url.protocol === 'http:' &&
+      url.hostname === window.location.hostname
+    ) {
+      url.protocol = 'https:';
+      return url.toString().replace(/\/+$/, '');
+    }
   } catch {
     return trimmedBaseUrl;
   }
 
   return trimmedBaseUrl;
+}
+
+function buildRequestUrl(baseUrl: string, path: string): string {
+  const requestPath = normalizePath(path);
+  const requestUrl = `${baseUrl}${requestPath}`;
+
+  if (typeof window === 'undefined') {
+    return requestUrl;
+  }
+
+  try {
+    const url = new URL(requestUrl);
+
+    if (
+      window.location.protocol === 'https:' &&
+      url.protocol === 'http:' &&
+      url.hostname === window.location.hostname
+    ) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    return url.toString();
+  } catch {
+    return requestUrl;
+  }
 }
 
 function getCookie(name: string): string | null {
@@ -190,7 +224,7 @@ class ApiClient {
         }
       }
 
-      const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
+      const response = await fetch(buildRequestUrl(this.baseUrl, path), {
         method,
         headers,
         body: requestBody,
@@ -292,7 +326,7 @@ class ApiClient {
    * Uses the same baseUrl, cookie auth, and loopback normalization as other methods.
    */
   async getBlob(path: string): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
+    const response = await fetch(buildRequestUrl(this.baseUrl, path), {
       method: 'GET',
       credentials: 'include',
     });
@@ -318,7 +352,7 @@ class ApiClient {
       }
       await this.refreshPromise;
 
-      const retryResponse = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
+      const retryResponse = await fetch(buildRequestUrl(this.baseUrl, path), {
         method: 'GET',
         credentials: 'include',
       });

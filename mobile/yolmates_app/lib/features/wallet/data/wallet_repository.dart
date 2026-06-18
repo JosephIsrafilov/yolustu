@@ -8,30 +8,94 @@ import 'wallet.dart';
 /// Wallet repository contract. Backend swap point.
 abstract class WalletRepository {
   Future<WalletBalance> getBalance();
-  Future<List<WalletTransaction>> getTransactions({int page = 1, int limit = 20});
+  Future<List<WalletTransaction>> getTransactions(
+      {int page = 1, int limit = 20});
+  Future<WalletBalance> topUpPassenger(double amount);
+  Future<WalletBalance> withdrawDriver(double amount);
 }
 
 /// Mock wallet repository with realistic demo data.
 class MockWalletRepository implements WalletRepository {
   static const Duration _latency = Duration(milliseconds: 400);
+  WalletBalance _balance = const WalletBalance(
+    userId: 'mock-user',
+    passengerBalance: 25.00,
+    driverBalance: 75.50,
+    pendingBalance: 0.00,
+    currency: 'AZN',
+    totalEarned: 75.50,
+    totalSpent: 25.00,
+  );
+  late final List<WalletTransaction> _transactions = _initialTransactions();
 
   @override
   Future<WalletBalance> getBalance() async {
     await Future.delayed(_latency);
-    return const WalletBalance(
-      userId: 'mock-user',
-      availableBalance: 25.00,
-      pendingBalance: 0.00,
-      currency: 'AZN',
-      totalEarned: 0.00,
-      totalSpent: 25.00,
-    );
+    return _balance;
   }
 
   @override
-  Future<List<WalletTransaction>> getTransactions({int page = 1, int limit = 20}) async {
+  Future<List<WalletTransaction>> getTransactions(
+      {int page = 1, int limit = 20}) async {
     await Future.delayed(_latency);
+    final start = (page - 1) * limit;
+    return _transactions.skip(start).take(limit).toList();
+  }
 
+  @override
+  Future<WalletBalance> topUpPassenger(double amount) async {
+    await Future.delayed(_latency);
+    if (amount <= 0) {
+      throw ArgumentError.value(
+          amount, 'amount', 'Amount must be greater than 0');
+    }
+    final nextPassengerBalance = _balance.passengerBalance + amount;
+    _balance = _balance.copyWith(passengerBalance: nextPassengerBalance);
+    _transactions.insert(
+      0,
+      WalletTransaction(
+        id: 'mock-topup-${DateTime.now().microsecondsSinceEpoch}',
+        userId: _balance.userId,
+        type: WalletTransactionType.topUp,
+        amount: amount,
+        currency: _balance.currency,
+        balanceAfter: nextPassengerBalance,
+        description: 'Mock top up',
+        createdAt: DateTime.now(),
+      ),
+    );
+    return _balance;
+  }
+
+  @override
+  Future<WalletBalance> withdrawDriver(double amount) async {
+    await Future.delayed(_latency);
+    if (amount <= 0) {
+      throw ArgumentError.value(
+          amount, 'amount', 'Amount must be greater than 0');
+    }
+    if (amount > _balance.driverBalance) {
+      throw StateError('Insufficient driver balance');
+    }
+    final nextDriverBalance = _balance.driverBalance - amount;
+    _balance = _balance.copyWith(driverBalance: nextDriverBalance);
+    _transactions.insert(
+      0,
+      WalletTransaction(
+        id: 'mock-withdraw-${DateTime.now().microsecondsSinceEpoch}',
+        userId: _balance.userId,
+        type: WalletTransactionType.payout,
+        amount: -amount,
+        currency: _balance.currency,
+        balanceAfter: nextDriverBalance,
+        description: 'Mock withdrawal',
+        createdAt: DateTime.now(),
+      ),
+    );
+    return _balance;
+  }
+
+  List<WalletTransaction> _initialTransactions() {
     final now = DateTime.now();
     return [
       WalletTransaction(

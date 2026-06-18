@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yolmates_app/features/auth/data/app_user.dart';
 import 'package:yolmates_app/features/auth/data/auth_repository.dart';
+import 'package:yolmates_app/features/auth/data/mock_auth_repository.dart';
 import 'package:yolmates_app/features/auth/data/session_storage.dart';
 import 'package:yolmates_app/features/auth/state/auth_controller.dart';
 
@@ -15,6 +16,7 @@ ProviderContainer _makeContainer({bool onboardingSeen = true}) {
   final container = ProviderContainer(
     overrides: [
       sessionStorageProvider.overrideWithValue(storage),
+      authRepositoryProvider.overrideWith((ref) => MockAuthRepository(storage)),
     ],
   );
   addTearDown(container.dispose);
@@ -120,7 +122,11 @@ void main() {
         () async {
       final storage = InMemorySessionStorage();
       storage.write('onboarding_seen', 'true');
-      final overrides = [sessionStorageProvider.overrideWithValue(storage)];
+      final overrides = [
+        sessionStorageProvider.overrideWithValue(storage),
+        authRepositoryProvider
+            .overrideWith((ref) => MockAuthRepository(storage)),
+      ];
 
       final c1 = ProviderContainer(overrides: overrides);
       while (c1.read(authControllerProvider).status == AuthStatus.unknown) {

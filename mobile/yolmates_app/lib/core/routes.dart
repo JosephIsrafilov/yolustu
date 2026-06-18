@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/splash_screen.dart';
-import '../features/auth/presentation/phone_login_screen.dart';
+import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/otp_verify_screen.dart';
 import '../features/auth/presentation/profile_setup_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/auth_intro_screen.dart';
+import '../features/auth/presentation/mode_transition_screen.dart';
 import '../features/auth/state/auth_controller.dart';
 import '../features/bookings/bookings_screen.dart';
 import '../features/bookings/booking_confirm_screen.dart';
@@ -24,11 +26,14 @@ import '../features/driver/active_ride_screen.dart';
 import '../features/driver/driver_panel_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
+import '../features/notifications/presentation/notification_detail_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/presentation/profile_edit_screen.dart';
 import '../features/reviews/reviews_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/support/support_screen.dart';
+import '../features/support/support_chat_screen.dart';
 import '../features/trips/trip_list_screen.dart';
 import '../features/trips/trip_detail_screen.dart';
 import '../features/wallet/wallet_screen.dart';
@@ -47,7 +52,8 @@ Page<T> _buildPageWithTransition<T>(
       const begin = Offset(0.03, 0);
       const end = Offset.zero;
       const curve = Curves.easeInOut;
-      final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      final tween =
+          Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
       final offsetAnimation = animation.drive(tween);
       final fadeAnimation = CurvedAnimation(parent: animation, curve: curve);
 
@@ -74,9 +80,11 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const authIntro = '/auth-intro';
   static const login = '/login';
+  static const register = '/register';
   static const otp = '/otp';
   static const profileSetup = '/profile-setup';
- 
+  static const modeTransition = '/mode-transition';
+
   // Main app (bottom-nav branches)
   static const home = '/';
   static const search = '/search';
@@ -94,6 +102,7 @@ class AppRoutes {
   // Profile sub-pages
   static const settings = '/settings';
   static const support = '/support';
+  static const profileEdit = '/profile/edit';
   static const notifications = '/notifications';
   static const reviews = '/reviews';
   static const wallet = '/wallet';
@@ -128,7 +137,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final status = ref.read(authControllerProvider).status;
       final loc = state.matchedLocation;
 
-      const authRoutes = {AppRoutes.login, AppRoutes.otp, AppRoutes.authIntro};
+      const authRoutes = {
+        AppRoutes.login,
+        AppRoutes.register,
+        AppRoutes.otp,
+        AppRoutes.authIntro
+      };
       final onSplash = loc == AppRoutes.splash;
       final onAuth = authRoutes.contains(loc);
       final onProfileSetup = loc == AppRoutes.profileSetup;
@@ -144,8 +158,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           return onOnboarding ? null : AppRoutes.onboarding;
 
         case AuthStatus.unauthenticated:
-          // Only login/otp/intro allowed.
-          return onAuth ? null : AppRoutes.authIntro;
+          // Only login/otp/register/intro allowed.
+          return onAuth ? null : AppRoutes.login;
 
         case AuthStatus.incompleteProfile:
           // Force profile setup.
@@ -153,7 +167,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         case AuthStatus.authenticated:
           // Bounce away from auth/splash into the app.
-          if (onSplash || onAuth || onProfileSetup || onOnboarding) return AppRoutes.home;
+          if (onSplash || onAuth || onProfileSetup || onOnboarding) {
+            return AppRoutes.home;
+          }
 
           // Driver routes access control: only approved drivers can access panel routes
           final user = ref.read(authControllerProvider).user;
@@ -161,7 +177,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (isDriverRoute) {
             if (user?.verificationStatus != 'approved') {
               // Allow access to onboarding and verification flow only
-              if (loc == AppRoutes.driverOnboarding || loc == AppRoutes.driverVerification) {
+              if (loc == AppRoutes.driverOnboarding ||
+                  loc == AppRoutes.driverVerification) {
                 return null;
               }
               return AppRoutes.driverOnboarding;
@@ -185,18 +202,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (_, __) => const PhoneLoginScreen(),
+        builder: (_, __) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (_, __) => const RegisterScreen(),
       ),
       GoRoute(
         path: AppRoutes.otp,
         builder: (context, state) {
           final phone = state.uri.queryParameters['phone'] ?? '';
-          return OtpVerifyScreen(phone: phone);
+          final avatar = state.uri.queryParameters['avatar'];
+          return OtpVerifyScreen(phone: phone, avatar: avatar);
         },
       ),
       GoRoute(
         path: AppRoutes.profileSetup,
         builder: (_, __) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.modeTransition,
+        builder: (context, state) {
+          final isDriver = state.uri.queryParameters['driver'] == 'true';
+          return ModeTransitionScreen(isDriver: isDriver);
+        },
       ),
 
       // --- Main app shell (bottom navigation) ---
@@ -250,6 +279,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // --- Secondary routes (above the shell, full screen, normal back) ---
       GoRoute(
+        path: '/notifications/:id',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          NotificationDetailScreen(notificationId: state.pathParameters['id']!),
+        ),
+      ),
+
+      GoRoute(
         path: '/trips/:id',
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
@@ -262,12 +300,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final q = state.uri.queryParameters;
           DateTime? date;
-          if (q['date'] != null) {
+          DateTime? dateTo;
+          if (q['date_from'] != null) {
+            try {
+              date = DateTime.parse(q['date_from']!);
+              if (q['date_to'] != null) {
+                dateTo = DateTime.parse(q['date_to']!);
+              }
+            } catch (_) {}
+          } else if (q['date'] != null) {
             try {
               date = DateTime.parse(q['date']!);
-            } catch (_) {
-              // Invalid date format, ignore
-            }
+            } catch (_) {}
           }
           return _buildPageWithTransition(
             context,
@@ -277,6 +321,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               toCity: q['to'] ?? 'Gəncə',
               passengers: int.tryParse(q['passengers'] ?? '1') ?? 1,
               date: date,
+              dateTo: dateTo,
             ),
           );
         },
@@ -320,11 +365,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: AppRoutes.profileEdit,
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const ProfileEditScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.support,
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
           const SupportScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.support}/chat',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const SupportChatScreen(),
         ),
       ),
       GoRoute(

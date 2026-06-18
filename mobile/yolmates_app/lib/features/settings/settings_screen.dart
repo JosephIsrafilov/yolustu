@@ -6,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../auth/data/app_user.dart';
 import '../auth/state/auth_controller.dart';
+import 'package:go_router/go_router.dart';
 
 /// App settings (mostly mock toggles).
 ///
@@ -42,17 +43,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _pickLanguage(context, language),
               ),
-              const _Sep(),
-              ListTile(
-                leading: const Icon(Icons.dark_mode_outlined),
-                title: Text(l10n.settingsDarkMode),
-                subtitle: Text(l10n.settingsThemePreparing),
-                trailing: const Icon(Icons.info_outline),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.settingsThemeNote)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _SectionLabel(l10n.settingsAccount),
+          _Card(
+            children: [
+              Consumer(
+                builder: (context, ref, child) {
+                  final user = ref.watch(authControllerProvider).user;
+                  final isDriverMode = user?.role == UserRole.driver;
+                  final canBeDriver = user?.verificationStatus == 'approved';
+
+                  return SwitchListTile.adaptive(
+                    secondary: const Icon(Icons.swap_horiz),
+                    title: const Text(
+                        'Sürücü rejimi'), // TODO: use l10n.modeDriver later if needed
+                    subtitle: canBeDriver
+                        ? null
+                        : const Text('Sürücü olmaq üçün təsdiqlənməlisiniz',
+                            style: TextStyle(fontSize: 12)),
+                    value: isDriverMode,
+                    activeThumbColor: AppTheme.teal,
+                    onChanged: canBeDriver
+                        ? (v) async {
+                            final newRole =
+                                v ? UserRole.driver : UserRole.passenger;
+                            // Push transition screen, let it handle the delay and update.
+                            // But for now let's just do it directly if we don't have the transition screen yet.
+                            // I will implement the transition screen next.
+                            context.push('/mode_transition', extra: newRole);
+                          }
+                        : null,
                   );
                 },
+              ),
+              const _Sep(),
+              ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: Text(l10n.settingsSecurity),
+                subtitle: Text(l10n.settingsComingSoon),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _comingSoon(context),
+              ),
+              const _Sep(),
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: Text(l10n.settingsPrivacy),
+                subtitle: Text(l10n.settingsComingSoon),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _comingSoon(context),
               ),
             ],
           ),
@@ -74,27 +114,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: _emailNotifications,
                 activeThumbColor: AppTheme.teal,
                 onChanged: (v) => setState(() => _emailNotifications = v),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _SectionLabel(l10n.settingsAccount),
-          _Card(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.lock_outline),
-                title: Text(l10n.settingsSecurity),
-                subtitle: Text(l10n.settingsComingSoon),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _comingSoon(context),
-              ),
-              const _Sep(),
-              ListTile(
-                leading: const Icon(Icons.privacy_tip_outlined),
-                title: Text(l10n.settingsPrivacy),
-                subtitle: Text(l10n.settingsComingSoon),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _comingSoon(context),
               ),
             ],
           ),

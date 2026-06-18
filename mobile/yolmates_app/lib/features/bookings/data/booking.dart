@@ -75,7 +75,7 @@ class Booking {
   const Booking({
     required this.id,
     required this.rideId,
-    this.driverId = 'mock-driver-id',
+    this.driverId = '',
     required this.fromCity,
     required this.toCity,
     required this.driverName,

@@ -110,6 +110,7 @@ class DriverDto {
   final String? avatarUrl;
   final double rating;
   final int totalRides;
+  final bool isVerified;
 
   const DriverDto({
     required this.id,
@@ -119,6 +120,7 @@ class DriverDto {
     this.avatarUrl,
     required this.rating,
     required this.totalRides,
+    this.isVerified = false,
   });
 
   factory DriverDto.fromJson(Map<String, dynamic> json) {
@@ -130,6 +132,7 @@ class DriverDto {
       avatarUrl: json['avatar_url'] as String?,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       totalRides: json['total_rides'] as int? ?? 0,
+      isVerified: json['is_verified'] as bool? ?? false,
     );
   }
 

@@ -7,6 +7,8 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../auth/state/auth_controller.dart';
+import '../wallet/data/wallet_controller.dart';
+import 'data/driver_controller.dart';
 
 class DriverPanelScreen extends ConsumerWidget {
   const DriverPanelScreen({super.key});
@@ -24,7 +26,8 @@ class DriverPanelScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 64, color: AppTheme.slate500),
+              const Icon(Icons.lock_outline,
+                  size: 64, color: AppTheme.slate500),
               const SizedBox(height: 16),
               Text(l10n.driverPanelAccessDenied),
               const SizedBox(height: 16),
@@ -106,27 +109,36 @@ class DriverPanelScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Stats / Earnings placeholder
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'Bugünkü gəlir',
-                    value: '0.00 AZN',
-                    icon: Icons.account_balance_wallet_outlined,
-                    color: AppTheme.teal,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatCard(
-                    title: 'Aktiv sorğular',
-                    value: '0',
-                    icon: Icons.group_add_outlined,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
+            Consumer(
+              builder: (context, ref, _) {
+                final walletAsync = ref.watch(walletControllerProvider);
+                final requestsAsync = ref.watch(passengerRequestsProvider);
+                
+                final income = walletAsync.valueOrNull?.balance.totalEarned ?? 0.0;
+                final pendingRequests = requestsAsync.valueOrNull?.where((r) => r.status.name == 'pending').length ?? 0;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Ümumi gəlir',
+                        value: '${income.toStringAsFixed(2)} AZN',
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: AppTheme.teal,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Aktiv sorğular',
+                        value: pendingRequests.toString(),
+                        icon: Icons.group_add_outlined,
+                        color: pendingRequests > 0 ? Colors.red : Colors.orange,
+                      ),
+                    ),
+                  ],
+                );
+              }
             ),
             const SizedBox(height: 32),
 

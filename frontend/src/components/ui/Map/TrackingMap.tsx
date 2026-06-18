@@ -121,12 +121,12 @@ function InnerTrackingMap({ route, position, heading, className }: TrackingMapPr
           />
         )}
         {routePath[0] && (
-          <MarkerF position={routePath[0]} icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png" />
+          <MarkerF position={routePath[0]} icon="https://maps.google.com/mapfiles/ms/icons/green-dot.png" />
         )}
         {routePath.length > 1 && (
           <MarkerF
             position={routePath[routePath.length - 1]}
-            icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            icon="https://maps.google.com/mapfiles/ms/icons/red-dot.png"
           />
         )}
         {rendered && <MarkerF position={rendered} icon={carIcon} zIndex={1000} />}

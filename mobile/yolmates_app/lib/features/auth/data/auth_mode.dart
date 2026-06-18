@@ -2,7 +2,7 @@
 ///
 /// Usage:
 /// ```
-/// flutter run --dart-define=API_MODE=api --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+/// flutter run --dart-define=API_MODE=api --dart-define=API_BASE_URL=https://63.182.139.73.nip.io/api/v1
 /// flutter run --dart-define=API_MODE=mock  # or omit API_MODE entirely
 /// ```
 ///
@@ -10,7 +10,7 @@
 class AuthMode {
   static const String mode = String.fromEnvironment(
     'API_MODE',
-    defaultValue: 'mock',
+    defaultValue: 'api',
   );
 
   static bool get isApi => mode.toLowerCase() == 'api';

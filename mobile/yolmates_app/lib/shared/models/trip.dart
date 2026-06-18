@@ -10,6 +10,10 @@ class Trip {
   final int availableSeats;
   final int totalSeats;
   final String status;
+  final bool femaleOnly;
+  final bool allowSmoking;
+  final bool allowPets;
+  final bool allowMusic;
 
   const Trip({
     required this.id,
@@ -21,6 +25,10 @@ class Trip {
     required this.availableSeats,
     required this.totalSeats,
     required this.status,
+    this.femaleOnly = false,
+    this.allowSmoking = false,
+    this.allowPets = false,
+    this.allowMusic = true,
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
@@ -34,6 +42,10 @@ class Trip {
       availableSeats: json['available_seats'] as int,
       totalSeats: json['total_seats'] as int,
       status: json['status'] as String,
+      femaleOnly: json['female_only'] as bool? ?? false,
+      allowSmoking: json['allow_smoking'] as bool? ?? false,
+      allowPets: json['allow_pets'] as bool? ?? false,
+      allowMusic: json['allow_music'] as bool? ?? true,
     );
   }
 

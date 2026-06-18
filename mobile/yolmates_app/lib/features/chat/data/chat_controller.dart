@@ -4,27 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/state/auth_controller.dart';
-import '../../notifications/data/notifications_controller.dart';
 import 'chat_models.dart';
 import 'chat_repository.dart';
 
-final conversationsProvider = FutureProvider.autoDispose<List<Conversation>>((ref) async {
+final conversationsProvider =
+    FutureProvider.autoDispose<List<Conversation>>((ref) async {
   final repo = ref.watch(chatRepositoryProvider);
-  return repo.getConversations();
+  final chats = await repo.getConversations();
+  return chats.where((c) => c.type != 'support').toList();
 });
 
 final unreadChatCountProvider = Provider<int>((ref) {
-  final conversations = ref.watch(conversationsProvider).valueOrNull ?? const <Conversation>[];
-  return conversations.fold<int>(0, (sum, conversation) => sum + conversation.unreadCount);
+  final conversations =
+      ref.watch(conversationsProvider).valueOrNull ?? const <Conversation>[];
+  return conversations.fold<int>(
+      0, (sum, conversation) => sum + conversation.unreadCount);
 });
 
-final unreadNotificationCountProvider = Provider<int>((ref) {
-  return ref.watch(
-    notificationsProvider.select((items) => items.where((item) => !item.read).length),
-  );
-});
-
-class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
+class ChatMessagesNotifier
+    extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
@@ -89,10 +87,16 @@ class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessa
     }
   }
 
+  int _reconnectAttempt = 0;
+
   void _scheduleReconnect() {
     if (_disposed) return;
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 2), () {
+    // ponytail: exponential backoff, cap 60s, stop after 8 attempts (permanent auth failure won't help retrying more)
+    if (_reconnectAttempt >= 8) return;
+    final delay = Duration(seconds: (2 << _reconnectAttempt).clamp(2, 60));
+    _reconnectAttempt++;
+    _reconnectTimer = Timer(delay, () {
       if (_disposed) return;
       unawaited(_connect());
     });
@@ -107,11 +111,13 @@ class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessa
     }
   }
 
-  Future<void> sendMessage(String content, {String type = 'text', List<String> attachments = const []}) async {
+  Future<void> sendMessage(String content,
+      {String type = 'text', List<String> attachments = const []}) async {
     final repo = ref.read(chatRepositoryProvider);
     final prev = state.value ?? [];
     try {
-      final msg = await repo.sendMessage(arg, content, type: type, attachments: attachments);
+      final msg = await repo.sendMessage(arg, content,
+          type: type, attachments: attachments);
       // Ensure we don't duplicate if websocket already got it
       if (!prev.any((e) => e.id == msg.id)) {
         state = AsyncData([...prev, msg]);
@@ -128,7 +134,8 @@ class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessa
     final prev = state.value ?? [];
     try {
       final url = await repo.uploadAttachment(filePath);
-      final msg = await repo.sendMessage(arg, '', type: 'photo', attachments: [url]);
+      final msg =
+          await repo.sendMessage(arg, '', type: 'photo', attachments: [url]);
       if (!prev.any((e) => e.id == msg.id)) {
         state = AsyncData([...prev, msg]);
       }
@@ -139,6 +146,7 @@ class ChatMessagesNotifier extends AutoDisposeFamilyAsyncNotifier<List<ChatMessa
   }
 }
 
-final chatMessagesProvider = AsyncNotifierProvider.autoDispose.family<ChatMessagesNotifier, List<ChatMessage>, String>(
+final chatMessagesProvider = AsyncNotifierProvider.autoDispose
+    .family<ChatMessagesNotifier, List<ChatMessage>, String>(
   ChatMessagesNotifier.new,
 );

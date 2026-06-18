@@ -129,7 +129,8 @@ void main() {
         _wrap(
           AppCard(
             onTap: () {},
-            child: const SizedBox(width: 120, height: 60, child: Text('Tap me')),
+            child:
+                const SizedBox(width: 120, height: 60, child: Text('Tap me')),
           ),
         ),
       );

@@ -7,19 +7,34 @@ import 'wallet_repository.dart';
 class WalletState {
   final WalletBalance balance;
   final List<WalletTransaction> transactions;
+  final List<WalletCard> cards;
+  final String? selectedCardId;
 
   const WalletState({
     required this.balance,
     required this.transactions,
+    this.cards = const [],
+    this.selectedCardId,
   });
+
+  WalletCard? get selectedCard {
+    for (final card in cards) {
+      if (card.id == selectedCardId) return card;
+    }
+    return cards.isEmpty ? null : cards.first;
+  }
 
   WalletState copyWith({
     WalletBalance? balance,
     List<WalletTransaction>? transactions,
+    List<WalletCard>? cards,
+    String? selectedCardId,
   }) {
     return WalletState(
       balance: balance ?? this.balance,
       transactions: transactions ?? this.transactions,
+      cards: cards ?? this.cards,
+      selectedCardId: selectedCardId ?? this.selectedCardId,
     );
   }
 }
@@ -38,10 +53,13 @@ class WalletController extends AsyncNotifier<WalletState> {
     return WalletState(
       balance: results[0] as WalletBalance,
       transactions: results[1] as List<WalletTransaction>,
+      cards: _demoCards,
+      selectedCardId: _demoCards.first.id,
     );
   }
 
   Future<void> refresh() async {
+    final current = state.value;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final results = await Future.wait([
@@ -52,6 +70,8 @@ class WalletController extends AsyncNotifier<WalletState> {
       return WalletState(
         balance: results[0] as WalletBalance,
         transactions: results[1] as List<WalletTransaction>,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
       );
     });
   }
@@ -69,8 +89,97 @@ class WalletController extends AsyncNotifier<WalletState> {
       ),
     );
   }
+
+  Future<void> topUpPassenger(double amount) async {
+    final current = state.value;
+    state = const AsyncValue.loading();
+    try {
+      final balance = await _repo.topUpPassenger(amount);
+      final transactions = await _repo.getTransactions(limit: 20);
+      state = AsyncValue.data(WalletState(
+        balance: balance,
+        transactions: transactions,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
+      ));
+    } catch (e) {
+      if (current != null) {
+        state = AsyncValue.data(current);
+      }
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<void> withdrawDriver(double amount) async {
+    final current = state.value;
+    state = const AsyncValue.loading();
+    try {
+      final balance = await _repo.withdrawDriver(amount);
+      final transactions = await _repo.getTransactions(limit: 20);
+      state = AsyncValue.data(WalletState(
+        balance: balance,
+        transactions: transactions,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
+      ));
+    } catch (e) {
+      if (current != null) {
+        state = AsyncValue.data(current);
+      }
+      throw Exception(e.toString());
+    }
+  }
+
+  void selectCard(String cardId) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncValue.data(current.copyWith(selectedCardId: cardId));
+  }
+
+  void addCard({
+    required String holderName,
+    required String number,
+    required String expiry,
+  }) {
+    final current = state.value;
+    if (current == null) return;
+    final digits = number.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 12) {
+      throw ArgumentError('Card number is too short');
+    }
+    final card = WalletCard(
+      id: 'card-${DateTime.now().microsecondsSinceEpoch}',
+      holderName: holderName.trim().isEmpty ? 'CARD HOLDER' : holderName.trim(),
+      last4: digits.substring(digits.length - 4),
+      expiry: expiry.trim(),
+      brand: _detectBrand(digits),
+    );
+    state = AsyncValue.data(
+      current.copyWith(
+        cards: [...current.cards, card],
+        selectedCardId: card.id,
+      ),
+    );
+  }
 }
 
-final walletControllerProvider = AsyncNotifierProvider<WalletController, WalletState>(
+final walletControllerProvider =
+    AsyncNotifierProvider<WalletController, WalletState>(
   WalletController.new,
 );
+
+const _demoCards = [
+  WalletCard(
+    id: 'demo-card-1',
+    holderName: 'Demo User',
+    last4: '4242',
+    expiry: '12/29',
+    brand: 'Visa',
+  ),
+];
+
+String _detectBrand(String digits) {
+  if (digits.startsWith('4')) return 'Visa';
+  if (digits.startsWith('5') || digits.startsWith('2')) return 'Mastercard';
+  return 'Card';
+}

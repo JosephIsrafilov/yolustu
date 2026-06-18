@@ -1,7 +1,8 @@
 /// Domain model for wallet balance and transactions.
 class WalletBalance {
   final String userId;
-  final double availableBalance;
+  final double passengerBalance;
+  final double driverBalance;
   final double pendingBalance;
   final String currency;
   final double totalEarned;
@@ -9,16 +10,21 @@ class WalletBalance {
 
   const WalletBalance({
     required this.userId,
-    required this.availableBalance,
+    required this.passengerBalance,
+    required this.driverBalance,
     required this.pendingBalance,
     required this.currency,
     required this.totalEarned,
     required this.totalSpent,
   });
 
+  // ponytail: keep availableBalance as alias so DTO layer compiles unchanged
+  double get availableBalance => passengerBalance;
+
   WalletBalance copyWith({
     String? userId,
-    double? availableBalance,
+    double? passengerBalance,
+    double? driverBalance,
     double? pendingBalance,
     String? currency,
     double? totalEarned,
@@ -26,7 +32,8 @@ class WalletBalance {
   }) {
     return WalletBalance(
       userId: userId ?? this.userId,
-      availableBalance: availableBalance ?? this.availableBalance,
+      passengerBalance: passengerBalance ?? this.passengerBalance,
+      driverBalance: driverBalance ?? this.driverBalance,
       pendingBalance: pendingBalance ?? this.pendingBalance,
       currency: currency ?? this.currency,
       totalEarned: totalEarned ?? this.totalEarned,
@@ -42,6 +49,7 @@ enum WalletTransactionType {
   driverAvailableEarning,
   refund,
   payout,
+  topUp,
   adjustment;
 
   String get label {
@@ -58,6 +66,8 @@ enum WalletTransactionType {
         return 'Geri qaytarma';
       case WalletTransactionType.payout:
         return 'Ödəniş';
+      case WalletTransactionType.topUp:
+        return 'Top up';
       case WalletTransactionType.adjustment:
         return 'Düzəliş';
     }
@@ -91,4 +101,22 @@ class WalletTransaction {
 
   bool get isCredit => amount > 0;
   bool get isDebit => amount < 0;
+}
+
+class WalletCard {
+  final String id;
+  final String holderName;
+  final String last4;
+  final String expiry;
+  final String brand;
+
+  const WalletCard({
+    required this.id,
+    required this.holderName,
+    required this.last4,
+    required this.expiry,
+    required this.brand,
+  });
+
+  String get label => '$brand •••• $last4';
 }

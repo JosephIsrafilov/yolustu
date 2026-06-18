@@ -8,6 +8,8 @@ import 'data/chat_controller.dart';
 import 'data/chat_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -22,6 +24,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
@@ -85,14 +93,37 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 18)),
+            if (conv.type != 'support')
+              const Text(
+                'Onlayn',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.tealLight,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.call, color: AppTheme.tealDark),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.chatCallExternal)),
-              );
+            onPressed: () async {
+              // Phone number would ideally come from participant data, using placeholder for now
+              final url = Uri.parse('tel:+994500000000');
+              final canLaunch = await canLaunchUrl(url);
+              if (!mounted) return;
+              if (canLaunch) {
+                await launchUrl(url);
+              } else {
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.chatCallExternal)),
+                );
+              }
             },
           ),
         ],
@@ -120,13 +151,25 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                            horizontal: 16, vertical: 10),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.7,
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
                         ),
                         decoration: BoxDecoration(
-                          color: isMine ? AppTheme.teal : AppTheme.slate100,
-                          borderRadius: BorderRadius.circular(16),
+                          color: isMine ? AppTheme.teal : Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(16),
+                            topRight: const Radius.circular(16),
+                            bottomLeft: Radius.circular(isMine ? 16 : 4),
+                            bottomRight: Radius.circular(isMine ? 4 : 16),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: isMine
@@ -163,6 +206,32 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                                   fontSize: 15,
                                 ),
                               ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  DateFormat('HH:mm').format(msg.createdAt),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isMine
+                                        ? Colors.white.withValues(alpha: 0.7)
+                                        : AppTheme.slate500,
+                                  ),
+                                ),
+                                if (isMine) ...[
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    msg.readAt != null
+                                        ? Icons.done_all
+                                        : Icons.check,
+                                    size: 14,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),

@@ -21,7 +21,8 @@ void main() {
       expect(searches.first.fromCity, 'Baku');
       expect(searches.first.toCity, 'Quba');
       expect(
-        searches.where((search) => search.fromCity == 'Baku' && search.toCity == 'Quba'),
+        searches.where(
+            (search) => search.fromCity == 'Baku' && search.toCity == 'Quba'),
         hasLength(1),
       );
     });

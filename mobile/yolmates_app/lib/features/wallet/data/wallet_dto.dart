@@ -20,19 +20,22 @@ class WalletBalanceDTO {
 
   factory WalletBalanceDTO.fromJson(Map<String, dynamic> json) {
     return WalletBalanceDTO(
-      userId: json['user_id'] as String,
-      availableBalance: json['available_balance'] as String,
-      pendingBalance: json['pending_balance'] as String,
-      currency: json['currency'] as String,
-      totalEarned: json['total_earned'] as String,
-      totalSpent: json['total_spent'] as String,
+      userId: json['user_id']?.toString() ?? '',
+      availableBalance: json['available_balance']?.toString() ?? '0',
+      pendingBalance: json['pending_balance']?.toString() ?? '0',
+      currency: json['currency']?.toString() ?? 'AZN',
+      totalEarned: json['total_earned']?.toString() ?? '0',
+      totalSpent: json['total_spent']?.toString() ?? '0',
     );
   }
 
   WalletBalance toDomain() {
+    final available = double.tryParse(availableBalance) ?? 0.0;
     return WalletBalance(
       userId: userId,
-      availableBalance: double.tryParse(availableBalance) ?? 0.0,
+      // ponytail: backend returns single balance; treat it as passenger balance
+      passengerBalance: available,
+      driverBalance: double.tryParse(totalEarned) ?? 0.0,
       pendingBalance: double.tryParse(pendingBalance) ?? 0.0,
       currency: currency,
       totalEarned: double.tryParse(totalEarned) ?? 0.0,
@@ -69,16 +72,17 @@ class WalletTransactionDTO {
 
   factory WalletTransactionDTO.fromJson(Map<String, dynamic> json) {
     return WalletTransactionDTO(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      type: json['type'] as String,
-      amount: json['amount'] as String,
-      currency: json['currency'] as String,
-      balanceAfter: json['balance_after'] as String,
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'adjustment',
+      amount: json['amount']?.toString() ?? '0',
+      currency: json['currency']?.toString() ?? 'AZN',
+      balanceAfter: json['balance_after']?.toString() ?? '0',
       relatedBookingId: json['related_booking_id'] as String?,
       relatedPaymentId: json['related_payment_id'] as String?,
       description: json['description'] as String?,
-      createdAt: json['created_at'] as String,
+      createdAt:
+          json['created_at']?.toString() ?? DateTime.now().toIso8601String(),
     );
   }
 
@@ -111,6 +115,9 @@ class WalletTransactionDTO {
         return WalletTransactionType.refund;
       case 'payout':
         return WalletTransactionType.payout;
+      case 'topup':
+      case 'top_up':
+        return WalletTransactionType.topUp;
       case 'adjustment':
         return WalletTransactionType.adjustment;
       default:

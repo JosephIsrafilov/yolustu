@@ -11,7 +11,8 @@ abstract class RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
+    DateTime? dateTo,
     int passengers = 1,
   });
 
@@ -25,14 +26,15 @@ class MockRidesRepository implements RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
+    DateTime? dateTo,
     int passengers = 1,
   }) async {
     await Future.delayed(_latency);
     return MockData.ridesFor(
       fromCity: fromCity,
       toCity: toCity,
-      date: date,
+      date: date ?? DateTime.now(),
       minSeats: passengers,
     );
   }
@@ -55,20 +57,28 @@ final ridesRepositoryProvider = Provider<RidesRepository>(
 
 /// Search parameters used as the [rideSearchProvider] family key.
 ///
-/// Keep the date normalized to day precision so rebuilds do not churn provider
+/// Keep dates normalized to day precision so rebuilds do not churn provider
 /// instances for the same search.
 class RideSearchParams {
   final String fromCity;
   final String toCity;
   final int passengers;
-  final DateTime date;
+  final DateTime? date;
+  final DateTime? dateTo;
 
   const RideSearchParams({
     required this.fromCity,
     required this.toCity,
-    required this.date,
+    this.date,
+    this.dateTo,
     this.passengers = 1,
   });
+
+  DateTime? get normalizedDate =>
+      date == null ? null : DateTime(date!.year, date!.month, date!.day);
+
+  DateTime? get normalizedDateTo =>
+      dateTo == null ? null : DateTime(dateTo!.year, dateTo!.month, dateTo!.day);
 
   @override
   bool operator ==(Object other) =>
@@ -76,13 +86,12 @@ class RideSearchParams {
       other.fromCity == fromCity &&
       other.toCity == toCity &&
       other.passengers == passengers &&
-      other.date.year == date.year &&
-      other.date.month == date.month &&
-      other.date.day == date.day;
+      other.normalizedDate == normalizedDate &&
+      other.normalizedDateTo == normalizedDateTo;
 
   @override
   int get hashCode =>
-      Object.hash(fromCity, toCity, passengers, date.year, date.month, date.day);
+      Object.hash(fromCity, toCity, passengers, normalizedDate, normalizedDateTo);
 }
 
 final rideSearchProvider =
@@ -90,7 +99,12 @@ final rideSearchProvider =
   return ref.read(ridesRepositoryProvider).search(
         fromCity: params.fromCity,
         toCity: params.toCity,
-        date: DateTime(params.date.year, params.date.month, params.date.day),
+        date: params.normalizedDate,
+        dateTo: params.normalizedDateTo,
         passengers: params.passengers,
       );
+});
+
+final rideByIdProvider = FutureProvider.family<Trip?, String>((ref, rideId) {
+  return ref.read(ridesRepositoryProvider).rideById(rideId);
 });

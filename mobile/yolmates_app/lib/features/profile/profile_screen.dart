@@ -62,10 +62,21 @@ class ProfileScreen extends ConsumerWidget {
           _MenuCard(
             items: [
               if (user?.verificationStatus == 'approved') ...[
-                _MenuItem(
-                  icon: Icons.dashboard_outlined,
-                  label: l10n.profileDriverPanel,
-                  onTap: () => context.push(AppRoutes.driverPanel),
+                SwitchListTile(
+                  value: ref.watch(driverModeProvider),
+                  onChanged: (val) {
+                    context.push('${AppRoutes.modeTransition}?driver=$val');
+                  },
+                  secondary: const Icon(Icons.dashboard_outlined,
+                      color: AppTheme.navy),
+                  title: Text(
+                    l10n.profileDriverPanel,
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  activeThumbColor: AppTheme.teal,
                 ),
               ] else if (user?.verificationStatus == 'pending') ...[
                 _MenuItem(
@@ -128,7 +139,8 @@ class ProfileScreen extends ConsumerWidget {
               Text(
                 l10n.profileLogoutConfirm,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
@@ -174,9 +186,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = (user?.fullName.trim().isNotEmpty ?? false)
-        ? user!.fullName
-        : 'User';
+    final name =
+        (user?.fullName.trim().isNotEmpty ?? false) ? user!.fullName : 'User';
     final phone = user?.phone ?? '';
     final roleLabel = user?.role == UserRole.driver ? 'Driver' : 'Passenger';
     final avatarUrl = user?.avatarUrl;
@@ -187,76 +198,81 @@ class _Header extends StatelessWidget {
             : FileImage(File(avatarUrl)))
         : null;
 
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.spacing24),
-      decoration: BoxDecoration(
-        color: AppTheme.navy,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppTheme.teal.withValues(alpha: 0.25),
-            backgroundImage: avatarImage,
-            child: hasAvatar
-                ? null
-                : Text(
-                    user?.initials ?? '?',
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.profileEdit),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.spacing24),
+        decoration: BoxDecoration(
+          color: AppTheme.navy,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: AppTheme.teal.withValues(alpha: 0.25),
+              backgroundImage: avatarImage,
+              child: hasAvatar
+                  ? null
+                  : Text(
+                      user?.initials ?? '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
                     style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      fontSize: 24,
                     ),
                   ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (phone.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    phone,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                  if (phone.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      phone,
+                      style:
+                          TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.teal.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      roleLabel,
+                      style: const TextStyle(
+                        color: AppTheme.tealLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.teal.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    roleLabel,
-                    style: const TextStyle(
-                      color: AppTheme.tealLight,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            const Icon(Icons.edit_outlined, color: Colors.white70),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _MenuItem {
+class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -268,10 +284,30 @@ class _MenuItem {
     required this.onTap,
     this.danger = false,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: danger ? Colors.red.shade600 : AppTheme.navy,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: danger ? Colors.red.shade600 : AppTheme.navy,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing:
+          danger ? null : Icon(Icons.chevron_right, color: AppTheme.slate500),
+      onTap: onTap,
+    );
+  }
 }
 
 class _MenuCard extends StatelessWidget {
-  final List<_MenuItem> items;
+  final List<Widget> items;
 
   const _MenuCard({required this.items});
 
@@ -288,23 +324,7 @@ class _MenuCard extends StatelessWidget {
         children: [
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0) Divider(height: 1, color: AppTheme.slate100),
-            ListTile(
-              leading: Icon(
-                items[i].icon,
-                color: items[i].danger ? Colors.red.shade600 : AppTheme.navy,
-              ),
-              title: Text(
-                items[i].label,
-                style: TextStyle(
-                  color: items[i].danger ? Colors.red.shade600 : AppTheme.navy,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              trailing: items[i].danger
-                  ? null
-                  : Icon(Icons.chevron_right, color: AppTheme.slate500),
-              onTap: items[i].onTap,
-            ),
+            items[i],
           ],
         ],
       ),

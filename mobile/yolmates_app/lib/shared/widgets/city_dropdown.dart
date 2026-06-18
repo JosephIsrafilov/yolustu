@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 
-class CityDropdown extends StatelessWidget {
+class CityDropdown extends ConsumerWidget {
   final String label;
-  final String value;
+  final String? value;
   final IconData icon;
   final ValueChanged<String> onChanged;
   final bool isDark;
+  final bool allowAll;
 
   const CityDropdown({
     super.key,
@@ -16,9 +19,10 @@ class CityDropdown extends StatelessWidget {
     required this.icon,
     required this.onChanged,
     this.isDark = false,
+    this.allowAll = false,
   });
 
-  void _showSelectionSheet(BuildContext context) {
+  void _showSelectionSheet(BuildContext context, AppLocalizations l10n) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -50,16 +54,21 @@ class CityDropdown extends StatelessWidget {
               const SizedBox(height: 16),
               Expanded(
                 child: ListView.builder(
-                  itemCount: AppConstants.cities.length,
+                  itemCount: AppConstants.cities.length + (allowAll ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final city = AppConstants.cities[index];
+                    final city = allowAll
+                        ? (index == 0
+                            ? l10n.allCities
+                            : AppConstants.cities[index - 1])
+                        : AppConstants.cities[index];
                     final isSelected = city == value;
                     return ListTile(
                       title: Text(
                         city,
                         style: TextStyle(
                           color: isSelected ? AppTheme.tealDark : AppTheme.navy,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       trailing: isSelected
@@ -81,17 +90,22 @@ class CityDropdown extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+
     return InkWell(
-      onTap: () => _showSelectionSheet(context),
+      onTap: () => _showSelectionSheet(context, l10n),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+          color:
+              isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.slate200,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : AppTheme.slate200,
           ),
         ),
         child: Row(
@@ -109,15 +123,21 @@ class CityDropdown extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      color: isDark ? Colors.white.withValues(alpha: 0.5) : AppTheme.slate500,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : AppTheme.slate500,
                       fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    value,
+                    value ?? 'Şəhər seçin',
                     style: TextStyle(
-                      color: isDark ? Colors.white : AppTheme.navy,
+                      color: value != null
+                          ? (isDark ? Colors.white : AppTheme.navy)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : AppTheme.slate500),
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -127,7 +147,9 @@ class CityDropdown extends StatelessWidget {
             ),
             Icon(
               Icons.keyboard_arrow_down,
-              color: isDark ? Colors.white.withValues(alpha: 0.5) : AppTheme.slate500,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.5)
+                  : AppTheme.slate500,
             ),
           ],
         ),

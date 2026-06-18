@@ -10,7 +10,6 @@ import '../../core/theme.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
-import '../../shared/widgets/map/route_map_view.dart';
 import '../../shared/widgets/skeleton_cards.dart';
 
 class TripListScreen extends ConsumerStatefulWidget {
@@ -18,12 +17,14 @@ class TripListScreen extends ConsumerStatefulWidget {
   final String toCity;
   final int passengers;
   final DateTime? date;
+  final DateTime? dateTo;
 
   const TripListScreen({
     required this.fromCity,
     required this.toCity,
     this.passengers = 1,
     this.date,
+    this.dateTo,
     super.key,
   });
 
@@ -36,6 +37,8 @@ enum _Sort { timeAsc, priceAsc }
 class _TripListScreenState extends ConsumerState<TripListScreen> {
   _Sort _sort = _Sort.timeAsc;
   bool _verifiedOnly = false;
+  bool _womenOnly = false;
+  bool _noSmoking = false;
   int _selectedIndex = 0;
 
   Future<void> _refresh(RideSearchParams params) async {
@@ -49,13 +52,16 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final params = RideSearchParams(
       fromCity: widget.fromCity,
       toCity: widget.toCity,
-      date: widget.date ?? DateTime.now(),
+      date: widget.date,
+      dateTo: widget.dateTo,
       passengers: widget.passengers,
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
-    final dateLabel = widget.date != null
-        ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
-        : '';
+    final dateLabel = widget.dateTo != null
+        ? ' · ${l10n.dateThisWeek}'
+        : widget.date != null
+            ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
+            : '';
 
     return Scaffold(
       appBar: AppBar(
@@ -86,9 +92,18 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
   }
 
   Widget _buildResults(BuildContext context, List<Trip> rides) {
-    final filtered = _verifiedOnly
-        ? rides.where((r) => r.driver.rating >= 4.7).toList()
-        : [...rides];
+    final now = DateTime.now();
+    var filtered = rides.where((r) => r.departureTime.isAfter(now)).toList();
+    if (_verifiedOnly) {
+      filtered = filtered.where((r) => r.driver.isVerified || r.driver.rating >= 4.7).toList();
+    }
+    if (_womenOnly) {
+      filtered = filtered.where((r) => r.femaleOnly).toList();
+    }
+    if (_noSmoking) {
+      filtered = filtered.where((r) => !r.allowSmoking).toList();
+    }
+
     switch (_sort) {
       case _Sort.timeAsc:
         filtered.sort((a, b) => a.departureTime.compareTo(b.departureTime));
@@ -98,38 +113,27 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
 
     final activeIndex =
         _selectedIndex.clamp(0, filtered.isEmpty ? 0 : filtered.length - 1);
-    final selectedTrip = filtered.isNotEmpty ? filtered[activeIndex] : null;
 
     return Column(
       children: [
         _FilterBar(
           sort: _sort,
           verifiedOnly: _verifiedOnly,
+          womenOnly: _womenOnly,
+          noSmoking: _noSmoking,
           onSort: (s) => setState(() => _sort = s),
           onVerified: (v) => setState(() => _verifiedOnly = v),
+          onWomenOnly: (v) => setState(() => _womenOnly = v),
+          onNoSmoking: (v) => setState(() => _noSmoking = v),
         ),
-        if (selectedTrip != null)
-          Container(
-            height: 180,
-            width: double.infinity,
-            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.slate200),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: RouteMapView(
-              origin: selectedTrip.fromCity,
-              destination: selectedTrip.toCity,
-            ),
-          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _refresh(
               RideSearchParams(
                 fromCity: widget.fromCity,
                 toCity: widget.toCity,
-                date: widget.date ?? DateTime.now(),
+                date: widget.date,
+                dateTo: widget.dateTo,
                 passengers: widget.passengers,
               ),
             ),
@@ -147,13 +151,25 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                       parent: BouncingScrollPhysics(),
                     ),
                     padding: const EdgeInsets.all(AppConstants.spacing16),
-                    itemCount: filtered.length,
+                    itemCount: filtered.length + (filtered.length < 3 ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, i) {
+                      if (i == filtered.length) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Bu parametrlərlə başqa gediş yoxdur, tarixləri dəyişməyi yoxlayın.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppTheme.slate500),
+                          ),
+                        );
+                      }
+
                       final isSelected = i == activeIndex;
                       return _TripCard(
                         trip: filtered[i],
                         isSelected: isSelected,
+                        showDate: widget.date == null || widget.dateTo != null,
                         onTap: () {
                           if (isSelected) {
                             context.push(
@@ -176,14 +192,22 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
 class _FilterBar extends ConsumerWidget {
   final _Sort sort;
   final bool verifiedOnly;
+  final bool womenOnly;
+  final bool noSmoking;
   final ValueChanged<_Sort> onSort;
   final ValueChanged<bool> onVerified;
+  final ValueChanged<bool> onWomenOnly;
+  final ValueChanged<bool> onNoSmoking;
 
   const _FilterBar({
     required this.sort,
     required this.verifiedOnly,
+    required this.womenOnly,
+    required this.noSmoking,
     required this.onSort,
     required this.onVerified,
+    required this.onWomenOnly,
+    required this.onNoSmoking,
   });
 
   @override
@@ -216,6 +240,20 @@ class _FilterBar extends ConsumerWidget {
               icon: Icons.verified,
               selected: verifiedOnly,
               onTap: () => onVerified(!verifiedOnly),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: 'Yalnız qadınlar',
+              icon: Icons.female,
+              selected: womenOnly,
+              onTap: () => onWomenOnly(!womenOnly),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: 'Siqaret çəkilmir',
+              icon: Icons.smoke_free,
+              selected: noSmoking,
+              onTap: () => onNoSmoking(!noSmoking),
             ),
           ],
         ),
@@ -270,19 +308,26 @@ class _FilterBar extends ConsumerWidget {
 class _TripCard extends ConsumerWidget {
   final Trip trip;
   final bool isSelected;
+  final bool showDate;
   final VoidCallback onTap;
 
   const _TripCard({
     required this.trip,
     required this.isSelected,
+    required this.showDate,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    final time =
+    final timeStr =
         '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
+    
+    final dateStr = showDate 
+        ? '${trip.departureTime.day.toString().padLeft(2, '0')}.${trip.departureTime.month.toString().padLeft(2, '0')} · '
+        : '';
+    final displayTime = '$dateStr$timeStr';
 
     return InkWell(
       onTap: onTap,
@@ -302,15 +347,38 @@ class _TripCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
-                  child: Text(
-                    trip.driver.name[0],
-                    style: const TextStyle(
-                      color: AppTheme.tealDark,
-                      fontWeight: FontWeight.bold,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
+                      child: trip.driver.avatarUrl != null
+                          ? null // TODO: handle image network
+                          : Text(
+                              trip.driver.name[0],
+                              style: const TextStyle(
+                                color: AppTheme.tealDark,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
-                  ),
+                    if (trip.driver.isVerified)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.verified,
+                            color: AppTheme.teal,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -337,6 +405,17 @@ class _TripCard extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${trip.fromCity} → ${trip.toCity}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.navy,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -361,7 +440,7 @@ class _TripCard extends ConsumerWidget {
                   children: [
                     const Icon(Icons.access_time, size: 18),
                     const SizedBox(width: 8),
-                    Text(time, style: const TextStyle(fontSize: 15)),
+                    Text(displayTime, style: const TextStyle(fontSize: 15)),
                   ],
                 ),
                 Row(

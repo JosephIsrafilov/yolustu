@@ -5,44 +5,75 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
+import 'data/reviews_repository.dart';
 
-/// User reviews summary + list (mock).
+final selectedStarFilterProvider = StateProvider.autoDispose<int>((ref) => 0);
+
+/// User reviews summary + list (dynamic).
 class ReviewsScreen extends ConsumerWidget {
   const ReviewsScreen({super.key});
-
-  static const _reviews = [
-    ('Aysel M.', 5, 'Çox rahat səyahət idi, vaxtında gəldi. Təşəkkürlər!'),
-    ('Elçin H.', 4, 'Yaxşı sürücü, maşın təmiz. Tövsiyə edirəm.'),
-    ('Nigar Ə.', 5, 'Hər şey əla idi, mütləq yenidən səyahət edəcəyəm.'),
-  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    // Mock aggregate.
-    const avg = 4.9;
-    const count = 156;
+    final reviewsAsync = ref.watch(userReviewsProvider);
+    final selectedStar = ref.watch(selectedStarFilterProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.commonReviews)),
-      body: ListView(
-        padding: const EdgeInsets.all(AppConstants.spacing16),
-        children: [
-          _SummaryCard(average: avg, count: count),
-          const SizedBox(height: 20),
-          if (_reviews.isEmpty)
-            const EmptyState(
-              icon: Icons.reviews_outlined,
-              title: 'Hələ rəy yoxdur',
-              message:
-                  'Tamamlanmış səyahətlərdən sonra rəylər burada görünəcək.',
-            )
-          else
-            ..._reviews.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ReviewCard(name: r.$1, stars: r.$2, text: r.$3),
-                )),
-        ],
+      body: reviewsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Xəta baş verdi: $e')),
+        data: (reviews) {
+          final count = reviews.length;
+          final avg = count == 0
+              ? 0.0
+              : reviews.map((e) => e.rating).reduce((a, b) => a + b) / count;
+
+          final filteredReviews = selectedStar == 0
+              ? reviews
+              : reviews.where((r) => r.rating == selectedStar).toList();
+
+          return ListView(
+            padding: const EdgeInsets.all(AppConstants.spacing16),
+            children: [
+              _SummaryCard(average: avg, count: count),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                        label: 'Hamısı', value: 0, selected: selectedStar),
+                    _FilterChip(
+                        label: '5 Ulduz', value: 5, selected: selectedStar),
+                    _FilterChip(
+                        label: '4 Ulduz', value: 4, selected: selectedStar),
+                    _FilterChip(
+                        label: '3 Ulduz', value: 3, selected: selectedStar),
+                    _FilterChip(
+                        label: '2 Ulduz', value: 2, selected: selectedStar),
+                    _FilterChip(
+                        label: '1 Ulduz', value: 1, selected: selectedStar),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (filteredReviews.isEmpty)
+                const EmptyState(
+                  icon: Icons.reviews_outlined,
+                  title: 'Hələ rəy yoxdur',
+                  message: 'Bu filtrə uyğun rəy tapılmadı.',
+                )
+              else
+                ...filteredReviews.map((r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _ReviewCard(
+                          name: r.authorName, stars: r.rating, text: r.comment),
+                    )),
+            ],
+          );
+        },
       ),
     );
   }
@@ -152,6 +183,43 @@ class _ReviewCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(text, style: TextStyle(color: AppTheme.slate700, height: 1.4)),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends ConsumerWidget {
+  final String label;
+  final int value;
+  final int selected;
+
+  const _FilterChip({
+    required this.label,
+    required this.value,
+    required this.selected,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSelected = value == selected;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppTheme.navy,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        selected: isSelected,
+        onSelected: (_) {
+          ref.read(selectedStarFilterProvider.notifier).state = value;
+        },
+        selectedColor: AppTheme.teal,
+        backgroundColor: AppTheme.teal.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        side: BorderSide.none,
       ),
     );
   }
