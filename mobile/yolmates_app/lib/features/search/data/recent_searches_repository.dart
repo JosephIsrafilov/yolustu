@@ -20,7 +20,9 @@ class RecentSearchesRepository {
 
     try {
       final List<dynamic> list = jsonDecode(json);
-      return list.map((e) => RecentSearch.fromJson(e as Map<String, dynamic>)).toList();
+      return list
+          .map((e) => RecentSearch.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
@@ -33,16 +35,19 @@ class RecentSearchesRepository {
     searches.removeWhere((s) => s.fromCity == fromCity && s.toCity == toCity);
 
     // Add new search at front
-    searches.insert(0, RecentSearch(
-      fromCity: fromCity,
-      toCity: toCity,
-      searchedAt: DateTime.now(),
-    ));
+    searches.insert(
+        0,
+        RecentSearch(
+          fromCity: fromCity,
+          toCity: toCity,
+          searchedAt: DateTime.now(),
+        ));
 
     // Keep only last 5
     final limited = searches.take(_maxRecent).toList();
 
-    await _storage.write(_key, jsonEncode(limited.map((s) => s.toJson()).toList()));
+    await _storage.write(
+        _key, jsonEncode(limited.map((s) => s.toJson()).toList()));
   }
 
   Future<void> clearAll() async {
@@ -50,7 +55,8 @@ class RecentSearchesRepository {
   }
 }
 
-final recentSearchesRepositoryProvider = Provider<RecentSearchesRepository>((ref) {
+final recentSearchesRepositoryProvider =
+    Provider<RecentSearchesRepository>((ref) {
   final storage = ref.watch(sessionStorageProvider);
   return RecentSearchesRepository(storage);
 });

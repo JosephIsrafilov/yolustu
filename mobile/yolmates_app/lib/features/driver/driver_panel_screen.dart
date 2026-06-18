@@ -24,7 +24,8 @@ class DriverPanelScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 64, color: AppTheme.slate500),
+              const Icon(Icons.lock_outline,
+                  size: 64, color: AppTheme.slate500),
               const SizedBox(height: 16),
               Text(l10n.driverPanelAccessDenied),
               const SizedBox(height: 16),

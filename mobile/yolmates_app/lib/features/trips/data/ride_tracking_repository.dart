@@ -19,14 +19,16 @@ class TrackingLocation {
 ///
 /// Later, this can be implemented by a WebSocket/GPS-based tracking repository.
 abstract class RideTrackingRepository {
-  Stream<TrackingLocation> trackRide(String rideId, String fromCity, String toCity);
+  Stream<TrackingLocation> trackRide(
+      String rideId, String fromCity, String toCity);
 }
 
 class MockRideTrackingRepository implements RideTrackingRepository {
   @override
-  Stream<TrackingLocation> trackRide(String rideId, String fromCity, String toCity) {
+  Stream<TrackingLocation> trackRide(
+      String rideId, String fromCity, String toCity) {
     final route = CityRoutes.getRoute(fromCity, toCity);
-    if (route.isEmpty) {
+    if (route.length < 2) {
       return Stream.value(const TrackingLocation(
         latitude: 40.4093,
         longitude: 49.8671,
@@ -39,7 +41,8 @@ class MockRideTrackingRepository implements RideTrackingRepository {
     return Stream.periodic(const Duration(seconds: 1), (tick) {
       final totalTicks = 30; // 30 seconds to complete the simulation
       final progress = (tick / totalTicks).clamp(0.0, 1.0);
-      final segmentIndex = (progress * (route.length - 1)).floor().clamp(0, route.length - 2);
+      final segmentIndex =
+          (progress * (route.length - 1)).floor().clamp(0, route.length - 2);
       final segmentProgress = (progress * (route.length - 1)) - segmentIndex;
 
       final p1 = route[segmentIndex];

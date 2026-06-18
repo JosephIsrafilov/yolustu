@@ -9,6 +9,7 @@ import '../../shared/data/mock_data.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../chat/data/chat_repository.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -61,7 +62,20 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       if (!mounted) return;
       await _showSuccess();
       if (!mounted) return;
-      context.go('${AppRoutes.bookings}/${created.id}');
+
+      // Navigate to chat and send automated message
+      final chatRepo = ref.read(chatRepositoryProvider);
+      final conversation =
+          await chatRepo.getOrCreateRideConversation(created.id);
+
+      final time =
+          '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+      final msg =
+          'Sifariş detalı:\nMarşrut: ${ride.fromCity} - ${ride.toCity}\nVaxt: ${ride.departureTime.day.toString().padLeft(2, '0')}.${ride.departureTime.month.toString().padLeft(2, '0')} $time\nYer sayı: $_seats\nQiymət: ${ride.price.toStringAsFixed(0)} AZN/yer';
+      await chatRepo.sendMessage(conversation.id, msg);
+
+      if (!mounted) return;
+      context.go('${AppRoutes.messages}/${conversation.id}');
     } catch (_) {
       if (!mounted) return;
       setState(
@@ -274,9 +288,11 @@ class _Content extends StatelessWidget {
                 title: 'Qiymət',
                 child: Column(
                   children: [
-                    _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer', '${subtotal.toStringAsFixed(2)} AZN'),
+                    _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer',
+                        '${subtotal.toStringAsFixed(2)} AZN'),
                     const SizedBox(height: 8),
-                    _row('Platforma xidmət haqqı (10%)', '${serviceFee.toStringAsFixed(2)} AZN'),
+                    _row('Platforma xidmət haqqı (10%)',
+                        '${serviceFee.toStringAsFixed(2)} AZN'),
                     const Divider(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

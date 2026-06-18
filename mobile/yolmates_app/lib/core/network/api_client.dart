@@ -35,7 +35,6 @@ class ApiClient {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            validateStatus: (status) => status != null && status < 500,
           ),
         ) {
     _dio.interceptors.add(_AuthInterceptor(_tokenStorage));
@@ -197,7 +196,8 @@ class ApiClient {
         throw ApiException.unauthorized();
       }
 
-      final response = await _dio.post('/auth/refresh');
+      final response = await _dio
+          .post('/auth/refresh', data: {'refresh_token': refreshToken});
       final data = response.data;
 
       if (data is Map<String, dynamic>) {

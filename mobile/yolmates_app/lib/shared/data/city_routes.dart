@@ -52,8 +52,12 @@ class CityRoutes {
 
     for (var i = 0; i <= steps; i++) {
       final t = i / steps;
-      final lat = (1 - t) * (1 - t) * start.lat + 2 * (1 - t) * t * ctrlLat + t * t * end.lat;
-      final lon = (1 - t) * (1 - t) * start.lon + 2 * (1 - t) * t * ctrlLon + t * t * end.lon;
+      final lat = (1 - t) * (1 - t) * start.lat +
+          2 * (1 - t) * t * ctrlLat +
+          t * t * end.lat;
+      final lon = (1 - t) * (1 - t) * start.lon +
+          2 * (1 - t) * t * ctrlLon +
+          t * t * end.lon;
       points.add(LatLon(lat, lon));
     }
     return points;

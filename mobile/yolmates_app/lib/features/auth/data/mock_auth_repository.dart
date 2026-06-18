@@ -48,22 +48,72 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> updateProfile({
+  Future<AppUser> loginWithPassword(String phone, String password) async {
+    await Future.delayed(_latency);
+    if (password.length < 8) {
+      throw const AuthException('Invalid phone or password');
+    }
+    final existing = await currentUser();
+    if (existing != null && existing.phone == phone) {
+      return existing;
+    }
+    final user = AppUser(
+      id: 'mock-${phone.hashCode.toUnsigned(32)}',
+      phone: phone,
+      firstName: 'Test',
+      lastName: 'User',
+      isVerified: true,
+    );
+    await _persist(user);
+    return user;
+  }
+
+  @override
+  Future<AppUser> registerWithPassword({
+    required String phone,
+    String? email,
+    required String password,
     required String firstName,
     required String lastName,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    final user = AppUser(
+      id: 'usr_mock_new',
+      phone: phone,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    await _persist(user);
+    return user;
+  }
+
+  @override
+  Future<AppUser> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
     String? avatarUrl,
     UserRole? role,
     AppLanguage? language,
+    DateTime? birthDate,
   }) async {
     await Future.delayed(_latency);
     final current = await currentUser();
-    final base = current ?? const AppUser(id: 'mock-anonymous', phone: '');
-    final updated = base.copyWith(
-      firstName: firstName,
-      lastName: lastName,
-      avatarUrl: avatarUrl,
-      role: role,
-      language: language,
+    if (current == null) {
+      throw const AuthException('No active session');
+    }
+
+    final updated = current.copyWith(
+      firstName: firstName ?? current.firstName,
+      lastName: lastName ?? current.lastName,
+      email: email ?? current.email,
+      phone: phone ?? current.phone,
+      avatarUrl: avatarUrl ?? current.avatarUrl,
+      role: role ?? current.role,
+      language: language ?? current.language,
+      birthDate: birthDate ?? current.birthDate,
     );
     await _persist(updated);
     return updated;

@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../features/auth/state/auth_controller.dart';
 import '../../features/chat/data/chat_controller.dart';
+import '../../features/notifications/data/notifications_controller.dart';
 
 /// Bottom-navigation shell for the authenticated main app.
 ///
@@ -24,63 +27,135 @@ class MainShell extends ConsumerWidget {
     );
   }
 
+  void _onDriverTap(BuildContext context, int index) {
+    if (index == 0) {
+      navigationShell.goBranch(0); // Home branch -> Shows DriverPanelScreen
+    } else if (index == 1) {
+      context.push(AppRoutes.createRide);
+    } else if (index == 2) {
+      navigationShell.goBranch(3); // Messages branch (Chats)
+    } else if (index == 3) {
+      context.push(AppRoutes.wallet); // Balance opens wallet
+    } else if (index == 4) {
+      navigationShell.goBranch(4); // Profile branch
+    }
+  }
+
+  int _getDriverIndex() {
+    if (navigationShell.currentIndex == 0) return 0;
+    if (navigationShell.currentIndex == 3) return 2;
+    if (navigationShell.currentIndex == 4) return 4;
+    return 0; // Default to Dashboard
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     final unreadChatCount = ref.watch(unreadChatCountProvider);
     final unreadNotificationCount = ref.watch(unreadNotificationCountProvider);
+    final isDriverMode = ref.watch(driverModeProvider);
 
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => _onTap(ref, index),
-        selectedItemColor: AppTheme.teal,
-        unselectedItemColor: AppTheme.slate500,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_outlined),
-            activeIcon: const Icon(Icons.home),
-            label: l10n.navHome,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.search_outlined),
-            activeIcon: const Icon(Icons.search),
-            label: l10n.navSearch,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.confirmation_number_outlined),
-            activeIcon: const Icon(Icons.confirmation_number),
-            label: l10n.navTrips,
-          ),
-          BottomNavigationBarItem(
-            icon: _NavBadgeIcon(
-              icon: Icons.chat_bubble_outline,
-              count: unreadChatCount,
+      bottomNavigationBar: isDriverMode
+          ? BottomNavigationBar(
+              currentIndex: _getDriverIndex(),
+              onTap: (index) => _onDriverTap(context, index),
+              selectedItemColor: AppTheme.teal,
+              unselectedItemColor: AppTheme.slate500,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.white,
+              selectedFontSize: 12,
+              unselectedFontSize: 12,
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.dashboard_outlined),
+                  activeIcon: const Icon(Icons.dashboard),
+                  label: l10n.navDriverPanel,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.add_circle_outline),
+                  activeIcon: const Icon(Icons.add_circle),
+                  label: l10n.driverPanelCreateRide,
+                ),
+                BottomNavigationBarItem(
+                  icon: _NavBadgeIcon(
+                    icon: Icons.chat_bubble_outline,
+                    count: unreadChatCount,
+                  ),
+                  activeIcon: _NavBadgeIcon(
+                    icon: Icons.chat_bubble,
+                    count: unreadChatCount,
+                  ),
+                  label: l10n.navChat,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.account_balance_wallet_outlined),
+                  activeIcon: const Icon(Icons.account_balance_wallet),
+                  label: l10n.driverWalletTitle,
+                ),
+                BottomNavigationBarItem(
+                  icon: _NavBadgeIcon(
+                    icon: Icons.person_outline,
+                    count: unreadNotificationCount,
+                  ),
+                  activeIcon: _NavBadgeIcon(
+                    icon: Icons.person,
+                    count: unreadNotificationCount,
+                  ),
+                  label: l10n.navProfile,
+                ),
+              ],
+            )
+          : BottomNavigationBar(
+              currentIndex: navigationShell.currentIndex,
+              onTap: (index) => _onTap(ref, index),
+              selectedItemColor: AppTheme.teal,
+              unselectedItemColor: AppTheme.slate500,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.white,
+              selectedFontSize: 12,
+              unselectedFontSize: 12,
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home),
+                  label: l10n.navHome,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.search_outlined),
+                  activeIcon: const Icon(Icons.search),
+                  label: l10n.navSearch,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  activeIcon: const Icon(Icons.confirmation_number),
+                  label: l10n.navTrips,
+                ),
+                BottomNavigationBarItem(
+                  icon: _NavBadgeIcon(
+                    icon: Icons.chat_bubble_outline,
+                    count: unreadChatCount,
+                  ),
+                  activeIcon: _NavBadgeIcon(
+                    icon: Icons.chat_bubble,
+                    count: unreadChatCount,
+                  ),
+                  label: l10n.navChat,
+                ),
+                BottomNavigationBarItem(
+                  icon: _NavBadgeIcon(
+                    icon: Icons.person_outline,
+                    count: unreadNotificationCount,
+                  ),
+                  activeIcon: _NavBadgeIcon(
+                    icon: Icons.person,
+                    count: unreadNotificationCount,
+                  ),
+                  label: l10n.navProfile,
+                ),
+              ],
             ),
-            activeIcon: _NavBadgeIcon(
-              icon: Icons.chat_bubble,
-              count: unreadChatCount,
-            ),
-            label: l10n.navChat,
-          ),
-          BottomNavigationBarItem(
-            icon: _NavBadgeIcon(
-              icon: Icons.person_outline,
-              count: unreadNotificationCount,
-            ),
-            activeIcon: _NavBadgeIcon(
-              icon: Icons.person,
-              count: unreadNotificationCount,
-            ),
-            label: l10n.navProfile,
-          ),
-        ],
-      ),
     );
   }
 }

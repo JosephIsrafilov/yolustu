@@ -85,10 +85,4 @@ class AppTheme {
       ),
     );
   }
-
-  static ThemeData get darkTheme {
-    // ponytail: the app still hardcodes many light-only colors; reuse the
-    // readable palette until screens are made theme-aware.
-    return lightTheme;
-  }
 }

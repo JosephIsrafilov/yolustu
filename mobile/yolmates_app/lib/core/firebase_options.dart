@@ -9,20 +9,23 @@ class DefaultFirebaseOptions {
   DefaultFirebaseOptions._();
 
   static const _apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-  static const _appIdAndroid = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
+  static const _appIdAndroid =
+      String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
   static const _appIdIos = String.fromEnvironment('FIREBASE_IOS_APP_ID');
   static const _messagingSenderId = String.fromEnvironment(
     'FIREBASE_MESSAGING_SENDER_ID',
   );
   static const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
-  static const _storageBucket = String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
+  static const _storageBucket =
+      String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
   static const _iosBundleId = String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID');
 
   static FirebaseOptions? get currentPlatform {
     if (_apiKey.isEmpty ||
         _messagingSenderId.isEmpty ||
         _projectId.isEmpty ||
-        (defaultTargetPlatform == TargetPlatform.android && _appIdAndroid.isEmpty) ||
+        (defaultTargetPlatform == TargetPlatform.android &&
+            _appIdAndroid.isEmpty) ||
         (defaultTargetPlatform == TargetPlatform.iOS && _appIdIos.isEmpty)) {
       return null;
     }

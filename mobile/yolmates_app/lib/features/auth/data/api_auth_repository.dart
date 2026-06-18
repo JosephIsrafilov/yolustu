@@ -65,9 +65,13 @@ class ApiAuthRepository implements AuthRepository {
   Future<void> sendOtp(String phone) async {
     try {
       // Backend expects query params, not body
-      await _client.post('/auth/request-otp?phone=${Uri.encodeComponent(phone)}');
+      await _client
+          .post('/auth/request-otp?phone=${Uri.encodeComponent(phone)}');
     } on DioException catch (e) {
-      final apiError = e.error as ApiException;
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
       throw AuthException(apiError.message);
     }
   }
@@ -84,10 +88,10 @@ class ApiAuthRepository implements AuthRepository {
 
       // Backend returns AuthSessionResponse: {accessToken, refreshToken, user}
       // Extract tokens (support both camelCase and snake_case)
-      final accessToken = data['accessToken'] as String? ??
-                          data['access_token'] as String?;
-      final refreshToken = data['refreshToken'] as String? ??
-                           data['refresh_token'] as String?;
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String?;
+      final refreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String?;
       final csrfToken = data['csrf_token'] as String?; // Optional
 
       if (accessToken == null || refreshToken == null) {
@@ -110,22 +114,129 @@ class ApiAuthRepository implements AuthRepository {
       await _persistUser(user);
       return user;
     } on DioException catch (e) {
-      final apiError = e.error as ApiException;
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
+  Future<AppUser> loginWithPassword(String phone, String password) async {
+    try {
+      final response = await _client.post(
+        '/auth/login',
+        data: {'phone': phone, 'password': password},
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String?;
+      final refreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String?;
+      final csrfToken = data['csrf_token'] as String?;
+
+      if (accessToken == null || refreshToken == null) {
+        throw const AuthException('Token alınmadı');
+      }
+
+      await _tokenStorage.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        csrfToken: csrfToken,
+      );
+
+      final userJson = data['user'] as Map<String, dynamic>?;
+      if (userJson == null) {
+        throw const AuthException('İstifadəçi məlumatı alınmadı');
+      }
+
+      if (userJson['role'] == 'admin') {
+        throw const AuthException(
+            'Admin hesabı ilə mobil tətbiqə giriş mümkün deyil.');
+      }
+
+      final user = mapUserResponse(userJson);
+      await _persistUser(user);
+      return user;
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
+  Future<AppUser> registerWithPassword({
+    required String phone,
+    String? email,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/auth/register',
+        data: {
+          'phone': phone,
+          if (email != null) 'email': email,
+          'password': password,
+          'first_name': firstName,
+          'last_name': lastName,
+        },
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String?;
+      final refreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String?;
+      final csrfToken = data['csrf_token'] as String?;
+
+      if (accessToken == null || refreshToken == null) {
+        throw const AuthException('Token alınmadı');
+      }
+
+      await _tokenStorage.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        csrfToken: csrfToken,
+      );
+
+      final userJson = data['user'] as Map<String, dynamic>?;
+      if (userJson == null) {
+        throw const AuthException('İstifadəçi məlumatı alınmadı');
+      }
+
+      final user = mapUserResponse(userJson);
+      await _persistUser(user);
+      return user;
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
       throw AuthException(apiError.message);
     }
   }
 
   @override
   Future<AppUser> updateProfile({
-    required String firstName,
-    required String lastName,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
     String? avatarUrl,
     UserRole? role,
     AppLanguage? language,
+    DateTime? birthDate,
   }) async {
     try {
       String? remoteAvatarUrl = avatarUrl;
-      
+
       if (avatarUrl != null && !avatarUrl.startsWith('http')) {
         final formData = FormData.fromMap({
           'file': await MultipartFile.fromFile(
@@ -133,7 +244,7 @@ class ApiAuthRepository implements AuthRepository {
             filename: avatarUrl.split('/').last,
           ),
         });
-        
+
         final uploadResp = await _client.post(
           '/users/me/avatar',
           data: formData,
@@ -143,11 +254,15 @@ class ApiAuthRepository implements AuthRepository {
       }
 
       final response = await _client.put('/users/me', data: {
-        'first_name': firstName,
-        'last_name': lastName,
+        if (firstName != null) 'first_name': firstName,
+        if (lastName != null) 'last_name': lastName,
+        if (email != null) 'email': email,
+        if (phone != null) 'phone': phone,
         if (remoteAvatarUrl != null) 'avatar_url': remoteAvatarUrl,
         if (role != null) 'role': role.name,
         if (language != null) 'language': language.name,
+        if (birthDate != null)
+          'birth_date': birthDate.toIso8601String().split('T').first,
       });
 
       final data = response.data as Map<String, dynamic>;
@@ -155,7 +270,10 @@ class ApiAuthRepository implements AuthRepository {
       await _persistUser(user);
       return user;
     } on DioException catch (e) {
-      final apiError = e.error as ApiException;
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
       throw AuthException(apiError.message);
     }
   }
@@ -164,9 +282,9 @@ class ApiAuthRepository implements AuthRepository {
   Future<AppUser> submitVerification(String documentPath) async {
     try {
       final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          [1, 2, 3, 4],
-          filename: 'verification.png',
+        'file': await MultipartFile.fromFile(
+          documentPath,
+          filename: documentPath.split('/').last,
         ),
       });
 
@@ -180,14 +298,29 @@ class ApiAuthRepository implements AuthRepository {
       await _persistUser(user);
       return user;
     } on DioException catch (e) {
-      final apiError = e.error as ApiException;
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
       throw AuthException(apiError.message);
     }
   }
 
   @override
-  Future<AppUser> mockApproveDriver() {
-    throw UnimplementedError('Mock driver approval is only supported in mock mode.');
+  Future<AppUser> mockApproveDriver() async {
+    try {
+      final response = await _client.post('/users/me/mock-verify');
+      final data = response.data as Map<String, dynamic>;
+      final user = mapUserResponse(data);
+      await _persistUser(user);
+      return user;
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
+    }
   }
 
   @override
@@ -217,6 +350,7 @@ class ApiAuthRepository implements AuthRepository {
     return AppUser(
       id: json['id'].toString(), // UUID to String
       phone: json['phone'] as String? ?? '',
+      email: json['email'] as String?,
       firstName: json['first_name'] as String?,
       lastName: json['last_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,

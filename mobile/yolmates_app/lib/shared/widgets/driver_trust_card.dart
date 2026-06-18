@@ -28,7 +28,8 @@ class DriverTrustCard extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
 
     return Container(
-      padding: EdgeInsets.all(compact ? AppConstants.spacing12 : AppConstants.spacing16),
+      padding: EdgeInsets.all(
+          compact ? AppConstants.spacing12 : AppConstants.spacing16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppConstants.borderRadius16),
@@ -95,7 +96,8 @@ class DriverTrustCard extends ConsumerWidget {
                   icon: const Icon(Icons.message_outlined),
                   iconSize: compact ? 20 : 24,
                   padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  constraints:
+                      const BoxConstraints(minWidth: 40, minHeight: 40),
                 ),
             ],
           ),

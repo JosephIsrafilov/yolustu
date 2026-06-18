@@ -43,8 +43,8 @@ class PricingSuggestionResponse {
 
   factory PricingSuggestionResponse.fromJson(Map<String, dynamic> json) {
     return PricingSuggestionResponse(
-      suggestedPrice: json['suggested_price'] as int,
-      reasoning: json['reasoning'] as String,
+      suggestedPrice: (json['suggested_price'] as num?)?.toInt() ?? 0,
+      reasoning: json['reasoning'] as String? ?? '',
     );
   }
 }
@@ -58,13 +58,15 @@ class AiPricingRepository {
 
   AiPricingRepository(this._apiClient);
 
-  Future<PricingSuggestionResponse> getSuggestion(PricingSuggestionRequest request) async {
+  Future<PricingSuggestionResponse> getSuggestion(
+      PricingSuggestionRequest request) async {
     try {
       final response = await _apiClient.post(
         '/ai/pricing-suggestion',
         data: request.toJson(),
       );
-      return PricingSuggestionResponse.fromJson(response.data as Map<String, dynamic>);
+      return PricingSuggestionResponse.fromJson(
+          response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiErrorMapper.fromDioException(e);
     } catch (e) {

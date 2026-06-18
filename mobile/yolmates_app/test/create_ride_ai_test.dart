@@ -6,18 +6,21 @@ import 'package:yolmates_app/features/driver/data/ai_pricing_repository.dart';
 
 class MockAiPricingRepository implements AiPricingRepository {
   bool failNext = false;
-  
+
   @override
-  Future<PricingSuggestionResponse> getSuggestion(PricingSuggestionRequest request) async {
+  Future<PricingSuggestionResponse> getSuggestion(
+      PricingSuggestionRequest request) async {
     if (failNext) {
       throw Exception('Mock failure');
     }
-    return PricingSuggestionResponse(suggestedPrice: 20, reasoning: 'Mock AI reasoning');
+    return PricingSuggestionResponse(
+        suggestedPrice: 20, reasoning: 'Mock AI reasoning');
   }
 }
 
 void main() {
-  testWidgets('CreateRideScreen shows AI button and fetches price', (WidgetTester tester) async {
+  testWidgets('CreateRideScreen shows AI button and fetches price',
+      (WidgetTester tester) async {
     final mockRepo = MockAiPricingRepository();
 
     tester.view.physicalSize = const Size(1080, 2400);
@@ -35,7 +38,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    
+
     // Initial state: Button visible, no suggestion
     expect(find.text('Təklif al'), findsOneWidget);
     expect(find.text('Təklif olunan qiymət: 20 AZN'), findsNothing);
@@ -43,10 +46,10 @@ void main() {
     // Tap the button
     await tester.ensureVisible(find.text('Təklif al'));
     await tester.tap(find.text('Təklif al'));
-    
+
     // Finish loading
     await tester.pumpAndSettle();
-    
+
     // Expect suggestion UI
     expect(find.text('Təklif olunan qiymət: 20 AZN'), findsOneWidget);
     expect(find.text('Mock AI reasoning'), findsOneWidget);
@@ -60,7 +63,8 @@ void main() {
     expect(find.text('20'), findsOneWidget);
   });
 
-  testWidgets('CreateRideScreen handles AI error gracefully', (WidgetTester tester) async {
+  testWidgets('CreateRideScreen handles AI error gracefully',
+      (WidgetTester tester) async {
     final mockRepo = MockAiPricingRepository()..failNext = true;
 
     tester.view.physicalSize = const Size(1080, 2400);
@@ -81,11 +85,11 @@ void main() {
     await tester.ensureVisible(find.text('Təklif al'));
     await tester.tap(find.text('Təklif al'));
     await tester.pumpAndSettle();
-    
+
     // Expect error state
     expect(find.text('Qiymət təklifi alınmadı'), findsOneWidget);
     expect(find.text('Yenidən cəhd et'), findsOneWidget);
-    
+
     // App shouldn't crash
     expect(find.byType(CreateRideScreen), findsOneWidget);
   });

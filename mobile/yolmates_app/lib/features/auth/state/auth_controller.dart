@@ -64,6 +64,35 @@ final authRepositoryProvider = Provider<AuthRepository>(
 final authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
 
+final driverModeProvider =
+    NotifierProvider<DriverModeNotifier, bool>(DriverModeNotifier.new);
+
+class DriverModeNotifier extends Notifier<bool> {
+  static const _key = 'driver_mode_active';
+
+  @override
+  bool build() {
+    // We cannot read asynchronously in `build` synchronously to return the initial state.
+    // Instead, we default to false and initialize from storage.
+    _init();
+    return false;
+  }
+
+  Future<void> _init() async {
+    final storage = ref.read(sessionStorageProvider);
+    final value = await storage.read(_key);
+    if (value == 'true') {
+      state = true;
+    }
+  }
+
+  Future<void> toggle(bool isDriver) async {
+    state = isDriver;
+    final storage = ref.read(sessionStorageProvider);
+    await storage.write(_key, isDriver ? 'true' : 'false');
+  }
+}
+
 // --- Controller --------------------------------------------------------------
 
 class AuthController extends Notifier<AuthState> {
@@ -118,6 +147,33 @@ class AuthController extends Notifier<AuthState> {
     state = _resolve(user);
   }
 
+  /// Login with phone and password.
+  /// If successful, user might need OTP if not verified.
+  Future<void> loginWithPassword(String phone, String password) async {
+    final user = await _repo.loginWithPassword(phone, password);
+    state = _resolve(user);
+  }
+
+  /// Register with phone, password, and name.
+  /// If successful, advances state (might need OTP).
+  Future<void> registerWithPassword({
+    required String phone,
+    String? email,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.registerWithPassword(
+      phone: phone,
+      email: email,
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    state = _resolve(user);
+  }
+
   /// Persist first-time profile and enter the main app.
   Future<void> completeProfile({
     required String firstName,
@@ -125,13 +181,41 @@ class AuthController extends Notifier<AuthState> {
     String? avatarUrl,
     UserRole role = UserRole.passenger,
     AppLanguage language = AppLanguage.az,
+    DateTime? birthDate,
   }) async {
-    final user = await _repo.updateProfile(
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.updateProfile(
       firstName: firstName,
       lastName: lastName,
       avatarUrl: avatarUrl,
       role: role,
       language: language,
+      birthDate: birthDate,
+    );
+    state = _resolve(user);
+  }
+
+  /// Update profile details.
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+    String? avatarUrl,
+    UserRole? role,
+    AppLanguage? language,
+    DateTime? birthDate,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: phone,
+      avatarUrl: avatarUrl,
+      role: role,
+      language: language,
+      birthDate: birthDate,
     );
     state = _resolve(user);
   }

@@ -6,11 +6,10 @@ import '../../../core/theme.dart';
 import '../../data/city_coordinates.dart';
 import '../../data/city_routes.dart';
 
-/// Real Google Maps integration for Yolmates routes.
 class GoogleRouteMapView extends StatefulWidget {
   final String origin;
   final String destination;
-  final double progress; // 0.0 to 1.0 to animate the car along the route.
+  final double progress; // 0.0 to 1.0
   final bool showCar;
 
   const GoogleRouteMapView({
@@ -25,22 +24,53 @@ class GoogleRouteMapView extends StatefulWidget {
   State<GoogleRouteMapView> createState() => _GoogleRouteMapViewState();
 }
 
-class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
+class _GoogleRouteMapViewState extends State<GoogleRouteMapView>
+    with SingleTickerProviderStateMixin {
   GoogleMapController? _mapController;
   late List<LatLon> _routePoints;
+
+  // Smooth animation between progress ticks
+  late AnimationController _animController;
+  late Animation<double> _smoothProgress;
+  double _prevProgress = 0.0;
 
   @override
   void initState() {
     super.initState();
     _loadRoute();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _smoothProgress = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
   }
 
   @override
-  void didUpdateWidget(GoogleRouteMapView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.origin != widget.origin || oldWidget.destination != widget.destination) {
+  void dispose() {
+    _animController.dispose();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(GoogleRouteMapView old) {
+    super.didUpdateWidget(old);
+    if (old.origin != widget.origin || old.destination != widget.destination) {
       _loadRoute();
       _fitBounds();
+    }
+    if (old.progress != widget.progress) {
+      _smoothProgress = Tween<double>(
+        begin: _prevProgress,
+        end: widget.progress,
+      ).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+      _prevProgress = widget.progress;
+      _animController
+        ..reset()
+        ..forward();
     }
   }
 
@@ -50,15 +80,22 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
 
   void _fitBounds() {
     if (_mapController == null || _routePoints.isEmpty) return;
-    double minLat = 90.0, maxLat = -90.0;
-    double minLon = 180.0, maxLon = -180.0;
-    for (var pt in _routePoints) {
+    var minLat = 90.0, maxLat = -90.0, minLon = 180.0, maxLon = -180.0;
+    for (final pt in _routePoints) {
       if (pt.lat < minLat) minLat = pt.lat;
       if (pt.lat > maxLat) maxLat = pt.lat;
       if (pt.lon < minLon) minLon = pt.lon;
       if (pt.lon > maxLon) maxLon = pt.lon;
     }
-    
+    // Expand tiny single-city bounds so the camera doesn't crash
+    if (maxLat - minLat < 0.01) {
+      minLat -= 0.05;
+      maxLat += 0.05;
+    }
+    if (maxLon - minLon < 0.01) {
+      minLon -= 0.05;
+      maxLon += 0.05;
+    }
     try {
       _mapController!.animateCamera(
         CameraUpdate.newLatLngBounds(
@@ -66,12 +103,10 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
             southwest: LatLng(minLat, minLon),
             northeast: LatLng(maxLat, maxLon),
           ),
-          40.0, // padding
+          48.0,
         ),
       );
-    } catch (_) {
-      // Bounds might be zero size or map not layout yet
-    }
+    } catch (_) {}
   }
 
   Set<Polyline> _buildPolylines() {
@@ -83,59 +118,51 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
         color: AppTheme.teal,
         width: 5,
         geodesic: true,
-      )
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        jointType: JointType.round,
+      ),
     };
   }
 
-  Set<Marker> _buildMarkers() {
+  Set<Marker> _buildMarkers(double progress) {
     if (_routePoints.isEmpty) return {};
     final markers = <Marker>{};
 
-    final start = _routePoints.first;
-    final end = _routePoints.last;
-
-    markers.add(
-      Marker(
-        markerId: const MarkerId('start'),
-        position: LatLng(start.lat, start.lon),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      ),
-    );
-
-    markers.add(
-      Marker(
-        markerId: const MarkerId('end'),
-        position: LatLng(end.lat, end.lon),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      ),
-    );
+    markers.add(Marker(
+      markerId: const MarkerId('start'),
+      position: LatLng(_routePoints.first.lat, _routePoints.first.lon),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+    ));
+    markers.add(Marker(
+      markerId: const MarkerId('end'),
+      position: LatLng(_routePoints.last.lat, _routePoints.last.lon),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+    ));
 
     if (widget.showCar && _routePoints.length > 1) {
       final totalSegments = _routePoints.length - 1;
-      final currentSegmentVal = widget.progress * totalSegments;
-      final segmentIndex = currentSegmentVal.floor().clamp(0, totalSegments - 1);
-      final segmentProgress = currentSegmentVal - segmentIndex;
+      final segVal = progress * totalSegments;
+      final segIdx = segVal.floor().clamp(0, totalSegments - 1);
+      final segProg = segVal - segIdx;
 
-      final p1 = _routePoints[segmentIndex];
-      final p2 = _routePoints[segmentIndex + 1];
+      final p1 = _routePoints[segIdx];
+      final p2 = _routePoints[segIdx + 1];
+      final lat = p1.lat + (p2.lat - p1.lat) * segProg;
+      final lon = p1.lon + (p2.lon - p1.lon) * segProg;
+      final heading =
+          atan2(p2.lon - p1.lon, (p2.lat - p1.lat) * cos(pi * p1.lat / 180)) *
+              180 /
+              pi;
 
-      final lat = p1.lat + (p2.lat - p1.lat) * segmentProgress;
-      final lon = p1.lon + (p2.lon - p1.lon) * segmentProgress;
-
-      // Calculate bearing/heading
-      final dx = p2.lon - p1.lon;
-      final dy = p2.lat - p1.lat;
-      final heading = (atan2(dx, dy * cos(pi * p1.lat / 180)) * 180 / pi); // simplified bearing
-
-      markers.add(
-        Marker(
-          markerId: const MarkerId('car'),
-          position: LatLng(lat, lon),
-          rotation: heading,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          anchor: const Offset(0.5, 0.5),
-        ),
-      );
+      markers.add(Marker(
+        markerId: const MarkerId('car'),
+        position: LatLng(lat, lon),
+        rotation: heading,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        anchor: const Offset(0.5, 0.5),
+        flat: true,
+      ));
     }
 
     return markers;
@@ -143,28 +170,32 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
 
   @override
   Widget build(BuildContext context) {
-    final initialPos = _routePoints.isNotEmpty 
+    final initialPos = _routePoints.isNotEmpty
         ? LatLng(_routePoints.first.lat, _routePoints.first.lon)
-        : const LatLng(40.4093, 49.8671); // Baku fallback
+        : const LatLng(40.4093, 49.8671);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: initialPos,
-              zoom: 10,
-            ),
-            polylines: _buildPolylines(),
-            markers: _buildMarkers(),
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            mapToolbarEnabled: false,
-            zoomControlsEnabled: false,
-            onMapCreated: (controller) {
-              _mapController = controller;
-              Future.delayed(const Duration(milliseconds: 300), _fitBounds);
+          AnimatedBuilder(
+            animation: _smoothProgress,
+            builder: (context, _) {
+              return GoogleMap(
+                initialCameraPosition:
+                    CameraPosition(target: initialPos, zoom: 8),
+                polylines: _buildPolylines(),
+                markers: _buildMarkers(_smoothProgress.value),
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                mapToolbarEnabled: false,
+                zoomControlsEnabled: false,
+                mapType: MapType.normal,
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                  Future.delayed(const Duration(milliseconds: 400), _fitBounds);
+                },
+              );
             },
           ),
           Positioned(
@@ -177,7 +208,7 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                   ),
                 ],
@@ -186,7 +217,7 @@ class _GoogleRouteMapViewState extends State<GoogleRouteMapView> {
                 '${widget.origin} → ${widget.destination}',
                 style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: AppTheme.navy,
                 ),
               ),

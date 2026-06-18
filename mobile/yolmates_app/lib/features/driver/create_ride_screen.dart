@@ -78,8 +78,10 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       final req = PricingSuggestionRequest(
         origin: _from,
         destination: _to,
-        departureTime: '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
-        departureDate: '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
+        departureTime:
+            '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+        departureDate:
+            '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
         seatsTotal: _seats,
         language: 'az',
       );
@@ -155,7 +157,8 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
             const Icon(Icons.check_circle, color: AppTheme.tealDark, size: 48),
             const SizedBox(height: 16),
             Text(l10n.createRideSuccessTitle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(l10n.createRideSuccessMessage,
                 textAlign: TextAlign.center,
@@ -256,7 +259,8 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppTheme.teal.withValues(alpha: 0.05),
-                  border: Border.all(color: AppTheme.teal.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: AppTheme.teal.withValues(alpha: 0.3)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -264,12 +268,15 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: AppTheme.tealDark, size: 20),
+                        const Icon(Icons.auto_awesome,
+                            color: AppTheme.tealDark, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             l10n.createRideAiTitle,
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.navy),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.navy),
                           ),
                         ),
                         if (!_loadingAi && _aiSuggestion == null)
@@ -287,23 +294,32 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                       const Padding(
                         padding: EdgeInsets.only(top: 12),
                         child: Center(
-                          child: SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppTheme.teal)),
-                          )
-                        ),
+                            child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation(AppTheme.teal)),
+                        )),
                       ),
                     if (_aiError != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, size: 16, color: Colors.red.shade600),
+                            Icon(Icons.error_outline,
+                                size: 16, color: Colors.red.shade600),
                             const SizedBox(width: 8),
-                            Expanded(child: Text(_aiError!, style: TextStyle(color: Colors.red.shade600, fontSize: 13))),
+                            Expanded(
+                                child: Text(_aiError!,
+                                    style: TextStyle(
+                                        color: Colors.red.shade600,
+                                        fontSize: 13))),
                             TextButton(
                               onPressed: _fetchAiPrice,
-                              child: Text(l10n.createRideAiRetry, style: const TextStyle(fontSize: 13)),
+                              child: Text(l10n.createRideAiRetry,
+                                  style: const TextStyle(fontSize: 13)),
                             )
                           ],
                         ),
@@ -316,12 +332,16 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                           children: [
                             Text(
                               '${l10n.createRideAiSuggestionLabel} ${_aiSuggestion!.suggestedPrice} AZN',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.tealDark),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppTheme.tealDark),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _aiSuggestion!.reasoning,
-                              style: const TextStyle(color: AppTheme.slate500, fontSize: 13),
+                              style: const TextStyle(
+                                  color: AppTheme.slate500, fontSize: 13),
                             ),
                             const SizedBox(height: 12),
                             SizedBox(
@@ -329,7 +349,8 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                               child: OutlinedButton(
                                 onPressed: () {
                                   setState(() {
-                                    _price.text = _aiSuggestion!.suggestedPrice.toString();
+                                    _price.text = _aiSuggestion!.suggestedPrice
+                                        .toString();
                                     _error = null;
                                   });
                                   // Re-validate field after setting text
@@ -337,8 +358,10 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                                 },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppTheme.tealDark,
-                                  side: const BorderSide(color: AppTheme.tealDark),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  side: const BorderSide(
+                                      color: AppTheme.tealDark),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                                 child: Text(l10n.createRideAiUsePrice),
                               ),
@@ -372,8 +395,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 controller: _description,
                 enabled: !_publishing,
                 maxLines: 3,
-                decoration: InputDecoration(
-                    hintText: l10n.createRideNotesHint),
+                decoration: InputDecoration(hintText: l10n.createRideNotesHint),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
@@ -439,7 +461,6 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       );
 }
 
-
 class _PickerTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -489,7 +510,8 @@ class _SeatsStepper extends StatelessWidget {
   final ValueChanged<int> onChanged;
   final String label;
 
-  const _SeatsStepper({required this.seats, required this.onChanged, required this.label});
+  const _SeatsStepper(
+      {required this.seats, required this.onChanged, required this.label});
 
   @override
   Widget build(BuildContext context) {

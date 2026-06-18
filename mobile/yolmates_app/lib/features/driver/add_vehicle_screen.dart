@@ -102,10 +102,12 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(_brand, l10n.addVehicleBrand, l10n.addVehicleBrandHint, _req,
+                _field(_brand, l10n.addVehicleBrand, l10n.addVehicleBrandHint,
+                    _req,
                     cap: TextCapitalization.words),
                 const SizedBox(height: 16),
-                _field(_model, l10n.addVehicleModel, l10n.addVehicleModelHint, _req,
+                _field(_model, l10n.addVehicleModel, l10n.addVehicleModelHint,
+                    _req,
                     cap: TextCapitalization.words),
                 const SizedBox(height: 16),
                 Row(
@@ -125,7 +127,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: _field(_color, l10n.addVehicleColor, l10n.addVehicleColorHint, _req,
+                      child: _field(_color, l10n.addVehicleColor,
+                          l10n.addVehicleColorHint, _req,
                           cap: TextCapitalization.words),
                     ),
                   ],

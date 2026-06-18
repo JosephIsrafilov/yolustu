@@ -75,6 +75,11 @@ class MockData {
 
   /// Lookup a single ride by id (mock detail fetch).
   static Trip? rideById(String id) {
+    // Decode in case GoRouter passed an encoded path segment
+    try {
+      id = Uri.decodeComponent(id);
+    } catch (_) {}
+
     // Mock ids encode the route; rebuild a plausible ride from the id.
     final parts = id.split('-');
     if (parts.length >= 4 && parts.first == 'ride') {

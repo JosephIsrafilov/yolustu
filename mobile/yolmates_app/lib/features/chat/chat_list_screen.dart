@@ -10,6 +10,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/skeleton_cards.dart';
+import '../../core/network/api_exception.dart';
 import '../auth/state/auth_controller.dart';
 import 'data/chat_controller.dart';
 
@@ -28,6 +29,7 @@ class ChatListScreen extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
     final authState = ref.watch(authControllerProvider);
     final currentUserId = authState.user?.id ?? '';
+    final isDriver = ref.watch(driverModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.chatTitle)),
@@ -39,8 +41,10 @@ class ChatListScreen extends ConsumerWidget {
           itemBuilder: (_, __) => const ChatCardSkeleton(),
         ),
         error: (e, _) => ErrorStateView(
-          title: 'Yüklənmədi',
-          message: e.toString(),
+          title: l10n.commonError,
+          message: e is ApiException
+              ? l10n.apiErrorMessage(e.code, e.message)
+              : l10n.commonError,
           onRetry: () => ref.invalidate(conversationsProvider),
         ),
         data: (conversations) {
@@ -49,8 +53,9 @@ class ChatListScreen extends ConsumerWidget {
                   icon: Icons.chat_bubble_outline,
                   title: l10n.chatEmpty,
                   message: l10n.chatEmptyMessage,
-                  actionLabel: l10n.chatSearchTrips,
-                  onAction: () => context.go(AppRoutes.search),
+                  actionLabel: isDriver ? null : l10n.chatSearchTrips,
+                  onAction:
+                      isDriver ? null : () => context.go(AppRoutes.search),
                   scrollable: true,
                 )
               : ListView.separated(
@@ -67,13 +72,15 @@ class ChatListScreen extends ConsumerWidget {
                     final name = c.type == 'support'
                         ? l10n.chatSupport
                         : (otherName.isNotEmpty ? otherName : l10n.chatTitle);
-                    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+                    final initial =
+                        name.isNotEmpty ? name[0].toUpperCase() : '?';
                     final lastMsg = c.lastMessage?.content ?? '';
                     final timeStr = c.lastMessage != null
                         ? '${c.lastMessage!.createdAt.hour.toString().padLeft(2, '0')}:${c.lastMessage!.createdAt.minute.toString().padLeft(2, '0')}'
                         : '';
-                    
-                    final avatarUrl = c.getOtherParticipantAvatar(currentUserId);
+
+                    final avatarUrl =
+                        c.getOtherParticipantAvatar(currentUserId);
 
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
@@ -84,9 +91,10 @@ class ChatListScreen extends ConsumerWidget {
                       leading: CircleAvatar(
                         radius: 24,
                         backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
-                        backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                            ? CachedNetworkImageProvider(avatarUrl)
-                            : null,
+                        backgroundImage:
+                            avatarUrl != null && avatarUrl.isNotEmpty
+                                ? CachedNetworkImageProvider(avatarUrl)
+                                : null,
                         child: avatarUrl == null || avatarUrl.isEmpty
                             ? Text(
                                 initial,

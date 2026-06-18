@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/firebase_options.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/state/auth_controller.dart' hide sessionStorageProvider;
-import '../../chat/data/chat_controller.dart';
 import '../../notifications/data/notifications_controller.dart';
 
 const _lastRegisteredTokenKey = 'push:last_registered_fcm_token';
@@ -61,24 +60,34 @@ class PushNotificationsService {
       _handleNotification(ref, message);
     });
 
-    _openedAppSubscription ??= FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    _openedAppSubscription ??=
+        FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _handleNotification(ref, message);
       _navigateFromMessage(router, message);
     });
 
-    _tokenRefreshSubscription ??= FirebaseMessaging.instance.onTokenRefresh.listen((nextToken) {
+    _tokenRefreshSubscription ??=
+        FirebaseMessaging.instance.onTokenRefresh.listen((nextToken) {
       unawaited(_registerTokenIfNeeded(ref, nextToken));
     });
   }
 
   Future<void> syncDeviceToken(WidgetRef ref) async {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
-    if (!isConfigured) return;
-    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) return;
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
+    if (!isConfigured) {
+      return;
+    }
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      return;
+    }
 
     final messaging = FirebaseMessaging.instance;
     final token = await messaging.getToken();
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      return;
+    }
 
     await _registerTokenIfNeeded(ref, token);
   }
@@ -93,24 +102,34 @@ class PushNotificationsService {
   }
 
   Future<void> _registerTokenIfNeeded(WidgetRef ref, String token) async {
-    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) return;
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      return;
+    }
     final storage = ref.read(sessionStorageProvider);
     final lastToken = await storage.read(_lastRegisteredTokenKey);
-    if (lastToken == token) return;
+    if (lastToken == token) {
+      return;
+    }
 
-    await ref.read(apiClientProvider).dio.post(
-      '/users/me/device-token',
-      data: {'token': token},
-    );
+    try {
+      await ref.read(apiClientProvider).post(
+        '/users/me/device-token',
+        data: {'token': token},
+      );
+    } catch (_) {
+      return;
+    }
     await storage.write(_lastRegisteredTokenKey, token);
   }
 
   void _handleNotification(WidgetRef ref, RemoteMessage message) {
     final notification = message.notification;
-    final title = notification?.title ?? message.data['title']?.toString() ?? 'Yolmates';
+    final title =
+        notification?.title ?? message.data['title']?.toString() ?? 'Yolmates';
     final body = notification?.body ?? message.data['body']?.toString() ?? '';
     ref.read(notificationsProvider.notifier).addNotification(
-          id: message.messageId ?? DateTime.now().microsecondsSinceEpoch.toString(),
+          id: message.messageId ??
+              DateTime.now().microsecondsSinceEpoch.toString(),
           title: title,
           body: body,
         );

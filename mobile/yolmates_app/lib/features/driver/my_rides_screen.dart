@@ -89,84 +89,84 @@ class _RideCard extends ConsumerWidget {
           border: Border.all(color: AppTheme.slate200),
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  '${ride.fromCity} → ${ride.toCity}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${ride.fromCity} → ${ride.toCity}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              StatusBadge(
-                label: ride.status.label,
-                backgroundColor: ride.status.colors.$1,
-                foregroundColor: ride.status.colors.$2,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 16),
-              const SizedBox(width: 6),
-              Text(date),
-              const SizedBox(width: 16),
-              const Icon(Icons.access_time, size: 16),
-              const SizedBox(width: 6),
-              Text(time),
-              const Spacer(),
-              Text(
-                '${ride.pricePerSeat.toStringAsFixed(0)} AZN',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.tealDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.event_seat, size: 16, color: AppTheme.slate500),
-              const SizedBox(width: 6),
-              Text('${ride.seats} ${l10n.myRidesSeatsLabel}',
-                  style: const TextStyle(color: AppTheme.slate500)),
-            ],
-          ),
-          if (ride.status == DriverRideStatus.active ||
-              ride.status == DriverRideStatus.upcoming) ...[
-            const Divider(height: 24),
-            Row(
-              children: [
-                _action(
-                  icon: Icons.people_outline,
-                  label: l10n.myRidesActionRequests,
-                  onTap: () => context.push(AppRoutes.passengerRequests),
-                ),
-                _action(
-                  icon: Icons.copy_outlined,
-                  label: l10n.myRidesActionDuplicate,
-                  onTap: () => _duplicate(context, ref, l10n),
-                ),
-                _action(
-                  icon: Icons.close,
-                  label: l10n.myRidesActionCancel,
-                  color: Colors.red.shade600,
-                  onTap: () => _cancel(context, ref, l10n),
+                StatusBadge(
+                  label: ride.status.label,
+                  backgroundColor: ride.status.colors.$1,
+                  foregroundColor: ride.status.colors.$2,
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 16),
+                const SizedBox(width: 6),
+                Text(date),
+                const SizedBox(width: 16),
+                const Icon(Icons.access_time, size: 16),
+                const SizedBox(width: 6),
+                Text(time),
+                const Spacer(),
+                Text(
+                  '${ride.pricePerSeat.toStringAsFixed(0)} AZN',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.tealDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.event_seat, size: 16, color: AppTheme.slate500),
+                const SizedBox(width: 6),
+                Text('${ride.seats} ${l10n.myRidesSeatsLabel}',
+                    style: const TextStyle(color: AppTheme.slate500)),
+              ],
+            ),
+            if (ride.status == DriverRideStatus.active ||
+                ride.status == DriverRideStatus.upcoming) ...[
+              const Divider(height: 24),
+              Row(
+                children: [
+                  _action(
+                    icon: Icons.people_outline,
+                    label: l10n.myRidesActionRequests,
+                    onTap: () => context.push(AppRoutes.passengerRequests),
+                  ),
+                  _action(
+                    icon: Icons.copy_outlined,
+                    label: l10n.myRidesActionDuplicate,
+                    onTap: () => _duplicate(context, ref, l10n),
+                  ),
+                  _action(
+                    icon: Icons.close,
+                    label: l10n.myRidesActionCancel,
+                    color: Colors.red.shade600,
+                    onTap: () => _cancel(context, ref, l10n),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _action({
@@ -199,7 +199,8 @@ class _RideCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _duplicate(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
+  Future<void> _duplicate(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     final copy = DriverRide(
       id: 'dr-${DateTime.now().millisecondsSinceEpoch}',
       fromCity: ride.fromCity,
@@ -220,7 +221,8 @@ class _RideCard extends ConsumerWidget {
     }
   }
 
-  Future<void> _cancel(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
+  Future<void> _cancel(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -233,8 +235,8 @@ class _RideCard extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child:
-                Text(l10n.myRidesCancelConfirm, style: TextStyle(color: Colors.red.shade600)),
+            child: Text(l10n.myRidesCancelConfirm,
+                style: TextStyle(color: Colors.red.shade600)),
           ),
         ],
       ),
@@ -246,4 +248,3 @@ class _RideCard extends ConsumerWidget {
     }
   }
 }
-

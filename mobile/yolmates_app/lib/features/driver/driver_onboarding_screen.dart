@@ -17,7 +17,7 @@ class DriverOnboardingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.driverOnboardingTitle)),
       body: SafeArea(
@@ -91,15 +91,8 @@ class DriverOnboardingScreen extends ConsumerWidget {
             SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: () => context.push(AppRoutes.addVehicle),
-                child: Text(l10n.commonContinue),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: TextButton(
                 onPressed: () => context.push(AppRoutes.driverVerification),
-                child: Text(l10n.driverOnboardingCheckStatus),
+                child: Text(l10n.commonContinue),
               ),
             ),
           ],

@@ -11,7 +11,7 @@ class BookingMapper {
     String fromCity = '';
     String toCity = '';
     String driverName = 'Sürücü';
-    String driverId = 'mock-driver-id';
+    String driverId = dto.rideId; // fallback to ride id until driver nested
     DateTime departureTime = DateTime.now();
     double pricePerSeat = 0.0;
 

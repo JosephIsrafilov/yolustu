@@ -29,7 +29,8 @@ class _FakeBookingsRepository implements BookingsRepository {
 
   @override
   Future<List<Booking>> all() async {
-    final sorted = [..._store]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final sorted = [..._store]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return sorted;
   }
 
@@ -78,7 +79,9 @@ void main() {
 
       await container.read(bookingsControllerProvider.future);
 
-      final created = await container.read(bookingsControllerProvider.notifier).createBooking(
+      final created = await container
+          .read(bookingsControllerProvider.notifier)
+          .createBooking(
             _booking(id: 'b1', createdAt: DateTime(2024, 1, 3)),
           );
       expect(created.id, 'b1');

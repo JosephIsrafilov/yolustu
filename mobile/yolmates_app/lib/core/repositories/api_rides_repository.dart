@@ -22,30 +22,33 @@ class ApiRidesRepository implements RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
     int passengers = 1,
   }) async {
     try {
       // Build query params
       final params = <String, dynamic>{
-        'origin_city': fromCity,
-        'dest_city': toCity,
+        if (!_isAllCities(fromCity)) 'origin_city': fromCity,
+        if (!_isAllCities(toCity)) 'dest_city': toCity,
         'min_seats': passengers,
         'limit': 20,
         'offset': 0,
       };
 
-      // Add date if provided (backend expects YYYY-MM-DD)
-      params['departure_date'] = _formatDate(date);
+      // Add date only when the user selected one. Omitting it means any
+      // upcoming date.
+      if (date != null) {
+        params['departure_date'] = _formatDate(date);
+      }
 
       // Add coordinates if available (improves backend spatial search)
       final fromCoords = CityCoordinates.get(fromCity);
       final toCoords = CityCoordinates.get(toCity);
-      if (fromCoords != null) {
+      if (!_isAllCities(fromCity) && fromCoords != null) {
         params['origin_lat'] = fromCoords.lat;
         params['origin_lon'] = fromCoords.lon;
       }
-      if (toCoords != null) {
+      if (!_isAllCities(toCity) && toCoords != null) {
         params['dest_lat'] = toCoords.lat;
         params['dest_lon'] = toCoords.lon;
       }
@@ -107,5 +110,14 @@ class ApiRidesRepository implements RidesRepository {
 
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  bool _isAllCities(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == 'all cities' ||
+        normalized.contains('bütün') ||
+        normalized.contains('butun') ||
+        normalized.contains('şəhər') ||
+        normalized.contains('seher');
   }
 }

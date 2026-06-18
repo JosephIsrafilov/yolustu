@@ -13,8 +13,9 @@ import '../state/auth_controller.dart';
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   final String phone;
+  final String? avatar;
 
-  const OtpVerifyScreen({required this.phone, super.key});
+  const OtpVerifyScreen({required this.phone, this.avatar, super.key});
 
   @override
   ConsumerState<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -79,7 +80,14 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     });
 
     try {
-      await ref.read(authControllerProvider.notifier).verifyOtp(widget.phone, code);
+      await ref
+          .read(authControllerProvider.notifier)
+          .verifyOtp(widget.phone, code);
+      if (widget.avatar != null && mounted) {
+        await ref.read(authControllerProvider.notifier).updateProfile(
+              avatarUrl: widget.avatar,
+            );
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -198,7 +206,8 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Text(l10n.otpResendBtn),
                       ),

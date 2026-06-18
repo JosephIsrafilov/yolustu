@@ -42,7 +42,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   void _startTracking(DriverRide ride) {
     _stopTracking();
-    
+
     // TODO: Adapter Layer: currently source = mock progress stream.
     // In production, change to real GPS / WebSocket repository source.
     final trackingRepo = MockRideTrackingRepository();
@@ -64,14 +64,18 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   }
 
   Future<void> _startRide(DriverRide ride) async {
-    await ref.read(driverRidesProvider.notifier).setStatus(ride.id, DriverRideStatus.active);
+    await ref
+        .read(driverRidesProvider.notifier)
+        .setStatus(ride.id, DriverRideStatus.active);
     _startTracking(ride);
   }
 
   Future<void> _completeRide(DriverRide ride) async {
     final l10n = ref.read(l10nProvider);
     _stopTracking();
-    await ref.read(driverRidesProvider.notifier).setStatus(ride.id, DriverRideStatus.completed);
+    await ref
+        .read(driverRidesProvider.notifier)
+        .setStatus(ride.id, DriverRideStatus.completed);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.activeRideCompleted)),
@@ -81,8 +85,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   Future<void> _shareTrip(DriverRide ride) async {
     final l10n = ref.read(l10nProvider);
-    final time = '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
-    final date = '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
+    final time =
+        '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+    final date =
+        '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
 
     final shareText = '''
 Yolmates Səfər Məlumatı
@@ -175,7 +181,8 @@ Təcili yardım: 112
           }
 
           // Auto-start tracking if ride is already active and stream is not listening yet
-          if (ride.status == DriverRideStatus.active && _trackingSubscription == null) {
+          if (ride.status == DriverRideStatus.active &&
+              _trackingSubscription == null) {
             _startTracking(ride);
           }
 
@@ -237,7 +244,8 @@ Təcili yardım: 112
                               const SizedBox(height: 4),
                               Text(
                                 'Çıxış vaxtı: $time',
-                                style: TextStyle(color: AppTheme.slate500, fontSize: 13),
+                                style: TextStyle(
+                                    color: AppTheme.slate500, fontSize: 13),
                               ),
                             ],
                           ),
@@ -255,7 +263,8 @@ Təcili yardım: 112
                           children: [
                             Text(
                               'Çatma vaxtı (ETA):',
-                              style: TextStyle(color: AppTheme.slate700, fontSize: 14),
+                              style: TextStyle(
+                                  color: AppTheme.slate700, fontSize: 14),
                             ),
                             Text(
                               '~${_etaMinutes.toStringAsFixed(0)} dəqiqə',
@@ -276,8 +285,9 @@ Təcili yardım: 112
                         const SizedBox(height: 4),
                         Text(
                           'Səyahət tərəqqisi: ${(_progress * 100).toStringAsFixed(0)}%',
-                          textAlign: Alignment.centerLeft as TextAlign?,
-                          style: TextStyle(fontSize: 12, color: AppTheme.slate500),
+                          textAlign: TextAlign.left,
+                          style:
+                              TextStyle(fontSize: 12, color: AppTheme.slate500),
                         ),
                       ],
                       const Spacer(),
@@ -287,7 +297,8 @@ Təcili yardım: 112
                           padding: const EdgeInsets.all(AppConstants.spacing12),
                           decoration: BoxDecoration(
                             color: AppTheme.slate50,
-                            borderRadius: BorderRadius.circular(AppConstants.borderRadius12),
+                            borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius12),
                             border: Border.all(color: AppTheme.slate200),
                           ),
                           child: Column(
@@ -295,7 +306,8 @@ Təcili yardım: 112
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.shield_outlined, size: 18, color: AppTheme.tealDark),
+                                  Icon(Icons.shield_outlined,
+                                      size: 18, color: AppTheme.tealDark),
                                   const SizedBox(width: 8),
                                   Text(
                                     l10n.safetyTitle,
@@ -316,7 +328,8 @@ Təcili yardım: 112
                                       icon: const Icon(Icons.share, size: 18),
                                       label: Text(l10n.safetyShareTrip),
                                       style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
                                         side: BorderSide(color: AppTheme.teal),
                                         foregroundColor: AppTheme.tealDark,
                                       ),
@@ -326,11 +339,14 @@ Təcili yardım: 112
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       onPressed: () => _showSOSDialog(ride!),
-                                      icon: const Icon(Icons.warning_amber, size: 18),
+                                      icon: const Icon(Icons.warning_amber,
+                                          size: 18),
                                       label: Text(l10n.safetySOS),
                                       style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        side: BorderSide(color: Colors.red.shade300),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        side: BorderSide(
+                                            color: Colors.red.shade300),
                                         foregroundColor: Colors.red.shade700,
                                       ),
                                     ),
@@ -399,4 +415,3 @@ Təcili yardım: 112
     }
   }
 }
-
