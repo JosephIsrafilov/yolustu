@@ -39,6 +39,7 @@ const COPY = {
 
 export default function ChatsPage() {
   const language = useAppStore((state) => state.language);
+  const unreadChats = useAppStore((state) => state.unreadChats);
   const t = COPY[language] || COPY.en;
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -93,8 +94,13 @@ export default function ChatsPage() {
                     <div className="truncate text-sm text-text-muted">{conversation.status}</div>
                   </div>
                 </div>
-                <div className="shrink-0 text-xs text-text-muted">
-                  {new Date(conversation.updated_at).toLocaleDateString()}
+                <div className="flex shrink-0 items-center gap-2">
+                  {unreadChats[conversation.id] && (
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden />
+                  )}
+                  <div className="text-xs text-text-muted">
+                    {new Date(conversation.updated_at).toLocaleDateString()}
+                  </div>
                 </div>
               </Link>
             ))}

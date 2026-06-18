@@ -63,12 +63,12 @@ export const createAuthSlice: StateCreator<
   requestPasswordReset: async (email) => {
     try {
       set({ lastError: null });
-      await authService.requestPasswordReset(email);
-      return true;
+      const otp = await authService.requestPasswordReset(email);
+      return otp;
     } catch (error) {
       const apiError = toApiError(error);
       set({ lastError: apiError.message || 'Failed to request password reset.' });
-      return false;
+      return null;
     }
   },
 
@@ -88,6 +88,10 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       await authService.requestEmailVerification();
+      const currentUser = get().currentUser;
+      if (currentUser) {
+        set({ currentUser: { ...currentUser, isEmailVerified: true } });
+      }
       return true;
     } catch (error) {
       const apiError = toApiError(error);

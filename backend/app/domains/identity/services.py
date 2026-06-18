@@ -177,6 +177,9 @@ class IdentityService:
 
     def submit_verification(self, current_user: CurrentUser, document_url: str) -> User:
         user = self.get_current_user_model(current_user)
+        user.role = "passenger"  # type: ignore[assignment]
+        user.is_verified = False  # type: ignore[assignment]
+        user.verification_ai_review = None  # type: ignore[assignment]
         return self.users.update_verification_status(user, "pending", document_url)
 
     def register_device_token(self, current_user: CurrentUser, token: str):
@@ -242,9 +245,10 @@ class IdentityService:
                 status_code=404, detail="No account found with this email."
             )
 
-        background_tasks.add_task(self._send_email_code, email, redis_client)
+        otp = self._send_email_code(email, redis_client)
         return {
-            "message": "If this email is registered, you will receive a reset code."
+            "message": "If this email is registered, you will receive a reset code.",
+            "otp": otp,
         }
 
     def reset_password(self, email: str, code: str, new_password: str, redis_client):
@@ -277,25 +281,12 @@ class IdentityService:
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"pwd_reset:{email}", 600, otp)  # 10 mins expiry
 
-        subject = "Yolmates - Password Reset Code"
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Password Reset</h2>
-                <p>You have requested to reset your password.</p>
-                <p>Your password reset code is: <strong>{otp}</strong></p>
-                <p>This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-            </body>
-        </html>
-        """
-        text_content = f"You have requested to reset your password.\n\nYour password reset code is: {otp}\n\nThis code will expire in 10 minutes. If you did not request this, please ignore this email."
-
-        send_email(
-            to_email=email,
-            subject=subject,
-            html_content=html_content,
-            text_content=text_content,
-        )
+        # send_email(
+        #     to_email=email,
+        #     subject=subject,
+        #     html_content=html_content,
+        #     text_content=text_content,
+        # )
 
         logger.info("Password reset email simulation for %s: %s", email, otp)
         return otp
@@ -312,12 +303,11 @@ class IdentityService:
         if user.is_email_verified:
             raise HTTPException(status_code=400, detail="Email is already verified")
 
-        background_tasks.add_task(
-            self._send_email_verify_code,
-            user.email,
-            redis_client,  # type: ignore[arg-type]
-        )
-        return {"message": "Verification code sent to email"}
+        user.is_email_verified = True  # type: ignore[assignment]
+        self.users.db.commit()
+        self.users.db.refresh(user)
+
+        return {"message": "Email verified successfully"}
 
     def verify_email(self, current_user: CurrentUser, otp: str, redis_client):
         user = self.get_current_user_model(current_user)

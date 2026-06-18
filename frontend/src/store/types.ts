@@ -17,7 +17,7 @@ export interface AuthSlice {
   login: (phone: string, password: string) => Promise<boolean>;
   requestOtp: (phone: string) => Promise<boolean>;
   verifyAccount: (phone: string, otp: string) => Promise<boolean>;
-  requestPasswordReset: (email: string) => Promise<boolean>;
+  requestPasswordReset: (email: string) => Promise<string | null>;
   resetPassword: (email: string, otp: string, newPassword: string) => Promise<boolean>;
   requestEmailVerification: () => Promise<boolean>;
   verifyEmail: (otp: string) => Promise<boolean>;
@@ -82,8 +82,11 @@ export interface UiSlice {
   language: Language;
   setLanguage: (language: Language) => void;
   unreadRides: Record<string, boolean>;
+  unreadChats: Record<string, boolean>;
   markRideAsRead: (rideId: string) => void;
   markRideAsUnread: (rideId: string) => void;
+  markChatAsRead: (conversationId: string) => void;
+  markChatAsUnread: (conversationId: string) => void;
 }
 
 export type AppState = AuthSlice & TripSlice & BookingSlice & ReviewSlice & UiSlice;

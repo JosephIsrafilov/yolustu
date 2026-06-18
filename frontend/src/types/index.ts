@@ -193,6 +193,8 @@ export interface Message {
   ride_id?: string;
   sender_id: string;
   content: string;
+  message_type?: string;
+  attachments?: string[];
   created_at: string;
   read_at?: string;
   sender_name?: string;

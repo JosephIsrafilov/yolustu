@@ -15,6 +15,7 @@ const COPY = {
     placeholder: 'Mesajinizi yazin',
     send: 'Gonder',
     user: 'Istifadeci',
+    attachment: 'Qoşma',
   },
   ru: {
     loading: 'Загрузка сообщений',
@@ -23,6 +24,7 @@ const COPY = {
     placeholder: 'Введите сообщение',
     send: 'Отправить',
     user: 'Пользователь',
+    attachment: 'Вложение',
   },
   en: {
     loading: 'Loading messages',
@@ -31,6 +33,7 @@ const COPY = {
     placeholder: 'Type your message',
     send: 'Send',
     user: 'User',
+    attachment: 'Attachment',
   },
 } as const;
 
@@ -42,6 +45,7 @@ interface ChatPanelProps {
 export default function ChatPanel({ conversationId, compact = false }: ChatPanelProps) {
   const currentUser = useAppStore((state) => state.currentUser);
   const language = useAppStore((state) => state.language);
+  const markChatAsRead = useAppStore((state) => state.markChatAsRead);
   const t = COPY[language] || COPY.en;
   const { messages, setMessages, isConnected, addMessage } = useChat(
     conversationId,
@@ -79,6 +83,40 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
+  React.useEffect(() => {
+    if (!conversationId || !currentUser?.id) return;
+
+    const hasUnreadIncoming = messages.some(
+      (message) => message.sender_id !== currentUser.id && !message.read_at,
+    );
+
+    if (!hasUnreadIncoming) {
+      markChatAsRead(conversationId);
+      return;
+    }
+
+    let cancelled = false;
+
+    messagesService
+      .markChatRead(conversationId)
+      .then(() => {
+        if (cancelled) return;
+        markChatAsRead(conversationId);
+        setMessages((current) =>
+          current.map((message) =>
+            message.sender_id !== currentUser.id && !message.read_at
+              ? { ...message, read_at: new Date().toISOString() }
+              : message,
+          ),
+        );
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, currentUser?.id, markChatAsRead, messages, setMessages]);
+
   const send = async (event: React.FormEvent) => {
     event.preventDefault();
     const body = text.trim();
@@ -91,6 +129,17 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
     } finally {
       setSending(false);
     }
+  };
+
+  const isImageAttachment = (attachment: string) => {
+    const normalized = attachment.split('?')[0].toLowerCase();
+    return (
+      normalized.endsWith('.jpg') ||
+      normalized.endsWith('.jpeg') ||
+      normalized.endsWith('.png') ||
+      normalized.endsWith('.webp') ||
+      normalized.endsWith('.gif')
+    );
   };
 
   return (
@@ -126,7 +175,38 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
                         mine ? 'bg-brand-600 text-white' : 'bg-surface-muted text-text'
                       }`}
                     >
-                      {message.content}
+                      <div className="space-y-2">
+                        {(message.attachments || []).map((attachment, index) =>
+                          isImageAttachment(attachment) || message.message_type === 'photo' ? (
+                            <a
+                              key={attachment}
+                              href={attachment}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block overflow-hidden rounded-xl"
+                            >
+                              <img
+                                src={attachment}
+                                alt={`${t.attachment} ${index + 1}`}
+                                className="max-h-64 w-full rounded-xl object-cover"
+                              />
+                            </a>
+                          ) : (
+                            <a
+                              key={attachment}
+                              href={attachment}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`block rounded-xl px-3 py-2 text-xs font-medium underline underline-offset-2 ${
+                                mine ? 'bg-brand-500/70 text-white' : 'bg-white text-brand-700'
+                              }`}
+                            >
+                              {t.attachment} {index + 1}
+                            </a>
+                          ),
+                        )}
+                        {message.content ? <div>{message.content}</div> : null}
+                      </div>
                     </div>
                     <div className="mt-1 text-[11px] text-text-muted">
                       {new Date(message.created_at).toLocaleTimeString([], {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import DriverLayout from '@/components/driver/DriverLayout';
 import BookingRequestCard from '@/components/bookings/BookingRequestCard';
 import EmptyState from '@/components/ui/EmptyState';
@@ -9,6 +10,9 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
+import { ROUTES } from '@/lib/routes';
+import { messagesService } from '@/services';
+import { useRideChats } from '@/hooks/useRideChats';
 
 const REQUESTS_I18N = {
   az: {
@@ -32,6 +36,7 @@ const REQUESTS_I18N = {
 } as const;
 
 export default function DriverRequestsPage() {
+  const router = useRouter();
   const {
     bookings,
     trips,
@@ -44,9 +49,12 @@ export default function DriverRequestsPage() {
     lastError,
     clearError,
     language,
+    unreadChats,
   } = useAppStore();
 
   const [rejectBookingId, setRejectBookingId] = React.useState<string | null>(null);
+  const [openingChatId, setOpeningChatId] = React.useState<string | null>(null);
+  const { getRideChatByBookingId, upsertRideChat } = useRideChats(Boolean(currentUser));
 
   React.useEffect(() => {
     fetchBookingRequests();
@@ -65,6 +73,7 @@ export default function DriverRequestsPage() {
   const renderRequest = (booking: (typeof bookings)[number], readonly = false) => {
     const trip = booking.trip ?? trips.find((item) => item.id === booking.tripId);
     const passenger = booking.passenger ?? users.find((user) => user.id === booking.passengerId);
+    const rideChat = getRideChatByBookingId(booking.id);
 
     return (
       <BookingRequestCard
@@ -72,8 +81,27 @@ export default function DriverRequestsPage() {
         booking={booking}
         passenger={passenger}
         trip={trip}
+        showChat
+        isOpeningChat={openingChatId === booking.id}
+        hasUnreadChat={Boolean(rideChat && unreadChats[rideChat.id])}
         onAccept={readonly ? () => {} : () => acceptBooking(booking.id)}
         onReject={readonly ? () => {} : () => setRejectBookingId(booking.id)}
+        onOpenChat={async () => {
+          if (openingChatId) return;
+          setOpeningChatId(booking.id);
+          try {
+            if (rideChat) {
+              router.push(ROUTES.chatDetails(rideChat.id));
+              return;
+            }
+
+            const conversation = await messagesService.createRideChat(booking.id);
+            upsertRideChat(conversation);
+            router.push(ROUTES.chatDetails(conversation.id));
+          } finally {
+            setOpeningChatId(null);
+          }
+        }}
       />
     );
   };

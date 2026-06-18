@@ -110,20 +110,25 @@ export const apiAdminService: AdminService = {
   },
 
   async openVerificationDocument(documentUrl: string) {
-    // documentUrl is a full absolute URL (built by buildApiAssetUrl in the mapper),
-    // e.g. "http://localhost:8000/api/v1/admin/verifications/{id}/document/{fn}"
-    // We fetch it directly with credentials:include to send the session cookie.
-    const response = await fetch(documentUrl, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch document: ${response.status}`);
+    const url = new URL(documentUrl, window.location.origin);
+    const prefix = '/api/v1/admin/verifications/';
+    if (!url.pathname.startsWith(prefix)) {
+      throw new Error('Invalid verification document URL');
     }
 
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    window.open(objectUrl, '_blank');
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      throw new Error('Document popup was blocked');
+    }
+
+    try {
+      const blob = await apiClient.getBlob(url.pathname.replace('/api/v1', ''));
+      const objectUrl = URL.createObjectURL(blob);
+      popup.location.href = objectUrl;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (error) {
+      popup.close();
+      throw error;
+    }
   },
 };

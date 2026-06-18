@@ -75,6 +75,14 @@ def test_local_storage_get_local_path_fallback(tmp_path):
         assert storage.get_local_path(filename, "verifications") == legacy_file
 
 
+def test_local_storage_rejects_path_traversal(tmp_path):
+    with patch("app.core.storage.VERIFICATION_UPLOADS_DIR", tmp_path / "uploads"):
+        storage = LocalStorage()
+        assert storage.get_local_path(r"..\secret.txt", "verifications") is None
+        with pytest.raises(ValueError):
+            storage.upload(b"secret", "../secret.txt", "text/plain", "verifications")
+
+
 def test_supabase_storage_missing_config():
     with (
         patch("app.core.storage.settings.SUPABASE_URL", ""),
@@ -167,7 +175,7 @@ def test_supabase_storage_get_signed_url():
 
         with patch("httpx.post", return_value=mock_response) as mock_post:
             url = storage.get_signed_url("file.jpg", "verifications", 1800)
-            assert url == "https://xyz.supabase.co/temp/signed/url"
+            assert url == "https://xyz.supabase.co/storage/v1/temp/signed/url"
             mock_post.assert_called_once_with(
                 "https://xyz.supabase.co/storage/v1/object/sign/verifications/file.jpg",
                 json={"expiresIn": 1800},

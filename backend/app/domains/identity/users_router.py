@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from pathlib import Path
@@ -14,7 +15,7 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
+from app.core.config import UPLOADS_DIR, settings
 from app.core.database import get_db
 from app.core.storage import get_storage
 from app.domains.identity.dependencies import CurrentUser, get_current_user
@@ -22,6 +23,7 @@ from app.domains.identity.schemas import DeviceTokenInput, UserResponse, UserUpd
 from app.domains.identity.services import IdentityService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 AVATAR_UPLOAD_TYPES: dict[str, set[str]] = {
     ".jpg": {"image/jpeg"},
@@ -67,31 +69,48 @@ async def submit_verification(
         allowed_types=VERIFICATION_UPLOAD_TYPES,
     )
     storage = get_storage()
-    storage.upload(
-        file_bytes,
-        filename,
-        content_type,
-        settings.STORAGE_BUCKET_VERIFICATIONS,
-    )
     document_url = f"/api/v1/admin/verifications/{current_user.id}/document/{filename}"
+    identity = IdentityService(db)
+    existing_user = identity.get_current_user_model(current_user)
+    previous_filename = (
+        existing_user.document_url.rsplit("/", 1)[-1]
+        if existing_user.document_url
+        else None
+    )
 
-    # Always keep a local copy for the AI document review task (reads from filesystem).
-    VERIFICATION_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    (VERIFICATION_UPLOADS_DIR / filename).write_bytes(file_bytes)
+    try:
+        storage.upload(
+            file_bytes,
+            filename,
+            content_type,
+            settings.STORAGE_BUCKET_VERIFICATIONS,
+        )
+        user = identity.submit_verification(current_user, document_url)
+    except HTTPException:
+        storage.delete(filename, settings.STORAGE_BUCKET_VERIFICATIONS)
+        raise
+    except Exception as exc:
+        storage.delete(filename, settings.STORAGE_BUCKET_VERIFICATIONS)
+        logger.exception("Verification upload failed for user %s", current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification document could not be stored.",
+        ) from exc
 
-    user = IdentityService(db).submit_verification(current_user, document_url)
+    if previous_filename and previous_filename != filename:
+        storage.delete(previous_filename, settings.STORAGE_BUCKET_VERIFICATIONS)
 
     # Advisory AI pre-screen, fire-and-forget.
     from app.domains.ai.document_review import run_document_review_task
 
-    local_path = str(VERIFICATION_UPLOADS_DIR / filename)
     background_tasks.add_task(
         run_document_review_task,
-        local_path,
+        file_bytes,
         content_type,
         str(user.id),
         user.first_name,
         user.last_name,
+        document_url,
     )
 
     return user

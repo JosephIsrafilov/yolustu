@@ -208,9 +208,15 @@ class AdminService:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        if user.verification_status != "pending":
+            raise HTTPException(
+                status_code=409, detail="Verification request is not pending"
+            )
+        old_role = user.role
+        old_verified = user.is_verified
         user.role = "driver"  # type: ignore[assignment]
         user.is_verified = True  # type: ignore[assignment]
-        updated_user = self.users.update_verification_status(user, "approved")
+        user.verification_status = "approved"  # type: ignore[assignment]
 
         # Audit log
         self.audit.create(
@@ -222,23 +228,34 @@ class AdminService:
             description=f"Approved driver verification for {user.first_name} {user.last_name}",
             changes={
                 "verification_status": {"old": "pending", "new": "approved"},
-                "role": {"old": "passenger", "new": "driver"},
+                "role": {"old": old_role, "new": "driver"},
+                "is_verified": {"old": old_verified, "new": True},
             },
         )
+        if self.db is not None:
+            self.db.commit()
+            self.db.refresh(user)
 
         # Gamification: newcomer badge
-        check_and_award_badge(self.db, user.id, "newcomer")  # type: ignore[arg-type]
+        if self.db is not None:
+            check_and_award_badge(self.db, user.id, "newcomer")  # type: ignore[arg-type]
 
-        return updated_user
+        return user
 
     def reject_verification(self, user_id: UUID, current_user: CurrentUser):
         self.require_admin(current_user)
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        if user.verification_status != "pending":
+            raise HTTPException(
+                status_code=409, detail="Verification request is not pending"
+            )
+        old_role = user.role
+        old_verified = user.is_verified
         user.role = "passenger"  # type: ignore[assignment]
         user.is_verified = False  # type: ignore[assignment]
-        updated_user = self.users.update_verification_status(user, "rejected")
+        user.verification_status = "rejected"  # type: ignore[assignment]
 
         # Audit log
         self.audit.create(
@@ -248,10 +265,17 @@ class AdminService:
             resource_type="user",
             resource_id=user_id,
             description=f"Rejected driver verification for {user.first_name} {user.last_name}",
-            changes={"verification_status": {"old": "pending", "new": "rejected"}},
+            changes={
+                "verification_status": {"old": "pending", "new": "rejected"},
+                "role": {"old": old_role, "new": "passenger"},
+                "is_verified": {"old": old_verified, "new": False},
+            },
         )
+        if self.db is not None:
+            self.db.commit()
+            self.db.refresh(user)
 
-        return updated_user
+        return user
 
     def simulate_journey(self, current_user: CurrentUser):
         self.require_admin(current_user)

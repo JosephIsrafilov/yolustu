@@ -20,7 +20,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'yolustu-storage',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => window.localStorage),
       partialize: (state) => ({
         currentUser: state.currentUser,
@@ -29,19 +29,20 @@ export const useAppStore = create<AppState>()(
         activeMode: state.activeMode,
         language: state.language,
         unreadRides: state.unreadRides,
+        unreadChats: state.unreadChats,
       }),
       migrate: (persistedState: unknown) => {
         const state = persistedState as Record<string, unknown> | null;
         if (!state) return state;
 
-        if (!state.activeMode && state.activeRole) {
-          return {
-            ...state,
-            activeMode: state.activeRole,
-          };
-        }
-
-        return state;
+        return {
+          ...state,
+          activeMode: state.activeMode || state.activeRole,
+          unreadChats:
+            state.unreadChats && typeof state.unreadChats === 'object'
+              ? state.unreadChats
+              : {},
+        };
       },
     }
   )

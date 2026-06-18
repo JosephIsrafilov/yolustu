@@ -10,6 +10,7 @@ export const createUiSlice: StateCreator<
   language: 'az',
   setLanguage: (language) => set({ language }),
   unreadRides: {},
+  unreadChats: {},
   markRideAsRead: (rideId) =>
     set((state) => {
       const updated = { ...state.unreadRides };
@@ -21,6 +22,19 @@ export const createUiSlice: StateCreator<
       unreadRides: {
         ...state.unreadRides,
         [rideId]: true,
+      },
+    })),
+  markChatAsRead: (conversationId) =>
+    set((state) => {
+      const updated = { ...state.unreadChats };
+      delete updated[conversationId];
+      return { unreadChats: updated };
+    }),
+  markChatAsUnread: (conversationId) =>
+    set((state) => ({
+      unreadChats: {
+        ...state.unreadChats,
+        [conversationId]: true,
       },
     })),
 });

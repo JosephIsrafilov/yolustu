@@ -12,12 +12,15 @@ import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { I18N } from '@/lib/i18n';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
+import { messagesService } from '@/services';
+import { useRideChats } from '@/hooks/useRideChats';
 
 export default function BookingsPage() {
   const router = useRouter();
   const { bookings, trips, users, currentUser, cancelBooking, fetchBookings, fetchTrips, lastError, clearError, language } = useAppStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const [cancelDialogBookingId, setCancelDialogBookingId] = useState<string | null>(null);
+  const { getRideChatByBookingId, upsertRideChat } = useRideChats(Boolean(currentUser));
 
   const copy = I18N[language].bookings;
   const common = I18N[language].common;
@@ -78,8 +81,20 @@ export default function BookingsPage() {
                   booking={booking}
                   trip={trip}
                   driver={driver}
+                  rideChatConversationId={getRideChatByBookingId(booking.id)?.id}
                   onCancel={() => setCancelDialogBookingId(booking.id)}
                   onReview={() => router.push(`${ROUTES.createReview}?tripId=${booking.tripId}&targetUserId=${trip?.driverId}`)}
+                  onOpenRideChat={async () => {
+                    const existingConversation = getRideChatByBookingId(booking.id);
+                    if (existingConversation) {
+                      router.push(ROUTES.chatDetails(existingConversation.id));
+                      return;
+                    }
+
+                    const conversation = await messagesService.createRideChat(booking.id);
+                    upsertRideChat(conversation);
+                    router.push(ROUTES.chatDetails(conversation.id));
+                  }}
                   onPay={async () => {
                     try {
                       const service = await import('@/services').then(m => m.paymentsService);

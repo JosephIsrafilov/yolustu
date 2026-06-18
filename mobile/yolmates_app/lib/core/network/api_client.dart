@@ -93,7 +93,7 @@ class ApiClient {
         await _refreshAndRetry();
         return await _dio.post<T>(
           path,
-          data: data,
+          data: data is FormData ? data.clone() : data,
           queryParameters: queryParameters,
           options: options,
         );

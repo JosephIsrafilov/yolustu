@@ -87,14 +87,26 @@ export function usePushNotifications() {
               if (notificationType.startsWith('booking_')) {
                 refreshCanonicalData();
               } else if (notificationType === 'new_message') {
+                const conversationId = data.data?.conversation_id;
                 const rideId = data.data?.ride_id;
-                if (typeof rideId === 'string') {
-                  const store = useAppStore.getState();
-                  const isCurrentChat = typeof window !== 'undefined' && 
-                    (window.location.pathname === `/trips/${rideId}/chat` || 
-                     window.location.pathname === `/trips/${rideId}/chat/`);
-                  
+                const store = useAppStore.getState();
+
+                if (typeof conversationId === 'string') {
+                  const isCurrentChat =
+                    typeof window !== 'undefined' &&
+                    (window.location.pathname === `/chats/${conversationId}` ||
+                      window.location.pathname === `/chats/${conversationId}/`);
+
                   if (!isCurrentChat) {
+                    store.markChatAsUnread(conversationId);
+                  }
+                } else if (typeof rideId === 'string') {
+                  const isCurrentLegacyChat =
+                    typeof window !== 'undefined' &&
+                    (window.location.pathname === `/trips/${rideId}/chat` ||
+                      window.location.pathname === `/trips/${rideId}/chat/`);
+
+                  if (!isCurrentLegacyChat) {
                     store.markRideAsUnread(rideId);
                   }
                 }

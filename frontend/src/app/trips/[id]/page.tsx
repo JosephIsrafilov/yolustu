@@ -17,7 +17,8 @@ import { formatPrice, formatRating, estimateDurationMinutes, formatDuration } fr
 import { getLocalizedCityName } from '@/lib/cities';
 import Icon from '@/components/ui/Icon';
 import { MapContainer } from '@/components/ui/Map';
-import { tripsService } from '@/services';
+import { useRideChats } from '@/hooks/useRideChats';
+import { messagesService, tripsService } from '@/services';
 import type { Trip } from '@/types';
 import { I18N } from '@/lib/i18n';
 import { getUserCapabilities } from '@/lib/access-control';
@@ -166,7 +167,7 @@ export default function TripDetailsPage() {
     lastError,
     clearError,
     language,
-    unreadRides,
+    unreadChats,
     activeMode,
     switchRole,
   } = useAppStore();
@@ -177,7 +178,9 @@ export default function TripDetailsPage() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [loadedTrip, setLoadedTrip] = useState<Trip | null>(null);
   const [tripLoadError, setTripLoadError] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
   const tripId = Array.isArray(id) ? id[0] : id;
+  const { getRideChatByBookingId, upsertRideChat } = useRideChats(isAuthenticated);
 
   const copy = TRIP_DETAILS_I18N[language] || TRIP_DETAILS_I18N.en;
   const common = I18N[language].common;
@@ -220,6 +223,7 @@ export default function TripDetailsPage() {
   const isOwnTrip = currentUser?.id === trip.driverId;
   const capabilities = getUserCapabilities(currentUser, isAuthenticated, activeMode);
   const existingBooking = bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser?.id && b.status !== 'cancelled' && b.status !== 'rejected');
+  const rideChatConversation = existingBooking ? getRideChatByBookingId(existingBooking.id) : undefined;
   const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
   const departureCity = getLocalizedCityName(trip.departureCity, language);
   const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
@@ -242,6 +246,23 @@ export default function TripDetailsPage() {
     if (!bookingId) return;
     setHasBookingSucceeded(true);
     setShowSuccessModal(true);
+  };
+
+  const openRideChat = async () => {
+    if (!existingBooking || isOpeningChat) return;
+    setIsOpeningChat(true);
+    try {
+      if (rideChatConversation) {
+        router.push(ROUTES.chatDetails(rideChatConversation.id));
+        return;
+      }
+
+      const conversation = await messagesService.createRideChat(existingBooking.id);
+      upsertRideChat(conversation);
+      router.push(ROUTES.chatDetails(conversation.id));
+    } finally {
+      setIsOpeningChat(false);
+    }
   };
 
   return (
@@ -355,12 +376,13 @@ export default function TripDetailsPage() {
                 <Button 
                   fullWidth 
                   variant="outline" 
-                  onClick={() => router.push(ROUTES.tripDetails(trip.id) + '/chat')}
+                  onClick={openRideChat}
+                  loading={isOpeningChat}
                   className="flex items-center justify-center gap-2 relative"
                 >
                   <Icon name="message-square" size={18} />
                   {copy.goToChatBtn}
-                  {(unreadRides || {})[trip.id] && (
+                  {rideChatConversation && unreadChats[rideChatConversation.id] && (
                     <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>

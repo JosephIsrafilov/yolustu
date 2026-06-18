@@ -150,6 +150,8 @@ describe('apiAuthService', () => {
     const user = await apiAuthService.submitVerification(file);
 
     expect(mockedApiClient.post).toHaveBeenCalledWith('/users/me/verify', expect.any(FormData));
+    const submitted = mockedApiClient.post.mock.calls[0][1] as FormData;
+    expect(submitted.get('file')).toBe(file);
     expect(user.verificationStatus).toBe('pending');
     expect(user.documentUrl).toBe('http://localhost:8000/uploads/doc.pdf');
   });

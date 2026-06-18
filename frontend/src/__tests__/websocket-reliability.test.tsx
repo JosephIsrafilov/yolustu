@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { buildApiWebSocketUrl, normalizeWebSocketBaseUrl } from '@/lib/env';
 import { useChat } from '@/hooks/useChat';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -12,6 +12,7 @@ var mockRefreshFns = {
   fetchTrips: jest.fn(),
   initAuth: jest.fn(),
   markRideAsUnread: jest.fn(),
+  markChatAsUnread: jest.fn(),
 };
 
 // eslint-disable-next-line no-var
@@ -106,5 +107,30 @@ describe('websocket reliability helpers', () => {
     expect(mockRefreshFns.fetchBookings).toHaveBeenCalledTimes(2);
     expect(mockRefreshFns.fetchBookingRequests).toHaveBeenCalledTimes(2);
     expect(mockRefreshFns.fetchTrips).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks conversation chats unread from message notifications', async () => {
+    render(<PushHarness />);
+
+    await waitFor(() => expect(MockWebSocket.instances).toHaveLength(1));
+    await act(async () => {
+      MockWebSocket.instances[0].onmessage?.({
+        data: JSON.stringify({
+          type: 'notification',
+          title: 'New message',
+          body: 'Hello',
+          data: {
+            type: 'new_message',
+            conversation_id: 'conversation-1',
+          },
+        }),
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(mockRefreshFns.markChatAsUnread).toHaveBeenCalledWith('conversation-1');
+      expect(mockRefreshFns.markRideAsUnread).not.toHaveBeenCalled();
+    });
   });
 });

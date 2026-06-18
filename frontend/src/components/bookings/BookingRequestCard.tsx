@@ -14,16 +14,30 @@ interface BookingRequestCardProps {
   booking: Booking;
   passenger?: User;
   trip?: Trip;
+  showChat?: boolean;
+  isOpeningChat?: boolean;
+  hasUnreadChat?: boolean;
   onAccept: () => void;
   onReject: () => void;
+  onOpenChat?: () => Promise<void> | void;
 }
+
+const CHAT_COPY = {
+  az: 'Söhbət',
+  ru: 'Чат',
+  en: 'Chat',
+} as const;
 
 export default function BookingRequestCard({
   booking,
   passenger,
   trip,
+  showChat = false,
+  isOpeningChat = false,
+  hasUnreadChat = false,
   onAccept,
   onReject,
+  onOpenChat,
 }: BookingRequestCardProps) {
   const language = useAppStore((state) => state.language);
 
@@ -67,23 +81,46 @@ export default function BookingRequestCard({
         </span>
       </div>
 
-      {isPending && (
+      {(isPending || showChat) && (
         <div className="flex gap-2 pt-3 border-t border-border flex-nowrap items-center h-12 w-full">
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
-            onClick={onAccept}
-            disabled={noSeats}
-            className="flex-1 w-full"
-          >
-            <Icon name="check" size={14} className="shrink-0 flex-none" />
-            <span className="truncate">{noSeats ? 'Yer yoxdur' : 'Qəbul et'}</span>
-          </Button>
-          <Button variant="outline" size="sm" fullWidth onClick={onReject} className="flex-1 w-full">
-            <Icon name="x" size={14} className="shrink-0 flex-none" />
-            <span className="truncate">Rədd et</span>
-          </Button>
+          {isPending && (
+            <>
+              <Button
+                variant="primary"
+                size="sm"
+                fullWidth
+                onClick={onAccept}
+                disabled={noSeats}
+                className="flex-1 w-full"
+              >
+                <Icon name="check" size={14} className="shrink-0 flex-none" />
+                <span className="truncate">{noSeats ? 'Yer yoxdur' : 'Qəbul et'}</span>
+              </Button>
+              <Button variant="outline" size="sm" fullWidth onClick={onReject} className="flex-1 w-full">
+                <Icon name="x" size={14} className="shrink-0 flex-none" />
+                <span className="truncate">Rədd et</span>
+              </Button>
+            </>
+          )}
+          {showChat && onOpenChat && (
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={onOpenChat}
+              loading={isOpeningChat}
+              className="relative flex-1 w-full"
+            >
+              <Icon name="message-square" size={14} className="shrink-0 flex-none" />
+              <span className="truncate">{CHAT_COPY[language]}</span>
+              {hasUnreadChat && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
+            </Button>
+          )}
         </div>
       )}
     </Card>

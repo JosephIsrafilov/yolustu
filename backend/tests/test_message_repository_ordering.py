@@ -10,7 +10,6 @@ creates User/AuditLog/Badge/UserBadge tables, not Conversation/Message.
 """
 
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine

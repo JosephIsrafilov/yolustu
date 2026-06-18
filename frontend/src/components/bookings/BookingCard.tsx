@@ -20,10 +20,12 @@ interface BookingCardProps {
   booking: Booking;
   trip?: Trip;
   driver?: User;
+  rideChatConversationId?: string;
   onCancel?: () => void;
   onReview?: () => void;
   onPay?: () => void;
   onWalletPaySuccess?: () => void;
+  onOpenRideChat?: () => Promise<void> | void;
 }
 
 const BOOKING_CARD_I18N = {
@@ -54,16 +56,18 @@ export default function BookingCard({
   booking,
   trip,
   driver,
+  rideChatConversationId,
   onCancel,
   onReview,
   onPay,
   onWalletPaySuccess,
+  onOpenRideChat,
 }: BookingCardProps) {
   const router = useRouter();
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const language = useAppStore((state) => state.language);
-  const unreadRides = useAppStore((state) => state.unreadRides) || {};
+  const unreadChats = useAppStore((state) => state.unreadChats) || {};
   const copy = I18N[language].bookings;
   const localCopy = BOOKING_CARD_I18N[language];
 
@@ -78,8 +82,12 @@ export default function BookingCard({
     if (isOpeningChat) return;
     setIsOpeningChat(true);
     try {
-      const conversation = await messagesService.createRideChat(booking.id);
-      router.push(ROUTES.chatDetails(conversation.id));
+      if (onOpenRideChat) {
+        await onOpenRideChat();
+      } else {
+        const conversation = await messagesService.createRideChat(booking.id);
+        router.push(ROUTES.chatDetails(conversation.id));
+      }
     } finally {
       setIsOpeningChat(false);
     }
@@ -170,7 +178,7 @@ export default function BookingCard({
                 >
                   <Icon name="message-square" size={14} className="shrink-0 flex-none" />
                   <span className="truncate">{localCopy.chat}</span>
-                  {unreadRides[trip.id] && (
+                  {rideChatConversationId && unreadChats[rideChatConversationId] && (
                     <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>

@@ -207,10 +207,24 @@ def test_admin_can_list_and_update_verification_status():
     assert approved.role == "driver"
     assert approved.is_verified is True
 
+    target.verification_status = "pending"
     rejected = service.reject_verification(target.id, admin)
     assert rejected.verification_status == "rejected"
     assert rejected.role == "passenger"
     assert rejected.is_verified is False
+
+
+def test_admin_cannot_decide_non_pending_verification():
+    service, users, _ = make_service()
+    admin = make_current_user(users[0].id, role="admin")
+    target = users[1]
+    target.verification_status = "approved"
+
+    with pytest.raises(HTTPException) as exc:
+        service.reject_verification(target.id, admin)
+
+    assert exc.value.status_code == 409
+    assert target.role == "driver"
 
 
 def test_admin_stats_available_only_for_admin():

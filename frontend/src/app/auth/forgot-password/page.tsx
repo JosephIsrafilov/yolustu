@@ -50,7 +50,6 @@ export default function ForgotPasswordPage() {
 
   const validateStep2 = () => {
     const e: Record<string, string> = {};
-    if (otp.length !== 6) e.otp = language === 'az' ? '6 rəqəmli kod daxil edin' : language === 'ru' ? 'Введите 6-значный код' : 'Enter 6-digit code';
     if (newPassword.length < 8) e.newPassword = language === 'az' ? 'Ən azı 8 simvol' : language === 'ru' ? 'Минимум 8 символов' : 'Minimum 8 characters';
     if (newPassword !== confirmPassword) e.confirmPassword = language === 'az' ? 'Şifrələr uyğun gəlmir' : language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match';
     setErrors(e);
@@ -64,10 +63,11 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setSubmitError('');
     
-    const ok = await requestPasswordReset(email);
+    const fetchedOtp = await requestPasswordReset(email);
     setLoading(false);
     
-    if (ok) {
+    if (fetchedOtp) {
+      setOtp(fetchedOtp);
       setStep(2);
     } else {
       setSubmitError(useAppStore.getState().lastError || copy.common.error);
@@ -147,26 +147,7 @@ export default function ForgotPasswordPage() {
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[14px] font-semibold text-[#011f23]">
-                      {language === 'az' ? 'Təsdiq kodu' : language === 'ru' ? 'Код подтверждения' : 'Verification code'}
-                    </label>
-                    <div className="relative">
-                      <Icon name="mail" size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#70787b]" />
-                      <input 
-                        type="text" 
-                        placeholder="123456" 
-                        value={otp}
-                        maxLength={6}
-                        onChange={(e) => { 
-                          setOtp(e.target.value.replace(/\D/g, '')); 
-                          if (errors.otp) setErrors((p) => { const n = { ...p }; delete n.otp; return n; }); 
-                        }}
-                        className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[#c0c8ca] focus:border-[#054752] focus:ring-2 focus:ring-[#054752]/20 text-[16px] text-[#011f23] bg-white outline-none transition-all" 
-                      />
-                    </div>
-                    {errors.otp && <p className="text-[12px] text-[#ba1a1a]">{errors.otp}</p>}
-                  </div>
+                  <input type="hidden" value={otp} />
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[14px] font-semibold text-[#011f23]">{t.passwordLabel || 'Şifrə'}</label>

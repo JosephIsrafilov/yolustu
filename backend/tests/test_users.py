@@ -98,6 +98,45 @@ def test_submit_verification_rejects_mismatched_file_content(access_token):
     assert "does not match" in response.json()["error"]["message"]
 
 
+def test_submit_verification_accepts_real_pdf_and_sets_pending(
+    access_token, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.domains.ai.document_review.run_document_review_task",
+        lambda *args: None,
+    )
+    response = client.post(
+        "/api/v1/users/me/verify",
+        headers={"Authorization": f"Bearer {access_token}"},
+        files={
+            "file": (
+                "license.pdf",
+                b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["verification_status"] == "pending"
+    assert data["is_verified"] is False
+    assert data["role"] == "passenger"
+    assert "/api/v1/admin/verifications/" in data["document_url"]
+
+
+def test_submit_verification_rejects_oversized_file(access_token):
+    oversized = b"%PDF-1.4\n" + b"0" * (5 * 1024 * 1024)
+    response = client.post(
+        "/api/v1/users/me/verify",
+        headers={"Authorization": f"Bearer {access_token}"},
+        files={"file": ("license.pdf", oversized, "application/pdf")},
+    )
+
+    assert response.status_code == 413
+    assert "5MB limit" in response.json()["error"]["message"]
+
+
 def test_upload_avatar_rejects_oversized_file(access_token):
     oversized = b"\x89PNG\r\n\x1a\n" + b"0" * (5 * 1024 * 1024 + 1)
     response = client.post(

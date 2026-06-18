@@ -67,11 +67,7 @@ export default function LoginPage() {
       }
 
       const lastError = useAppStore.getState().lastError;
-      if (lastError && lastError.toLowerCase().includes('verify')) {
-        router.push(`/auth/verify?phone=${encodeURIComponent(normalizedPhone)}`);
-      } else {
-        setSubmitError(lastError || copy.auth.loginFail);
-      }
+      setSubmitError(lastError || copy.auth.loginFail);
     } catch (error) {
       const apiError = toApiError(error);
       setLoading(false);

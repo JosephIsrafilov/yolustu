@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
@@ -264,10 +266,18 @@ class ApiAuthRepository implements AuthRepository {
   @override
   Future<AppUser> submitVerification(String documentPath) async {
     try {
+      final extension = path.extension(documentPath).toLowerCase();
+      final contentType = switch (extension) {
+        '.jpg' || '.jpeg' => MediaType('image', 'jpeg'),
+        '.png' => MediaType('image', 'png'),
+        '.pdf' => MediaType('application', 'pdf'),
+        _ => throw const AuthException('Dəstəklənməyən fayl növü'),
+      };
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           documentPath,
-          filename: documentPath.split('/').last,
+          filename: path.basename(documentPath),
+          contentType: contentType,
         ),
       });
 
@@ -281,11 +291,17 @@ class ApiAuthRepository implements AuthRepository {
       await _persistUser(user);
       return user;
     } on DioException catch (e) {
-      final apiError = e.error is ApiException
-          ? e.error as ApiException
-          : ApiException(
-              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
-      throw AuthException(apiError.message);
+      final apiError = e.error;
+      if (apiError is ApiException) {
+        if (apiError.statusCode == 413) {
+          throw const AuthException('Fayl 5 MB limitini keçir');
+        }
+        if (apiError.statusCode == 401) {
+          throw const AuthException('Yenidən daxil olun');
+        }
+        throw AuthException(apiError.message);
+      }
+      throw const AuthException('Şəbəkə və ya server xətası');
     }
   }
 

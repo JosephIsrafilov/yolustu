@@ -155,10 +155,18 @@ def get_verification_document(
     from app.core.storage import SupabaseStorage
 
     if isinstance(storage, SupabaseStorage):
-        signed_url = storage.get_signed_url(
-            filename, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=3600
+        try:
+            signed_url = storage.get_signed_url(
+                filename, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=300
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Verification document is temporarily unavailable",
+            ) from exc
+        return RedirectResponse(
+            url=signed_url, headers={"Cache-Control": "private, no-store"}
         )
-        return RedirectResponse(url=signed_url)
 
     # LocalStorage — serve from filesystem (works in both dev and prod-without-Supabase).
     from app.core.storage import LocalStorage as _LocalStorage
@@ -168,7 +176,11 @@ def get_verification_document(
             filename, settings.STORAGE_BUCKET_VERIFICATIONS
         )
         if file_path and file_path.is_file():
-            return FileResponse(str(file_path), filename=filename)
+            return FileResponse(
+                str(file_path),
+                filename=filename,
+                headers={"Cache-Control": "private, no-store"},
+            )
 
     raise HTTPException(status_code=404, detail="Verification document not found")
 

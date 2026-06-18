@@ -49,21 +49,21 @@ const TOP_ROUTES: Array<{
     to: 'Gəncə',
     price: 15,
     tripsKey: 'ganca',
-    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64',
+    img: '/images/ganja_route.jpg',
   },
   {
     from: 'Bakı',
     to: 'Quba',
     price: 10,
     tripsKey: 'quba',
-    img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4',
+    img: '/images/quba_route.jpg',
   },
   {
     from: 'Bakı',
     to: 'Lənkəran',
     price: 12,
     tripsKey: 'lankaran',
-    img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b',
+    img: '/images/lankaran_route.jpg',
   },
 ];
 

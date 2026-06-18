@@ -5,8 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text
 
 from app.core.config import UPLOADS_DIR, settings
@@ -56,11 +55,20 @@ app.add_exception_handler(
     _rate_limit_exceeded_handler,  # type: ignore[arg-type]
 )
 
-# Mount local uploads directory in development only.
-# Production serves files from Supabase Storage.
+# Serve only top-level avatar files in development. Verification documents live
+# in a subdirectory and are served only through the admin-authenticated route.
 if settings.ENVIRONMENT != "production":
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
+    @app.get("/uploads/{filename}", include_in_schema=False)
+    def get_local_avatar(filename: str):
+        if "/" in filename or "\\" in filename or filename in {".", ".."}:
+            raise HTTPException(status_code=404, detail="File not found")
+        file_path = (UPLOADS_DIR / filename).resolve()
+        if file_path.parent != UPLOADS_DIR.resolve() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="File not found")
+        return FileResponse(file_path)
+
 
 if settings.ENVIRONMENT == "production":
     # Production: only allow the configured frontend URL

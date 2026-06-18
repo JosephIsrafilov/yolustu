@@ -201,10 +201,16 @@ export default function AdminVerificationsPage() {
 
   const fetchVerifications = useCallback(async (currentPage: number) => {
     setLoadError(false);
+    setActionError(null);
     try {
       const res = await adminService.getPendingVerifications(currentPage, limit);
+      const lastPage = Math.max(1, res.pages);
+      if (currentPage > lastPage) {
+        setPage(lastPage);
+        return;
+      }
       setVerifications(res.items);
-      setTotalPages(res.pages);
+      setTotalPages(lastPage);
     } catch {
       setLoadError(true);
     } finally {
@@ -236,7 +242,7 @@ export default function AdminVerificationsPage() {
       setPendingUserId(userId);
       try {
         await adminService.approveVerification(userId);
-        setVerifications(prev => prev.filter(v => v.id !== userId));
+        await fetchVerifications(page);
       } catch {
         setActionError(t.actionError);
       } finally {
@@ -251,7 +257,7 @@ export default function AdminVerificationsPage() {
       setPendingUserId(userId);
       try {
         await adminService.rejectVerification(userId);
-        setVerifications(prev => prev.filter(v => v.id !== userId));
+        await fetchVerifications(page);
       } catch {
         setActionError(t.actionError);
       } finally {
@@ -339,7 +345,7 @@ export default function AdminVerificationsPage() {
                             }
                             try {
                               await adminService.openVerificationDocument(user.documentUrl);
-                            } catch (error) {
+                            } catch {
                               alert(t.actionError);
                             }
                           }}

@@ -21,11 +21,30 @@ Bucket constants come from settings:
 """
 
 from abc import ABC, abstractmethod
+import logging
 from pathlib import Path
 
 import httpx
 
 from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
+
+logger = logging.getLogger(__name__)
+
+
+def _safe_path(directory: Path, filename: str) -> Path:
+    if (
+        not filename
+        or filename in {".", ".."}
+        or "/" in filename
+        or "\\" in filename
+        or Path(filename).is_absolute()
+    ):
+        raise ValueError("Unsafe storage filename")
+    root = directory.resolve()
+    candidate = (root / filename).resolve()
+    if candidate.parent != root:
+        raise ValueError("Unsafe storage filename")
+    return candidate
 
 
 class StorageBackend(ABC):
@@ -76,7 +95,7 @@ class LocalStorage(StorageBackend):
     ) -> str:
         dest_dir = self._bucket_dir(bucket)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        (dest_dir / filename).write_bytes(file_data)
+        _safe_path(dest_dir, filename).write_bytes(file_data)
         base_url = str(settings.BACKEND_URL).rstrip("/")
         url_path = self._bucket_url_path(bucket)
         return f"{base_url}/{url_path}/{filename}"
@@ -87,20 +106,23 @@ class LocalStorage(StorageBackend):
         return f"{base_url}/{url_path}/{filename}"
 
     def delete(self, filename: str, bucket: str) -> None:
-        path = self._bucket_dir(bucket) / filename
+        path = _safe_path(self._bucket_dir(bucket), filename)
         path.unlink(missing_ok=True)
 
     def get_local_path(self, filename: str, bucket: str) -> Path | None:
         """Return the local filesystem path (used by admin document endpoint)."""
-        primary = self._bucket_dir(bucket) / filename
+        try:
+            primary = _safe_path(self._bucket_dir(bucket), filename)
+        except ValueError:
+            return None
         if primary.is_file():
             return primary
         # Legacy fallback 1 — files uploaded before bucket/subdirectory separation
-        legacy_verification = VERIFICATION_UPLOADS_DIR / filename
+        legacy_verification = _safe_path(VERIFICATION_UPLOADS_DIR, filename)
         if legacy_verification.is_file():
             return legacy_verification
         # Legacy fallback 2 — files uploaded to old flat uploads/ dir
-        legacy = UPLOADS_DIR / filename
+        legacy = _safe_path(UPLOADS_DIR, filename)
         return legacy if legacy.is_file() else None
 
 
@@ -143,6 +165,8 @@ class SupabaseStorage(StorageBackend):
         return self.get_url(filename, bucket)
 
     def get_url(self, filename: str, bucket: str) -> str:
+        if bucket == settings.STORAGE_BUCKET_VERIFICATIONS:
+            return filename
         return f"{self._base}/storage/v1/object/public/{bucket}/{filename}"
 
     def get_signed_url(self, filename: str, bucket: str, expires_in: int = 3600) -> str:
@@ -156,7 +180,9 @@ class SupabaseStorage(StorageBackend):
         )
         response.raise_for_status()
         signed_path = response.json()["signedURL"]
-        return f"{self._base}{signed_path}"
+        if signed_path.startswith("/storage/v1/"):
+            return f"{self._base}{signed_path}"
+        return f"{self._base}/storage/v1{signed_path}"
 
     def delete(self, filename: str, bucket: str) -> None:
         url = f"{self._base}/storage/v1/object/{bucket}"
@@ -168,8 +194,13 @@ class SupabaseStorage(StorageBackend):
                 headers=self._headers(),
                 timeout=10,
             ).raise_for_status()
-        except Exception:
-            pass  # Best-effort — don't crash on delete failures
+        except Exception as exc:
+            logger.warning(
+                "Storage delete failed for bucket=%s object=%s: %s",
+                bucket,
+                filename,
+                exc,
+            )
 
 
 def get_storage() -> StorageBackend:

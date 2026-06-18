@@ -13,8 +13,9 @@ import TireLoader from '@/components/ui/TireLoader';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import TrackingMap from '@/components/ui/Map/TrackingMap';
 import { useTracking } from '@/hooks/useTracking';
+import { useRideChats } from '@/hooks/useRideChats';
 import { useAppStore } from '@/store/useAppStore';
-import { tripsService } from '@/services';
+import { messagesService, tripsService } from '@/services';
 import { ROUTES } from '@/lib/routes';
 import { I18N } from '@/lib/i18n';
 import { getLocalizedCityName } from '@/lib/cities';
@@ -41,9 +42,12 @@ export default function DriverTripManagePage({
     cancelTrip,
     lastError,
     clearError,
+    currentUser,
+    unreadChats,
   } = useAppStore();
 
   const copy = I18N[language].tripManage;
+  const chatLabel = language === 'az' ? 'Söhbət' : language === 'ru' ? 'Чат' : 'Chat';
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,8 @@ export default function DriverTripManagePage({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmBoarding, setConfirmBoarding] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [openingChatId, setOpeningChatId] = useState<string | null>(null);
+  const { getRideChatByBookingId, upsertRideChat } = useRideChats(Boolean(currentUser));
 
   const refreshTrip = useCallback(async () => {
     const data = await tripsService.getTripById(tripId);
@@ -279,6 +285,7 @@ export default function DriverTripManagePage({
           <div className="space-y-2">
             {passengers.map((booking) => {
               const name = booking.passenger?.fullName ?? 'Passenger';
+              const rideChat = getRideChatByBookingId(booking.id);
               return (
                 <Card key={booking.id} padding="sm">
                   <div className="flex items-center justify-between gap-3">
@@ -296,6 +303,37 @@ export default function DriverTripManagePage({
                     </div>
                     {!isFinished && (
                       <div className="flex flex-none gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={openingChatId === booking.id}
+                          loading={openingChatId === booking.id}
+                          onClick={async () => {
+                            if (openingChatId) return;
+                            setOpeningChatId(booking.id);
+                            try {
+                              if (rideChat) {
+                                router.push(ROUTES.chatDetails(rideChat.id));
+                                return;
+                              }
+
+                              const conversation = await messagesService.createRideChat(booking.id);
+                              upsertRideChat(conversation);
+                              router.push(ROUTES.chatDetails(conversation.id));
+                            } finally {
+                              setOpeningChatId(null);
+                            }
+                          }}
+                          className="relative"
+                        >
+                          <Icon name="message-square" size={14} /> {chatLabel}
+                          {rideChat && unreadChats[rideChat.id] && (
+                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            </span>
+                          )}
+                        </Button>
                         <Button
                           size="sm"
                           variant={booking.status === 'boarded' ? 'secondary' : 'primary'}

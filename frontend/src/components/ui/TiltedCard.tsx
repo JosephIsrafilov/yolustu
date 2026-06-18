@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 
 interface TiltedCardProps extends React.HTMLAttributes<HTMLDivElement> {
   maxRotation?: number;
@@ -16,8 +16,6 @@ export default function TiltedCard({
   ...props
 }: TiltedCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -32,16 +30,24 @@ export default function TiltedCard({
     const rotateX = -mouseY * maxRotation;
     const rotateY = mouseX * maxRotation;
 
-    setRotate({ x: rotateX, y: rotateY });
+    requestAnimationFrame(() => {
+      if (cardRef.current) {
+        cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+      }
+    });
   };
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'transform 0.1s ease-out';
+    }
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
-    setRotate({ x: 0, y: 0 });
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'transform 0.5s ease-out';
+      cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+    }
   };
 
   return (
@@ -50,11 +56,9 @@ export default function TiltedCard({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`transition-all duration-500 ease-out cursor-pointer ${className}`}
+      className={`cursor-pointer ${className}`}
       style={{
-        transform: isHovered
-          ? `perspective(1000px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale(${scale})`
-          : 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
+        transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
         transformStyle: 'preserve-3d',
       }}
       {...props}

@@ -497,13 +497,14 @@ def review_verification_document(
 
 
 def run_document_review_task(
-    file_path: str,
+    image_bytes: bytes,
     mime_type: str,
     user_id: str,
     first_name: str,
     last_name: str,
+    document_url: str,
 ) -> None:
-    """Background task: read stored doc, run AI review, persist to the user.
+    """Background task: review uploaded bytes and persist if document is current.
 
     Opens its own DB session (the request session is closed by the time this
     runs). Swallows all errors — verification submission must never fail because
@@ -514,22 +515,12 @@ def run_document_review_task(
     from app.core.database import SessionLocal
     from app.domains.identity.models import User
 
-    try:
-        with open(file_path, "rb") as f:
-            image_bytes = f.read()
-    except OSError as exc:
-        logger.warning("AI review could not read %s: %s", file_path, exc)
-        review = _needs_review("file_unreadable")
-        image_bytes = b""
-    else:
-        review = review_verification_document(
-            image_bytes, mime_type, first_name, last_name
-        )
+    review = review_verification_document(image_bytes, mime_type, first_name, last_name)
 
     db = SessionLocal()
     try:
         user = db.get(User, UUID(user_id))
-        if user is not None:
+        if user is not None and user.document_url == document_url:
             user.verification_ai_review = review
             db.commit()
     except Exception as exc:  # noqa: BLE001 - never raise from a background task

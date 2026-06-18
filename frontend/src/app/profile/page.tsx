@@ -342,10 +342,8 @@ interface VehiclePayload {
 }
 
 function EmailVerificationSection({ copy }: VerificationSectionProps) {
-  const { currentUser, requestEmailVerification, verifyEmail } = useAppStore();
+  const { currentUser, requestEmailVerification } = useAppStore();
   const [loading, setLoading] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  const [otp, setOtp] = useState('');
   const [msg, setMsg] = useState({ type: '', text: '' });
 
   if (!currentUser || !currentUser.email) return null;
@@ -355,22 +353,7 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
     setMsg({ type: '', text: '' });
     const success = await requestEmailVerification();
     if (success) {
-      setShowOtp(true);
-      setMsg({ type: 'success', text: copy.otpSentSuccess });
-    } else {
-      setMsg({ type: 'error', text: useAppStore.getState().lastError || copy.emailVerifyError });
-    }
-    setLoading(false);
-  };
-
-  const handleVerify = async () => {
-    if (otp.length < 6) return;
-    setLoading(true);
-    setMsg({ type: '', text: '' });
-    const success = await verifyEmail(otp);
-    if (success) {
       setMsg({ type: 'success', text: copy.emailVerifySuccess });
-      setShowOtp(false);
     } else {
       setMsg({ type: 'error', text: useAppStore.getState().lastError || copy.emailVerifyError });
     }
@@ -400,24 +383,9 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
             </div>
           )}
 
-          {!showOtp ? (
-            <Button fullWidth onClick={handleRequest} loading={loading}>
-              {copy.verifyEmailBtn}
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Input
-                placeholder={copy.enterOtpPlaceholder}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                className="flex-1"
-              />
-              <Button onClick={handleVerify} loading={loading} disabled={otp.length < 6}>
-                {copy.submitOtpBtn}
-              </Button>
-            </div>
-          )}
+          <Button fullWidth onClick={handleRequest} loading={loading}>
+            {copy.verifyEmailBtn}
+          </Button>
         </div>
       )}
     </Card>
@@ -446,8 +414,8 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
       await submitVerification(file);
       setShowSuccess(true);
       setFile(null);
-    } catch (error) {
-      useAppStore.setState({ lastError: copy.uploadError });
+    } catch {
+      // Store action preserves the backend's specific upload error.
     } finally {
       setUploading(false);
     }
@@ -480,7 +448,7 @@ function DriverVerificationSection({ copy }: VerificationSectionProps) {
           <div className="relative group">
             <input 
               type="file" 
-              accept="image/*,.pdf" 
+              accept=".jpg,.jpeg,.png,.pdf"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />

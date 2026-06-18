@@ -184,6 +184,15 @@ Stop:
 - close the backend/frontend PowerShell windows started by the script
 - stop infra when needed: `docker compose down`
 
+Production uploads persist in the `uploadsdata` Docker volume mounted at
+`/app/uploads`. If Supabase Storage is enabled, create a public `avatars`
+bucket and a private `verifications` bucket, then configure
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STORAGE_BUCKET_AVATARS`, and
+`STORAGE_BUCKET_VERIFICATIONS`.
+
+> Warning: `docker compose down -v` deletes database and uploaded-file volumes,
+> including locally stored verification documents.
+
 ---
 
 ## Local Cleanup
@@ -289,7 +298,8 @@ Recommended GitHub Secrets (deploy environments):
 
 ### 6) Security notes
 - Do not commit real secrets to git.
-- `SUPABASE_SERVICE_ROLE_KEY` is not required when Supabase is used only as Postgres.
+- `SUPABASE_SERVICE_ROLE_KEY` is required only when backend-managed Supabase
+  Storage is enabled. Never expose it to frontend or mobile clients.
 - Never expose service-role secrets to frontend bundles.
 - Frontend should keep using backend API (no direct frontend-to-Supabase DB integration in current architecture).
 
