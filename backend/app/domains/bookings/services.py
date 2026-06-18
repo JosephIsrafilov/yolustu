@@ -65,12 +65,45 @@ class BookingsService:
                 status_code=400, detail="Booking already exists for this ride"
             )
 
+        from app.core.config import settings
+        from app.domains.payments.services import PaymentService, money
+
+        amount = money(ride.price_per_seat * booking_in.seats_booked)
+        payment_service = PaymentService(self.db)
+        wallet = payment_service.wallets.get_or_create_for_update(
+            current_user.id, settings.PAYMENT_CURRENCY
+        )
+        if wallet.available_balance < amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient wallet balance for this booking",
+            )
+
+        # Hold the funds
+        wallet.available_balance = money(wallet.available_balance - amount)
+        wallet.pending_balance = money(wallet.pending_balance + amount)
+
         booking = self.bookings.create(
             ride_id=ride.id,  # type: ignore[arg-type]
             passenger_id=current_user.id,
             seats_booked=booking_in.seats_booked,
-            total_price=ride.price_per_seat * booking_in.seats_booked,  # type: ignore[arg-type]
+            total_price=amount,  # type: ignore[arg-type]
         )
+
+        # Record wallet transaction for the hold
+        payment_service._ledger(
+            user_id=current_user.id,
+            payment=None,
+            booking_id=booking.id,  # type: ignore[arg-type]
+            ride_id=ride.id,  # type: ignore[arg-type]
+            tx_type="reservation_hold",
+            direction="debit",
+            amount=amount,
+            status="pending",
+            description="Funds reserved for booking",
+            idempotency_key=f"booking:{booking.id}:reservation_hold",
+        )
+
         ride.available_seats -= booking_in.seats_booked  # type: ignore[assignment]
         if self.db is not None:
             self.db.commit()
@@ -141,6 +174,32 @@ class BookingsService:
             ride.available_seats = min(  # type: ignore[assignment,arg-type]
                 ride.total_seats, ride.available_seats + booking.seats_booked
             )
+
+        # Release held funds
+        if self.db is not None:
+            from app.domains.payments.services import PaymentService, money
+
+            payment_service = PaymentService(self.db)
+            wallet = payment_service.wallets.get_or_create_for_update(
+                booking.passenger_id, "AZN"  # type: ignore[arg-type]
+            )
+            amount = money(booking.total_price or 0)  # type: ignore[arg-type]
+            wallet.available_balance = money(wallet.available_balance + amount)
+            wallet.pending_balance = money(wallet.pending_balance - amount)
+
+            payment_service._ledger(
+                user_id=booking.passenger_id,  # type: ignore[arg-type]
+                payment=None,
+                booking_id=booking.id,  # type: ignore[arg-type]
+                ride_id=ride.id,  # type: ignore[arg-type]
+                tx_type="reservation_release",
+                direction="credit",
+                amount=amount,
+                status="posted",
+                description="Funds released due to rejected booking",
+                idempotency_key=f"booking:{booking.id}:reservation_release_reject",
+            )
+
         self.bookings.save(booking)
 
         self.notifications.send_push_notification(
@@ -188,6 +247,32 @@ class BookingsService:
             if ride.status != RIDE_COMPLETED:
                 ride.available_seats = min(  # type: ignore[assignment,arg-type]
                     ride.total_seats, ride.available_seats + booking.seats_booked
+                )
+
+        if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]:
+            # Release held funds
+            if self.db is not None:
+                from app.domains.payments.services import PaymentService, money
+
+                payment_service = PaymentService(self.db)
+                wallet = payment_service.wallets.get_or_create_for_update(
+                    booking.passenger_id, "AZN"  # type: ignore[arg-type]
+                )
+                amount = money(booking.total_price or 0)  # type: ignore[arg-type]
+                wallet.available_balance = money(wallet.available_balance + amount)
+                wallet.pending_balance = money(wallet.pending_balance - amount)
+
+                payment_service._ledger(
+                    user_id=booking.passenger_id,  # type: ignore[arg-type]
+                    payment=None,
+                    booking_id=booking.id,  # type: ignore[arg-type]
+                    ride_id=ride.id,  # type: ignore[arg-type]
+                    tx_type="reservation_release",
+                    direction="credit",
+                    amount=amount,
+                    status="posted",
+                    description="Funds released due to cancelled booking",
+                    idempotency_key=f"booking:{booking.id}:reservation_release_cancel",
                 )
 
         booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
@@ -280,6 +365,32 @@ class BookingsService:
                     ride.total_seats,
                     ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
                 )
+
+            # Release held funds
+            if self.db is not None:
+                from app.domains.payments.services import PaymentService, money
+
+                payment_service = PaymentService(self.db)
+                wallet = payment_service.wallets.get_or_create_for_update(
+                    booking.passenger_id, "AZN"  # type: ignore[arg-type]
+                )
+                amount = money(booking.total_price or 0)  # type: ignore[arg-type]
+                wallet.available_balance = money(wallet.available_balance + amount)
+                wallet.pending_balance = money(wallet.pending_balance - amount)
+
+                payment_service._ledger(
+                    user_id=booking.passenger_id,  # type: ignore[arg-type]
+                    payment=None,
+                    booking_id=booking.id,  # type: ignore[arg-type]
+                    ride_id=ride.id if ride else booking.ride_id,  # type: ignore[arg-type]
+                    tx_type="reservation_release",
+                    direction="credit",
+                    amount=amount,
+                    status="posted",
+                    description="Funds released due to expired booking",
+                    idempotency_key=f"booking:{booking.id}:reservation_release_expire",
+                )
+
             self.bookings.save(booking)
             self.notifications.send_push_notification(
                 user_id=booking.passenger_id,  # type: ignore[arg-type]

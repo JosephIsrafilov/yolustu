@@ -56,7 +56,7 @@ def create_ride_chat(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return EngagementService(db).get_or_create_ride_conversation(
-        payload.booking_id, current_user
+        payload.ride_id, current_user, payload.booking_id
     )
 
 
