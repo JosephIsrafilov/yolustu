@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 UPLOADS_DIR = BACKEND_DIR / "uploads"
-VERIFICATION_UPLOADS_DIR = BACKEND_DIR / "verification_uploads"
+VERIFICATION_UPLOADS_DIR = UPLOADS_DIR / "verifications"
 
 
 def normalize_database_url(url: str) -> str:

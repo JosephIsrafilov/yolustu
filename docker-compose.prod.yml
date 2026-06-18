@@ -45,6 +45,9 @@ services:
     env_file: .env.prod
     environment:
       WEB_CONCURRENCY: "2"
+    volumes:
+      # Persist user-uploaded files (avatars, verification docs) across redeploys.
+      - uploadsdata:/app/uploads
     # Not published to the host — Caddy reaches it over the compose network.
     expose:
       - "8000"
@@ -78,3 +81,4 @@ volumes:
   redisdata:
   caddydata:
   caddyconfig:
+  uploadsdata:

@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
-from app.core.pagination import PaginatedResponse
-from app.core.storage import LocalStorage, get_storage
+from app.core.config import settings
+from app.core.storage import get_storage
 from app.core.database import get_db
+from app.core.pagination import PaginatedResponse
 from app.domains.admin.repositories import AuditLogRepository
 from app.domains.admin.schemas import AuditLogResponse
 from app.domains.admin.services import AdminService
@@ -150,24 +150,26 @@ def get_verification_document(
         raise HTTPException(status_code=404, detail="Verification document not found")
 
     storage = get_storage()
-    if settings.ENVIRONMENT == "production" and not isinstance(storage, LocalStorage):
-        # Redirect admin browser to a time-limited Supabase signed URL (1 hour)
-        from app.core.storage import SupabaseStorage
 
-        if isinstance(storage, SupabaseStorage):
-            signed_url = storage.get_signed_url(
-                filename, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=3600
-            )
-            return RedirectResponse(url=signed_url)
+    # If using Supabase Storage, redirect to a time-limited signed URL.
+    from app.core.storage import SupabaseStorage
 
-    # Development: serve from local filesystem
-    private_path = VERIFICATION_UPLOADS_DIR / filename
-    legacy_path = UPLOADS_DIR / filename
-    file_path = private_path if private_path.is_file() else legacy_path
-    if not file_path.is_file():
-        raise HTTPException(status_code=404, detail="Verification document not found")
+    if isinstance(storage, SupabaseStorage):
+        signed_url = storage.get_signed_url(
+            filename, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=3600
+        )
+        return RedirectResponse(url=signed_url)
 
-    return FileResponse(file_path, filename=filename)
+    # LocalStorage — serve from filesystem (works in both dev and prod-without-Supabase).
+    from app.core.storage import LocalStorage as _LocalStorage
+
+    if isinstance(storage, _LocalStorage):
+        file_path = storage.get_local_path(filename, settings.STORAGE_BUCKET_VERIFICATIONS)
+        if file_path and file_path.is_file():
+            return FileResponse(str(file_path), filename=filename)
+
+    raise HTTPException(status_code=404, detail="Verification document not found")
+
 
 
 @router.patch("/verifications/{user_id}/approve", response_model=UserResponse)

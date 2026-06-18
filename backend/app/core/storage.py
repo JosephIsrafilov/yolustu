@@ -65,6 +65,12 @@ class LocalStorage(StorageBackend):
             return VERIFICATION_UPLOADS_DIR
         return UPLOADS_DIR
 
+    def _bucket_url_path(self, bucket: str) -> str:
+        """URL subpath for files in a given bucket."""
+        if bucket == settings.STORAGE_BUCKET_VERIFICATIONS:
+            return "uploads/verifications"
+        return "uploads"
+
     def upload(
         self, file_data: bytes, filename: str, content_type: str, bucket: str
     ) -> str:
@@ -72,11 +78,13 @@ class LocalStorage(StorageBackend):
         dest_dir.mkdir(parents=True, exist_ok=True)
         (dest_dir / filename).write_bytes(file_data)
         base_url = str(settings.BACKEND_URL).rstrip("/")
-        return f"{base_url}/uploads/{filename}"
+        url_path = self._bucket_url_path(bucket)
+        return f"{base_url}/{url_path}/{filename}"
 
     def get_url(self, filename: str, bucket: str) -> str:
         base_url = str(settings.BACKEND_URL).rstrip("/")
-        return f"{base_url}/uploads/{filename}"
+        url_path = self._bucket_url_path(bucket)
+        return f"{base_url}/{url_path}/{filename}"
 
     def delete(self, filename: str, bucket: str) -> None:
         path = self._bucket_dir(bucket) / filename
@@ -87,7 +95,11 @@ class LocalStorage(StorageBackend):
         primary = self._bucket_dir(bucket) / filename
         if primary.is_file():
             return primary
-        # Legacy fallback — files uploaded before bucket separation
+        # Legacy fallback 1 — files uploaded before bucket/subdirectory separation
+        legacy_verification = VERIFICATION_UPLOADS_DIR / filename
+        if legacy_verification.is_file():
+            return legacy_verification
+        # Legacy fallback 2 — files uploaded to old flat uploads/ dir
         legacy = UPLOADS_DIR / filename
         return legacy if legacy.is_file() else None
 
@@ -162,11 +174,13 @@ class SupabaseStorage(StorageBackend):
 
 def get_storage() -> StorageBackend:
     """
-    Return the appropriate storage backend based on ENVIRONMENT.
+    Return the appropriate storage backend based on ENVIRONMENT and available
+    credentials.
 
-    Development → LocalStorage (no credentials needed)
-    Production  → SupabaseStorage
+    Production + Supabase creds → SupabaseStorage
+    Production without creds    → LocalStorage (files stored in Docker volume)
+    Development                 → LocalStorage (no credentials needed)
     """
-    if settings.ENVIRONMENT == "production":
+    if settings.ENVIRONMENT == "production" and settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
         return SupabaseStorage()
     return LocalStorage()

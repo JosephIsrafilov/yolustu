@@ -77,10 +77,9 @@ async def submit_verification(
     )
     document_url = f"/api/v1/admin/verifications/{current_user.id}/document/{filename}"
 
-    # Keep a local copy for the AI document review task (reads from filesystem)
-    if settings.ENVIRONMENT != "production":
-        VERIFICATION_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-        (VERIFICATION_UPLOADS_DIR / filename).write_bytes(file_bytes)
+    # Always keep a local copy for the AI document review task (reads from filesystem).
+    VERIFICATION_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    (VERIFICATION_UPLOADS_DIR / filename).write_bytes(file_bytes)
 
     user = IdentityService(db).submit_verification(current_user, document_url)
 
