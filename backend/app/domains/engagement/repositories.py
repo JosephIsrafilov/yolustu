@@ -216,7 +216,9 @@ class MessageRepository:
         )
         if before is not None:
             query = query.filter(Message.created_at < before)
-        return query.order_by(Message.created_at.asc()).limit(limit).all()
+        rows = query.order_by(Message.created_at.desc()).limit(limit).all()
+        rows.reverse()
+        return rows
 
     def mark_read(self, conversation_id: UUID, user_id: UUID) -> None:
         self.db.query(Message).filter(
