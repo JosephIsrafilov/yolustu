@@ -119,7 +119,7 @@ def _parse_markdown_block(text: str) -> dict[str, Any]:
 
 
 def _parse_model_output(text: str) -> dict[str, Any]:
-    """Parse model output: strict JSON first, then markdown fallback."""
+    """Parse structured output, then conservatively extract prose observations."""
     clean = text.replace("```json", "").replace("```", "").strip()
     match = re.search(r"\{.*\}", clean, re.DOTALL)
     if match:
@@ -130,6 +130,37 @@ def _parse_model_output(text: str) -> dict[str, Any]:
     parsed = _parse_markdown_block(clean)
     if parsed:
         return parsed
+
+    lowered = clean.lower()
+    is_license = "driver's license" in lowered or "driving licence" in lowered
+    is_azerbaijani = "azerbaijan" in lowered or "azerbaijani" in lowered
+    if is_license or is_azerbaijani:
+        quoted_text = re.findall(r'"([^"]{2,80})"', clean)
+        categories = sorted(
+            set(re.findall(r"\b[A-E]\b", clean.upper())),
+            key="ABCDE".index,
+        )
+        return {
+            "is_document": True if is_license else None,
+            "is_azerbaijani": True if is_azerbaijani else None,
+            "document_type": "drivers_license" if is_license else None,
+            "extracted_name": None,
+            "expiry_date": None,
+            "is_expired": False if "not expired" in lowered else None,
+            "portrait_present": (
+                True if "portrait" in lowered or "photo" in lowered else None
+            ),
+            "document_number_present": (
+                True
+                if "license number" in lowered or "document number" in lowered
+                else None
+            ),
+            "license_title_present": True if is_license else None,
+            "license_categories": categories,
+            "visible_text": quoted_text,
+            "confidence": 0.75,
+            "issues": ["structured_output_unavailable"],
+        }
     raise ValueError("Could not parse JSON or key-value pairs from model response")
 
 

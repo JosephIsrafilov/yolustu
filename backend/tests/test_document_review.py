@@ -120,6 +120,33 @@ def test_json_after_answer_prefix_is_parsed(mock_openai, monkeypatch):
 
 
 @patch("app.domains.ai.document_review.OpenAI")
+def test_prose_only_vision_response_is_conservatively_parsed(mock_openai, monkeypatch):
+    monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
+    content = (
+        "The image is a valid Azerbaijani driver's license. "
+        'The text "AZƏRBAYCAN RESPUBLİKASI" is visible. '
+        "The portrait, license number, and categories A, B, C are present. "
+        "The license is not expired.\n\n**Answer:** true"
+    )
+    mock_openai.return_value.chat.completions.create.return_value = _mock_completion(
+        content
+    )
+
+    result = dr.review_verification_document(
+        _png_image(), "image/png", "Elvin", "Mammadov"
+    )
+
+    assert result["is_document"] is True
+    assert result["is_azerbaijani"] is True
+    assert result["document_type"] == "drivers_license"
+    assert result["portrait_present"] is True
+    assert result["document_number_present"] is True
+    assert result["license_categories"] == ["A", "B", "C"]
+    assert result["recommendation"] == "needs_review"
+    assert "structured_output_unavailable" in result["issues"]
+
+
+@patch("app.domains.ai.document_review.OpenAI")
 def test_api_failure_falls_back(mock_openai, monkeypatch):
     monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
     mock_openai.return_value.chat.completions.create.side_effect = Exception("boom")
