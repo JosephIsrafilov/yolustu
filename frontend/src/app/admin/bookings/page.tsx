@@ -16,6 +16,7 @@ import Icon from '@/components/ui/Icon';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
+import AdminTableShell from '@/components/admin/AdminTableShell';
 
 const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'paid', 'completed'];
 
@@ -318,13 +319,13 @@ export default function AdminBookingsPage() {
         </div>
       )}
 
-      <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm">
+      <AdminTableShell>
+        <table className="w-full min-w-full table-fixed text-sm">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('passenger')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.passenger}</span>
@@ -337,7 +338,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('driver')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.driver}</span>
@@ -350,7 +351,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('route')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[24%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.route}</span>
@@ -363,7 +364,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('seats')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[7%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.seats}</span>
@@ -376,7 +377,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('price')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[11%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.price}</span>
@@ -389,7 +390,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[10%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -402,7 +403,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('date')}
-                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden lg:table-cell w-[8%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.date}</span>
@@ -413,7 +414,7 @@ export default function AdminBookingsPage() {
                   )}
                 </div>
               </th>
-              <th className="px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="w-[14%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -475,7 +476,7 @@ export default function AdminBookingsPage() {
                 return (
                   <tr key={booking.id} className="transition-colors duration-150 hover:bg-surface-dim">
                     <td className="px-3 py-3 md:px-4 md:py-3.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {passenger?.avatarUrl ? (
                             <Image src={passenger.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
@@ -485,14 +486,14 @@ export default function AdminBookingsPage() {
                         </div>
                         <span 
                           title={passengerName}
-                          className="font-medium text-text max-w-[90px] md:max-w-[120px] truncate block"
+                          className="block min-w-0 max-w-full truncate font-medium text-text"
                         >
                           {passengerName}
                         </span>
                       </div>
                     </td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {driver?.avatarUrl ? (
                             <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
@@ -502,7 +503,7 @@ export default function AdminBookingsPage() {
                         </div>
                         <span 
                           title={driverName}
-                          className="font-medium text-text max-w-[90px] md:max-w-[120px] truncate block"
+                          className="block min-w-0 max-w-full truncate font-medium text-text"
                         >
                           {driverName}
                         </span>
@@ -512,11 +513,11 @@ export default function AdminBookingsPage() {
                       {trip ? (
                         <div 
                           title={`${trip.departureCity} → ${trip.arrivalCity}`}
-                          className="flex items-center gap-1 max-w-[150px] md:max-w-[200px]"
+                          className="flex max-w-full min-w-0 items-center gap-1"
                         >
-                          <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.departureCity}</span>
+                          <span className="block min-w-0 max-w-full truncate">{trip.departureCity}</span>
                           <Icon name="arrow-right" size={12} className="text-text-muted shrink-0" />
-                          <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.arrivalCity}</span>
+                          <span className="block min-w-0 max-w-full truncate">{trip.arrivalCity}</span>
                         </div>
                       ) : t.placeholder}
                     </td>
@@ -532,7 +533,7 @@ export default function AdminBookingsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5"><StatusBadge status={booking.status} /></td>
-                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
+                    <td className="hidden lg:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {trip && (
@@ -544,7 +545,7 @@ export default function AdminBookingsPage() {
                             title={t.actions.view}
                           >
                             <Icon name="file-text" size={14} />
-                            <span className="hidden xl:inline">{t.actions.view}</span>
+                            <span className="hidden 2xl:inline">{t.actions.view}</span>
                           </Button>
                         )}
                         {booking.status === 'pending' && (
@@ -558,7 +559,7 @@ export default function AdminBookingsPage() {
                               title={t.actions.confirm}
                             >
                               <Icon name="check" size={14} />
-                              <span className="hidden xl:inline">{t.actions.confirm}</span>
+                              <span className="hidden 2xl:inline">{t.actions.confirm}</span>
                             </Button>
                             <Button 
                               size="sm" 
@@ -569,7 +570,7 @@ export default function AdminBookingsPage() {
                               title={t.actions.reject}
                             >
                               <Icon name="x" size={14} />
-                              <span className="hidden xl:inline">{t.actions.reject}</span>
+                              <span className="hidden 2xl:inline">{t.actions.reject}</span>
                             </Button>
                           </>
                         )}
@@ -583,7 +584,7 @@ export default function AdminBookingsPage() {
                             title={t.actions.cancel}
                           >
                             <Icon name="ban" size={14} />
-                            <span className="hidden xl:inline">{t.actions.cancel}</span>
+                            <span className="hidden 2xl:inline">{t.actions.cancel}</span>
                           </Button>
                         )}
                       </div>
@@ -594,7 +595,7 @@ export default function AdminBookingsPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
       {!isLoading && allBookings.length > 0 && !isFiltering && (
         <div className="mt-4 flex justify-end">
           <Pagination

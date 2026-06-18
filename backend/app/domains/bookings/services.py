@@ -12,6 +12,7 @@ from app.domains.bookings.schemas import (
     booking_to_response,
 )
 from app.domains.identity.dependencies import CurrentUser
+from app.domains.payments.services import PaymentService, money
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_BOARDED,
@@ -66,7 +67,6 @@ class BookingsService:
             )
 
         from app.core.config import settings
-        from app.domains.payments.services import PaymentService, money
 
         amount = money(ride.price_per_seat * booking_in.seats_booked)
         if self.db is not None:

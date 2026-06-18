@@ -265,6 +265,12 @@ def test_create_booking_db_commit_and_refresh(mock_ps_class):
     service, _, _, notifications = make_service(rides=[ride], db=mock_db)
     passenger = make_current_user(uuid4(), "passenger")
 
+    mock_ps_instance = mock_ps_class.return_value
+    mock_wallet = MagicMock()
+    mock_wallet.available_balance = Decimal("100.0")
+    mock_wallet.pending_balance = Decimal("0.0")
+    mock_ps_instance.wallets.get_or_create_for_update.return_value = mock_wallet
+
     res = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
     )

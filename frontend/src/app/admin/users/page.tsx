@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import { adminService } from '@/services';
 import CreateUserModal from './CreateUserModal';
+import AdminTableShell from '@/components/admin/AdminTableShell';
 import type { User, UserRole } from '@/types';
 
 const USERS_I18N = {
@@ -486,13 +487,13 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="w-full overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm">
+      <AdminTableShell>
+        <table className="w-full min-w-full table-fixed text-sm">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('fullName')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[24%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.user}</span>
@@ -505,7 +506,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('role')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.role}</span>
@@ -518,7 +519,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('rating')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[8%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rating}</span>
@@ -531,7 +532,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[7%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -544,7 +545,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[7%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -557,7 +558,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('verificationStatus')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[12%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.verification}</span>
@@ -570,7 +571,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -583,7 +584,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[11%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -594,7 +595,7 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -660,7 +661,7 @@ export default function AdminUsersPage() {
                   <React.Fragment key={u.id}>
                     <tr className="group hover:bg-surface-dim transition-colors duration-150">
                       <td className="px-3 py-3 md:px-4 md:py-3.5">
-                        <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
                           <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
                             {u.avatarUrl ? (
                               <Image src={u.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
@@ -668,16 +669,16 @@ export default function AdminUsersPage() {
                               <Icon name="user" size={16} className="text-text-muted" />
                             )}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <span 
                               title={u.fullName}
-                              className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                              className="block max-w-full truncate font-medium text-text"
                             >
                               {u.fullName}
                             </span>
                             <span 
                               title={userEmailOrPhone}
-                              className="text-xs text-text-muted max-w-[120px] md:max-w-[160px] truncate block"
+                              className="block max-w-full truncate text-xs text-text-muted"
                             >
                               {userEmailOrPhone}
                             </span>
@@ -716,7 +717,7 @@ export default function AdminUsersPage() {
                             title={t.actions.view}
                           >
                             <Icon name="file-text" size={14} />
-                            <span className="hidden xl:inline">{t.actions.view}</span>
+                            <span className="hidden 2xl:inline">{t.actions.view}</span>
                           </Button>
                           {u.verificationStatus === 'pending' && (
                             <>
@@ -729,7 +730,7 @@ export default function AdminUsersPage() {
                                 title={t.actions.verify}
                               >
                                 <Icon name="check" size={14} />
-                                <span className="hidden xl:inline">{t.actions.verify}</span>
+                                <span className="hidden 2xl:inline">{t.actions.verify}</span>
                               </Button>
                               <Button 
                                 size="sm" 
@@ -740,7 +741,7 @@ export default function AdminUsersPage() {
                                 title={t.actions.reject}
                               >
                                 <Icon name="x" size={14} />
-                                <span className="hidden xl:inline">{t.actions.reject}</span>
+                                <span className="hidden 2xl:inline">{t.actions.reject}</span>
                               </Button>
                             </>
                           )}
@@ -754,7 +755,7 @@ export default function AdminUsersPage() {
                               title={t.actions.unblock}
                             >
                               <Icon name="shield-check" size={14} />
-                              <span className="hidden xl:inline">{t.actions.unblock}</span>
+                              <span className="hidden 2xl:inline">{t.actions.unblock}</span>
                             </Button>
                           ) : (
                             <Button 
@@ -766,7 +767,7 @@ export default function AdminUsersPage() {
                               title={t.actions.block}
                             >
                               <Icon name="shield-off" size={14} />
-                              <span className="hidden xl:inline">{t.actions.block}</span>
+                              <span className="hidden 2xl:inline">{t.actions.block}</span>
                             </Button>
                           )}
                         </div>
@@ -775,56 +776,56 @@ export default function AdminUsersPage() {
                     {isExpanded && (
                       <tr>
                         <td colSpan={9} className="bg-surface-muted/50 p-0 border-b border-border">
-                          <div className="sticky left-0 w-full max-w-[100vw] px-3 py-3 md:px-4 md:py-3.5">
-                            <div className="grid gap-3 sm:grid-cols-5 text-sm">
-                            <div>
-                              <p className="text-xs text-text-muted">{t.details.email}</p>
-                              <p className="font-semibold text-text">{u.email || t.placeholder}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-text-muted">{t.details.phone}</p>
-                              <p className="font-semibold text-text">{u.phone || t.placeholder}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-text-muted">{t.details.city}</p>
-                              <p className="font-semibold text-text">{u.city || t.placeholder}</p>
-                            </div>
-                            <div className="xl:hidden">
-                              <p className="text-xs text-text-muted">{t.table.rides}</p>
-                              <p className="font-semibold text-text">{u.totalTrips}</p>
-                            </div>
-                            <div className="xl:hidden">
-                              <p className="text-xs text-text-muted">{t.table.bookings}</p>
-                              <p className="font-semibold text-text">{bookingCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-text-muted">{t.details.created}</p>
-                              <p className="font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-text-muted mb-2">{t.manage.role}</p>
-                              {editingRoleUserId === u.id ? (
-                                <div className="flex gap-2 items-center">
-                                  <Select
-                                    value={editingRole || u.role}
-                                    onChange={(value) => setEditingRole(value as UserRole)}
-                                    options={roleOptions}
-                                  />
-                                  <Button size="sm" disabled={pendingActionUserId === u.id} onClick={() => editingRole && handleRoleChange(u.id, editingRole)}>
-                                    <Icon name="check" size={14} />
+                          <div className="w-full min-w-0 px-3 py-3 md:px-4 md:py-3.5">
+                            <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
+                              <div className="min-w-0">
+                                <p className="text-xs text-text-muted">{t.details.email}</p>
+                                <p className="break-words font-semibold text-text">{u.email || t.placeholder}</p>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs text-text-muted">{t.details.phone}</p>
+                                <p className="break-words font-semibold text-text">{u.phone || t.placeholder}</p>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs text-text-muted">{t.details.city}</p>
+                                <p className="break-words font-semibold text-text">{u.city || t.placeholder}</p>
+                              </div>
+                              <div className="min-w-0 xl:hidden">
+                                <p className="text-xs text-text-muted">{t.table.rides}</p>
+                                <p className="font-semibold text-text">{u.totalTrips}</p>
+                              </div>
+                              <div className="min-w-0 xl:hidden">
+                                <p className="text-xs text-text-muted">{t.table.bookings}</p>
+                                <p className="font-semibold text-text">{bookingCount}</p>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs text-text-muted">{t.details.created}</p>
+                                <p className="break-words font-semibold text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</p>
+                              </div>
+                              <div className="min-w-0 sm:col-span-2 xl:col-span-3">
+                                <p className="mb-2 text-xs text-text-muted">{t.manage.role}</p>
+                                {editingRoleUserId === u.id ? (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Select
+                                      value={editingRole || u.role}
+                                      onChange={(value) => setEditingRole(value as UserRole)}
+                                      options={roleOptions}
+                                    />
+                                    <Button size="sm" disabled={pendingActionUserId === u.id} onClick={() => editingRole && handleRoleChange(u.id, editingRole)}>
+                                      <Icon name="check" size={14} />
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(null); setEditingRole(null); }}>
+                                      <Icon name="x" size={14} />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(u.id); setEditingRole(u.role); }}>
+                                    <Icon name="settings" size={14} /> {t.manage.changeRole}
                                   </Button>
-                                  <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(null); setEditingRole(null); }}>
-                                    <Icon name="x" size={14} />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button size="sm" variant="outline" onClick={() => { setEditingRoleUserId(u.id); setEditingRole(u.role); }}>
-                                  <Icon name="settings" size={14} /> {t.manage.changeRole}
-                                </Button>
-                              )}
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
                         </td>
                       </tr>
                     )}
@@ -834,7 +835,7 @@ export default function AdminUsersPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
       {!isLoading && users.length > 0 && !isFiltering && (
         <div className="mt-4 flex justify-end">
           <Pagination
