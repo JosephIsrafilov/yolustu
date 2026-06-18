@@ -1,11 +1,12 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
-import '../../shared/widgets/status_badge.dart';
-import '../auth/data/auth_mode.dart';
 import '../auth/state/auth_controller.dart';
-import 'data/vehicle.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DriverVerificationScreen extends ConsumerStatefulWidget {
   const DriverVerificationScreen({super.key});
@@ -18,29 +19,32 @@ class DriverVerificationScreen extends ConsumerStatefulWidget {
 class _DriverVerificationScreenState
     extends ConsumerState<DriverVerificationScreen> {
   bool _submitting = false;
+  String? _selectedDocumentPath;
+  final _picker = ImagePicker();
 
-  VerificationStatus _mapStatus(String statusStr) {
-    switch (statusStr.toLowerCase()) {
-      case 'pending':
-        return VerificationStatus.pending;
-      case 'approved':
-        return VerificationStatus.approved;
-      case 'rejected':
-        return VerificationStatus.rejected;
-      default:
-        return VerificationStatus.notSubmitted;
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedDocumentPath = pickedFile.path);
     }
   }
 
-  Future<void> _submit(String docType) async {
+  Future<void> _submit() async {
+    if (_selectedDocumentPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Zəhmət olmasa sənəd seçin')),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .submitVerification('mock_path/$docType');
+          .submitVerification(_selectedDocumentPath!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$docType təsdiq üçün göndərildi')),
+          const SnackBar(content: Text('Təsdiq üçün göndərildi')),
         );
       }
     } catch (e) {
@@ -78,7 +82,7 @@ class _DriverVerificationScreenState
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
     final userStatus = user?.verificationStatus ?? 'none';
-    final status = _mapStatus(userStatus);
+    final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Təsdiqləmə')),
@@ -89,35 +93,66 @@ class _DriverVerificationScreenState
             if (_submitting)
               const LinearProgressIndicator(color: AppTheme.teal),
             const SizedBox(height: 12),
-            _VerifyTile(
-              icon: Icons.badge_outlined,
-              title: 'Şəxsiyyət vəsiqəsi',
-              subtitle: 'Ön və arxa tərəf',
-              status: status,
-              onUpload: () => _submit('Şəxsiyyət vəsiqəsi'),
-            ),
-            const SizedBox(height: 12),
-            _VerifyTile(
-              icon: Icons.face_outlined,
-              title: 'Selfi təsdiqi',
-              subtitle: 'Üz tanıma üçün',
-              status: status,
-              onUpload: () => _submit('Selfi təsdiqi'),
-            ),
-            const SizedBox(height: 12),
-            _VerifyTile(
-              icon: Icons.directions_car_outlined,
-              title: 'Sürücülük vəsiqəsi',
-              subtitle: 'Etibarlı sürücülük vəsiqəsi',
-              status: status,
-              onUpload: () => _submit('Sürücülük vəsiqəsi'),
+            if (_selectedDocumentPath != null)
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: FileImage(File(_selectedDocumentPath!)),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () =>
+                        setState(() => _selectedDocumentPath = null),
+                  ),
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        color: AppTheme.tealDark, style: BorderStyle.solid),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_upload_outlined,
+                          size: 48, color: AppTheme.tealDark),
+                      SizedBox(height: 12),
+                      Text(
+                        l10n.uploadDocument,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _submitting || _selectedDocumentPath == null
+                    ? null
+                    : _submit,
+                child: const Text('Təsdiqlə'),
+              ),
             ),
             const SizedBox(height: 20),
-            if (AuthMode.isMock && userStatus != 'approved') ...[
+            if (kDebugMode && userStatus != 'approved') ...[
               ElevatedButton.icon(
                 onPressed: _submitting ? null : _mockApprove,
                 icon: const Icon(Icons.verified),
-                label: const Text('Mock Təsdiqlə (Geliştirici)'),
+                label: Text(l10n.mockApprove),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.tealDark,
                 ),
@@ -132,79 +167,12 @@ class _DriverVerificationScreenState
   }
 }
 
-class _VerifyTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VerificationStatus status;
-  final VoidCallback onUpload;
-
-  const _VerifyTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.status,
-    required this.onUpload,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isPending = status == VerificationStatus.pending;
-    final isApproved = status == VerificationStatus.approved;
-
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.spacing16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.slate200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.teal.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppTheme.tealDark),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 15)),
-                const SizedBox(height: 2),
-                Text(subtitle,
-                    style: TextStyle(color: AppTheme.slate500, fontSize: 13)),
-                const SizedBox(height: 8),
-                StatusBadge(
-                  label: status.label,
-                  backgroundColor: status.colors.$1,
-                  foregroundColor: status.colors.$2,
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: (isPending || isApproved) ? null : onUpload,
-            child: Text(isApproved ? 'Təsdiq' : 'Yüklə'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _Note extends ConsumerWidget {
   const _Note();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -217,7 +185,7 @@ class _Note extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Təsdiq prosesi bir neçə dəqiqə çəkə bilər. Status yeniləndikdə Sürücü Paneli aktivləşəcək.',
+              l10n.driverVerificationInfo,
               style: TextStyle(fontSize: 13, color: AppTheme.slate700),
             ),
           ),

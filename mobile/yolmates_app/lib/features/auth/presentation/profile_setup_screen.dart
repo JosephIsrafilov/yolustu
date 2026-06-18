@@ -28,6 +28,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   bool _saving = false;
   String? _error;
   String? _avatarPath;
+  DateTime? _birthDate;
+  bool _termsAccepted = false;
+  bool _privacyAccepted = false;
 
   @override
   void initState() {
@@ -38,6 +41,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       _lastName.text = user.lastName ?? '';
       _language = user.language;
       _avatarPath = user.avatarUrl;
+      _birthDate = user.birthDate;
     }
   }
 
@@ -72,9 +76,30 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     setState(() => _avatarPath = image.path);
   }
 
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 25),
+      firstDate: DateTime(1920),
+      lastDate: DateTime(now.year - 18, now.month, now.day),
+    );
+    if (picked != null) setState(() => _birthDate = picked);
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+
+    final l10n = ref.read(l10nProvider);
+    if (_birthDate == null) {
+      setState(() => _error = l10n.profileSetupBirthDateRequired);
+      return;
+    }
+    if (!_termsAccepted || !_privacyAccepted) {
+      setState(() => _error = l10n.profileSetupTermsRequired);
+      return;
+    }
 
     setState(() {
       _saving = true;
@@ -89,6 +114,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             avatarUrl: _avatarPath,
             role: UserRole.passenger,
             language: _language,
+            birthDate: _birthDate,
           );
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -142,9 +168,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   textCapitalization: TextCapitalization.words,
                   validator: _required,
                   onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: l10n.profileSetupFirstNameHint,
-                  ),
+                  decoration:
+                      InputDecoration(hintText: l10n.profileSetupFirstNameHint),
                 ),
                 const SizedBox(height: 16),
                 Text(l10n.profileSetupLastName, style: _labelStyle()),
@@ -156,10 +181,33 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   textCapitalization: TextCapitalization.words,
                   validator: _required,
                   onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: l10n.profileSetupLastNameHint,
-                  ),
+                  decoration:
+                      InputDecoration(hintText: l10n.profileSetupLastNameHint),
                   onFieldSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 16),
+                Text(l10n.profileSetupBirthDate, style: _labelStyle()),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: _saving ? null : _pickBirthDate,
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      readOnly: true,
+                      enabled: !_saving,
+                      decoration: InputDecoration(
+                        hintText: l10n.profileSetupBirthDateHint,
+                        suffixIcon:
+                            const Icon(Icons.calendar_today_outlined, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                      ),
+                      controller: TextEditingController(
+                        text: _birthDate != null
+                            ? '${_birthDate!.day.toString().padLeft(2, '0')}.${_birthDate!.month.toString().padLeft(2, '0')}.${_birthDate!.year}'
+                            : '',
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(l10n.profileLanguage, style: _labelStyle()),
@@ -169,18 +217,33 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   enabled: !_saving,
                   onChanged: (language) async {
                     setState(() => _language = language);
-                    await ref.read(languageProvider.notifier).setLanguage(language);
+                    await ref
+                        .read(languageProvider.notifier)
+                        .setLanguage(language);
                   },
+                ),
+                const SizedBox(height: 24),
+                _TermsCheckbox(
+                  value: _termsAccepted,
+                  label: l10n.profileSetupTermsAccept,
+                  onChanged: _saving
+                      ? null
+                      : (v) => setState(() => _termsAccepted = v ?? false),
+                ),
+                const SizedBox(height: 8),
+                _TermsCheckbox(
+                  value: _privacyAccepted,
+                  label: l10n.profileSetupPrivacyAccept,
+                  onChanged: _saving
+                      ? null
+                      : (v) => setState(() => _privacyAccepted = v ?? false),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 18,
-                        color: Colors.red.shade600,
-                      ),
+                      Icon(Icons.error_outline,
+                          size: 18, color: Colors.red.shade600),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -218,14 +281,51 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 }
 
+class _TermsCheckbox extends StatelessWidget {
+  final bool value;
+  final String label;
+  final ValueChanged<bool?>? onChanged;
+
+  const _TermsCheckbox({
+    required this.value,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: onChanged,
+          activeColor: AppTheme.teal,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: GestureDetector(
+            onTap: onChanged != null ? () => onChanged!(!value) : null,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 14, color: AppTheme.slate700),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _AvatarPlaceholder extends StatelessWidget {
   final String initials;
   final String? imagePath;
 
-  const _AvatarPlaceholder({
-    required this.initials,
-    this.imagePath,
-  });
+  const _AvatarPlaceholder({required this.initials, this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -238,9 +338,7 @@ class _AvatarPlaceholder extends StatelessWidget {
         border: Border.all(color: AppTheme.slate200, width: 2),
         image: imagePath != null && imagePath!.isNotEmpty
             ? DecorationImage(
-                image: FileImage(File(imagePath!)),
-                fit: BoxFit.cover,
-              )
+                image: FileImage(File(imagePath!)), fit: BoxFit.cover)
             : null,
       ),
       child: imagePath == null || imagePath!.isEmpty
@@ -303,11 +401,8 @@ class _ChoiceChipBox extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
-  const _ChoiceChipBox({
-    required this.label,
-    required this.selected,
-    this.onTap,
-  });
+  const _ChoiceChipBox(
+      {required this.label, required this.selected, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -324,17 +419,14 @@ class _ChoiceChipBox extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: selected ? AppTheme.tealDark : AppTheme.slate700,
-              ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: selected ? AppTheme.tealDark : AppTheme.slate700,
             ),
-          ],
+          ),
         ),
       ),
     );

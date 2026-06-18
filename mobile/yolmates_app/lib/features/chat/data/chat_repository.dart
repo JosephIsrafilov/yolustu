@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../core/network/api_client.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/data/auth_mode.dart';
 import 'chat_models.dart';
@@ -11,44 +12,57 @@ abstract class ChatRepository {
   Future<Conversation> getOrCreateSupportConversation();
   Future<Conversation> getOrCreateRideConversation(String bookingId);
   Future<List<ChatMessage>> getMessages(String conversationId);
-  Future<ChatMessage> sendMessage(String conversationId, String content, {String type = 'text', List<String> attachments = const []});
+  Future<ChatMessage> sendMessage(String conversationId, String content,
+      {String type = 'text', List<String> attachments = const []});
   Future<void> markAsRead(String conversationId);
   WebSocketChannel? connectWebSocket(String conversationId, String token);
   Future<String> uploadAttachment(String filePath);
 }
 
 class ApiChatRepository implements ChatRepository {
-  final Dio _dio;
-  
-  ApiChatRepository(this._dio);
+  final ApiClient _client;
+
+  ApiChatRepository(this._client);
 
   @override
   Future<List<Conversation>> getConversations() async {
-    final response = await _dio.get('/chats');
-    return (response.data as List).map((e) => Conversation.fromJson(e)).toList();
+    final response = await _client.get('/chats');
+    final data = response.data;
+    if (data is! List) return const [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(Conversation.fromJson)
+        .toList();
   }
 
   @override
   Future<Conversation> getOrCreateSupportConversation() async {
-    final response = await _dio.post('/chats/support');
-    return Conversation.fromJson(response.data);
+    final response = await _client.post('/chats/support');
+    return Conversation.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<Conversation> getOrCreateRideConversation(String bookingId) async {
-    final response = await _dio.post('/chats/ride', data: {'booking_id': bookingId});
-    return Conversation.fromJson(response.data);
+    final response =
+        await _client.post('/chats/ride', data: {'booking_id': bookingId});
+    return Conversation.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<List<ChatMessage>> getMessages(String conversationId) async {
-    final response = await _dio.get('/chats/$conversationId/messages');
-    return (response.data as List).map((e) => ChatMessage.fromJson(e)).toList();
+    final response = await _client.get('/chats/$conversationId/messages');
+    final data = response.data;
+    if (data is! List) return const [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(ChatMessage.fromJson)
+        .toList();
   }
 
   @override
-  Future<ChatMessage> sendMessage(String conversationId, String content, {String type = 'text', List<String> attachments = const []}) async {
-    final response = await _dio.post(
+  Future<ChatMessage> sendMessage(String conversationId, String content,
+      {String type = 'text', List<String> attachments = const []}) async {
+    final response = await _client.post(
       '/chats/$conversationId/messages',
       data: {
         'content': content,
@@ -56,29 +70,32 @@ class ApiChatRepository implements ChatRepository {
         'attachments': attachments,
       },
     );
-    return ChatMessage.fromJson(response.data);
+    return ChatMessage.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<void> markAsRead(String conversationId) async {
-    await _dio.patch('/chats/$conversationId/read');
+    await _client.patch('/chats/$conversationId/read');
   }
 
   @override
   WebSocketChannel? connectWebSocket(String conversationId, String token) {
-    // Assuming backend is at ws://10.0.2.2:8000/api/v1/chats/ws/{id}?token={token}
-    // We get baseUrl from Dio and replace http with ws.
-    final baseUrl = _dio.options.baseUrl.replaceFirst('http', 'ws');
-    final url = '$baseUrl/chats/ws/$conversationId?token=$token';
-    return WebSocketChannel.connect(Uri.parse(url));
+    final base = Uri.parse(_client.dio.options.baseUrl);
+    final scheme = base.scheme == 'https' ? 'wss' : 'ws';
+    final url = base.replace(
+      scheme: scheme,
+      path: '${base.path}/chats/ws/$conversationId',
+      queryParameters: {'token': Uri.encodeQueryComponent(token)},
+    );
+    return WebSocketChannel.connect(url);
   }
 
   @override
   Future<String> uploadAttachment(String filePath) async {
     final file = await MultipartFile.fromFile(filePath);
     final formData = FormData.fromMap({'file': file});
-    final response = await _dio.post('/chats/attachments', data: formData);
-    return response.data['url'] as String;
+    final response = await _client.post('/chats/attachments', data: formData);
+    return (response.data as Map<String, dynamic>)['url'] as String;
   }
 }
 
@@ -88,90 +105,22 @@ class MockChatRepository implements ChatRepository {
   final List<Conversation> _conversations = [];
   final Map<String, List<ChatMessage>> _messagesByConversation = {};
 
-  MockChatRepository() {
-    final now = DateTime.now();
-    final supportConversation = Conversation(
-      id: 'support-1',
-      type: 'support',
-      status: 'open',
-      createdAt: now.subtract(const Duration(days: 2)),
-      updatedAt: now.subtract(const Duration(minutes: 40)),
-      participants: [
-        ConversationParticipant(userId: 'mock-user', role: 'user'),
-      ],
-      unreadCount: 1,
-    );
-    final rideConversation = Conversation(
-      id: 'ride-1',
-      type: 'ride',
-      rideId: 'ride-1',
-      bookingId: 'booking-1',
-      status: 'open',
-      createdAt: now.subtract(const Duration(days: 1)),
-      updatedAt: now.subtract(const Duration(minutes: 10)),
-      participants: [
-        ConversationParticipant(userId: 'mock-user', role: 'passenger'),
-        ConversationParticipant(userId: 'driver-1', role: 'driver'),
-      ],
-      unreadCount: 2,
-    );
-
-    _conversations.addAll([rideConversation, supportConversation]);
-    _messagesByConversation.addAll({
-      supportConversation.id: [
-        ChatMessage(
-          id: 'support-msg-1',
-          conversationId: supportConversation.id,
-          senderId: 'support-agent',
-          senderName: 'Yolmates Dəstək',
-          content: 'Salam, sizə necə kömək edə bilərik?',
-          messageType: 'text',
-          createdAt: now.subtract(const Duration(minutes: 40)),
-        ),
-      ],
-      rideConversation.id: [
-        ChatMessage(
-          id: 'ride-msg-1',
-          conversationId: rideConversation.id,
-          rideId: 'ride-1',
-          senderId: 'driver-1',
-          senderName: 'Elvin',
-          content: 'Salam, yola 10 dəqiqəyə çıxıram.',
-          messageType: 'text',
-          createdAt: now.subtract(const Duration(minutes: 12)),
-        ),
-        ChatMessage(
-          id: 'ride-msg-2',
-          conversationId: rideConversation.id,
-          rideId: 'ride-1',
-          senderId: 'driver-1',
-          senderName: 'Elvin',
-          content: 'Mərkəzi avtovağzalın qarşısında gözləyəcəyəm.',
-          messageType: 'text',
-          createdAt: now.subtract(const Duration(minutes: 10)),
-        ),
-      ],
-    });
-  }
-
   @override
   Future<List<Conversation>> getConversations() async {
     await Future.delayed(_latency);
     return _conversations
-        .map(
-          (conversation) => Conversation(
-            id: conversation.id,
-            type: conversation.type,
-            rideId: conversation.rideId,
-            bookingId: conversation.bookingId,
-            status: conversation.status,
-            createdAt: conversation.createdAt,
-            updatedAt: conversation.updatedAt,
-            participants: conversation.participants,
-            lastMessage: _lastMessageFor(conversation.id),
-            unreadCount: conversation.unreadCount,
-          ),
-        )
+        .map((c) => Conversation(
+              id: c.id,
+              type: c.type,
+              rideId: c.rideId,
+              bookingId: c.bookingId,
+              status: c.status,
+              createdAt: c.createdAt,
+              updatedAt: c.updatedAt,
+              participants: c.participants,
+              lastMessage: _lastMessageFor(c.id),
+              unreadCount: c.unreadCount,
+            ))
         .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
   }
@@ -179,30 +128,62 @@ class MockChatRepository implements ChatRepository {
   @override
   Future<Conversation> getOrCreateSupportConversation() async {
     await Future.delayed(_latency);
-    return _conversations.firstWhere((conversation) => conversation.type == 'support');
+    return _conversations.firstWhere(
+      (c) => c.type == 'support',
+      orElse: () {
+        final c = Conversation(
+          id: 'support-mock',
+          type: 'support',
+          status: 'open',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          participants: [
+            ConversationParticipant(userId: 'mock-user', role: 'user')
+          ],
+          unreadCount: 0,
+        );
+        _conversations.add(c);
+        return c;
+      },
+    );
   }
 
   @override
   Future<Conversation> getOrCreateRideConversation(String bookingId) async {
     await Future.delayed(_latency);
-    return _conversations.firstWhere((conversation) => conversation.bookingId == bookingId);
+    return _conversations.firstWhere(
+      (c) => c.bookingId == bookingId,
+      orElse: () {
+        final c = Conversation(
+          id: 'ride-mock',
+          type: 'ride',
+          bookingId: bookingId,
+          status: 'open',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          participants: [
+            ConversationParticipant(userId: 'mock-user', role: 'passenger')
+          ],
+          unreadCount: 0,
+        );
+        _conversations.add(c);
+        return c;
+      },
+    );
   }
 
   @override
   Future<List<ChatMessage>> getMessages(String conversationId) async {
     await Future.delayed(_latency);
-    return List<ChatMessage>.from(_messagesByConversation[conversationId] ?? const []);
+    return List<ChatMessage>.from(
+        _messagesByConversation[conversationId] ?? const []);
   }
 
   @override
-  Future<ChatMessage> sendMessage(
-    String conversationId,
-    String content, {
-    String type = 'text',
-    List<String> attachments = const [],
-  }) async {
+  Future<ChatMessage> sendMessage(String conversationId, String content,
+      {String type = 'text', List<String> attachments = const []}) async {
     await Future.delayed(_latency);
-    final message = ChatMessage(
+    final msg = ChatMessage(
       id: 'mock-${DateTime.now().microsecondsSinceEpoch}',
       conversationId: conversationId,
       senderId: 'mock-user',
@@ -213,10 +194,9 @@ class MockChatRepository implements ChatRepository {
       createdAt: DateTime.now(),
       readAt: DateTime.now(),
     );
-    final messages = _messagesByConversation.putIfAbsent(conversationId, () => []);
-    messages.add(message);
+    _messagesByConversation.putIfAbsent(conversationId, () => []).add(msg);
     _touchConversation(conversationId, unreadCount: 0);
-    return message;
+    return msg;
   }
 
   @override
@@ -226,7 +206,8 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  WebSocketChannel? connectWebSocket(String conversationId, String token) => null;
+  WebSocketChannel? connectWebSocket(String conversationId, String token) =>
+      null;
 
   @override
   Future<String> uploadAttachment(String filePath) async {
@@ -235,24 +216,24 @@ class MockChatRepository implements ChatRepository {
   }
 
   ChatMessage? _lastMessageFor(String conversationId) {
-    final messages = _messagesByConversation[conversationId];
-    if (messages == null || messages.isEmpty) return null;
-    return messages.last;
+    final msgs = _messagesByConversation[conversationId];
+    if (msgs == null || msgs.isEmpty) return null;
+    return msgs.last;
   }
 
   void _touchConversation(String conversationId, {required int unreadCount}) {
-    final index = _conversations.indexWhere((conversation) => conversation.id == conversationId);
-    if (index == -1) return;
-    final existing = _conversations[index];
-    _conversations[index] = Conversation(
-      id: existing.id,
-      type: existing.type,
-      rideId: existing.rideId,
-      bookingId: existing.bookingId,
-      status: existing.status,
-      createdAt: existing.createdAt,
+    final i = _conversations.indexWhere((c) => c.id == conversationId);
+    if (i == -1) return;
+    final e = _conversations[i];
+    _conversations[i] = Conversation(
+      id: e.id,
+      type: e.type,
+      rideId: e.rideId,
+      bookingId: e.bookingId,
+      status: e.status,
+      createdAt: e.createdAt,
       updatedAt: DateTime.now(),
-      participants: existing.participants,
+      participants: e.participants,
       lastMessage: _lastMessageFor(conversationId),
       unreadCount: unreadCount,
     );
@@ -260,8 +241,6 @@ class MockChatRepository implements ChatRepository {
 }
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  if (AuthMode.isApi) {
-    return ApiChatRepository(ref.watch(apiClientProvider).dio);
-  }
+  if (AuthMode.isApi) return ApiChatRepository(ref.watch(apiClientProvider));
   return MockChatRepository();
 });

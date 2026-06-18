@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
@@ -24,9 +25,9 @@ class SupportScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppConstants.spacing16),
         children: [
           _ContactCard(
-            supportTitle: l10n.supportContactWrite,
-            reportTitle: l10n.supportReportIssue,
-            reportSubtitle: l10n.supportReportIssueSubtitle,
+            supportTitle: 'Dəstək Çatı (AI)',
+            reportTitle: 'Operatora zəng',
+            reportSubtitle: 'Mürəkkəb problemlər üçün',
             comingSoon: l10n.supportComingSoon,
           ),
           const SizedBox(height: 20),
@@ -103,16 +104,20 @@ class _ContactCard extends StatelessWidget {
         children: [
           _row(
             context,
-            icon: Icons.headset_mic_outlined,
+            icon: Icons.chat_bubble_outline,
             title: supportTitle,
-            subtitle: 'support@yolmates.az',
+            subtitle: '7/24 Avtomatlaşdırılmış dəstək',
+            onTap: () => context.push('/support/chat'),
           ),
           Divider(height: 24, color: AppTheme.slate100),
           _row(
             context,
-            icon: Icons.report_problem_outlined,
+            icon: Icons.support_agent,
             title: reportTitle,
             subtitle: reportSubtitle,
+            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(comingSoon)),
+            ),
           ),
         ],
       ),
@@ -124,11 +129,10 @@ class _ContactCard extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(comingSoon)),
-      ),
+      onTap: onTap,
       child: Row(
         children: [
           Container(

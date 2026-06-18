@@ -1,18 +1,30 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 
 import 'core/localization/app_localizations.dart';
 import 'core/routes.dart';
 import 'core/theme.dart';
-import 'core/theme_provider.dart';
+
 import 'features/auth/state/auth_controller.dart';
 import 'features/notifications/data/push_notifications_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Use the latest (TLHC) renderer on Android for correct tile display.
+  if (Platform.isAndroid) {
+    final mapsImpl = GoogleMapsFlutterPlatform.instance;
+    if (mapsImpl is GoogleMapsFlutterAndroid) {
+      mapsImpl.initializeWithRenderer(AndroidMapRenderer.latest);
+    }
+  }
+
   await initializePushNotifications();
   runApp(const ProviderScope(child: YolmatesApp()));
 }
@@ -34,12 +46,14 @@ class _YolmatesAppState extends ConsumerState<YolmatesApp> {
       authControllerProvider,
       (_, next) {
         if (next.status == AuthStatus.authenticated) {
-          unawaited(ref.read(pushNotificationsServiceProvider).syncDeviceToken(ref));
+          unawaited(
+              ref.read(pushNotificationsServiceProvider).syncDeviceToken(ref));
         }
       },
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(ref.read(pushNotificationsServiceProvider).attach(context, ref));
+      unawaited(
+          ref.read(pushNotificationsServiceProvider).attach(context, ref));
     });
   }
 
@@ -51,14 +65,12 @@ class _YolmatesAppState extends ConsumerState<YolmatesApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeProvider);
     final appLanguage = ref.watch(languageProvider);
 
     return MaterialApp.router(
       title: 'Yolmates',
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode == ThemeMode.system ? ThemeMode.light : themeMode,
+      themeMode: ThemeMode.light,
       locale: Locale(appLanguage.name),
       supportedLocales: const [
         Locale('az'),

@@ -8,6 +8,7 @@ enum AppLanguage { az, ru, en }
 class AppUser {
   final String id;
   final String phone;
+  final String? email;
   final String? firstName;
   final String? lastName;
   final String? avatarUrl;
@@ -16,10 +17,12 @@ class AppUser {
   final bool isVerified;
   final String verificationStatus;
   final String? documentUrl;
+  final DateTime? birthDate;
 
   const AppUser({
     required this.id,
     required this.phone,
+    this.email,
     this.firstName,
     this.lastName,
     this.avatarUrl,
@@ -28,6 +31,7 @@ class AppUser {
     this.isVerified = false,
     this.verificationStatus = 'none',
     this.documentUrl,
+    this.birthDate,
   });
 
   /// Profile is complete once both name fields are filled.
@@ -48,6 +52,8 @@ class AppUser {
   }
 
   AppUser copyWith({
+    String? phone,
+    String? email,
     String? firstName,
     String? lastName,
     String? avatarUrl,
@@ -56,10 +62,12 @@ class AppUser {
     bool? isVerified,
     String? verificationStatus,
     String? documentUrl,
+    DateTime? birthDate,
   }) {
     return AppUser(
       id: id,
-      phone: phone,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       avatarUrl: avatarUrl ?? this.avatarUrl,
@@ -68,6 +76,7 @@ class AppUser {
       isVerified: isVerified ?? this.isVerified,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       documentUrl: documentUrl ?? this.documentUrl,
+      birthDate: birthDate ?? this.birthDate,
     );
   }
 
@@ -75,6 +84,7 @@ class AppUser {
     return AppUser(
       id: json['id'] as String,
       phone: json['phone'] as String,
+      email: json['email'] as String?,
       firstName: json['first_name'] as String?,
       lastName: json['last_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
@@ -89,6 +99,9 @@ class AppUser {
       isVerified: json['is_verified'] as bool? ?? false,
       verificationStatus: json['verification_status'] as String? ?? 'none',
       documentUrl: json['document_url'] as String?,
+      birthDate: json['birth_date'] != null
+          ? DateTime.tryParse(json['birth_date'] as String)
+          : null,
     );
   }
 
@@ -96,6 +109,7 @@ class AppUser {
     return {
       'id': id,
       'phone': phone,
+      'email': email,
       'first_name': firstName,
       'last_name': lastName,
       'avatar_url': avatarUrl,
@@ -104,6 +118,7 @@ class AppUser {
       'is_verified': isVerified,
       'verification_status': verificationStatus,
       'document_url': documentUrl,
+      if (birthDate != null) 'birth_date': birthDate!.toIso8601String(),
     };
   }
 }

@@ -2,20 +2,16 @@
 ///
 /// Usage:
 /// ```
-/// flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+/// flutter run --dart-define=API_BASE_URL=https://63.182.139.73.nip.io/api/v1
 /// flutter run --dart-define=API_BASE_URL=https://api.yolmates.az/api/v1
 /// ```
-///
-/// Android emulator default: 10.0.2.2 maps to host machine localhost.
-/// iOS simulator uses localhost directly.
 class ApiConfig {
   /// Base URL for all API calls.
   ///
-  /// Defaults to Android emulator-friendly local dev server.
-  /// Override with --dart-define=API_BASE_URL=...
+  /// Defaults to AWS backend. Override with --dart-define=API_BASE_URL=...
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api/v1',
+    defaultValue: 'https://63.182.139.73.nip.io/api/v1',
   );
 
   /// Connect timeout in milliseconds.

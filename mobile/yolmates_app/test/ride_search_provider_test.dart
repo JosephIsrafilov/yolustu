@@ -17,7 +17,7 @@ class _FakeRidesRepository implements RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
     int passengers = 1,
   }) async {
     this.fromCity = fromCity;
@@ -97,6 +97,26 @@ void main() {
       expect(a, b);
       expect(a.hashCode, b.hashCode);
       expect(a == c, isFalse);
+    });
+
+    test('preserves null date for any-date searches', () async {
+      final repo = _FakeRidesRepository();
+      final container = ProviderContainer(
+        overrides: [ridesRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(
+        rideSearchProvider(
+          const RideSearchParams(
+            fromCity: 'All Cities',
+            toCity: 'All Cities',
+            passengers: 1,
+          ),
+        ).future,
+      );
+
+      expect(repo.date, isNull);
     });
   });
 }

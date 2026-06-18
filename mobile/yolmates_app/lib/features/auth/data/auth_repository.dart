@@ -24,13 +24,28 @@ abstract class AuthRepository {
   /// On success persists and returns the user (possibly profile-incomplete).
   Future<AppUser> verifyOtp(String phone, String code);
 
-  /// Persists profile fields and returns the updated user.
-  Future<AppUser> updateProfile({
+  /// Authenticate with phone and password. Returns user on success.
+  Future<AppUser> loginWithPassword(String phone, String password);
+
+  /// Register new user with password. Returns user on success.
+  Future<AppUser> registerWithPassword({
+    required String phone,
+    String? email,
+    required String password,
     required String firstName,
     required String lastName,
+  });
+
+  /// Persists profile fields and returns the updated user.
+  Future<AppUser> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
     String? avatarUrl,
     UserRole? role,
     AppLanguage? language,
+    DateTime? birthDate,
   });
 
   /// Submits document verification for the user.

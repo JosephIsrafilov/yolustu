@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yolmates_app/core/localization/app_localizations.dart';
 import 'package:yolmates_app/features/auth/data/app_user.dart';
+import 'package:yolmates_app/features/auth/data/mock_auth_repository.dart';
 import 'package:yolmates_app/core/routes.dart';
 import 'package:yolmates_app/core/theme.dart';
 import 'package:yolmates_app/features/auth/data/session_storage.dart';
@@ -15,6 +16,8 @@ Future<void> _pumpApp(WidgetTester tester) async {
     ProviderScope(
       overrides: [
         sessionStorageProvider.overrideWithValue(InMemorySessionStorage()),
+        authRepositoryProvider.overrideWith(
+            (ref) => MockAuthRepository(ref.read(sessionStorageProvider))),
       ],
       child: const _TestApp(),
     ),
@@ -45,19 +48,21 @@ void main() {
       await _pumpApp(tester);
 
       expect(find.text(az.onboardingSaveMoneyTitle), findsOneWidget);
-      expect(find.text(az.onboardingSkip), findsNWidgets(2));
+      expect(find.text(az.onboardingSkip), findsOneWidget);
 
       await tester.tap(find.text(az.onboardingSkip).first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Yolmates'), findsNothing); // Removed old name as it might be an icon now
+      expect(find.text('Yolmates'),
+          findsNothing); // Removed old name as it might be an icon now
       expect(find.text(az.registerLink), findsOneWidget);
 
       await tester.tap(find.text(az.loginBtn).first);
       await tester.pumpAndSettle();
 
-      expect(find.text(az.phoneLoginSubtitle), findsOneWidget);
-      expect(find.text(az.phoneLoginSendCode), findsOneWidget);
+      expect(find.text(az.loginSubtitle), findsOneWidget);
+      // Wait, there might be two widgets with loginBtn text since we transition. We can just check for passwordLabel
+      expect(find.text(az.passwordLabel), findsOneWidget);
     },
   );
 
@@ -70,6 +75,8 @@ void main() {
       ProviderScope(
         overrides: [
           sessionStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider
+              .overrideWith((ref) => MockAuthRepository(storage)),
         ],
         child: const _TestApp(),
       ),
@@ -81,7 +88,7 @@ void main() {
     await tester.tap(find.text(az.loginBtn).first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(az.phoneLoginSendCode));
+    await tester.tap(find.byType(ElevatedButton));
     await tester.pump();
 
     expect(find.text(az.phoneLoginPhoneRequired), findsOneWidget);

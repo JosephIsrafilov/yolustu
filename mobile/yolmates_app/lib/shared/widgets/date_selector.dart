@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 
-class CityDropdown extends ConsumerWidget {
-  final String label;
-  final String? value;
-  final IconData icon;
-  final ValueChanged<String> onChanged;
+class DateSelector extends ConsumerWidget {
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime?> onChanged;
   final bool isDark;
-  final bool allowAll;
 
-  const CityDropdown({
+  const DateSelector({
     super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
+    required this.selectedDate,
     required this.onChanged,
     this.isDark = false,
-    this.allowAll = false,
   });
 
   void _showSelectionSheet(BuildContext context, AppLocalizations l10n) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -44,7 +41,7 @@ class CityDropdown extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                label,
+                l10n.dateSelectTitle,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -52,36 +49,60 @@ class CityDropdown extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: AppConstants.cities.length + (allowAll ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    final city = allowAll
-                        ? (index == 0
-                            ? l10n.allCities
-                            : AppConstants.cities[index - 1])
-                        : AppConstants.cities[index];
-                    final isSelected = city == value;
-                    return ListTile(
-                      title: Text(
-                        city,
-                        style: TextStyle(
-                          color: isSelected ? AppTheme.tealDark : AppTheme.navy,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle, color: AppTheme.teal)
-                          : null,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onChanged(city);
-                      },
-                    );
-                  },
-                ),
+              ListTile(
+                title: Text(l10n.dateToday),
+                leading: const Icon(Icons.today),
+                onTap: () {
+                  Navigator.pop(context);
+                  onChanged(today);
+                },
               ),
+              ListTile(
+                title: Text(l10n.dateTomorrow),
+                leading: const Icon(Icons.event),
+                onTap: () {
+                  Navigator.pop(context);
+                  onChanged(tomorrow);
+                },
+              ),
+              ListTile(
+                title: Text(l10n.dateThisWeek),
+                leading: const Icon(Icons.date_range),
+                onTap: () {
+                  Navigator.pop(context);
+                  onChanged(null); // null means any date / this week
+                },
+              ),
+              const Divider(),
+              ListTile(
+                title: Text(l10n.dateFromCalendar),
+                leading: const Icon(Icons.calendar_month),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate ?? today,
+                    firstDate: today,
+                    lastDate: today.add(const Duration(days: 90)),
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: AppTheme.teal,
+                            onPrimary: Colors.white,
+                            onSurface: AppTheme.navy,
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (picked != null) {
+                    onChanged(picked);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -92,6 +113,22 @@ class CityDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    String text = l10n.dateOptional;
+    if (selectedDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+
+      final selected =
+          DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
+      if (selected == today) {
+        text = l10n.dateToday;
+      } else if (selected == tomorrow) {
+        text = l10n.dateTomorrow;
+      } else {
+        text = '${selected.day}.${selected.month}.${selected.year}';
+      }
+    }
 
     return InkWell(
       onTap: () => _showSelectionSheet(context, l10n),
@@ -111,7 +148,7 @@ class CityDropdown extends ConsumerWidget {
         child: Row(
           children: [
             Icon(
-              icon,
+              Icons.calendar_today,
               color: isDark ? AppTheme.tealLight : AppTheme.slate500,
               size: 20,
             ),
@@ -121,7 +158,7 @@ class CityDropdown extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label,
+                    l10n.dateDeparture,
                     style: TextStyle(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.5)
@@ -131,9 +168,9 @@ class CityDropdown extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    value ?? 'Şəhər seçin',
+                    text,
                     style: TextStyle(
-                      color: value != null
+                      color: selectedDate != null
                           ? (isDark ? Colors.white : AppTheme.navy)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.5)

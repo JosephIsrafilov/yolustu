@@ -11,7 +11,7 @@ abstract class RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
     int passengers = 1,
   });
 
@@ -25,14 +25,14 @@ class MockRidesRepository implements RidesRepository {
   Future<List<Trip>> search({
     required String fromCity,
     required String toCity,
-    required DateTime date,
+    DateTime? date,
     int passengers = 1,
   }) async {
     await Future.delayed(_latency);
     return MockData.ridesFor(
       fromCity: fromCity,
       toCity: toCity,
-      date: date,
+      date: date ?? DateTime.now(),
       minSeats: passengers,
     );
   }
@@ -61,14 +61,17 @@ class RideSearchParams {
   final String fromCity;
   final String toCity;
   final int passengers;
-  final DateTime date;
+  final DateTime? date;
 
   const RideSearchParams({
     required this.fromCity,
     required this.toCity,
-    required this.date,
+    this.date,
     this.passengers = 1,
   });
+
+  DateTime? get normalizedDate =>
+      date == null ? null : DateTime(date!.year, date!.month, date!.day);
 
   @override
   bool operator ==(Object other) =>
@@ -76,13 +79,10 @@ class RideSearchParams {
       other.fromCity == fromCity &&
       other.toCity == toCity &&
       other.passengers == passengers &&
-      other.date.year == date.year &&
-      other.date.month == date.month &&
-      other.date.day == date.day;
+      other.normalizedDate == normalizedDate;
 
   @override
-  int get hashCode =>
-      Object.hash(fromCity, toCity, passengers, date.year, date.month, date.day);
+  int get hashCode => Object.hash(fromCity, toCity, passengers, normalizedDate);
 }
 
 final rideSearchProvider =
@@ -90,7 +90,7 @@ final rideSearchProvider =
   return ref.read(ridesRepositoryProvider).search(
         fromCity: params.fromCity,
         toCity: params.toCity,
-        date: DateTime(params.date.year, params.date.month, params.date.day),
+        date: params.normalizedDate,
         passengers: params.passengers,
       );
 });

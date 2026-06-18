@@ -10,6 +10,7 @@ import '../../shared/models/trip.dart';
 import '../../shared/widgets/driver_trust_card.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/map/route_map_view.dart';
+import '../auth/state/auth_controller.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
@@ -80,7 +81,7 @@ class _Body extends ConsumerWidget {
               ],
             ),
           ),
-          
+
           // Map visualizer
           SizedBox(
             height: 200,
@@ -134,9 +135,14 @@ class _Body extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _PrefChip(icon: Icons.smoke_free, label: l10n.tripDetailNoSmoking),
-                    _PrefChip(icon: Icons.music_note, label: l10n.tripDetailMusic),
-                    _PrefChip(icon: Icons.luggage, label: l10n.tripDetailLuggageAllowed),
+                    _PrefChip(
+                        icon: Icons.smoke_free,
+                        label: l10n.tripDetailNoSmoking),
+                    _PrefChip(
+                        icon: Icons.music_note, label: l10n.tripDetailMusic),
+                    _PrefChip(
+                        icon: Icons.luggage,
+                        label: l10n.tripDetailLuggageAllowed),
                   ],
                 ),
               ],
@@ -259,6 +265,9 @@ class _BookingBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    final currentUser = ref.watch(authControllerProvider).user;
+    final isOwnRide = currentUser?.id == ride.driver.id;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -299,11 +308,14 @@ class _BookingBar extends ConsumerWidget {
                 child: SizedBox(
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: ride.availableSeats > 0
+                    onPressed: (ride.availableSeats > 0 && !isOwnRide)
                         ? () => context.push('/booking/confirm/${ride.id}')
                         : null,
-                    child: Text(
-                        ride.availableSeats > 0 ? l10n.tripDetailBookBtn : l10n.tripDetailNoSeats),
+                    child: Text(isOwnRide
+                        ? 'Sizin gedişiniz'
+                        : (ride.availableSeats > 0
+                            ? l10n.tripDetailBookBtn
+                            : l10n.tripDetailNoSeats)),
                   ),
                 ),
               ),

@@ -10,7 +10,6 @@ import '../../core/theme.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
-import '../../shared/widgets/map/route_map_view.dart';
 import '../../shared/widgets/skeleton_cards.dart';
 
 class TripListScreen extends ConsumerStatefulWidget {
@@ -36,6 +35,8 @@ enum _Sort { timeAsc, priceAsc }
 class _TripListScreenState extends ConsumerState<TripListScreen> {
   _Sort _sort = _Sort.timeAsc;
   bool _verifiedOnly = false;
+  bool _womenOnly = false;
+  bool _noSmoking = false;
   int _selectedIndex = 0;
 
   Future<void> _refresh(RideSearchParams params) async {
@@ -49,7 +50,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final params = RideSearchParams(
       fromCity: widget.fromCity,
       toCity: widget.toCity,
-      date: widget.date ?? DateTime.now(),
+      date: widget.date,
       passengers: widget.passengers,
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
@@ -86,9 +87,12 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
   }
 
   Widget _buildResults(BuildContext context, List<Trip> rides) {
-    final filtered = _verifiedOnly
-        ? rides.where((r) => r.driver.rating >= 4.7).toList()
-        : [...rides];
+    final now = DateTime.now();
+    var filtered = rides.where((r) => r.departureTime.isAfter(now)).toList();
+    if (_verifiedOnly) {
+      filtered = filtered.where((r) => r.driver.rating >= 4.7).toList();
+    }
+
     switch (_sort) {
       case _Sort.timeAsc:
         filtered.sort((a, b) => a.departureTime.compareTo(b.departureTime));
@@ -98,38 +102,26 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
 
     final activeIndex =
         _selectedIndex.clamp(0, filtered.isEmpty ? 0 : filtered.length - 1);
-    final selectedTrip = filtered.isNotEmpty ? filtered[activeIndex] : null;
 
     return Column(
       children: [
         _FilterBar(
           sort: _sort,
           verifiedOnly: _verifiedOnly,
+          womenOnly: _womenOnly,
+          noSmoking: _noSmoking,
           onSort: (s) => setState(() => _sort = s),
           onVerified: (v) => setState(() => _verifiedOnly = v),
+          onWomenOnly: (v) => setState(() => _womenOnly = v),
+          onNoSmoking: (v) => setState(() => _noSmoking = v),
         ),
-        if (selectedTrip != null)
-          Container(
-            height: 180,
-            width: double.infinity,
-            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.slate200),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: RouteMapView(
-              origin: selectedTrip.fromCity,
-              destination: selectedTrip.toCity,
-            ),
-          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _refresh(
               RideSearchParams(
                 fromCity: widget.fromCity,
                 toCity: widget.toCity,
-                date: widget.date ?? DateTime.now(),
+                date: widget.date,
                 passengers: widget.passengers,
               ),
             ),
@@ -147,9 +139,20 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                       parent: BouncingScrollPhysics(),
                     ),
                     padding: const EdgeInsets.all(AppConstants.spacing16),
-                    itemCount: filtered.length,
+                    itemCount: filtered.length + (filtered.length < 3 ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, i) {
+                      if (i == filtered.length) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'Bu parametrlərlə başqa gediş yoxdur, tarixləri dəyişməyi yoxlayın.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppTheme.slate500),
+                          ),
+                        );
+                      }
+
                       final isSelected = i == activeIndex;
                       return _TripCard(
                         trip: filtered[i],
@@ -176,14 +179,22 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
 class _FilterBar extends ConsumerWidget {
   final _Sort sort;
   final bool verifiedOnly;
+  final bool womenOnly;
+  final bool noSmoking;
   final ValueChanged<_Sort> onSort;
   final ValueChanged<bool> onVerified;
+  final ValueChanged<bool> onWomenOnly;
+  final ValueChanged<bool> onNoSmoking;
 
   const _FilterBar({
     required this.sort,
     required this.verifiedOnly,
+    required this.womenOnly,
+    required this.noSmoking,
     required this.onSort,
     required this.onVerified,
+    required this.onWomenOnly,
+    required this.onNoSmoking,
   });
 
   @override
@@ -216,6 +227,20 @@ class _FilterBar extends ConsumerWidget {
               icon: Icons.verified,
               selected: verifiedOnly,
               onTap: () => onVerified(!verifiedOnly),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: 'Yalnız qadınlar',
+              icon: Icons.female,
+              selected: womenOnly,
+              onTap: () => onWomenOnly(!womenOnly),
+            ),
+            const SizedBox(width: 8),
+            _chip(
+              label: 'Siqaret çəkilmir',
+              icon: Icons.smoke_free,
+              selected: noSmoking,
+              onTap: () => onNoSmoking(!noSmoking),
             ),
           ],
         ),

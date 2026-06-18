@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 
 /// Reusable error / offline state with a retry action.
 ///
 /// Set [isOffline] for server-unavailable / connectivity styling.
-class ErrorStateView extends StatelessWidget {
+class ErrorStateView extends ConsumerWidget {
   final String title;
   final String? message;
   final VoidCallback? onRetry;
-  final String retryLabel;
+  final String? retryLabel;
   final bool isOffline;
 
   const ErrorStateView({
@@ -16,13 +19,15 @@ class ErrorStateView extends StatelessWidget {
     required this.title,
     this.message,
     this.onRetry,
-    this.retryLabel = 'Yenidən cəhd et',
+    this.retryLabel,
     this.isOffline = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final color = isOffline ? AppTheme.slate500 : Colors.red.shade600;
+    final label = retryLabel ?? l10n.createRideAiRetry;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -65,7 +70,7 @@ class ErrorStateView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 20),
-                label: Text(retryLabel),
+                label: Text(label),
               ),
             ],
           ],

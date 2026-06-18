@@ -3,36 +3,39 @@ import 'package:yolmates_app/features/chat/data/chat_repository.dart';
 
 void main() {
   group('MockChatRepository', () {
-    test('returns sorted seeded conversations with unread counts', () async {
+    test('getOrCreate creates new conversations when empty', () async {
       final repo = MockChatRepository();
 
-      final conversations = await repo.getConversations();
+      final support = await repo.getOrCreateSupportConversation();
+      expect(support.type, 'support');
 
+      final ride = await repo.getOrCreateRideConversation('booking-123');
+      expect(ride.bookingId, 'booking-123');
+
+      final conversations = await repo.getConversations();
       expect(conversations, hasLength(2));
-      expect(conversations.first.updatedAt.isAfter(conversations.last.updatedAt), isTrue);
-      expect(conversations.first.unreadCount, greaterThan(0));
-      expect(conversations.first.lastMessage, isNotNull);
     });
 
     test('markAsRead and sendMessage update conversation state', () async {
       final repo = MockChatRepository();
 
-      await repo.markAsRead('ride-1');
-      var conversations = await repo.getConversations();
-      expect(
-        conversations.firstWhere((conversation) => conversation.id == 'ride-1').unreadCount,
-        0,
-      );
+      final ride = await repo.getOrCreateRideConversation('booking-123');
+      final message = await repo.sendMessage(ride.id, 'On my way');
+      final messages = await repo.getMessages(ride.id);
 
-      final message = await repo.sendMessage('ride-1', 'On my way');
-      final messages = await repo.getMessages('ride-1');
-      conversations = await repo.getConversations();
-      final rideConversation =
-          conversations.firstWhere((conversation) => conversation.id == 'ride-1');
+      var conversations = await repo.getConversations();
+      var rideConversation = conversations.firstWhere((c) => c.id == ride.id);
 
       expect(messages.last.id, message.id);
       expect(rideConversation.lastMessage?.content, 'On my way');
       expect(rideConversation.unreadCount, 0);
+
+      await repo.markAsRead(ride.id);
+      conversations = await repo.getConversations();
+      expect(
+        conversations.firstWhere((c) => c.id == ride.id).unreadCount,
+        0,
+      );
     });
   });
 }

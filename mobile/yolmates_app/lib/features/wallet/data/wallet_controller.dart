@@ -69,8 +69,45 @@ class WalletController extends AsyncNotifier<WalletState> {
       ),
     );
   }
+
+  Future<void> topUpPassenger(double amount) async {
+    final current = state.value;
+    state = const AsyncValue.loading();
+    try {
+      final balance = await _repo.topUpPassenger(amount);
+      final transactions = await _repo.getTransactions(limit: 20);
+      state = AsyncValue.data(WalletState(
+        balance: balance,
+        transactions: transactions,
+      ));
+    } catch (e) {
+      if (current != null) {
+        state = AsyncValue.data(current);
+      }
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<void> withdrawDriver(double amount) async {
+    final current = state.value;
+    state = const AsyncValue.loading();
+    try {
+      final balance = await _repo.withdrawDriver(amount);
+      final transactions = await _repo.getTransactions(limit: 20);
+      state = AsyncValue.data(WalletState(
+        balance: balance,
+        transactions: transactions,
+      ));
+    } catch (e) {
+      if (current != null) {
+        state = AsyncValue.data(current);
+      }
+      throw Exception(e.toString());
+    }
+  }
 }
 
-final walletControllerProvider = AsyncNotifierProvider<WalletController, WalletState>(
+final walletControllerProvider =
+    AsyncNotifierProvider<WalletController, WalletState>(
   WalletController.new,
 );

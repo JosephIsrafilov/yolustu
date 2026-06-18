@@ -6,6 +6,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/city_dropdown.dart';
+import '../../shared/widgets/date_selector.dart';
 import 'data/recent_searches_repository.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -16,14 +17,15 @@ class SearchScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
-  String _from = 'Bakı';
-  String _to = 'Gəncə';
-  DateTime _date = DateTime.now();
+  String? _from;
+  String? _to;
+  DateTime? _date;
   int _passengers = 1;
 
   void _search() async {
     final l10n = ref.read(l10nProvider);
-    if (_from == _to) {
+    if (_from == null || _to == null) return;
+    if (_from == _to && _from != l10n.allCities) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.searchSameLocationError)),
       );
@@ -31,24 +33,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     final repo = ref.read(recentSearchesRepositoryProvider);
-    await repo.addSearch(_from, _to);
+    await repo.addSearch(_from!, _to!);
     ref.invalidate(recentSearchesProvider);
 
-    final dateStr =
-        '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
     if (mounted) {
-      context.push(
-        '${AppRoutes.rideResults}?from=$_from&to=$_to'
-        '&passengers=$_passengers&date=$dateStr',
-      );
+      String route =
+          '${AppRoutes.rideResults}?from=$_from&to=$_to&passengers=$_passengers';
+      if (_date != null) {
+        route += '&date=${_date!.toIso8601String()}';
+      }
+      context.push(route);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
-    final dateLabel =
-        '${l10n.shortWeekdayName(_date.weekday)}, ${_date.day} ${l10n.monthName(_date.month)}';
 
     return Scaffold(
       appBar: AppBar(
@@ -82,7 +82,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: searches.map((search) {
+                          children: searches.take(3).map((search) {
                             return InkWell(
                               onTap: () {
                                 setState(() {
@@ -136,6 +136,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               label: l10n.searchFromLabel,
               value: _from,
               icon: Icons.location_on_outlined,
+              allowAll: true,
               onChanged: (value) => setState(() => _from = value),
             ),
             const SizedBox(height: 8),
@@ -165,33 +166,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               label: l10n.searchToLabel,
               value: _to,
               icon: Icons.location_on,
+              allowAll: true,
               onChanged: (value) => setState(() => _to = value),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppTheme.slate200),
-              ),
-              leading: const Icon(Icons.calendar_today),
-              title: Text(l10n.searchDateLabel),
-              subtitle: Text(
-                dateLabel,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _date,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 90)),
-                );
-                if (picked != null) {
-                  setState(() => _date = picked);
-                }
-              },
+            DateSelector(
+              selectedDate: _date,
+              onChanged: (val) => setState(() => _date = val),
+              isDark: false,
             ),
             const SizedBox(height: 16),
             Container(
@@ -235,7 +216,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _search,
+              onPressed: (_from == null || _to == null) ? null : _search,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),

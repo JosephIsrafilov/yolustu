@@ -58,7 +58,8 @@ class Conversation {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       participants: (json['participants'] as List<dynamic>?)
-              ?.map((e) => ConversationParticipant.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  ConversationParticipant.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -119,9 +120,14 @@ class ChatMessage {
       senderName: json['sender_name'] as String,
       content: json['content'] as String,
       messageType: json['message_type'] as String? ?? 'text',
-      attachments: (json['attachments'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      attachments: (json['attachments'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
-      readAt: json['read_at'] != null ? DateTime.parse(json['read_at'] as String).toLocal() : null,
+      readAt: json['read_at'] != null
+          ? DateTime.parse(json['read_at'] as String).toLocal()
+          : null,
     );
   }
 

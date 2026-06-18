@@ -8,6 +8,7 @@ abstract class SessionStorage {
   Future<String?> read(String key);
   Future<void> write(String key, String value);
   Future<void> delete(String key);
+  Future<void> clearAll();
 }
 
 class SecureSessionStorage implements SessionStorage {
@@ -25,6 +26,9 @@ class SecureSessionStorage implements SessionStorage {
 
   @override
   Future<void> delete(String key) => _storage.delete(key: key);
+
+  @override
+  Future<void> clearAll() => _storage.deleteAll();
 }
 
 class InMemorySessionStorage implements SessionStorage {
@@ -38,4 +42,7 @@ class InMemorySessionStorage implements SessionStorage {
 
   @override
   Future<void> delete(String key) async => _store.remove(key);
+
+  @override
+  Future<void> clearAll() async => _store.clear();
 }

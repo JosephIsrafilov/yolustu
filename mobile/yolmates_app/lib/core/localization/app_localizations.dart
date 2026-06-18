@@ -62,6 +62,8 @@ class AppLocalizations {
 
   // Common
   String get commonAll => _get({'az': 'Bütün', 'en': 'All', 'ru': 'Всё'});
+  String get allCities =>
+      _get({'az': 'Bütün Şəhərlər', 'en': 'All Cities', 'ru': 'Все города'});
   String get commonSearch =>
       _get({'az': 'Axtar', 'en': 'Search', 'ru': 'Найти'});
   String get commonFrom =>
@@ -70,6 +72,26 @@ class AppLocalizations {
   String get commonDate => _get({'az': 'Tarix', 'en': 'Date', 'ru': 'Дата'});
   String get commonPassenger =>
       _get({'az': 'Sərnişin', 'en': 'Passenger', 'ru': 'Пассажир'});
+  String get dateSelectTitle =>
+      _get({'az': 'Tarix Seçin', 'en': 'Select Date', 'ru': 'Выберите дату'});
+  String get dateToday =>
+      _get({'az': 'Bu gün', 'en': 'Today', 'ru': 'Сегодня'});
+  String get dateTomorrow =>
+      _get({'az': 'Sabah', 'en': 'Tomorrow', 'ru': 'Завтра'});
+  String get dateThisWeek =>
+      _get({'az': 'Bu həftə', 'en': 'This week', 'ru': 'На этой неделе'});
+  String get dateFromCalendar => _get({
+        'az': 'Təqvimdən seçin...',
+        'en': 'Select from calendar...',
+        'ru': 'Выбрать из календаря...'
+      });
+  String get dateOptional => _get({
+        'az': 'Tarix seçin (İstəyə görə)',
+        'en': 'Select Date (Optional)',
+        'ru': 'Выберите дату (Необязательно)'
+      });
+  String get dateDeparture => _get(
+      {'az': 'Gediş tarixi', 'en': 'Departure Date', 'ru': 'Дата отправления'});
   String get commonClose =>
       _get({'az': 'Bağla', 'en': 'Close', 'ru': 'Закрыть'});
   String get commonBack => _get({'az': 'Geri', 'en': 'Back', 'ru': 'Назад'});
@@ -78,6 +100,84 @@ class AppLocalizations {
         'en': 'An error occurred',
         'ru': 'Произошла ошибка'
       });
+
+  String apiErrorMessage(String code, String fallback) {
+    switch (code) {
+      case 'NETWORK_ERROR':
+        return _get({
+          'az': 'İnternet bağlantısı yoxdur',
+          'en': 'No internet connection',
+          'ru': 'Нет подключения к интернету'
+        });
+      case 'TIMEOUT':
+        return _get({
+          'az': 'Sorğu vaxtı bitdi. Zəhmət olmasa yenidən cəhd edin',
+          'en': 'Request timed out. Please try again',
+          'ru': 'Время ожидания истекло. Пожалуйста, попробуйте снова'
+        });
+      case 'UNAUTHORIZED':
+        return _get({
+          'az': 'İstifadəçi təsdiqi tələb olunur',
+          'en': 'User authentication required',
+          'ru': 'Требуется аутентификация пользователя'
+        });
+      case 'FORBIDDEN':
+        return _get({
+          'az': 'Bu əməliyyata icazəniz yoxdur',
+          'en': 'You do not have permission for this operation',
+          'ru': 'У вас нет прав на эту операцию'
+        });
+      case 'NOT_FOUND':
+        return _get({
+          'az': 'Məlumat tapılmadı',
+          'en': 'Data not found',
+          'ru': 'Данные не найдены'
+        });
+      case 'CONFLICT':
+        return _get({
+          'az': 'Məlumat artıq mövcuddur',
+          'en': 'Data already exists',
+          'ru': 'Данные уже существуют'
+        });
+      case 'VALIDATION_ERROR':
+        return _get({
+          'az': 'Məlumat doğrulanması uğursuz oldu',
+          'en': 'Data validation failed',
+          'ru': 'Ошибка валидации данных'
+        });
+      case 'RATE_LIMITED':
+        return _get({
+          'az': 'Çox tez-tez cəhd etdiniz. Zəhmət olmasa gözləyin',
+          'en': 'Too many attempts. Please wait',
+          'ru': 'Слишком много попыток. Пожалуйста, подождите'
+        });
+      case 'SERVER_ERROR':
+        return _get({
+          'az': 'Server xətası. Zəhmət olmasa yenidən cəhd edin',
+          'en': 'Server error. Please try again',
+          'ru': 'Ошибка сервера. Пожалуйста, попробуйте снова'
+        });
+      case 'CANCELLED':
+        return _get({
+          'az': 'Sorğu ləğv edildi',
+          'en': 'Request cancelled',
+          'ru': 'Запрос отменен'
+        });
+      case 'BAD_CERTIFICATE':
+        return _get({
+          'az': 'SSL sertifikatı səhvdir',
+          'en': 'Bad SSL certificate',
+          'ru': 'Неверный SSL-сертификат'
+        });
+      default:
+        // Try to translate the fallback message, otherwise return it.
+        if (fallback.toLowerCase().contains('server')) {
+          return _get(
+              {'az': fallback, 'en': 'Server error', 'ru': 'Ошибка сервера'});
+        }
+        return fallback;
+    }
+  }
 
   // Auth & Onboarding
   String get loginTitle =>
@@ -105,10 +205,39 @@ class AppLocalizations {
       });
   String get registerTitle =>
       _get({'az': 'Qeydiyyat', 'en': 'Sign up', 'ru': 'Регистрация'});
-  String get fullNameLabel =>
-      _get({'az': 'Ad və Soyad', 'en': 'Full Name', 'ru': 'Имя и Фамилия'});
+  String get firstNameLabel =>
+      _get({'az': 'Ad', 'en': 'First Name', 'ru': 'Имя'});
+  String get lastNameLabel =>
+      _get({'az': 'Soyad', 'en': 'Last Name', 'ru': 'Фамилия'});
+  String get emailLabel =>
+      _get({'az': 'E-poçt', 'en': 'Email', 'ru': 'Эл. почта'});
   String get verifyBtn =>
       _get({'az': 'Təsdiqlə', 'en': 'Verify', 'ru': 'Подтвердить'});
+  String get registerNameRequired => _get({
+        'az': 'Ad və Soyad daxil edilməlidir',
+        'en': 'Name and Surname are required',
+        'ru': 'Введите имя и фамилию'
+      });
+  String get registerEmailRequired => _get({
+        'az': 'E-poçt daxil edilməlidir',
+        'en': 'Email is required',
+        'ru': 'Введите эл. почту'
+      });
+  String get registerEmailInvalid => _get({
+        'az': 'Düzgün e-poçt daxil edin',
+        'en': 'Enter a valid email',
+        'ru': 'Введите правильную эл. почту'
+      });
+  String get registerPasswordRequired => _get({
+        'az': 'Şifrə daxil edilməlidir',
+        'en': 'Password is required',
+        'ru': 'Введите пароль'
+      });
+  String get registerPasswordLength => _get({
+        'az': 'Şifrə ən az 8 simvol olmalıdır',
+        'en': 'Password must be at least 8 characters',
+        'ru': 'Пароль должен быть не менее 8 символов'
+      });
 
   String get onboardingSkip =>
       _get({'az': 'Keç', 'en': 'Skip', 'ru': 'Пропустить'});
@@ -545,6 +674,28 @@ class AppLocalizations {
       });
   String get walletRefresh =>
       _get({'az': 'Yenilə', 'en': 'Refresh', 'ru': 'Обновить'});
+  String get walletPassengerBalance => _get({
+        'az': 'Sərnişin balansı',
+        'en': 'Passenger balance',
+        'ru': 'Баланс пассажира'
+      });
+  String get walletPassengerBalanceDesc => _get({
+        'az': 'Səyahətlər üçün ödəniş',
+        'en': 'Used to pay for rides',
+        'ru': 'Для оплаты поездок'
+      });
+  String get walletDriverBalance => _get({
+        'az': 'Sürücü balansı',
+        'en': 'Driver balance',
+        'ru': 'Баланс водителя'
+      });
+  String get walletDriverBalanceDesc => _get({
+        'az': 'Yalnız çıxarış',
+        'en': 'Withdrawals only',
+        'ru': 'Только для вывода'
+      });
+  String get walletWithdraw =>
+      _get({'az': 'Çıxarış', 'en': 'Withdraw', 'ru': 'Вывести'});
 
   // Driver Onboarding & Verification Extras
   String get commonContinue =>
@@ -572,20 +723,44 @@ class AppLocalizations {
         'ru': 'Mock Подтвердить (Дев)'
       });
   String get driverOnboardingTitle => _get(
-      {'az': 'Sürücü rejimi', 'en': 'Driver mode', 'ru': 'Режим водителя'});
+      {'az': 'Sürücü Rejimi', 'en': 'Driver Mode', 'ru': 'Режим водителя'});
   String get driverOnboardingBenefits =>
       _get({'az': 'Üstünlüklər', 'en': 'Benefits', 'ru': 'Преимущества'});
   String get driverOnboardingRequirements =>
       _get({'az': 'Tələblər', 'en': 'Requirements', 'ru': 'Требования'});
+  String get mockApprove => _get({
+        'az': 'Mock Təsdiqlə (Geliştirici)',
+        'en': 'Mock Approve (Developer)',
+        'ru': 'Мок-подтверждение'
+      });
+  String get uploadDocument => _get({
+        'az': 'Sürücülük vəsiqəsi və ya Şəxsiyyət vəsiqəsi yüklə',
+        'en': 'Upload Driver License or ID Card',
+        'ru': 'Загрузите документы'
+      });
+  String get driverVerificationInfo => _get({
+        'az':
+            'Təsdiq prosesi bir neçə dəqiqə çəkə bilər. Status yeniləndikdə Sürücü Paneli aktivləşəcək.',
+        'en':
+            'Verification can take a few minutes. Driver Panel will be activated once status updates.',
+        'ru': 'Процесс подтверждения может занять несколько минут.'
+      });
   String get driverOnboardingCheckStatus => _get({
         'az': 'Təsdiq statusuna bax',
         'en': 'Check verification status',
         'ru': 'Проверить статус'
       });
+  String get driverVerificationUpload => _get({
+        'az': 'Sənəd yüklə',
+        'en': 'Upload document',
+        'ru': 'Загрузить документ'
+      });
 
   // Driver Panel Screen
   String get driverPanelTitle => _get(
       {'az': 'Sürücü Paneli', 'en': 'Driver Panel', 'ru': 'Панель водителя'});
+  String get driverWalletTitle =>
+      _get({'az': 'Balans', 'en': 'Balance', 'ru': 'Баланс'});
   String get driverPanelAccessDenied => _get({
         'az': 'Bu səhifəyə giriş qadağandır.',
         'en': 'Access to this page is forbidden.',
@@ -666,6 +841,17 @@ class AppLocalizations {
       _get({'az': 'Çıxış et', 'en': 'Log out', 'ru': 'Выйти'});
   String get profileCancel =>
       _get({'az': 'Ləğv et', 'en': 'Cancel', 'ru': 'Отмена'});
+  String get profileEdit => _get({
+        'az': 'Profili yenilə',
+        'en': 'Edit Profile',
+        'ru': 'Редактировать профиль'
+      });
+  String get profileSave =>
+      _get({'az': 'Yadda saxla', 'en': 'Save', 'ru': 'Сохранить'});
+  String get modePassenger =>
+      _get({'az': 'Sərnişin', 'en': 'Passenger', 'ru': 'Пассажир'});
+  String get modeDriver =>
+      _get({'az': 'Sürücü', 'en': 'Driver', 'ru': 'Водитель'});
 
   // Trust & Safety
   String get trustVerifiedDriver => _get({
@@ -1069,6 +1255,30 @@ class AppLocalizations {
       _get({'az': 'Soyadınız', 'en': 'Your last name', 'ru': 'Ваша фамилия'});
   String get profileSetupContinue =>
       _get({'az': 'Davam et', 'en': 'Continue', 'ru': 'Продолжить'});
+  String get profileSetupBirthDate => _get(
+      {'az': 'Doğum tarixi', 'en': 'Date of birth', 'ru': 'Дата рождения'});
+  String get profileSetupBirthDateHint =>
+      _get({'az': 'Tarix seçin', 'en': 'Select date', 'ru': 'Выберите дату'});
+  String get profileSetupBirthDateRequired => _get({
+        'az': 'Doğum tarixi tələb olunur',
+        'en': 'Date of birth is required',
+        'ru': 'Дата рождения обязательна'
+      });
+  String get profileSetupTermsAccept => _get({
+        'az': 'İstifadə şərtlərini qəbul edirəm',
+        'en': 'I accept the Terms & Conditions',
+        'ru': 'Принимаю условия использования'
+      });
+  String get profileSetupPrivacyAccept => _get({
+        'az': 'Məxfilik siyasətini qəbul edirəm',
+        'en': 'I accept the Privacy Policy',
+        'ru': 'Принимаю политику конфиденциальности'
+      });
+  String get profileSetupTermsRequired => _get({
+        'az': 'Davam etmək üçün şərtləri qəbul edin',
+        'en': 'Please accept the terms to continue',
+        'ru': 'Примите условия, чтобы продолжить'
+      });
   String get bookingCreateFailed => _get({
         'az': 'Rezervasiya yaradıla bilmədi. Yenidən cəhd edin.',
         'en': 'Failed to create the booking. Please try again.',

@@ -16,24 +16,28 @@ class PassengerRequestsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    final requests = ref.watch(passengerRequestsProvider);
+    final requestsAsync = ref.watch(passengerRequestsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.passengerRequestsTitle)),
-      body: requests.isEmpty
-          ? EmptyState(
-              icon: Icons.inbox_outlined,
-              title: l10n.passengerRequestsEmpty,
-              message: l10n.passengerRequestsEmptyMessage,
-              actionLabel: l10n.commonBack,
-              onAction: () => Navigator.of(context).maybePop(),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(AppConstants.spacing16),
-              itemCount: requests.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, i) => _RequestCard(request: requests[i]),
-            ),
+      body: requestsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text(e.toString())),
+        data: (requests) => requests.isEmpty
+            ? EmptyState(
+                icon: Icons.inbox_outlined,
+                title: l10n.passengerRequestsEmpty,
+                message: l10n.passengerRequestsEmptyMessage,
+                actionLabel: l10n.commonBack,
+                onAction: () => Navigator.of(context).maybePop(),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.all(AppConstants.spacing16),
+                itemCount: requests.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => _RequestCard(request: requests[i]),
+              ),
+      ),
     );
   }
 }
@@ -135,9 +139,11 @@ class _RequestCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => ref
-                        .read(passengerRequestsProvider.notifier)
-                        .setStatus(request.id, RequestStatus.rejected),
+                    onPressed: () async {
+                      await ref
+                          .read(passengerRequestsProvider.notifier)
+                          .setStatus(request.id, RequestStatus.rejected);
+                    },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red.shade600,
                       side: BorderSide(color: Colors.red.shade200),
@@ -148,9 +154,11 @@ class _RequestCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => ref
-                        .read(passengerRequestsProvider.notifier)
-                        .setStatus(request.id, RequestStatus.accepted),
+                    onPressed: () async {
+                      await ref
+                          .read(passengerRequestsProvider.notifier)
+                          .setStatus(request.id, RequestStatus.accepted);
+                    },
                     child: Text(l10n.passengerRequestsAccept),
                   ),
                 ),
