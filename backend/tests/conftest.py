@@ -10,7 +10,9 @@ from sqlalchemy.pool import StaticPool
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("REDIS_URL", "memory://")  # ponytail: avoids Redis dep in CI
-os.environ.setdefault("SMS_ENABLED", "false")  # ponytail: unit tests never hit SNS/boto3
+os.environ.setdefault(
+    "SMS_ENABLED", "false"
+)  # ponytail: unit tests never hit SNS/boto3
 
 from app.main import app
 from app.core.database import Base, get_db

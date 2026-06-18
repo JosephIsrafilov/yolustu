@@ -94,8 +94,7 @@ def test_list_for_conversation_returns_most_recent_ascending(session):
     assert result[0].content == "msg-10"
     # Timestamps strictly ascending.
     assert all(
-        result[i].created_at < result[i + 1].created_at
-        for i in range(len(result) - 1)
+        result[i].created_at < result[i + 1].created_at for i in range(len(result) - 1)
     )
 
 

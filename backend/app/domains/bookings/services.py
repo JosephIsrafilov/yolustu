@@ -181,7 +181,8 @@ class BookingsService:
 
             payment_service = PaymentService(self.db)
             wallet = payment_service.wallets.get_or_create_for_update(
-                booking.passenger_id, "AZN"  # type: ignore[arg-type]
+                booking.passenger_id,
+                "AZN",  # type: ignore[arg-type]
             )
             amount = money(booking.total_price or 0)  # type: ignore[arg-type]
             wallet.available_balance = money(wallet.available_balance + amount)
@@ -256,7 +257,8 @@ class BookingsService:
 
                 payment_service = PaymentService(self.db)
                 wallet = payment_service.wallets.get_or_create_for_update(
-                    booking.passenger_id, "AZN"  # type: ignore[arg-type]
+                    booking.passenger_id,
+                    "AZN",  # type: ignore[arg-type]
                 )
                 amount = money(booking.total_price or 0)  # type: ignore[arg-type]
                 wallet.available_balance = money(wallet.available_balance + amount)
@@ -372,7 +374,8 @@ class BookingsService:
 
                 payment_service = PaymentService(self.db)
                 wallet = payment_service.wallets.get_or_create_for_update(
-                    booking.passenger_id, "AZN"  # type: ignore[arg-type]
+                    booking.passenger_id,
+                    "AZN",  # type: ignore[arg-type]
                 )
                 amount = money(booking.total_price or 0)  # type: ignore[arg-type]
                 wallet.available_balance = money(wallet.available_balance + amount)
