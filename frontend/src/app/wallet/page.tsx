@@ -485,7 +485,7 @@ function WalletContent() {
           ) : (
             <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
               <Card className="overflow-hidden border border-[#cfdfe3] bg-[#f7fbfb] p-0 shadow-md">
-                <div className="relative overflow-hidden bg-[#052f36] bg-gradient-to-br from-[#063b43] via-[#052f36] to-[#021f24] p-6 text-white shadow-inner">
+                <div className="relative overflow-hidden bg-[#052f36] bg-linear-to-br from-[#063b43] via-[#052f36] to-[#021f24] p-6 text-white shadow-inner">
                   {/* Decorative background glassmorphism glows */}
                   <div className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 rounded-full bg-cyan-400/10 blur-2xl" />
                   <div className="pointer-events-none absolute -left-8 -bottom-8 h-36 w-36 rounded-full bg-teal-400/10 blur-2xl" />
@@ -549,9 +549,9 @@ function WalletContent() {
                   </span>
                 </div>
 
-                <div className="group relative mt-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#115e6e] via-[#0b3c43] to-[#041f24] p-5 text-white shadow-lg border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                <div className="group relative mt-5 overflow-hidden rounded-2xl bg-linear-to-br from-[#115e6e] via-[#0b3c43] to-[#041f24] p-5 text-white shadow-lg border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
                   {/* shine effect overlay */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-75" />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-white/10 opacity-75" />
                   <div className="pointer-events-none absolute -left-1/3 -top-1/2 w-full h-full bg-white/5 blur-3xl rounded-full transition-transform duration-500 group-hover:translate-x-10" />
                   <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rotate-45 bg-white/5 transition-transform duration-500 group-hover:-translate-y-2" />
                   

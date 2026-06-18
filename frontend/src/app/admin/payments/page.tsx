@@ -225,7 +225,7 @@ export default function AdminPaymentsPage() {
                       className="h-8 px-2 text-xs gap-1"
                       title={copy.refund}
                     >
-                      <Icon name="rotate-ccw" size={14} />
+                      <Icon name="refresh-cw" size={14} />
                       <span className="hidden lg:inline">{copy.refund}</span>
                     </Button>
                   )}

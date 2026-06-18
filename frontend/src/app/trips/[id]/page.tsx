@@ -331,7 +331,7 @@ export default function TripDetailsPage() {
         </div>
         <div className="lg:col-span-1 min-w-0">
           <div className="sticky top-24 flex flex-col gap-4 min-w-0">
-            <Card className="bg-gradient-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">{copy.pricePerSeatLabel}</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
+            <Card className="bg-linear-to-r from-brand-50 to-blue-50 border-brand-100"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">{copy.pricePerSeatLabel}</span><span className="text-2xl font-bold text-brand-600">{formatPrice(trip.pricePerSeat)}</span></div></Card>
             {lastError && (
               <Card padding="sm" className="bg-[#fff4f2] border-[#ffdad6]">
                 <div className="flex items-center justify-between gap-3 text-sm font-medium text-[#93000a]">
