@@ -289,6 +289,7 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     rating: apiUser.rating,
     totalTrips: apiUser.total_rides,
     isBlocked: apiUser.is_blocked ?? false,
+    isVerified: apiUser.is_verified ?? false,
     verificationStatus: apiUser.verification_status ?? 'none',
     isEmailVerified: apiUser.is_email_verified ?? false,
     documentUrl: apiUser.document_url ? buildApiAssetUrl(apiUser.document_url) : undefined,

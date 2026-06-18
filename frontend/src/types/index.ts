@@ -35,6 +35,7 @@ export interface User {
   rating: number;
   totalTrips: number;
   isBlocked: boolean;
+  isVerified: boolean;
   verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
   isEmailVerified: boolean;
   documentUrl?: string;

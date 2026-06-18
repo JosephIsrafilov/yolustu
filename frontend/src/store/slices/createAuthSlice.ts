@@ -45,6 +45,13 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       await authService.verifyOtp({ phone, otp });
+      const { currentUser } = get();
+      set({
+        isAuthenticated: true,
+        authStatus: 'authenticated',
+        activeRole: currentUser?.role === 'driver' ? 'driver' : 'passenger',
+        activeMode: currentUser?.role === 'driver' ? 'driver' : 'passenger',
+      });
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -108,8 +115,8 @@ export const createAuthSlice: StateCreator<
       const user = await authService.register(data);
       set({
         currentUser: user,
-        isAuthenticated: true,
-        authStatus: 'authenticated',
+        isAuthenticated: false,
+        authStatus: 'pending_verification',
         activeRole: user.role === 'driver' ? 'driver' : 'passenger',
         activeMode: user.role === 'driver' ? 'driver' : 'passenger',
         lastError: null,
