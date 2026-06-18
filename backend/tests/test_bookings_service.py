@@ -125,6 +125,7 @@ def make_service(
     ride_available_seats: int = 3,
 ) -> tuple[BookingsService, FakeRide, CurrentUser, CurrentUser]:
     from unittest.mock import MagicMock
+
     driver_id = uuid4()
     passenger_id = uuid4()
     ride = FakeRide(
@@ -137,7 +138,7 @@ def make_service(
     )
 
     db_mock = MagicMock(spec=Session)
-    
+
     # Mock wallet behavior so get_or_create_for_update works and ledger works
     wallet_mock = MagicMock()
     wallet_mock.available_balance = Decimal("1000.00")
@@ -145,11 +146,11 @@ def make_service(
     wallet_mock.status = "succeeded"  # So it can also act as a payment mock
     wallet_mock.provider = "mock"
     wallet_mock.amount = Decimal("10.00")
-    
+
     # We'll just mock PaymentService where it matters. But PaymentService itself
     # creates WalletRepository using db_mock.
     # To intercept the query, we can mock the entire PaymentService.
-    
+
     service = BookingsService(db=db_mock)
     service.bookings = cast(BookingRepository, FakeBookingRepository())
     service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
@@ -158,7 +159,7 @@ def make_service(
     # Mock the PaymentService at the module level or inside BookingsService
     # But since create_booking imports PaymentService directly, we might need a patch
     # Or just mock db_mock.query().filter().with_for_update().first() to return a wallet
-    
+
     db_mock.query.return_value.filter.return_value.with_for_update.return_value.first.return_value = wallet_mock
 
     driver = make_current_user(driver_id, role="driver")
@@ -256,6 +257,7 @@ def test_duplicate_booking_is_forbidden():
 
 def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
     from unittest.mock import patch, MagicMock
+
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=1), passenger
@@ -270,7 +272,7 @@ def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
         mock_payment = MagicMock()
         mock_payment.id = uuid4()
         mock_ps_instance.payments.get_succeeded_for_booking.return_value = mock_payment
-        
+
         def mock_refund(*args, **kwargs):
             stored.status = "cancelled"
             ride.available_seats += stored.seats_booked
