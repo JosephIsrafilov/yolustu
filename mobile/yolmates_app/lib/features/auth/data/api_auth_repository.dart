@@ -277,6 +277,7 @@ class ApiAuthRepository implements AuthRepository {
         'file': await MultipartFile.fromFile(
           documentPath,
           filename: documentPath.split('/').last,
+          contentType: contentType,
         ),
       });
 
