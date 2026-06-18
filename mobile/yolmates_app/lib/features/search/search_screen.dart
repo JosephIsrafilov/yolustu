@@ -19,7 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   String? _from;
   String? _to;
-  DateSelection? _dateSelection;
+  DateTime? _date;
   int _passengers = 1;
 
   void _search() async {
@@ -39,13 +39,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (mounted) {
       String route =
           '${AppRoutes.rideResults}?from=$_from&to=$_to&passengers=$_passengers';
-      if (_dateSelection != null) {
-        if (_dateSelection!.date != null) {
-          route += '&date=${_dateSelection!.date!.toIso8601String()}';
-        }
-        if (_dateSelection!.dateTo != null) {
-          route += '&dateTo=${_dateSelection!.dateTo!.toIso8601String()}';
-        }
+      if (_date != null) {
+        route += '&date=${_date!.toIso8601String()}';
       }
       context.push(route);
     }
@@ -175,8 +170,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onChanged: (value) => setState(() => _to = value),
             ),
             DateSelector(
-              selectedDate: _dateSelection,
-              onChanged: (val) => setState(() => _dateSelection = val),
+              selectedDate: _date,
+              onChanged: (val) => setState(() => _date = val),
               isDark: false,
             ),
             const SizedBox(height: 16),

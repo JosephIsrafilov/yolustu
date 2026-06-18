@@ -12,7 +12,6 @@ abstract class RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
-    DateTime? dateTo,
     int passengers = 1,
   });
 
@@ -27,7 +26,6 @@ class MockRidesRepository implements RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
-    DateTime? dateTo,
     int passengers = 1,
   }) async {
     await Future.delayed(_latency);
@@ -64,21 +62,16 @@ class RideSearchParams {
   final String toCity;
   final int passengers;
   final DateTime? date;
-  final DateTime? dateTo;
 
   const RideSearchParams({
     required this.fromCity,
     required this.toCity,
     this.date,
-    this.dateTo,
     this.passengers = 1,
   });
 
   DateTime? get normalizedDate =>
       date == null ? null : DateTime(date!.year, date!.month, date!.day);
-
-  DateTime? get normalizedDateTo =>
-      dateTo == null ? null : DateTime(dateTo!.year, dateTo!.month, dateTo!.day);
 
   @override
   bool operator ==(Object other) =>
@@ -86,12 +79,10 @@ class RideSearchParams {
       other.fromCity == fromCity &&
       other.toCity == toCity &&
       other.passengers == passengers &&
-      other.normalizedDate == normalizedDate &&
-      other.normalizedDateTo == normalizedDateTo;
+      other.normalizedDate == normalizedDate;
 
   @override
-  int get hashCode =>
-      Object.hash(fromCity, toCity, passengers, normalizedDate, normalizedDateTo);
+  int get hashCode => Object.hash(fromCity, toCity, passengers, normalizedDate);
 }
 
 final rideSearchProvider =
@@ -100,7 +91,6 @@ final rideSearchProvider =
         fromCity: params.fromCity,
         toCity: params.toCity,
         date: params.normalizedDate,
-        dateTo: params.normalizedDateTo,
         passengers: params.passengers,
       );
 });

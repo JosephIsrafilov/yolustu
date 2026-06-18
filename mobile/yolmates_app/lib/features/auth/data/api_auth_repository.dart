@@ -91,6 +91,25 @@ class ApiAuthRepository implements AuthRepository {
       final meResponse = await _client.get('/users/me');
       final userJson = meResponse.data as Map<String, dynamic>?;
 
+      // Backend returns AuthSessionResponse: {accessToken, refreshToken, user}
+      // Extract tokens (support both camelCase and snake_case)
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String?;
+      final refreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String?;
+      final csrfToken = data['csrf_token'] as String?; // Optional
+
+      if (accessToken == null || refreshToken == null) {
+        throw const AuthException('Token alınmadı');
+      }
+
+      await _tokenStorage.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        csrfToken: csrfToken,
+      );
+
+      final userJson = data['user'] as Map<String, dynamic>?;
       if (userJson == null) {
         throw const AuthException('İstifadəçi məlumatı alınmadı');
       }
@@ -276,8 +295,7 @@ class ApiAuthRepository implements AuthRepository {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           documentPath,
-          filename: path.basename(documentPath),
-          contentType: contentType,
+          filename: documentPath.split('/').last,
         ),
       });
 
@@ -291,17 +309,11 @@ class ApiAuthRepository implements AuthRepository {
       await _persistUser(user);
       return user;
     } on DioException catch (e) {
-      final apiError = e.error;
-      if (apiError is ApiException) {
-        if (apiError.statusCode == 413) {
-          throw const AuthException('Fayl 5 MB limitini keçir');
-        }
-        if (apiError.statusCode == 401) {
-          throw const AuthException('Yenidən daxil olun');
-        }
-        throw AuthException(apiError.message);
-      }
-      throw const AuthException('Şəbəkə və ya server xətası');
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
     }
   }
 

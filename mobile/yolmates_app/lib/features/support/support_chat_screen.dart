@@ -30,15 +30,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     'Əşyamı avtomobildə unutmuşam',
   ];
 
-  final Map<String, String> _suggestedAnswers = {
-    'Sürücü necə ola bilərəm?': 'Sürücü olmaq üçün profilinizdən "Sürücü Rejimi"nə keçid edə bilərsiniz.',
-    'Ödəniş üsulları hansılardır?': 'Ödənişlər hazırda nağd şəkildə və ya kartla qəbul edilir.',
-    'Səyahətimi necə ləğv edim?': 'Səyahəti ləğv etmək üçün "Sifarişlər" bölməsinə daxil olun.',
-    'Əşyamı avtomobildə unutmuşam': 'Narahat olmayın. Zəhmət olmasa operatorla əlaqə saxlayın, sürücü ilə əlaqə qurarıq.',
-  };
-
-  bool _operatorCalled = false;
-
   void _sendSuggested(String text) {
     _controller.text = text;
     _sendMessage();
@@ -46,7 +37,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
   void _callOperator() {
     setState(() {
-      _operatorCalled = true;
       _messages.insert(0, {
         'isMe': true,
         'text': 'Operatorla əlaqə saxlanılsın',
@@ -79,15 +69,13 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       _controller.clear();
     });
 
-    final answer = _suggestedAnswers[text] ?? 'Sualınızı başa düşmədim, lakin operator tezliklə sizinlə əlaqə saxlayacaq.';
-
     // Mock AI response
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;
       setState(() {
         _messages.insert(0, {
           'isMe': false,
-          'text': answer,
+          'text': 'Operator tezliklə sizinlə əlaqə saxlayacaq.',
           'time': DateTime.now(),
         });
       });
@@ -143,50 +131,48 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
               },
             ),
           ),
-          if (!_operatorCalled)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              color: AppTheme.slate50,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    ..._suggestedQuestions.map((q) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ActionChip(
-                            label: Text(q,
-                                style: const TextStyle(
-                                    fontSize: 13, color: AppTheme.tealDark)),
-                            backgroundColor: AppTheme.teal.withValues(alpha: 0.1),
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            onPressed: () => _sendSuggested(q),
-                          ),
-                        )),
-                    ActionChip(
-                      label: const Row(
-                        children: [
-                          Icon(Icons.headset_mic, size: 14, color: AppTheme.navy),
-                          SizedBox(width: 4),
-                          Text('Operator çağır',
-                              style: TextStyle(
-                                  fontSize: 13, color: AppTheme.navy)),
-                        ],
-                      ),
-                      backgroundColor: AppTheme.slate200,
-                      side: BorderSide.none,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      onPressed: _callOperator,
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            color: AppTheme.slate50,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  ..._suggestedQuestions.map((q) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ActionChip(
+                          label: Text(q,
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppTheme.tealDark)),
+                          backgroundColor: AppTheme.teal.withValues(alpha: 0.1),
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          onPressed: () => _sendSuggested(q),
+                        ),
+                      )),
+                  ActionChip(
+                    label: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.headset_mic, size: 14, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text('Operatora bağlan',
+                            style:
+                                TextStyle(fontSize: 13, color: Colors.white)),
+                      ],
                     ),
-                  ],
-                ),
+                    backgroundColor: AppTheme.teal,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    onPressed: _callOperator,
+                  ),
+                ],
               ),
             ),
+          ),
           Container(
             padding: EdgeInsets.only(
               left: 16,

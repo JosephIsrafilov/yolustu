@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 import '../auth/state/auth_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DriverVerificationScreen extends ConsumerStatefulWidget {
   const DriverVerificationScreen({super.key});
@@ -20,16 +20,12 @@ class _DriverVerificationScreenState
     extends ConsumerState<DriverVerificationScreen> {
   bool _submitting = false;
   String? _selectedDocumentPath;
+  final _picker = ImagePicker();
 
-  Future<void> _pickDocument() async {
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf'],
-      allowMultiple: false,
-    );
-    final selectedPath = result?.files.single.path;
-    if (selectedPath != null) {
-      setState(() => _selectedDocumentPath = selectedPath);
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedDocumentPath = pickedFile.path);
     }
   }
 
@@ -97,8 +93,7 @@ class _DriverVerificationScreenState
             if (_submitting)
               const LinearProgressIndicator(color: AppTheme.teal),
             const SizedBox(height: 12),
-            if (_selectedDocumentPath != null &&
-                !_selectedDocumentPath!.toLowerCase().endsWith('.pdf'))
+            if (_selectedDocumentPath != null)
               Container(
                 height: 200,
                 decoration: BoxDecoration(
@@ -119,7 +114,7 @@ class _DriverVerificationScreenState
               )
             else
               GestureDetector(
-                onTap: _submitting ? null : _pickDocument,
+                onTap: _pickImage,
                 child: Container(
                   height: 150,
                   decoration: BoxDecoration(
@@ -137,11 +132,6 @@ class _DriverVerificationScreenState
                       Text(
                         l10n.uploadDocument,
                         textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'JPG, PNG və ya PDF — maksimum 5 MB',
-                        style: TextStyle(fontSize: 12),
                       ),
                     ],
                   ),

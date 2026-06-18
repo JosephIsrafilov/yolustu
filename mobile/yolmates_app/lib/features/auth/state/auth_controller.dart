@@ -151,7 +151,6 @@ class AuthController extends Notifier<AuthState> {
   /// If successful, user might need OTP if not verified.
   Future<void> loginWithPassword(String phone, String password) async {
     final user = await _repo.loginWithPassword(phone, password);
-    await ref.read(driverModeProvider.notifier).toggle(false);
     state = _resolve(user);
   }
 
@@ -172,7 +171,6 @@ class AuthController extends Notifier<AuthState> {
       firstName: firstName,
       lastName: lastName,
     );
-    await ref.read(driverModeProvider.notifier).toggle(false);
     state = _resolve(user);
   }
 

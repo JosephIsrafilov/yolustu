@@ -18,7 +18,6 @@ class _FakeRidesRepository implements RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
-    DateTime? dateTo,
     int passengers = 1,
   }) async {
     this.fromCity = fromCity;

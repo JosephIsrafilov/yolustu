@@ -83,7 +83,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
       if (!mounted) return;
       context.go('${AppRoutes.messages}/${conversation.id}');
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(
           () => _error = 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
