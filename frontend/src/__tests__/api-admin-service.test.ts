@@ -75,29 +75,19 @@ describe('apiAdminService', () => {
     expect(user.verificationStatus).toBe('rejected');
   });
 
-  it('opens verification document through authenticated api client', async () => {
+  it('opens verification document through authenticated admin route', async () => {
     const popup = { location: { href: '' }, close: jest.fn() };
     jest.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
-    mockedApiClient.getBlob.mockResolvedValueOnce(new Blob(['document']));
-    Object.defineProperty(URL, 'createObjectURL', {
-      configurable: true,
-      value: jest.fn(),
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      configurable: true,
-      value: jest.fn(),
-    });
-    jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:document');
-    jest.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
     await apiAdminService.openVerificationDocument(
       'http://localhost:8000/api/v1/admin/verifications/u-1/document/verification_doc.pdf'
     );
 
-    expect(mockedApiClient.getBlob).toHaveBeenCalledWith(
-      '/admin/verifications/u-1/document/verification_doc.pdf'
+    expect(window.open).toHaveBeenCalledWith('', '_blank');
+    expect(popup.location.href).toBe(
+      'http://localhost:8000/api/v1/admin/verifications/u-1/document/verification_doc.pdf'
     );
-    expect(popup.location.href).toBe('blob:document');
+    expect(mockedApiClient.getBlob).not.toHaveBeenCalled();
   });
 
   it('getUsers defaults to page 1 / limit 10 with no filters', async () => {

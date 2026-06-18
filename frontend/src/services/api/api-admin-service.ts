@@ -120,15 +120,6 @@ export const apiAdminService: AdminService = {
     if (!popup) {
       throw new Error('Document popup was blocked');
     }
-
-    try {
-      const blob = await apiClient.getBlob(url.pathname.replace('/api/v1', ''));
-      const objectUrl = URL.createObjectURL(blob);
-      popup.location.href = objectUrl;
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-    } catch (error) {
-      popup.close();
-      throw error;
-    }
+    popup.location.href = url.toString();
   },
 };

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 import { paymentsService } from '@/services';
@@ -35,6 +35,7 @@ const HEADER_MODE_I18N = {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, currentUser, logout, language, activeMode } = useAppStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const copy = I18N[language];
@@ -75,6 +76,12 @@ export default function Header() {
   const isActive = (match: string) => {
     if (match === '/driver' && pathname === '/driver/create-trip') return false;
     return pathname === match || pathname.startsWith(`${match}/`);
+  };
+
+  const handleLogout = async () => {
+    setMobileOpen(false);
+    await logout();
+    router.replace(ROUTES.login);
   };
 
   return (
@@ -148,7 +155,7 @@ export default function Header() {
               </Link>
 
               <button
-                onClick={() => logout()}
+                onClick={handleLogout}
                 aria-label={copy.header.logout}
                 className="hidden rounded-full p-2 text-foreground/70 transition-colors hover:bg-accent hover:text-foreground active:scale-[0.96] sm:block"
               >
@@ -254,10 +261,7 @@ export default function Header() {
             {isAuthenticated && (
               <button
                 type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  logout();
-                }}
+                onClick={handleLogout}
                 className="ui-nav-text mt-2 flex items-center gap-2 rounded-lg px-2 py-2 text-left text-red-600 transition-all hover:bg-red-50"
               >
                 <Icon name="log-out" size={18} />

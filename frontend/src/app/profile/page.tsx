@@ -306,7 +306,16 @@ export default function ProfilePage() {
         <DriverVerificationSection copy={copy} />
         <DriverVehiclesSection copy={copy} isDriver={activeMode === 'driver'} />
         {userReviews.length > 0 && (<div><h3 className="text-lg font-semibold text-text mb-3">{copy.reviewsTitle}</h3><div className="grid sm:grid-cols-2 gap-3">{userReviews.map((r) => (<ReviewCard key={r.id} review={r} author={users.find((u) => u.id === r.authorId)} />))}</div></div>)}
-        <Button variant="ghost" className="mt-8 text-danger-500" onClick={() => { logout(); router.push('/'); }}><Icon name="log-out" size={16} /> {copy.logoutBtn}</Button>
+        <Button
+          variant="ghost"
+          className="mt-8 text-danger-500"
+          onClick={async () => {
+            await logout();
+            router.replace(ROUTES.login);
+          }}
+        >
+          <Icon name="log-out" size={16} /> {copy.logoutBtn}
+        </Button>
         
         <SuccessModal
           isOpen={showProfileSuccess}
