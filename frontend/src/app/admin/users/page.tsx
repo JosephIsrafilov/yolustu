@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
@@ -262,18 +262,23 @@ export default function AdminUsersPage() {
     void fetchUsers(page);
   };
 
+  const isFilterChange = useRef(false);
   useEffect(() => {
-    setPage(1);
+    isFilterChange.current = true;
   }, [query, roleFilter, statusFilter, verificationFilter]);
 
   useEffect(() => {
+    const targetPage = isFilterChange.current ? 1 : page;
+    if (isFilterChange.current) {
+      setPage(1);
+      isFilterChange.current = false;
+    }
     setIsLoading(true);
     const timeoutId = window.setTimeout(() => {
-      void fetchUsers(page);
+      void fetchUsers(targetPage);
     }, 300);
-
     return () => window.clearTimeout(timeoutId);
-  }, [fetchUsers, page]);
+  }, [fetchUsers, page, query, roleFilter, statusFilter, verificationFilter]);
 
   const handlePageChange = (nextPage: number) => {
     setIsLoading(true);

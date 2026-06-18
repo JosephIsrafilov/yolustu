@@ -5,15 +5,13 @@ import { useEffect, useState } from 'react';
 let loadPromise: Promise<void> | null = null;
 
 export function useGoogleMapsLoader() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [loadError, setLoadError] = useState<any>(null);
+  const [isLoaded, setIsLoaded] = useState(
+    () => typeof window !== 'undefined' && !!window.google?.maps
+  );
+  const [loadError, setLoadError] = useState<Error | Event | null>(null);
 
   useEffect(() => {
-    // If window.google is already loaded
-    if (typeof window !== 'undefined' && window.google?.maps) {
-      setIsLoaded(true);
-      return;
-    }
+    if (isLoaded) return;
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     if (!apiKey) {
