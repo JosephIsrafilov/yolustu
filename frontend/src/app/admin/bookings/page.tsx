@@ -476,16 +476,16 @@ export default function AdminBookingsPage() {
                   <tr key={booking.id} className="transition-colors duration-150 hover:bg-surface-dim">
                     <td className="px-3 py-3 md:px-4 md:py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {passenger?.avatarUrl ? (
-                            <Image src={passenger.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                            <Image src={passenger.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
                           ) : (
-                            <Icon name="user" size={16} className="text-text-muted" />
+                            <Icon name="user" size={12} className="text-text-muted" />
                           )}
                         </div>
                         <span 
                           title={passengerName}
-                          className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                          className="font-medium text-text max-w-[90px] md:max-w-[120px] truncate block"
                         >
                           {passengerName}
                         </span>
@@ -493,16 +493,16 @@ export default function AdminBookingsPage() {
                     </td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {driver?.avatarUrl ? (
-                            <Image src={driver.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
+                            <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
                           ) : (
-                            <Icon name="user" size={16} className="text-text-muted" />
+                            <Icon name="user" size={12} className="text-text-muted" />
                           )}
                         </div>
                         <span 
                           title={driverName}
-                          className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                          className="font-medium text-text max-w-[90px] md:max-w-[120px] truncate block"
                         >
                           {driverName}
                         </span>
@@ -544,7 +544,7 @@ export default function AdminBookingsPage() {
                             title={t.actions.view}
                           >
                             <Icon name="file-text" size={14} />
-                            <span className="hidden lg:inline">{t.actions.view}</span>
+                            <span className="hidden xl:inline">{t.actions.view}</span>
                           </Button>
                         )}
                         {booking.status === 'pending' && (
@@ -558,7 +558,7 @@ export default function AdminBookingsPage() {
                               title={t.actions.confirm}
                             >
                               <Icon name="check" size={14} />
-                              <span className="hidden lg:inline">{t.actions.confirm}</span>
+                              <span className="hidden xl:inline">{t.actions.confirm}</span>
                             </Button>
                             <Button 
                               size="sm" 
@@ -569,7 +569,7 @@ export default function AdminBookingsPage() {
                               title={t.actions.reject}
                             >
                               <Icon name="x" size={14} />
-                              <span className="hidden lg:inline">{t.actions.reject}</span>
+                              <span className="hidden xl:inline">{t.actions.reject}</span>
                             </Button>
                           </>
                         )}
@@ -583,7 +583,7 @@ export default function AdminBookingsPage() {
                             title={t.actions.cancel}
                           >
                             <Icon name="ban" size={14} />
-                            <span className="hidden lg:inline">{t.actions.cancel}</span>
+                            <span className="hidden xl:inline">{t.actions.cancel}</span>
                           </Button>
                         )}
                       </div>

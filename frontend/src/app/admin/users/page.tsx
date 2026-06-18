@@ -526,7 +526,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -539,7 +539,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -578,7 +578,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -607,11 +607,11 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-12 rounded-full" /></td>
                   <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
-                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
-                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
                   <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-16 rounded-full" /></td>
                   <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-16 rounded-full" /></td>
-                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-16" /></td>
+                  <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-16" /></td>
                   <td className="px-3 py-3 md:px-4 md:py-3.5 text-right"><Skeleton className="h-8 w-20 ml-auto" /></td>
                 </tr>
               ))
@@ -688,8 +688,8 @@ export default function AdminUsersPage() {
                           {u.rating.toFixed(1)}
                         </div>
                       </td>
-                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{u.totalTrips}</td>
-                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{bookingCount}</td>
+                      <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{u.totalTrips}</td>
+                      <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{bookingCount}</td>
                       <td className="px-3 py-3 md:px-4 md:py-3.5">
                         <Badge variant={verificationVariant}>{verificationLabel}</Badge>
                       </td>
@@ -700,7 +700,7 @@ export default function AdminUsersPage() {
                           <Badge variant="success">{t.status.active}</Badge>
                         )}
                       </td>
-                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
+                      <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
                       <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Button 
@@ -711,7 +711,7 @@ export default function AdminUsersPage() {
                             title={t.actions.view}
                           >
                             <Icon name="file-text" size={14} />
-                            <span className="hidden lg:inline">{t.actions.view}</span>
+                            <span className="hidden xl:inline">{t.actions.view}</span>
                           </Button>
                           {u.verificationStatus === 'pending' && (
                             <>
@@ -724,7 +724,7 @@ export default function AdminUsersPage() {
                                 title={t.actions.verify}
                               >
                                 <Icon name="check" size={14} />
-                                <span className="hidden lg:inline">{t.actions.verify}</span>
+                                <span className="hidden xl:inline">{t.actions.verify}</span>
                               </Button>
                               <Button 
                                 size="sm" 
@@ -735,7 +735,7 @@ export default function AdminUsersPage() {
                                 title={t.actions.reject}
                               >
                                 <Icon name="x" size={14} />
-                                <span className="hidden lg:inline">{t.actions.reject}</span>
+                                <span className="hidden xl:inline">{t.actions.reject}</span>
                               </Button>
                             </>
                           )}
@@ -749,7 +749,7 @@ export default function AdminUsersPage() {
                               title={t.actions.unblock}
                             >
                               <Icon name="shield-check" size={14} />
-                              <span className="hidden lg:inline">{t.actions.unblock}</span>
+                              <span className="hidden xl:inline">{t.actions.unblock}</span>
                             </Button>
                           ) : (
                             <Button 
@@ -761,7 +761,7 @@ export default function AdminUsersPage() {
                               title={t.actions.block}
                             >
                               <Icon name="shield-off" size={14} />
-                              <span className="hidden lg:inline">{t.actions.block}</span>
+                              <span className="hidden xl:inline">{t.actions.block}</span>
                             </Button>
                           )}
                         </div>
@@ -783,6 +783,14 @@ export default function AdminUsersPage() {
                             <div>
                               <p className="text-xs text-text-muted">{t.details.city}</p>
                               <p className="font-semibold text-text">{u.city || t.placeholder}</p>
+                            </div>
+                            <div className="xl:hidden">
+                              <p className="text-xs text-text-muted">{t.table.rides}</p>
+                              <p className="font-semibold text-text">{u.totalTrips}</p>
+                            </div>
+                            <div className="xl:hidden">
+                              <p className="text-xs text-text-muted">{t.table.bookings}</p>
+                              <p className="font-semibold text-text">{bookingCount}</p>
                             </div>
                             <div>
                               <p className="text-xs text-text-muted">{t.details.created}</p>
