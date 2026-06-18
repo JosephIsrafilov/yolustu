@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
-import '../../shared/data/mock_data.dart';
+import '../../core/repositories/rides_repository.dart';
 import '../../shared/models/trip.dart';
+import '../wallet/data/wallet_controller.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../chat/data/chat_repository.dart';
@@ -14,10 +15,6 @@ import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
 /// Booking confirmation for a selected ride.
-///
-/// Resolves the ride from the mock dataset, lets the user pick a seat count,
-/// and on confirm creates a booking via [bookingsControllerProvider] then
-/// routes to its detail screen.
 class BookingConfirmScreen extends ConsumerStatefulWidget {
   final String rideId;
   final int initialSeats;
@@ -39,13 +36,23 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
   String? _error;
 
   Future<void> _confirm(Trip ride) async {
+    // Check wallet balance before booking
+    const serviceFeePercent = 0.10;
+    final total = ride.price * _seats * (1 + serviceFeePercent);
+    final walletState = ref.read(walletControllerProvider).valueOrNull;
+    if (walletState != null && walletState.balance.passengerBalance < total) {
+      setState(() => _error =
+          'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.passengerBalance.toStringAsFixed(2)} AZN var.');
+      return;
+    }
+
     setState(() {
       _submitting = true;
       _error = null;
     });
     try {
       final booking = Booking(
-        id: 'bk-${DateTime.now().millisecondsSinceEpoch}',
+        id: '',
         rideId: ride.id,
         fromCity: ride.fromCity,
         toCity: ride.toCity,
@@ -76,10 +83,10 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
       if (!mounted) return;
       context.go('${AppRoutes.messages}/${conversation.id}');
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(
-          () => _error = 'Rezervasiya yaradıla bilmədi. Yenidən cəhd edin.');
+          () => _error = 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -128,26 +135,35 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ride = MockData.rideById(widget.rideId);
+    final rideAsync = ref.watch(rideByIdProvider(widget.rideId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rezervasiyanı təsdiqlə')),
-      body: ride == null
-          ? ErrorStateView(
-              title: 'Səyahət tapılmadı',
-              message: 'Bu səyahət artıq mövcud deyil.',
-              onRetry: () => context.pop(),
-              retryLabel: 'Geri qayıt',
-            )
-          : _submitting
-              ? const LoadingView(message: 'Rezervasiya yaradılır...')
-              : _Content(
-                  ride: ride,
-                  seats: _seats,
-                  error: _error,
-                  onSeatsChanged: (s) => setState(() => _seats = s),
-                  onConfirm: () => _confirm(ride),
-                ),
+      body: rideAsync.when(
+        loading: () => const LoadingView(message: 'Yüklənir...'),
+        error: (_, __) => ErrorStateView(
+          title: 'Səyahət tapılmadı',
+          message: 'Bu səyahət artıq mövcud deyil.',
+          onRetry: () => context.pop(),
+          retryLabel: 'Geri qayıt',
+        ),
+        data: (ride) => ride == null
+            ? ErrorStateView(
+                title: 'Səyahət tapılmadı',
+                message: 'Bu səyahət artıq mövcud deyil.',
+                onRetry: () => context.pop(),
+                retryLabel: 'Geri qayıt',
+              )
+            : _submitting
+                ? const LoadingView(message: 'Rezervasiya yaradılır...')
+                : _Content(
+                    ride: ride,
+                    seats: _seats,
+                    error: _error,
+                    onSeatsChanged: (s) => setState(() => _seats = s),
+                    onConfirm: () => _confirm(ride),
+                  ),
+      ),
     );
   }
 }

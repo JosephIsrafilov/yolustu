@@ -300,12 +300,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final q = state.uri.queryParameters;
           DateTime? date;
-          if (q['date'] != null) {
+          DateTime? dateTo;
+          if (q['date_from'] != null) {
+            try {
+              date = DateTime.parse(q['date_from']!);
+              if (q['date_to'] != null) {
+                dateTo = DateTime.parse(q['date_to']!);
+              }
+            } catch (_) {}
+          } else if (q['date'] != null) {
             try {
               date = DateTime.parse(q['date']!);
-            } catch (_) {
-              // Invalid date format, ignore
-            }
+            } catch (_) {}
           }
           return _buildPageWithTransition(
             context,
@@ -315,6 +321,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               toCity: q['to'] ?? 'Gəncə',
               passengers: int.tryParse(q['passengers'] ?? '1') ?? 1,
               date: date,
+              dateTo: dateTo,
             ),
           );
         },

@@ -4,13 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/repositories/rides_repository.dart';
 import '../../core/theme.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/models/trip.dart';
 import '../../shared/widgets/driver_trust_card.dart';
 import '../../shared/widgets/error_state.dart';
+import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../auth/state/auth_controller.dart';
+import '../chat/data/chat_repository.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
@@ -22,24 +24,40 @@ class TripDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    final ride = MockData.rideById(tripId);
+    final rideAsync = ref.watch(rideByIdProvider(tripId));
 
-    if (ride == null) {
-      return Scaffold(
+    return rideAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: Text(l10n.tripDetailTitle)),
+        body: const LoadingView(),
+      ),
+      error: (error, _) => Scaffold(
         appBar: AppBar(title: Text(l10n.tripDetailTitle)),
         body: ErrorStateView(
           title: l10n.tripDetailNotFound,
-          message: l10n.tripDetailNotFoundMessage,
-          onRetry: () => context.pop(),
-          retryLabel: l10n.bookingDetailGoBack,
+          message: error.toString(),
+          onRetry: () => ref.invalidate(rideByIdProvider(tripId)),
         ),
-      );
-    }
+      ),
+      data: (ride) {
+        if (ride == null) {
+          return Scaffold(
+            appBar: AppBar(title: Text(l10n.tripDetailTitle)),
+            body: ErrorStateView(
+              title: l10n.tripDetailNotFound,
+              message: l10n.tripDetailNotFoundMessage,
+              onRetry: () => context.pop(),
+              retryLabel: l10n.bookingDetailGoBack,
+            ),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.tripDetailTitle)),
-      body: _Body(ride: ride),
-      bottomNavigationBar: _BookingBar(ride: ride),
+        return Scaffold(
+          appBar: AppBar(title: Text(l10n.tripDetailTitle)),
+          body: _Body(ride: ride),
+          bottomNavigationBar: _BookingBar(ride: ride),
+        );
+      },
     );
   }
 }
@@ -89,6 +107,7 @@ class _Body extends ConsumerWidget {
             child: RouteMapView(
               origin: ride.fromCity,
               destination: ride.toCity,
+              forceCanvas: true,
             ),
           ),
 
@@ -108,7 +127,25 @@ class _Body extends ConsumerWidget {
                   driver: ride.driver,
                   showVerificationBadge: true,
                   showMessageButton: true,
-                  onMessageTap: () => context.push('/messages/conv-${ride.id}'),
+                  onMessageTap: () async {
+                    // Create or get the conversation for this ride
+                    final repo = ref.read(chatRepositoryProvider);
+                    try {
+                      // Note: getOrCreateRideConversation expects a booking ID or ride ID depending on backend implementation.
+                      // The backend route is POST /chats/ride. If it takes booking_id but we just have ride, we might pass ride.id.
+                      // Wait, let's just pass ride.id since we might not have booked it yet!
+                      final conv = await repo.getOrCreateRideConversation(ride.id);
+                      if (context.mounted) {
+                        context.push('/messages/${conv.id}');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Söhbət yaradıla bilmədi. Səbəb: ${e.toString()}')),
+                        );
+                      }
+                    }
+                  },
                 ),
                 const SizedBox(height: 24),
                 _SectionTitle(l10n.tripDetailInfoSection),

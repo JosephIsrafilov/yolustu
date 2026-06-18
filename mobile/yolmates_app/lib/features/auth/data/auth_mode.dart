@@ -10,7 +10,7 @@
 class AuthMode {
   static const String mode = String.fromEnvironment(
     'API_MODE',
-    defaultValue: 'mock',
+    defaultValue: 'api',
   );
 
   static bool get isApi => mode.toLowerCase() == 'api';

@@ -5,6 +5,7 @@ class User {
   final String? avatarUrl;
   final double rating;
   final int tripCount;
+  final bool isVerified;
 
   const User({
     required this.id,
@@ -13,6 +14,7 @@ class User {
     this.avatarUrl,
     required this.rating,
     required this.tripCount,
+    this.isVerified = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class User {
       avatarUrl: json['avatar_url'] as String?,
       rating: (json['rating'] as num).toDouble(),
       tripCount: json['trip_count'] as int,
+      isVerified: json['is_verified'] as bool? ?? false,
     );
   }
 

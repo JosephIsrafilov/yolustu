@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _from;
   String? _to;
-  DateTime? _date;
+  DateSelection? _dateSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -191,8 +191,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(height: 12),
                             DateSelector(
-                              selectedDate: _date,
-                              onChanged: (val) => setState(() => _date = val),
+                              selectedDate: _dateSelection,
+                              onChanged: (val) =>
+                                  setState(() => _dateSelection = val),
                               isDark: true,
                             ),
                             const SizedBox(height: 16),
@@ -204,9 +205,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     : () {
                                         String route =
                                             '${AppRoutes.rideResults}?from=$_from&to=$_to';
-                                        if (_date != null) {
-                                          route +=
-                                              '&date=${_date!.toIso8601String()}';
+                                        final sel = _dateSelection;
+                                        if (sel != null && sel.date != null) {
+                                          if (sel.isWeekRange &&
+                                              sel.dateTo != null) {
+                                            route +=
+                                                '&date_from=${sel.date!.toIso8601String()}'
+                                                '&date_to=${sel.dateTo!.toIso8601String()}';
+                                          } else {
+                                            route +=
+                                                '&date=${sel.date!.toIso8601String()}';
+                                          }
                                         }
                                         context.push(route);
                                       },
@@ -374,11 +383,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 i++) ...[
                               if (i > 0) const SizedBox(height: 12),
                               _buildRouteCard(
+                                context,
                                 routes[i].fromCity,
                                 routes[i].toCity,
-                                '${routes[i].averagePrice.toStringAsFixed(0)} AZN',
-                                l10n.homeDailyTrips.replaceAll(
-                                    '15+', '${routes[i].dailyTrips}+'),
+                                '15 AZN',
                               ),
                             ],
                           ],
@@ -396,64 +404,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildRouteCard(
-      String from, String to, String price, String dailyTrips) {
+      BuildContext context, String from, String to, String price) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        from,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          context.push('${AppRoutes.rideResults}?from=$from&to=$to');
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          from,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        to,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          to,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    dailyTrips,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.slate500,
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                price,
-                style: const TextStyle(
-                  color: AppTheme.tealDark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
               ),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  price,
+                  style: const TextStyle(
+                    color: AppTheme.tealDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

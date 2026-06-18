@@ -12,6 +12,7 @@ abstract class RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
+    DateTime? dateTo,
     int passengers = 1,
   });
 
@@ -26,6 +27,7 @@ class MockRidesRepository implements RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
+    DateTime? dateTo,
     int passengers = 1,
   }) async {
     await Future.delayed(_latency);
@@ -55,23 +57,28 @@ final ridesRepositoryProvider = Provider<RidesRepository>(
 
 /// Search parameters used as the [rideSearchProvider] family key.
 ///
-/// Keep the date normalized to day precision so rebuilds do not churn provider
+/// Keep dates normalized to day precision so rebuilds do not churn provider
 /// instances for the same search.
 class RideSearchParams {
   final String fromCity;
   final String toCity;
   final int passengers;
   final DateTime? date;
+  final DateTime? dateTo;
 
   const RideSearchParams({
     required this.fromCity,
     required this.toCity,
     this.date,
+    this.dateTo,
     this.passengers = 1,
   });
 
   DateTime? get normalizedDate =>
       date == null ? null : DateTime(date!.year, date!.month, date!.day);
+
+  DateTime? get normalizedDateTo =>
+      dateTo == null ? null : DateTime(dateTo!.year, dateTo!.month, dateTo!.day);
 
   @override
   bool operator ==(Object other) =>
@@ -79,10 +86,12 @@ class RideSearchParams {
       other.fromCity == fromCity &&
       other.toCity == toCity &&
       other.passengers == passengers &&
-      other.normalizedDate == normalizedDate;
+      other.normalizedDate == normalizedDate &&
+      other.normalizedDateTo == normalizedDateTo;
 
   @override
-  int get hashCode => Object.hash(fromCity, toCity, passengers, normalizedDate);
+  int get hashCode =>
+      Object.hash(fromCity, toCity, passengers, normalizedDate, normalizedDateTo);
 }
 
 final rideSearchProvider =
@@ -91,6 +100,11 @@ final rideSearchProvider =
         fromCity: params.fromCity,
         toCity: params.toCity,
         date: params.normalizedDate,
+        dateTo: params.normalizedDateTo,
         passengers: params.passengers,
       );
+});
+
+final rideByIdProvider = FutureProvider.family<Trip?, String>((ref, rideId) {
+  return ref.read(ridesRepositoryProvider).rideById(rideId);
 });

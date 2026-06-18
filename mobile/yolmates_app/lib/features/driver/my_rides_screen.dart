@@ -24,6 +24,16 @@ class MyRidesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(context.canPop() ? Icons.arrow_back : Icons.home_outlined),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
+        ),
         title: Text(l10n.myRidesTitle),
         actions: [
           IconButton(
