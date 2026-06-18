@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "yolmatessupport@gmail.com"
 
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "eu-central-1"
+    SMS_ENABLED: bool = False
+
 
 settings = Settings()  # type: ignore[call-arg]
 settings.DATABASE_URL = normalize_database_url(settings.DATABASE_URL)

@@ -175,7 +175,22 @@ class IdentityService:
     def _send_otp_simulation(phone: str, redis_client):
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
-        logger.info("SMS OTP simulation for %s: %s", phone, otp)
+        if settings.SMS_ENABLED:
+            try:
+                import boto3
+                sns = boto3.client(
+                    "sns",
+                    region_name=settings.AWS_REGION,
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID or None,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY or None,
+                )
+                sns.publish(PhoneNumber=phone, Message=f"Your Yolmates OTP: {otp}")
+            except Exception as e:
+                logger.error("SNS SMS failed for %s: %s", phone, e)
+                raise HTTPException(status_code=500, detail="Failed to send OTP")
+        else:
+            # ponytail: dev fallback — OTP visible in CloudWatch/stdout logs
+            logger.info("SMS OTP (dev) for %s: %s", phone, otp)
         return otp
 
     def request_password_reset(
