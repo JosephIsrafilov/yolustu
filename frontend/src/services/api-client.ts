@@ -49,6 +49,15 @@ function normalizeApiBaseUrl(baseUrl: string): string {
       url.hostname = pageHost;
       return url.toString().replace(/\/+$/, '');
     }
+
+    if (
+      window.location.protocol === 'https:' &&
+      url.protocol === 'http:' &&
+      url.hostname === window.location.hostname
+    ) {
+      url.protocol = 'https:';
+      return url.toString().replace(/\/+$/, '');
+    }
   } catch {
     return trimmedBaseUrl;
   }

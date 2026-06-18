@@ -15,6 +15,14 @@ function normalizeLoopbackHost(url: URL): URL {
     url.hostname = pageHost;
   }
 
+  if (
+    window.location.protocol === 'https:' &&
+    url.protocol === 'http:' &&
+    url.hostname === window.location.hostname
+  ) {
+    url.protocol = 'https:';
+  }
+
   return url;
 }
 
@@ -64,7 +72,11 @@ export function buildApiAssetUrl(path: string): string {
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1',
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'ws://127.0.0.1:8000',
+  mapProvider: process.env.NEXT_PUBLIC_MAP_PROVIDER ?? 'fallback',
+  googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
 } satisfies {
   apiUrl: string;
   wsUrl: string;
+  mapProvider: string;
+  googleMapsApiKey: string;
 };
