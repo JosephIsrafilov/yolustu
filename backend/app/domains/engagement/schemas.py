@@ -88,7 +88,6 @@ class ConversationParticipantResponse(BaseModel):
             return super().model_validate(data, *args, **kwargs)
         return super().model_validate(obj, *args, **kwargs)
 
-
 class ConversationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

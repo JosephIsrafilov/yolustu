@@ -664,8 +664,7 @@ class PaymentService:
         amount = money(amount)
         currency = payment.currency if payment else settings.PAYMENT_CURRENCY
         wallet = self.wallets.get_or_create_for_update(
-            user_id,
-            currency,  # type: ignore[arg-type]
+            user_id, currency  # type: ignore[arg-type]
         )
         sign = Decimal("1") if direction == "credit" else Decimal("-1")
         if balance_bucket == "pending":
