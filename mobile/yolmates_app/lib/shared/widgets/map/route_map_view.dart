@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../data/city_coordinates.dart';
 import '../../data/city_routes.dart';
-import 'google_route_map_view.dart';
+import 'adaptive_route_map_view.dart';
 
 /// Interactive Map wrapper choosing between Google Maps and Canvas Map fallback.
 class RouteMapView extends StatelessWidget {
@@ -36,7 +36,7 @@ class RouteMapView extends StatelessWidget {
         showCar: showCar,
       );
     }
-    return GoogleRouteMapView(
+    return AdaptiveRouteMapView(
       origin: origin,
       destination: destination,
       progress: progress,

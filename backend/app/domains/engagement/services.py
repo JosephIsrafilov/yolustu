@@ -137,7 +137,9 @@ class EngagementService:
             ride_id = booking.ride_id  # type: ignore[assignment]
 
         if not ride_id:
-            raise HTTPException(status_code=400, detail="ride_id or booking_id required")
+            raise HTTPException(
+                status_code=400, detail="ride_id or booking_id required"
+            )
 
         ride = self.rides.get_ride(ride_id)
         if not ride:
@@ -166,10 +168,14 @@ class EngagementService:
             self.conversations.create(conv)
             self.db.flush()
             self.conversations.add_participant(
-                conv.id, booking.passenger_id, "passenger"  # type: ignore[arg-type]
+                conv.id,
+                booking.passenger_id,
+                "passenger",  # type: ignore[arg-type]
             )
             self.conversations.add_participant(
-                conv.id, ride.driver_id, "driver"  # type: ignore[arg-type]
+                conv.id,
+                ride.driver_id,
+                "driver",  # type: ignore[arg-type]
             )
             self.db.commit()
             self.db.refresh(conv)
@@ -216,10 +222,14 @@ class EngagementService:
         self.conversations.create(conv)
         self.db.flush()
         self.conversations.add_participant(
-            conv.id, current_user.id, "passenger"  # type: ignore[arg-type]
+            conv.id,
+            current_user.id,
+            "passenger",  # type: ignore[arg-type]
         )
         self.conversations.add_participant(
-            conv.id, ride.driver_id, "driver"  # type: ignore[arg-type]
+            conv.id,
+            ride.driver_id,
+            "driver",  # type: ignore[arg-type]
         )
         self.db.commit()
         self.db.refresh(conv)
