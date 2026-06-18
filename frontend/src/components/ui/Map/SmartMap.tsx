@@ -19,7 +19,8 @@ const SimpleMapRenderer = dynamic(() => import('./SimpleMapRenderer'), {
 
 export default function SmartMap(props: SmartMapProps) {
   const googleKey = env.googleMapsApiKey;
-  const useGoogle = env.mapProvider.toLowerCase() === 'google' && Boolean(googleKey);
+  const mapProvider = env.mapProvider.toLowerCase();
+  const useGoogle = Boolean(googleKey) && mapProvider !== 'fallback';
   const fetchedRoute = useOsrmRoute(props.origin, props.destination);
   const routeToUse = props.route || fetchedRoute;
 

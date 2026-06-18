@@ -50,11 +50,7 @@ function normalizeApiBaseUrl(baseUrl: string): string {
       return url.toString().replace(/\/+$/, '');
     }
 
-    if (
-      window.location.protocol === 'https:' &&
-      url.protocol === 'http:' &&
-      url.hostname === window.location.hostname
-    ) {
+    if (window.location.protocol === 'https:' && url.protocol === 'http:') {
       url.protocol = 'https:';
       return url.toString().replace(/\/+$/, '');
     }
@@ -76,11 +72,7 @@ function buildRequestUrl(baseUrl: string, path: string): string {
   try {
     const url = new URL(requestUrl);
 
-    if (
-      window.location.protocol === 'https:' &&
-      url.protocol === 'http:' &&
-      url.hostname === window.location.hostname
-    ) {
+    if (window.location.protocol === 'https:' && url.protocol === 'http:') {
       return `${url.pathname}${url.search}${url.hash}`;
     }
 

@@ -15,11 +15,7 @@ function normalizeLoopbackHost(url: URL): URL {
     url.hostname = pageHost;
   }
 
-  if (
-    window.location.protocol === 'https:' &&
-    url.protocol === 'http:' &&
-    url.hostname === window.location.hostname
-  ) {
+  if (window.location.protocol === 'https:' && url.protocol === 'http:') {
     url.protocol = 'https:';
   }
 
@@ -51,6 +47,9 @@ export function buildApiAssetUrl(path: string): string {
 
     if (/^https?:\/\//i.test(path)) {
       const assetUrl = normalizeLoopbackHost(new URL(path));
+      if (window.location.protocol === 'https:' && assetUrl.protocol === 'http:') {
+        assetUrl.protocol = 'https:';
+      }
       const isAssetLoopback =
         assetUrl.hostname === 'localhost' || assetUrl.hostname === '127.0.0.1';
       const isApiLoopback =
@@ -72,7 +71,7 @@ export function buildApiAssetUrl(path: string): string {
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1',
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ?? 'ws://127.0.0.1:8000',
-  mapProvider: process.env.NEXT_PUBLIC_MAP_PROVIDER ?? 'fallback',
+  mapProvider: process.env.NEXT_PUBLIC_MAP_PROVIDER ?? 'auto',
   googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
 } satisfies {
   apiUrl: string;
