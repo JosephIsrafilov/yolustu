@@ -12,7 +12,7 @@ interface LocationPickerProps {
   arrivalCity?: string;
 }
 
-const PRESET_ICON = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+const PRESET_ICON = 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
 
 const LocationPicker = ({
   origin,
@@ -69,7 +69,7 @@ const LocationPicker = ({
         <MarkerF
           position={origin}
           draggable={true}
-          icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          icon="https://maps.google.com/mapfiles/ms/icons/green-dot.png"
           onDragEnd={(e) => {
             if (e.latLng) onSelectOrigin({ lat: e.latLng.lat(), lng: e.latLng.lng() });
           }}
@@ -80,7 +80,7 @@ const LocationPicker = ({
         <MarkerF
           position={destination}
           draggable={true}
-          icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          icon="https://maps.google.com/mapfiles/ms/icons/red-dot.png"
           onDragEnd={(e) => {
             if (e.latLng) onSelectDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() });
           }}
