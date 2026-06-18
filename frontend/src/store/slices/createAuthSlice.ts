@@ -165,11 +165,12 @@ export const createAuthSlice: StateCreator<
   },
 
   logout: async () => {
-    get().clearSession();
     try {
       await authService.logout();
     } catch {
       // Error handled silently
+    } finally {
+      get().clearSession();
     }
   },
 
