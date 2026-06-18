@@ -23,6 +23,7 @@ class ApiRidesRepository implements RidesRepository {
     required String fromCity,
     required String toCity,
     DateTime? date,
+    DateTime? dateTo,
     int passengers = 1,
   }) async {
     try {
@@ -35,11 +36,16 @@ class ApiRidesRepository implements RidesRepository {
         'offset': 0,
       };
 
-      // Add date only when the user selected one. Omitting it means any
-      // upcoming date.
-      if (date != null) {
+      // Date filtering: range takes precedence over single date.
+      // Backend supports departure_date_from / departure_date_to (week mode)
+      // or departure_date for a specific day.
+      if (date != null && dateTo != null) {
+        params['departure_date_from'] = _formatDate(date);
+        params['departure_date_to'] = _formatDate(dateTo);
+      } else if (date != null) {
         params['departure_date'] = _formatDate(date);
       }
+      // Omitting date params means any upcoming date.
 
       // Add coordinates if available (improves backend spatial search)
       final fromCoords = CityCoordinates.get(fromCity);
@@ -73,6 +79,7 @@ class ApiRidesRepository implements RidesRepository {
       return rides
           .map((json) =>
               RideMapper.toTrip(RideDto.fromJson(json as Map<String, dynamic>)))
+          .where((trip) => trip.fromCity != trip.toCity)
           .toList();
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
@@ -113,11 +120,11 @@ class ApiRidesRepository implements RidesRepository {
   }
 
   bool _isAllCities(String value) {
-    final normalized = value.trim().toLowerCase();
-    return normalized == 'all cities' ||
-        normalized.contains('bütün') ||
-        normalized.contains('butun') ||
-        normalized.contains('şəhər') ||
-        normalized.contains('seher');
+    final n = value.trim().toLowerCase();
+    return n.contains('all') ||
+        n.contains('bütün') ||
+        n.contains('butun') ||
+        n.contains('şəhər') ||
+        n.contains('seher');
   }
 }

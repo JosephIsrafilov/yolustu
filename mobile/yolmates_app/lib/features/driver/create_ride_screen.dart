@@ -136,7 +136,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       if (!mounted) return;
       await _showSuccess();
       if (!mounted) return;
-      context.go(AppRoutes.myRides);
+      context.go(AppRoutes.home);
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = l10n.createRidePublishError);
@@ -211,6 +211,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 child: RouteMapView(
                   origin: _from,
                   destination: _to,
+                  forceCanvas: true,
                 ),
               ),
               const SizedBox(height: 16),

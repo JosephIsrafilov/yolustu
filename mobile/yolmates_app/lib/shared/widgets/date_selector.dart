@@ -3,9 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
 
+/// Represents the result of a date selection.
+///
+/// [date] is non-null for exact-day selections.
+/// [dateTo] is set when [isWeekRange] is true (end of the selected week).
+class DateSelection {
+  final DateTime? date;
+  final DateTime? dateTo;
+  final bool isWeekRange;
+
+  const DateSelection.any()
+      : date = null,
+        dateTo = null,
+        isWeekRange = false;
+
+  const DateSelection.exact(DateTime d)
+      : date = d,
+        dateTo = null,
+        isWeekRange = false;
+
+  DateSelection.week()
+      : isWeekRange = true,
+        date = _today(),
+        dateTo = _today().add(const Duration(days: 6));
+
+  static DateTime _today() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+}
+
 class DateSelector extends ConsumerWidget {
-  final DateTime? selectedDate;
-  final ValueChanged<DateTime?> onChanged;
+  final DateSelection? selectedDate;
+  final ValueChanged<DateSelection?> onChanged;
   final bool isDark;
 
   const DateSelector({
@@ -54,7 +84,7 @@ class DateSelector extends ConsumerWidget {
                 leading: const Icon(Icons.today),
                 onTap: () {
                   Navigator.pop(context);
-                  onChanged(today);
+                  onChanged(DateSelection.exact(today));
                 },
               ),
               ListTile(
@@ -62,7 +92,7 @@ class DateSelector extends ConsumerWidget {
                 leading: const Icon(Icons.event),
                 onTap: () {
                   Navigator.pop(context);
-                  onChanged(tomorrow);
+                  onChanged(DateSelection.exact(tomorrow));
                 },
               ),
               ListTile(
@@ -70,7 +100,7 @@ class DateSelector extends ConsumerWidget {
                 leading: const Icon(Icons.date_range),
                 onTap: () {
                   Navigator.pop(context);
-                  onChanged(null); // null means any date / this week
+                  onChanged(DateSelection.week());
                 },
               ),
               const Divider(),
@@ -81,7 +111,7 @@ class DateSelector extends ConsumerWidget {
                   Navigator.pop(context);
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: selectedDate ?? today,
+                    initialDate: selectedDate?.date ?? today,
                     firstDate: today,
                     lastDate: today.add(const Duration(days: 90)),
                     builder: (context, child) {
@@ -98,7 +128,7 @@ class DateSelector extends ConsumerWidget {
                     },
                   );
                   if (picked != null) {
-                    onChanged(picked);
+                    onChanged(DateSelection.exact(picked));
                   }
                 },
               ),
@@ -114,19 +144,22 @@ class DateSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     String text = l10n.dateOptional;
-    if (selectedDate != null) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(const Duration(days: 1));
-
-      final selected =
-          DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
-      if (selected == today) {
-        text = l10n.dateToday;
-      } else if (selected == tomorrow) {
-        text = l10n.dateTomorrow;
+    final sel = selectedDate;
+    if (sel != null && sel.date != null) {
+      if (sel.isWeekRange) {
+        text = l10n.dateThisWeek;
       } else {
-        text = '${selected.day}.${selected.month}.${selected.year}';
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tomorrow = today.add(const Duration(days: 1));
+        final d = sel.date!;
+        if (d == today) {
+          text = l10n.dateToday;
+        } else if (d == tomorrow) {
+          text = l10n.dateTomorrow;
+        } else {
+          text = '${d.day}.${d.month}.${d.year}';
+        }
       }
     }
 
@@ -170,7 +203,7 @@ class DateSelector extends ConsumerWidget {
                   Text(
                     text,
                     style: TextStyle(
-                      color: selectedDate != null
+                      color: sel != null
                           ? (isDark ? Colors.white : AppTheme.navy)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.5)
@@ -194,3 +227,4 @@ class DateSelector extends ConsumerWidget {
     );
   }
 }
+

@@ -102,3 +102,21 @@ class WalletTransaction {
   bool get isCredit => amount > 0;
   bool get isDebit => amount < 0;
 }
+
+class WalletCard {
+  final String id;
+  final String holderName;
+  final String last4;
+  final String expiry;
+  final String brand;
+
+  const WalletCard({
+    required this.id,
+    required this.holderName,
+    required this.last4,
+    required this.expiry,
+    required this.brand,
+  });
+
+  String get label => '$brand •••• $last4';
+}

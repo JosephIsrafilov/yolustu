@@ -17,12 +17,14 @@ class TripListScreen extends ConsumerStatefulWidget {
   final String toCity;
   final int passengers;
   final DateTime? date;
+  final DateTime? dateTo;
 
   const TripListScreen({
     required this.fromCity,
     required this.toCity,
     this.passengers = 1,
     this.date,
+    this.dateTo,
     super.key,
   });
 
@@ -51,12 +53,15 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
       fromCity: widget.fromCity,
       toCity: widget.toCity,
       date: widget.date,
+      dateTo: widget.dateTo,
       passengers: widget.passengers,
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
-    final dateLabel = widget.date != null
-        ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
-        : '';
+    final dateLabel = widget.dateTo != null
+        ? ' · ${l10n.dateThisWeek}'
+        : widget.date != null
+            ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
+            : '';
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +95,13 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final now = DateTime.now();
     var filtered = rides.where((r) => r.departureTime.isAfter(now)).toList();
     if (_verifiedOnly) {
-      filtered = filtered.where((r) => r.driver.rating >= 4.7).toList();
+      filtered = filtered.where((r) => r.driver.isVerified || r.driver.rating >= 4.7).toList();
+    }
+    if (_womenOnly) {
+      filtered = filtered.where((r) => r.femaleOnly).toList();
+    }
+    if (_noSmoking) {
+      filtered = filtered.where((r) => !r.allowSmoking).toList();
     }
 
     switch (_sort) {
@@ -122,6 +133,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                 fromCity: widget.fromCity,
                 toCity: widget.toCity,
                 date: widget.date,
+                dateTo: widget.dateTo,
                 passengers: widget.passengers,
               ),
             ),
@@ -157,6 +169,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                       return _TripCard(
                         trip: filtered[i],
                         isSelected: isSelected,
+                        showDate: widget.date == null || widget.dateTo != null,
                         onTap: () {
                           if (isSelected) {
                             context.push(
@@ -295,19 +308,26 @@ class _FilterBar extends ConsumerWidget {
 class _TripCard extends ConsumerWidget {
   final Trip trip;
   final bool isSelected;
+  final bool showDate;
   final VoidCallback onTap;
 
   const _TripCard({
     required this.trip,
     required this.isSelected,
+    required this.showDate,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    final time =
+    final timeStr =
         '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
+    
+    final dateStr = showDate 
+        ? '${trip.departureTime.day.toString().padLeft(2, '0')}.${trip.departureTime.month.toString().padLeft(2, '0')} · '
+        : '';
+    final displayTime = '$dateStr$timeStr';
 
     return InkWell(
       onTap: onTap,
@@ -327,15 +347,38 @@ class _TripCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
-                  child: Text(
-                    trip.driver.name[0],
-                    style: const TextStyle(
-                      color: AppTheme.tealDark,
-                      fontWeight: FontWeight.bold,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppTheme.teal.withValues(alpha: 0.2),
+                      child: trip.driver.avatarUrl != null
+                          ? null // TODO: handle image network
+                          : Text(
+                              trip.driver.name[0],
+                              style: const TextStyle(
+                                color: AppTheme.tealDark,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
-                  ),
+                    if (trip.driver.isVerified)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.verified,
+                            color: AppTheme.teal,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -362,6 +405,17 @@ class _TripCard extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${trip.fromCity} → ${trip.toCity}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.navy,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -386,7 +440,7 @@ class _TripCard extends ConsumerWidget {
                   children: [
                     const Icon(Icons.access_time, size: 18),
                     const SizedBox(width: 8),
-                    Text(time, style: const TextStyle(fontSize: 15)),
+                    Text(displayTime, style: const TextStyle(fontSize: 15)),
                   ],
                 ),
                 Row(

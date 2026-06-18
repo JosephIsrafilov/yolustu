@@ -99,6 +99,6 @@ class BookingsController extends AsyncNotifier<List<Booking>> {
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = AsyncData(await _repo.all());
+    state = await AsyncValue.guard(() => _repo.all());
   }
 }

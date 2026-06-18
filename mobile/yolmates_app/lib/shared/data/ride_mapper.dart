@@ -18,6 +18,10 @@ class RideMapper {
       availableSeats: dto.availableSeats,
       totalSeats: dto.totalSeats,
       status: dto.status,
+      femaleOnly: dto.femaleOnly,
+      allowSmoking: dto.smokingAllowed,
+      allowPets: dto.petsAllowed,
+      allowMusic: dto.musicAllowed,
     );
   }
 
@@ -43,6 +47,7 @@ class RideMapper {
       avatarUrl: driver.avatarUrl,
       rating: driver.rating,
       tripCount: driver.totalRides,
+      isVerified: driver.isVerified,
     );
   }
 }
