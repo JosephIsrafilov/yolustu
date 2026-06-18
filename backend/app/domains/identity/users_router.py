@@ -13,6 +13,7 @@ from fastapi import (
     status,
     UploadFile,
 )
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import UPLOADS_DIR, settings
@@ -154,6 +155,30 @@ async def upload_avatar(
     db.commit()
     db.refresh(user_model)
     return user_model
+
+
+@router.get("/avatar/{filename}", include_in_schema=False)
+def get_avatar(filename: str):
+    storage = get_storage()
+    from app.core.storage import LocalStorage, S3Storage, SupabaseStorage
+
+    if isinstance(storage, (S3Storage, SupabaseStorage)):
+        try:
+            signed_url = storage.get_signed_url(
+                filename, settings.STORAGE_BUCKET_AVATARS, expires_in=300
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=404, detail="Avatar not found") from exc
+        return RedirectResponse(
+            url=signed_url, headers={"Cache-Control": "public, max-age=240"}
+        )
+
+    if isinstance(storage, LocalStorage):
+        file_path = storage.get_local_path(filename, settings.STORAGE_BUCKET_AVATARS)
+        if file_path:
+            return FileResponse(file_path)
+
+    raise HTTPException(status_code=404, detail="Avatar not found")
 
 
 def _validate_and_read_file(

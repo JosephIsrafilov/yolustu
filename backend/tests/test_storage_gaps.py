@@ -4,7 +4,7 @@ import httpx
 
 
 from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
-from app.core.storage import get_storage, LocalStorage, SupabaseStorage
+from app.core.storage import get_storage, LocalStorage, S3Storage, SupabaseStorage
 
 
 def test_local_storage_bucket_dir():
@@ -92,6 +92,44 @@ def test_supabase_storage_missing_config():
             SupabaseStorage()
         assert "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set" in str(
             exc.value
+        )
+
+
+def test_s3_storage_upload_sign_and_delete():
+    client = MagicMock()
+    client.generate_presigned_url.return_value = "https://signed.example/object"
+    with (
+        patch("app.core.storage.settings.AWS_S3_BUCKET", "yolmates-test"),
+        patch("app.core.storage.settings.AWS_REGION", "eu-central-1"),
+        patch("app.core.storage.settings.BACKEND_URL", "https://api.example"),
+        patch("app.core.storage.boto3.client", return_value=client),
+    ):
+        storage = S3Storage()
+        avatar_url = storage.upload(b"image", "avatar_test.png", "image/png", "avatars")
+        assert avatar_url == "https://api.example/api/v1/users/avatar/avatar_test.png"
+        client.put_object.assert_called_once_with(
+            Bucket="yolmates-test",
+            Key="avatars/avatar_test.png",
+            Body=b"image",
+            ContentType="image/png",
+            ServerSideEncryption="AES256",
+        )
+
+        signed = storage.get_signed_url("verification_test.pdf", "verifications", 300)
+        assert signed == "https://signed.example/object"
+        client.generate_presigned_url.assert_called_once_with(
+            "get_object",
+            Params={
+                "Bucket": "yolmates-test",
+                "Key": "verifications/verification_test.pdf",
+            },
+            ExpiresIn=300,
+        )
+
+        storage.delete("verification_test.pdf", "verifications")
+        client.delete_object.assert_called_once_with(
+            Bucket="yolmates-test",
+            Key="verifications/verification_test.pdf",
         )
 
 
@@ -217,12 +255,19 @@ def test_supabase_storage_delete_exception_handled():
 
 
 def test_get_storage_backends():
-    with patch("app.core.storage.settings.ENVIRONMENT", "development"):
+    with patch("app.core.storage.settings.STORAGE_BACKEND", "local"):
         assert isinstance(get_storage(), LocalStorage)
 
     with (
-        patch("app.core.storage.settings.ENVIRONMENT", "production"),
+        patch("app.core.storage.settings.STORAGE_BACKEND", "supabase"),
         patch("app.core.storage.settings.SUPABASE_URL", "https://xyz.supabase.co"),
         patch("app.core.storage.settings.SUPABASE_SERVICE_ROLE_KEY", "secret-key"),
     ):
         assert isinstance(get_storage(), SupabaseStorage)
+
+    with (
+        patch("app.core.storage.settings.STORAGE_BACKEND", "s3"),
+        patch("app.core.storage.settings.AWS_S3_BUCKET", "yolmates-test"),
+        patch("app.core.storage.boto3.client", return_value=MagicMock()),
+    ):
+        assert isinstance(get_storage(), S3Storage)

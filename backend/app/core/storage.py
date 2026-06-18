@@ -3,9 +3,8 @@ File storage abstraction.
 
 Development:  LocalStorage  — writes files to the local filesystem under
               UPLOADS_DIR / VERIFICATION_UPLOADS_DIR (existing behaviour).
-Production:   SupabaseStorage — uploads files to Supabase Storage via the
-              REST API (no extra SDK required, just httpx which is already
-              in requirements).
+Production:   S3Storage — stores private objects in Amazon S3 using the EC2
+              instance role. SupabaseStorage remains as a legacy option.
 
 Usage
 -----
@@ -25,6 +24,7 @@ import logging
 from pathlib import Path
 
 import httpx
+import boto3
 
 from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
 
@@ -126,6 +126,60 @@ class LocalStorage(StorageBackend):
         return legacy if legacy.is_file() else None
 
 
+class S3Storage(StorageBackend):
+    """Private S3 object storage using logical bucket names as key prefixes."""
+
+    def __init__(self) -> None:
+        if not settings.AWS_S3_BUCKET:
+            raise RuntimeError("AWS_S3_BUCKET must be set when STORAGE_BACKEND=s3.")
+        self.bucket = settings.AWS_S3_BUCKET
+        self.client = boto3.client("s3", region_name=settings.AWS_REGION)
+
+    @staticmethod
+    def _key(filename: str, bucket: str) -> str:
+        _safe_path(Path("/storage"), filename)
+        return f"{bucket.strip('/')}/{filename}"
+
+    def upload(
+        self, file_data: bytes, filename: str, content_type: str, bucket: str
+    ) -> str:
+        key = self._key(filename, bucket)
+        self.client.put_object(
+            Bucket=self.bucket,
+            Key=key,
+            Body=file_data,
+            ContentType=content_type,
+            ServerSideEncryption="AES256",
+        )
+        return self.get_url(filename, bucket)
+
+    def get_url(self, filename: str, bucket: str) -> str:
+        if bucket == settings.STORAGE_BUCKET_AVATARS:
+            base_url = str(settings.BACKEND_URL).rstrip("/")
+            return f"{base_url}/api/v1/users/avatar/{filename}"
+        return filename
+
+    def get_signed_url(self, filename: str, bucket: str, expires_in: int = 300) -> str:
+        return self.client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self.bucket, "Key": self._key(filename, bucket)},
+            ExpiresIn=expires_in,
+        )
+
+    def delete(self, filename: str, bucket: str) -> None:
+        try:
+            self.client.delete_object(
+                Bucket=self.bucket, Key=self._key(filename, bucket)
+            )
+        except Exception as exc:
+            logger.warning(
+                "S3 delete failed for bucket=%s object=%s: %s",
+                bucket,
+                filename,
+                exc,
+            )
+
+
 class SupabaseStorage(StorageBackend):
     """
     Uploads files to Supabase Storage using the REST API.
@@ -212,10 +266,11 @@ def get_storage() -> StorageBackend:
     Production without creds    → LocalStorage (files stored in Docker volume)
     Development                 → LocalStorage (no credentials needed)
     """
-    if (
-        settings.ENVIRONMENT == "production"
-        and settings.SUPABASE_URL
-        and settings.SUPABASE_SERVICE_ROLE_KEY
-    ):
+    backend = settings.STORAGE_BACKEND.lower()
+    if backend == "s3":
+        return S3Storage()
+    if backend == "supabase":
         return SupabaseStorage()
+    if backend != "local":
+        raise RuntimeError(f"Unsupported STORAGE_BACKEND: {settings.STORAGE_BACKEND}")
     return LocalStorage()

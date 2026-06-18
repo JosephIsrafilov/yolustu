@@ -152,9 +152,9 @@ def get_verification_document(
     storage = get_storage()
 
     # If using Supabase Storage, redirect to a time-limited signed URL.
-    from app.core.storage import SupabaseStorage
+    from app.core.storage import S3Storage, SupabaseStorage
 
-    if isinstance(storage, SupabaseStorage):
+    if isinstance(storage, (S3Storage, SupabaseStorage)):
         try:
             signed_url = storage.get_signed_url(
                 filename, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=300

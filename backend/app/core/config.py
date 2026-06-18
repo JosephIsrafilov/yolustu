@@ -45,7 +45,10 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = ""
     ENVIRONMENT: str = "development"
 
-    # Supabase Storage (used in production for avatar and verification uploads)
+    STORAGE_BACKEND: str = "local"  # local | s3 | supabase
+    AWS_S3_BUCKET: str = ""
+
+    # Legacy Supabase Storage. Database use is independent of storage backend.
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
     STORAGE_BUCKET_AVATARS: str = "avatars"

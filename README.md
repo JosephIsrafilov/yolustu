@@ -184,11 +184,11 @@ Stop:
 - close the backend/frontend PowerShell windows started by the script
 - stop infra when needed: `docker compose down`
 
-Production uploads persist in the `uploadsdata` Docker volume mounted at
-`/app/uploads`. If Supabase Storage is enabled, create a public `avatars`
-bucket and a private `verifications` bucket, then configure
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STORAGE_BUCKET_AVATARS`, and
-`STORAGE_BUCKET_VERIFICATIONS`.
+Production uses a private Amazon S3 bucket with `avatars/` and
+`verifications/` prefixes. Configure `STORAGE_BACKEND=s3`, `AWS_S3_BUCKET`,
+and `AWS_REGION`. The EC2 instance role supplies temporary AWS credentials;
+do not configure long-lived access keys. Local development uses
+`STORAGE_BACKEND=local`.
 
 > Warning: `docker compose down -v` deletes database and uploaded-file volumes,
 > including locally stored verification documents.

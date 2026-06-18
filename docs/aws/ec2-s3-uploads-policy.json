@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListUploadPrefixes",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::yolmates-prod-uploads-529349714028-eu-central-1",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "avatars/*",
+            "verifications/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ManageUploadObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::yolmates-prod-uploads-529349714028-eu-central-1/avatars/*",
+        "arn:aws:s3:::yolmates-prod-uploads-529349714028-eu-central-1/verifications/*"
+      ]
+    }
+  ]
+}
