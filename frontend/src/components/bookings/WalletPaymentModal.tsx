@@ -80,7 +80,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
     try {
       const wallet = await paymentsService.getWallet();
       setBalance(wallet.availableBalance);
-    } catch (e) {
+    } catch {
       // Error handled silently
     } finally {
       setIsLoading(false);
@@ -110,7 +110,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       await paymentsService.payFromWallet(booking.id);
       setIsSuccess(true);
       onPaymentSuccess();
-    } catch (error) {
+    } catch {
       alert('Payment failed');
     } finally {
       setIsPaying(false);
@@ -122,7 +122,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       setIsPaying(true);
       await paymentsService.topupWallet(missingAmount, crypto.randomUUID());
       await fetchBalance();
-    } catch (error) {
+    } catch {
       alert('Top-up failed');
     } finally {
       setIsPaying(false);

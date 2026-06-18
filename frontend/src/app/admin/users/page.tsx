@@ -269,12 +269,12 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     const targetPage = isFilterChange.current ? 1 : page;
-    if (isFilterChange.current) {
-      setPage(1);
-      isFilterChange.current = false;
-    }
-    setIsLoading(true);
     const timeoutId = window.setTimeout(() => {
+      if (isFilterChange.current) {
+        setPage(1);
+        isFilterChange.current = false;
+      }
+      setIsLoading(true);
       void fetchUsers(targetPage);
     }, 300);
     return () => window.clearTimeout(timeoutId);

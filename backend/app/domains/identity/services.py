@@ -166,12 +166,9 @@ class IdentityService:
         ):
             raise HTTPException(status_code=400, detail="Phone already registered")
 
-        if (
-            user_in.email
-            and user_in.email != user.email
-            and self.users.get_by_email(user_in.email)
-        ):
-            raise HTTPException(status_code=400, detail="Email already registered")
+        if user_in.email and user_in.email != user.email:
+            if self.users.get_by_email(user_in.email):
+                raise HTTPException(status_code=400, detail="Email already registered")
 
         return self.users.update(user, user_in)
 
@@ -303,11 +300,9 @@ class IdentityService:
         if user.is_email_verified:
             raise HTTPException(status_code=400, detail="Email is already verified")
 
-        user.is_email_verified = True  # type: ignore[assignment]
-        self.users.db.commit()
-        self.users.db.refresh(user)
+        background_tasks.add_task(self._send_email_verify_code, user.email, redis_client)
 
-        return {"message": "Email verified successfully"}
+        return {"message": "Verification code sent to your email"}
 
     def verify_email(self, current_user: CurrentUser, otp: str, redis_client):
         user = self.get_current_user_model(current_user)

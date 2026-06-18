@@ -238,7 +238,7 @@ export default function TripDetailsPage() {
     let bookingId = '';
     try {
       bookingId = await createBooking(trip.id, seats);
-    } catch (err) {
+    } catch (error) {
       bookingId = '';
     } finally {
       setIsBookingLoading(false);

@@ -141,7 +141,7 @@ export default function CreateTripPage() {
       try {
         const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
         return response.map(mapApiVehicleToVehicle);
-      } catch (err) {
+      } catch {
         return [];
       }
     },
@@ -271,7 +271,7 @@ export default function CreateTripPage() {
       if (response?.description) {
         setValue('comment', response.description);
       }
-    } catch (error) {
+    } catch {
       // Error handled silently
     } finally {
       setIsDrafting(false);
@@ -400,7 +400,7 @@ export default function CreateTripPage() {
       clearErrors(coordField);
       setValue(coordField, pos);
       setValue(field, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-    } catch (err) {
+    } catch {
       // Error handled silently
     }
   };

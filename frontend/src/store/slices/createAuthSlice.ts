@@ -88,10 +88,6 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       await authService.requestEmailVerification();
-      const currentUser = get().currentUser;
-      if (currentUser) {
-        set({ currentUser: { ...currentUser, isEmailVerified: true } });
-      }
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -167,7 +163,7 @@ export const createAuthSlice: StateCreator<
   logout: async () => {
     try {
       await authService.logout();
-    } catch {
+    } catch (error) {
       // Error handled silently
     } finally {
       get().clearSession();

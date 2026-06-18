@@ -199,7 +199,7 @@ def test_request_otp_rate_limit(enable_rate_limiter):
 
     test_ip = f"10.1.{random.randint(0, 255)}.{random.randint(0, 255)}"
     responses = []
-    for _ in range(6):
+    for _ in range(21):
         response = client.post(
             f"/api/v1/auth/request-otp?phone={TEST_PHONE}",
             headers={"X-Forwarded-For": test_ip},

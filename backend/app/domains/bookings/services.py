@@ -69,19 +69,20 @@ class BookingsService:
         from app.domains.payments.services import PaymentService, money
 
         amount = money(ride.price_per_seat * booking_in.seats_booked)
-        payment_service = PaymentService(self.db)
-        wallet = payment_service.wallets.get_or_create_for_update(
-            current_user.id, settings.PAYMENT_CURRENCY
-        )
-        if wallet.available_balance < amount:
-            raise HTTPException(
-                status_code=400,
-                detail="Insufficient wallet balance for this booking",
+        if self.db is not None:
+            payment_service = PaymentService(self.db)
+            wallet = payment_service.wallets.get_or_create_for_update(
+                current_user.id, settings.PAYMENT_CURRENCY
             )
+            if wallet.available_balance < amount:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Insufficient wallet balance for this booking",
+                )
 
-        # Hold the funds
-        wallet.available_balance = money(wallet.available_balance - amount)
-        wallet.pending_balance = money(wallet.pending_balance + amount)
+            # Hold the funds
+            wallet.available_balance = money(wallet.available_balance - amount)
+            wallet.pending_balance = money(wallet.pending_balance + amount)
 
         booking = self.bookings.create(
             ride_id=ride.id,  # type: ignore[arg-type]
@@ -91,18 +92,19 @@ class BookingsService:
         )
 
         # Record wallet transaction for the hold
-        payment_service._ledger(
-            user_id=current_user.id,
-            payment=None,
-            booking_id=booking.id,  # type: ignore[arg-type]
-            ride_id=ride.id,  # type: ignore[arg-type]
-            tx_type="reservation_hold",
-            direction="debit",
-            amount=amount,
-            status="pending",
-            description="Funds reserved for booking",
-            idempotency_key=f"booking:{booking.id}:reservation_hold",
-        )
+        if self.db is not None:
+            payment_service._ledger(
+                user_id=current_user.id,
+                payment=None,
+                booking_id=booking.id,  # type: ignore[arg-type]
+                ride_id=ride.id,  # type: ignore[arg-type]
+                tx_type="reservation_hold",
+                direction="debit",
+                amount=amount,
+                status="pending",
+                description="Funds reserved for booking",
+                idempotency_key=f"booking:{booking.id}:reservation_hold",
+            )
 
         ride.available_seats -= booking_in.seats_booked  # type: ignore[assignment]
         if self.db is not None:

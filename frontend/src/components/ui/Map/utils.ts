@@ -60,7 +60,7 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
   const fallbackPath = React.useMemo(() => {
     if (!origin || !destination) return [];
     return getCurvedPath([origin.lat, origin.lng], [destination.lat, destination.lng]);
-  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+  }, [origin, destination]);
 
   if (!origin || !destination) {
     return fallbackPath;
@@ -125,7 +125,7 @@ export function useOsrmMultipleRoutes(
     return () => {
       active = false;
     };
-  }, [tripsKey]);
+  }, [tripsKey, trips]);
 
   return routes;
 }

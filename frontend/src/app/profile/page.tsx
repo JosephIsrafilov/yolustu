@@ -72,6 +72,9 @@ const PROFILE_I18N = {
     submitOtpBtn: 'Kodu təsdiqlə',
     emailVerifySuccess: 'Email uğurla təsdiqləndi!',
     emailVerifyError: 'Emaili təsdiqləmək mümkün olmadı.',
+    emailVerifyCodeSent: 'Doğrulama kodu emailinizə göndərildi.',
+    confirmCodeBtn: 'Kodu təsdiqlə',
+    resendCodeBtn: 'Kodu yenidən göndər',
     otpSentSuccess: 'Kod emailinizə göndərildi.',
   },
   ru: {
@@ -123,6 +126,9 @@ const PROFILE_I18N = {
     submitOtpBtn: 'Подтвердить код',
     emailVerifySuccess: 'Email успешно подтвержден!',
     emailVerifyError: 'Не удалось подтвердить email.',
+    emailVerifyCodeSent: 'Код подтверждения отправлен на ваш email.',
+    confirmCodeBtn: 'Подтвердить код',
+    resendCodeBtn: 'Отправить код повторно',
     otpSentSuccess: 'Код был отправлен на ваш email.',
   },
   en: {
@@ -174,6 +180,9 @@ const PROFILE_I18N = {
     submitOtpBtn: 'Confirm OTP',
     emailVerifySuccess: 'Email verified successfully!',
     emailVerifyError: 'Failed to verify email.',
+    emailVerifyCodeSent: 'Verification code sent to your email.',
+    confirmCodeBtn: 'Confirm Code',
+    resendCodeBtn: 'Resend code',
     otpSentSuccess: 'OTP has been sent to your email.',
   },
 };
@@ -353,9 +362,11 @@ interface VehiclePayload {
 }
 
 function EmailVerificationSection({ copy }: VerificationSectionProps) {
-  const { currentUser, requestEmailVerification } = useAppStore();
+  const { currentUser, requestEmailVerification, verifyEmail } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
 
   if (!currentUser || !currentUser.email) return null;
 
@@ -363,6 +374,20 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
     setLoading(true);
     setMsg({ type: '', text: '' });
     const success = await requestEmailVerification();
+    if (success) {
+      setOtpSent(true);
+      setMsg({ type: 'success', text: copy.emailVerifyCodeSent ?? 'Verification code sent to your email.' });
+    } else {
+      setMsg({ type: 'error', text: useAppStore.getState().lastError || copy.emailVerifyError });
+    }
+    setLoading(false);
+  };
+
+  const handleVerify = async () => {
+    if (!otp.trim()) return;
+    setLoading(true);
+    setMsg({ type: '', text: '' });
+    const success = await verifyEmail(otp.trim());
     if (success) {
       setMsg({ type: 'success', text: copy.emailVerifySuccess });
     } else {
@@ -394,9 +419,34 @@ function EmailVerificationSection({ copy }: VerificationSectionProps) {
             </div>
           )}
 
-          <Button fullWidth onClick={handleRequest} loading={loading}>
-            {copy.verifyEmailBtn}
-          </Button>
+          {otpSent ? (
+            <>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                placeholder="6-digit code"
+                className="w-full border border-border rounded-lg px-4 py-2 text-center text-lg tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button fullWidth onClick={handleVerify} loading={loading}>
+                {copy.confirmCodeBtn ?? 'Confirm Code'}
+              </Button>
+              <button
+                type="button"
+                onClick={handleRequest}
+                disabled={loading}
+                className="w-full text-sm text-text-secondary hover:text-text underline"
+              >
+                {copy.resendCodeBtn ?? 'Resend code'}
+              </button>
+            </>
+          ) : (
+            <Button fullWidth onClick={handleRequest} loading={loading}>
+              {copy.verifyEmailBtn}
+            </Button>
+          )}
         </div>
       )}
     </Card>

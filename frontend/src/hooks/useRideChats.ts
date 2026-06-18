@@ -10,15 +10,18 @@ export function useRideChats(enabled = true) {
 
   React.useEffect(() => {
     if (!enabled) {
-      // eslint-disable-next-line
-      setRideChats([]);
-      // eslint-disable-next-line
-      setLoading(false);
-      return;
+      // ponytail: defer to avoid synchronous setState in effect body
+      const id = setTimeout(() => {
+        setRideChats([]);
+        setLoading(false);
+      }, 0);
+      return () => clearTimeout(id);
     }
 
     let cancelled = false;
-    setLoading(true);
+    const id = setTimeout(() => {
+      if (!cancelled) setLoading(true);
+    }, 0);
 
     messagesService
       .getChats()
@@ -33,6 +36,7 @@ export function useRideChats(enabled = true) {
         }
       })
       .finally(() => {
+        clearTimeout(id);
         if (!cancelled) {
           setLoading(false);
         }

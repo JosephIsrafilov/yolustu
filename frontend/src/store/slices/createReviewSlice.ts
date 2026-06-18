@@ -14,7 +14,7 @@ export const createReviewSlice: StateCreator<
     try {
       const reviews = await reviewsService.getReviewsForUser(targetUserId);
       set({ reviews });
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -26,7 +26,7 @@ export const createReviewSlice: StateCreator<
         reviews: [review, ...state.reviews],
       }));
       return true;
-    } catch (error) {
+    } catch {
       // Error handled silently
       return false;
     }

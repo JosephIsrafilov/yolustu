@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React from 'react';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
@@ -185,9 +186,11 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
                               rel="noopener noreferrer"
                               className="block overflow-hidden rounded-xl"
                             >
-                              <img
+                              <Image
                                 src={attachment}
                                 alt={`${t.attachment} ${index + 1}`}
+                                width={500}
+                                height={256}
                                 className="max-h-64 w-full rounded-xl object-cover"
                               />
                             </a>

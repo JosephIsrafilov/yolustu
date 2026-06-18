@@ -47,6 +47,7 @@ class FakeRide:
     driver: object | None = None
     share_token: str | None = None
     vehicle_id: UUID = field(default_factory=uuid4)
+    available_spots: list | None = None
 
 
 @dataclass
@@ -61,6 +62,7 @@ class FakeBooking:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: FakeRide | None = None
     passenger: object | None = None
+    selected_spots: list | None = None
 
 
 class FakeBookingRepository:
@@ -248,7 +250,8 @@ def test_create_booking_admin_role_forbidden():
     assert "Admin cannot book rides" in exc.value.detail
 
 
-def test_create_booking_db_commit_and_refresh():
+@patch("app.domains.bookings.services.PaymentService")
+def test_create_booking_db_commit_and_refresh(mock_ps_class):
     driver_id = uuid4()
     ride = FakeRide(
         id=uuid4(),

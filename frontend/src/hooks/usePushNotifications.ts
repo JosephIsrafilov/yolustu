@@ -113,7 +113,7 @@ export function usePushNotifications() {
               }
             }
           }
-        } catch (error) {
+        } catch {
           // Error handled silently
         }
       };

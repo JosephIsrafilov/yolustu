@@ -15,7 +15,7 @@ export function useGoogleMapsLoader() {
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     if (!apiKey) {
-      setLoadError(new Error('Google Maps API key is missing'));
+      setTimeout(() => setLoadError(new Error('Google Maps API key is missing')), 0);
       return;
     }
 
@@ -48,7 +48,7 @@ export function useGoogleMapsLoader() {
       .catch((err) => {
         setLoadError(err);
       });
-  }, []);
+  }, [isLoaded]);
 
   return { isLoaded, loadError };
 }

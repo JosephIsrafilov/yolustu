@@ -105,7 +105,7 @@ export default function BookingsPage() {
                         return;
                       }
                       window.location.href = res.checkoutUrl;
-                    } catch (error) {
+                    } catch {
                       alert(copy.paymentFail);
                     }
                   }}

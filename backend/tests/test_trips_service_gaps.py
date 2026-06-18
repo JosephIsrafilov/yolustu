@@ -59,6 +59,7 @@ class FakeRide:
     vehicle: object | None = None
     driver: object | None = None
     share_token: str = "test-share-token"
+    available_spots: list | None = None
 
 
 class FakeVehicleRepository:

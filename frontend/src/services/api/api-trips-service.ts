@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api-client';
-import type { TripsService, PaginatedResponse, PublicTrackInfo } from '@/services/contracts/trips-service';
+import type { TripsService, PublicTrackInfo } from '@/services/contracts/trips-service';
 import type { TripSearchFilters } from '@/types';
 import { getCityCoordinates } from '@/lib/utils';
 import {

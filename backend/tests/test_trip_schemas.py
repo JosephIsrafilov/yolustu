@@ -30,6 +30,7 @@ def make_ride(origin_location, destination_location):
         destination_location=destination_location,
         vehicle=None,
         driver=None,
+        available_spots=None,
     )
 
 
@@ -118,6 +119,7 @@ def test_ride_response_handles_null_values():
         destination_location={"lat": 40.4093, "lon": 49.8671},
         vehicle=None,
         driver=None,
+        available_spots=None,
     )
 
     response = RideResponse.model_validate(ride_data)

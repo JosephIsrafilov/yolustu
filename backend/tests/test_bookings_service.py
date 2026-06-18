@@ -27,6 +27,7 @@ class FakeRide:
         default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=1)
     )
     status: str = "active"
+    available_spots: list | None = None
 
 
 @dataclass
@@ -41,6 +42,7 @@ class FakeBooking:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
     passenger: object | None = None
+    selected_spots: list | None = None
 
 
 class FakeBookingRepository:
