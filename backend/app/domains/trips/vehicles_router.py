@@ -12,7 +12,7 @@ from app.domains.trips.services import TripsService
 router = APIRouter()
 
 
-@router.post("/", response_model=VehicleResponse)
+@router.post("", response_model=VehicleResponse)
 def create_vehicle(
     vehicle_in: VehicleCreate,
     db: Session = Depends(get_db),

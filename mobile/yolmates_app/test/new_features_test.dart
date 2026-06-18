@@ -26,6 +26,10 @@ void main() {
       ),
     );
 
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
     // Verify origin and destination are displayed in the HUD
     expect(find.text('Bakı → Gəncə'), findsOneWidget);
     // Verify CustomPaint is rendered

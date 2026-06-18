@@ -18,11 +18,12 @@ import 'auth_token_storage.dart';
 class ApiClient {
   final Dio _dio;
   final AuthTokenStorage _tokenStorage;
+  final void Function()? onUnauthenticated;
 
   /// Prevent infinite refresh loops.
   bool _isRefreshing = false;
 
-  ApiClient(this._tokenStorage)
+  ApiClient(this._tokenStorage, {this.onUnauthenticated})
       : _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
@@ -62,12 +63,18 @@ class ApiClient {
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
         await _refreshAndRetry();
-        return await _dio.get<T>(
-          path,
-          queryParameters: queryParameters,
-          options: options,
-        );
+        try {
+          return await _dio.get<T>(
+            path,
+            queryParameters: queryParameters,
+            options: options,
+          );
+        } on DioException catch (retryErr) {
+          if (retryErr.error is ApiException) throw retryErr.error!;
+          rethrow;
+        }
       }
+      if (e.error is ApiException) throw e.error!;
       rethrow;
     }
   }
@@ -91,13 +98,19 @@ class ApiClient {
           !_isRefreshing &&
           path != '/auth/refresh') {
         await _refreshAndRetry();
-        return await _dio.post<T>(
-          path,
-          data: data is FormData ? data.clone() : data,
-          queryParameters: queryParameters,
-          options: options,
-        );
+        try {
+          return await _dio.post<T>(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          );
+        } on DioException catch (retryErr) {
+          if (retryErr.error is ApiException) throw retryErr.error!;
+          rethrow;
+        }
       }
+      if (e.error is ApiException) throw e.error!;
       rethrow;
     }
   }
@@ -119,13 +132,19 @@ class ApiClient {
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
         await _refreshAndRetry();
-        return await _dio.put<T>(
-          path,
-          data: data,
-          queryParameters: queryParameters,
-          options: options,
-        );
+        try {
+          return await _dio.put<T>(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          );
+        } on DioException catch (retryErr) {
+          if (retryErr.error is ApiException) throw retryErr.error!;
+          rethrow;
+        }
       }
+      if (e.error is ApiException) throw e.error!;
       rethrow;
     }
   }
@@ -147,13 +166,19 @@ class ApiClient {
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
         await _refreshAndRetry();
-        return await _dio.patch<T>(
-          path,
-          data: data,
-          queryParameters: queryParameters,
-          options: options,
-        );
+        try {
+          return await _dio.patch<T>(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          );
+        } on DioException catch (retryErr) {
+          if (retryErr.error is ApiException) throw retryErr.error!;
+          rethrow;
+        }
       }
+      if (e.error is ApiException) throw e.error!;
       rethrow;
     }
   }
@@ -175,13 +200,19 @@ class ApiClient {
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
         await _refreshAndRetry();
-        return await _dio.delete<T>(
-          path,
-          data: data,
-          queryParameters: queryParameters,
-          options: options,
-        );
+        try {
+          return await _dio.delete<T>(
+            path,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          );
+        } on DioException catch (retryErr) {
+          if (retryErr.error is ApiException) throw retryErr.error!;
+          rethrow;
+        }
       }
+      if (e.error is ApiException) throw e.error!;
       rethrow;
     }
   }
@@ -193,6 +224,7 @@ class ApiClient {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null) {
         await _tokenStorage.clearTokens();
+        onUnauthenticated?.call();
         throw ApiException.unauthorized();
       }
 
@@ -216,9 +248,11 @@ class ApiClient {
       }
 
       await _tokenStorage.clearTokens();
+      onUnauthenticated?.call();
       throw ApiException.unauthorized();
     } catch (e) {
       await _tokenStorage.clearTokens();
+      onUnauthenticated?.call();
       if (e is ApiException) rethrow;
       throw ApiException.unauthorized();
     } finally {

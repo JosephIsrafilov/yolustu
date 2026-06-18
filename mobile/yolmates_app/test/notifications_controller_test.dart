@@ -1,10 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yolmates_app/features/notifications/data/notifications_controller.dart';
+import 'package:yolmates_app/core/network/providers.dart';
+import 'package:yolmates_app/features/auth/data/session_storage.dart';
 
 void main() {
   test('addNotification prepends new items and de-duplicates by id', () {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        sessionStorageProvider.overrideWithValue(InMemorySessionStorage()),
+      ],
+    );
     addTearDown(container.dispose);
 
     final controller = container.read(notificationsProvider.notifier);

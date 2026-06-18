@@ -50,7 +50,7 @@ class ApiDriverRepository implements DriverRepository {
     try {
       final origin = CityCoordinates.get(ride.fromCity);
       final dest = CityCoordinates.get(ride.toCity);
-      final response = await _client.post('/rides/', data: {
+      final response = await _client.post('/rides', data: {
         'origin_city': ride.fromCity,
         'destination_city': ride.toCity,
         'departure_time': ride.departureTime.toIso8601String(),
@@ -119,7 +119,7 @@ class ApiDriverRepository implements DriverRepository {
   @override
   Future<Vehicle> saveVehicle(Vehicle vehicle) async {
     try {
-      final response = await _client.post('/vehicles/', data: {
+      final response = await _client.post('/vehicles', data: {
         'brand': vehicle.brand,
         'model': vehicle.model,
         'year': vehicle.year,

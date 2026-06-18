@@ -5,10 +5,10 @@ import 'package:yolmates_app/features/auth/data/auth_mode.dart';
 
 void main() {
   group('AuthMode', () {
-    test('defaults to mock', () {
-      // No --dart-define means mode should stay local/demo friendly.
-      expect(AuthMode.isApi, isFalse);
-      expect(AuthMode.isMock, isTrue);
+    test('defaults to api', () {
+      // Default changed to api
+      expect(AuthMode.isApi, isTrue);
+      expect(AuthMode.isMock, isFalse);
     });
   });
 

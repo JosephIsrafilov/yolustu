@@ -12,7 +12,7 @@ from app.domains.identity.dependencies import CurrentUser, get_current_user
 router = APIRouter()
 
 
-@router.post("/", response_model=ReviewResponse)
+@router.post("", response_model=ReviewResponse)
 def create_review(
     review_in: ReviewCreate,
     db: Session = Depends(get_db),

@@ -21,7 +21,7 @@ from app.domains.trips.tracking import tracking_manager
 router = APIRouter()
 
 
-@router.post("/", response_model=RideResponse)
+@router.post("", response_model=RideResponse)
 @limiter.limit("5/minute")
 def create_ride(
     request: Request,
