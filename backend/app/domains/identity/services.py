@@ -178,6 +178,7 @@ class IdentityService:
         if settings.SMS_ENABLED:
             try:
                 import boto3
+
                 sns = boto3.client(
                     "sns",
                     region_name=settings.AWS_REGION,
