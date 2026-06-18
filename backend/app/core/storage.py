@@ -181,6 +181,10 @@ def get_storage() -> StorageBackend:
     Production without creds    → LocalStorage (files stored in Docker volume)
     Development                 → LocalStorage (no credentials needed)
     """
-    if settings.ENVIRONMENT == "production" and settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+    if (
+        settings.ENVIRONMENT == "production"
+        and settings.SUPABASE_URL
+        and settings.SUPABASE_SERVICE_ROLE_KEY
+    ):
         return SupabaseStorage()
     return LocalStorage()

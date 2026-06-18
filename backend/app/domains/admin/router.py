@@ -164,12 +164,13 @@ def get_verification_document(
     from app.core.storage import LocalStorage as _LocalStorage
 
     if isinstance(storage, _LocalStorage):
-        file_path = storage.get_local_path(filename, settings.STORAGE_BUCKET_VERIFICATIONS)
+        file_path = storage.get_local_path(
+            filename, settings.STORAGE_BUCKET_VERIFICATIONS
+        )
         if file_path and file_path.is_file():
             return FileResponse(str(file_path), filename=filename)
 
     raise HTTPException(status_code=404, detail="Verification document not found")
-
 
 
 @router.patch("/verifications/{user_id}/approve", response_model=UserResponse)
