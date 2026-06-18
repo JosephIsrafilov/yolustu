@@ -41,6 +41,7 @@ class FakeBooking:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
     passenger: object | None = None
+    selected_spots: object | None = None
 
 
 class FakeBookingRepository:
