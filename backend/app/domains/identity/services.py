@@ -22,12 +22,20 @@ from app.domains.identity.schemas import LoginInput, UserCreate, UserUpdate
 logger = logging.getLogger(__name__)
 
 
+def mask_phone_number(phone: str) -> str:
+    if len(phone) <= 4:
+        return "*" * len(phone)
+    if len(phone) <= 8:
+        return f"{phone[:2]}****{phone[-2:]}"
+    return f"{phone[:4]}****{phone[-4:]}"
+
+
 class IdentityService:
     def __init__(self, db: Session):
         self.users = UserRepository(db)
 
     def request_otp(self, phone: str, redis_client):
-        self._send_otp_simulation(phone, redis_client)
+        self._send_otp(phone, redis_client)
         return {"message": "OTP sent successfully", "phone": phone}
 
     def verify_otp(self, phone: str, otp: str, redis_client):
@@ -53,7 +61,7 @@ class IdentityService:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         user = self.users.create(user_in, get_password_hash(user_in.password))
-        self._send_otp_simulation(user.phone, redis_client)  # type: ignore[arg-type]
+        self._send_otp(user.phone, redis_client)  # type: ignore[arg-type]
         return self._create_auth_session(user, redis_client)
 
     def login(self, login_data: LoginInput, redis_client):
@@ -172,26 +180,48 @@ class IdentityService:
         self.users.add_device_token(current_user.id, token)
 
     @staticmethod
-    def _send_otp_simulation(phone: str, redis_client):
+    def _send_otp(phone: str, redis_client):
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"otp:{phone}", 300, otp)
-        if settings.SMS_ENABLED:
-            try:
-                import boto3
-
-                sns = boto3.client(
-                    "sns",
-                    region_name=settings.AWS_REGION,
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID or None,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY or None,
-                )
-                sns.publish(PhoneNumber=phone, Message=f"Your Yolmates OTP: {otp}")
-            except Exception as e:
-                logger.error("SNS SMS failed for %s: %s", phone, e)
-                raise HTTPException(status_code=500, detail="Failed to send OTP")
-        else:
+        if not settings.SMS_ENABLED:
             # ponytail: dev fallback — OTP visible in CloudWatch/stdout logs
             logger.info("SMS OTP (dev) for %s: %s", phone, otp)
+            return otp
+
+        try:
+            import boto3
+
+            client_kwargs = {"region_name": settings.AWS_REGION}
+            if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+                client_kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+                client_kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+
+            sns = boto3.client("sns", **client_kwargs)
+            message_attributes = {
+                "AWS.SNS.SMS.SMSType": {
+                    "DataType": "String",
+                    "StringValue": "Transactional",
+                }
+            }
+            if settings.SMS_SENDER_ID:
+                message_attributes["AWS.SNS.SMS.SenderID"] = {
+                    "DataType": "String",
+                    "StringValue": settings.SMS_SENDER_ID,
+                }
+
+            sns.publish(
+                PhoneNumber=phone,
+                Message=(
+                    f"Your Yolmates verification code is: {otp}. "
+                    "It expires in 5 minutes."
+                ),
+                MessageAttributes=message_attributes,
+            )
+        except Exception:
+            logger.exception("SNS SMS failed for %s", mask_phone_number(phone))
+            raise HTTPException(status_code=500, detail="Failed to send OTP")
+
+        logger.info("OTP SMS sent to %s", mask_phone_number(phone))
         return otp
 
     def request_password_reset(

@@ -1,18 +1,23 @@
 """Service-layer unit tests for IdentityService — covers missed lines."""
 
+import sys
 import pytest
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import cast
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.identity.schemas import LoginInput, UserCreate, UserUpdate
+from app.domains.identity import services as identity_services
 from app.domains.identity.services import IdentityService
 
 
@@ -112,12 +117,15 @@ class FakeUserRepo:
 class FakeRedis:
     def __init__(self):
         self.store: dict[str, str] = {}
+        self.ttls: dict[str, int] = {}
 
     def get(self, key):
         return self.store.get(key)
 
     def setex(self, key, ttl, value):
         self.store[key] = value
+        self.ttls[key] = ttl
+        return True
 
     def delete(self, key):
         self.store.pop(key, None)
@@ -148,6 +156,90 @@ def test_request_otp_stores_key():
     r = svc.request_otp("+994501234567", redis)
     assert r["phone"] == "+994501234567"
     assert "otp:+994501234567" in redis.store
+    assert redis.ttls["otp:+994501234567"] == 300
+
+
+def test_request_otp_sms_disabled_stores_otp_without_sns(monkeypatch):
+    svc, _, redis = make_service()
+
+    monkeypatch.setattr(settings, "SMS_ENABLED", False)
+    monkeypatch.setattr(identity_services.secrets, "randbelow", lambda _: 23456)
+
+    response = svc.request_otp("+994501234567", redis)
+
+    assert response == {
+        "message": "OTP sent successfully",
+        "phone": "+994501234567",
+    }
+    assert redis.store["otp:+994501234567"] == "123456"
+    assert redis.ttls["otp:+994501234567"] == 300
+
+
+def test_request_otp_sms_enabled_calls_sns_publish(monkeypatch, caplog):
+    svc, _, redis = make_service()
+    sns_client = MagicMock()
+    boto3_client = MagicMock(return_value=sns_client)
+
+    monkeypatch.setattr(settings, "SMS_ENABLED", True)
+    monkeypatch.setattr(settings, "AWS_REGION", "eu-central-1")
+    monkeypatch.setattr(settings, "AWS_ACCESS_KEY_ID", "")
+    monkeypatch.setattr(settings, "AWS_SECRET_ACCESS_KEY", "")
+    monkeypatch.setattr(settings, "SMS_SENDER_ID", "Yolmates")
+    monkeypatch.setattr(identity_services.secrets, "randbelow", lambda _: 23456)
+    monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=boto3_client))
+
+    with caplog.at_level("INFO", logger="app.domains.identity.services"):
+        response = svc.request_otp("+994513944224", redis)
+
+    assert response == {
+        "message": "OTP sent successfully",
+        "phone": "+994513944224",
+    }
+    assert redis.store["otp:+994513944224"] == "123456"
+    assert redis.ttls["otp:+994513944224"] == 300
+    boto3_client.assert_called_once_with("sns", region_name="eu-central-1")
+    sns_client.publish.assert_called_once_with(
+        PhoneNumber="+994513944224",
+        Message="Your Yolmates verification code is: 123456. It expires in 5 minutes.",
+        MessageAttributes={
+            "AWS.SNS.SMS.SMSType": {
+                "DataType": "String",
+                "StringValue": "Transactional",
+            },
+            "AWS.SNS.SMS.SenderID": {
+                "DataType": "String",
+                "StringValue": "Yolmates",
+            },
+        },
+    )
+    assert "OTP SMS sent to +994****4224" in caplog.text
+    assert "123456" not in caplog.text
+
+
+def test_request_otp_sms_enabled_sns_failure_raises_500(monkeypatch):
+    svc, _, redis = make_service()
+    sns_client = MagicMock()
+    sns_client.publish.side_effect = RuntimeError("sns down")
+
+    monkeypatch.setattr(settings, "SMS_ENABLED", True)
+    monkeypatch.setattr(settings, "AWS_REGION", "eu-central-1")
+    monkeypatch.setattr(settings, "AWS_ACCESS_KEY_ID", "")
+    monkeypatch.setattr(settings, "AWS_SECRET_ACCESS_KEY", "")
+    monkeypatch.setattr(settings, "SMS_SENDER_ID", "Yolmates")
+    monkeypatch.setattr(identity_services.secrets, "randbelow", lambda _: 23456)
+    monkeypatch.setitem(
+        sys.modules,
+        "boto3",
+        SimpleNamespace(client=MagicMock(return_value=sns_client)),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        svc.request_otp("+994513944224", redis)
+
+    assert exc.value.status_code == 500
+    assert exc.value.detail == "Failed to send OTP"
+    assert redis.store["otp:+994513944224"] == "123456"
+    assert redis.ttls["otp:+994513944224"] == 300
 
 
 # verify_otp

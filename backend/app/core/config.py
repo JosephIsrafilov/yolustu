@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "eu-central-1"
     SMS_ENABLED: bool = False
+    SMS_SENDER_ID: str = "Yolmates"
 
 
 settings = Settings()  # type: ignore[call-arg]
