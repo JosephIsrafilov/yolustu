@@ -11,6 +11,7 @@ import { paymentsService } from '@/services';
 import type { Payment, PaymentStatus } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
+import Icon from '@/components/ui/Icon';
 
 const STATUSES: Array<PaymentStatus | 'all'> = ['all', 'pending', 'succeeded', 'failed', 'cancelled', 'refunded'];
 
@@ -168,47 +169,64 @@ export default function AdminPaymentsPage() {
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-surface-muted">
             <tr>
-              <th className="px-4 py-3 text-left">{copy.booking}</th>
-              <th className="px-4 py-3 text-left">{copy.provider}</th>
-              <th className="px-4 py-3 text-left">{copy.amount}</th>
-              <th className="px-4 py-3 text-left">{copy.fee}</th>
-              <th className="px-4 py-3 text-left">{copy.driver}</th>
-              <th className="px-4 py-3 text-left">{copy.status}</th>
-              <th className="px-4 py-3 text-left">{copy.created}</th>
-              <th className="px-4 py-3 text-right"></th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.booking}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.provider}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.amount}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.fee}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.driver}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.status}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-left">{copy.created}</th>
+              <th className="px-3 py-2.5 md:px-4 md:py-3 text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-6 w-16 rounded-full" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                  <td className="px-4 py-3 text-right"><Skeleton className="h-8 w-16 ml-auto" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-10" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-10" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-10" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-6 w-14 rounded-full" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="px-3 py-2.5 md:px-4 md:py-3 text-right"><Skeleton className="h-8 w-16 ml-auto" /></td>
                 </tr>
               ))
             ) : loadError ? (
-              <tr><td colSpan={8} className="px-4 py-8"><ErrorBanner message={copy.loadError} onRetry={() => void loadPayments()} retryLabel={copy.retry} /></td></tr>
+              <tr><td colSpan={8} className="px-3 py-8 text-center"><ErrorBanner message={copy.loadError} onRetry={() => void loadPayments()} retryLabel={copy.retry} /></td></tr>
             ) : payments.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-text-muted">{copy.empty}</td></tr>
+              <tr><td colSpan={8} className="px-3 py-10 text-center text-text-muted">{copy.empty}</td></tr>
             ) : payments.map((payment) => (
-              <tr key={payment.id}>
-                <td className="px-4 py-3 font-mono text-xs">{payment.bookingId}</td>
-                <td className="px-4 py-3">{payment.provider}</td>
-                <td className="px-4 py-3 font-semibold">{formatPrice(payment.amount)}</td>
-                <td className="px-4 py-3">{formatPrice(payment.serviceFee)}</td>
-                <td className="px-4 py-3">{formatPrice(payment.driverAmount)}</td>
-                <td className="px-4 py-3">{payment.status}</td>
-                <td className="px-4 py-3">{new Date(payment.createdAt).toLocaleString()}</td>
-                <td className="px-4 py-3 text-right">
+              <tr key={payment.id} className="transition-colors duration-150 hover:bg-surface-dim">
+                <td className="px-3 py-2.5 md:px-4 md:py-3">
+                  <span 
+                    title={payment.bookingId} 
+                    className="truncate block max-w-[80px] md:max-w-[120px] font-mono text-xs"
+                  >
+                    {payment.bookingId}
+                  </span>
+                </td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3">{payment.provider}</td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3 font-semibold text-text">{formatPrice(payment.amount)}</td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3 text-text">{formatPrice(payment.serviceFee)}</td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3 text-text">{formatPrice(payment.driverAmount)}</td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3">{payment.status}</td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3 text-text-muted text-xs">
+                  {new Date(payment.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-3 py-2.5 md:px-4 md:py-3 text-right">
                   {payment.status === 'succeeded' && (
-                    <Button size="sm" variant="danger" disabled={pendingPaymentId === payment.id} onClick={() => refund(payment.id)}>
-                      {copy.refund}
+                    <Button 
+                      size="sm" 
+                      variant="danger" 
+                      disabled={pendingPaymentId === payment.id} 
+                      onClick={() => refund(payment.id)}
+                      className="h-8 px-2 text-xs gap-1"
+                      title={copy.refund}
+                    >
+                      <Icon name="rotate-ccw" size={14} />
+                      <span className="hidden lg:inline">{copy.refund}</span>
                     </Button>
                   )}
                 </td>

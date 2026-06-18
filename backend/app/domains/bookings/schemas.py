@@ -11,6 +11,7 @@ from app.domains.trips.schemas import RideResponse, ride_to_response
 
 class BookingBase(BaseModel):
     seats_booked: int
+    selected_spots: Optional[list[str]] = None
 
 
 class BookingCreate(BookingBase):
@@ -37,6 +38,7 @@ def booking_to_response(booking: Any) -> BookingResponse:
         ride_id=booking.ride_id,
         passenger_id=booking.passenger_id,
         seats_booked=booking.seats_booked,
+        selected_spots=booking.selected_spots,
         status=booking.status,
         total_price=booking.total_price,
         payment_deadline=booking.payment_deadline,

@@ -324,7 +324,7 @@ export default function AdminBookingsPage() {
             <tr>
               <th 
                 onClick={() => handleSort('passenger')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.passenger}</span>
@@ -337,7 +337,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('driver')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.driver}</span>
@@ -350,7 +350,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('route')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.route}</span>
@@ -363,7 +363,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('seats')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.seats}</span>
@@ -376,7 +376,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('price')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.price}</span>
@@ -389,7 +389,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -402,7 +402,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('date')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.date}</span>
@@ -413,67 +413,69 @@ export default function AdminBookingsPage() {
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-4 w-32" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-4 w-8" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-3 w-12" />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
                     <Skeleton className="h-4 w-24" />
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Skeleton className="h-8 w-20 ml-auto" />
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
+                    <Skeleton className="h-4 w-6" />
+                  </td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
+                    <div className="flex flex-col gap-1">
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-3 w-8" />
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
+                    <Skeleton className="h-4 w-16" />
+                  </td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
+                    <Skeleton className="h-8 w-16 ml-auto" />
                   </td>
                 </tr>
               ))
             ) : loadError ? (
               <tr>
-                <td colSpan={8} className="px-6 py-8">
+                <td colSpan={8} className="px-3 py-8 text-center">
                   <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
                 </td>
               </tr>
             ) : sortedBookings.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
+                <td colSpan={8} className="px-3 py-12 text-center text-text-muted">
                   {t.emptyState}
                 </td>
               </tr>
             ) : (
               sortedBookings.map(({ booking, trip, passenger, driver }) => {
                 const totalPrice = trip ? formatPrice(trip.pricePerSeat * booking.seatsRequested) : t.placeholder;
+                const passengerName = passenger?.fullName || t.placeholder;
+                const driverName = driver?.fullName || t.placeholder;
                 return (
                   <tr key={booking.id} className="transition-colors duration-150 hover:bg-surface-dim">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5">
+                      <div className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {passenger?.avatarUrl ? (
                             <Image src={passenger.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
@@ -481,11 +483,16 @@ export default function AdminBookingsPage() {
                             <Icon name="user" size={16} className="text-text-muted" />
                           )}
                         </div>
-                        <span className="font-medium text-text break-words line-clamp-2">{passenger?.fullName || t.placeholder}</span>
+                        <span 
+                          title={passengerName}
+                          className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                        >
+                          {passengerName}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5">
+                      <div className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {driver?.avatarUrl ? (
                             <Image src={driver.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
@@ -493,55 +500,90 @@ export default function AdminBookingsPage() {
                             <Icon name="user" size={16} className="text-text-muted" />
                           )}
                         </div>
-                        <span className="font-medium text-text break-words line-clamp-2">{driver?.fullName || t.placeholder}</span>
+                        <span 
+                          title={driverName}
+                          className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                        >
+                          {driverName}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-text">
                       {trip ? (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="break-words line-clamp-2">{trip.departureCity}</span>
-                          <Icon name="arrow-right" size={14} className="text-text-muted shrink-0" />
-                          <span className="break-words line-clamp-2">{trip.arrivalCity}</span>
+                        <div 
+                          title={`${trip.departureCity} → ${trip.arrivalCity}`}
+                          className="flex items-center gap-1 max-w-[150px] md:max-w-[200px]"
+                        >
+                          <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.departureCity}</span>
+                          <Icon name="arrow-right" size={12} className="text-text-muted shrink-0" />
+                          <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.arrivalCity}</span>
                         </div>
                       ) : t.placeholder}
                     </td>
-                    <td className="px-6 py-4 font-medium text-text">{booking.seatsRequested}</td>
-                    <td className="px-6 py-4 font-medium text-text">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">{booking.seatsRequested}</td>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">
                       <div className="flex flex-col">
                         <span>{totalPrice}</span>
                         {trip && (
                           <span className="text-xs text-text-muted">
-                            {t.table.perSeat} {formatPrice(trip.pricePerSeat)}
+                            {formatPrice(trip.pricePerSeat)}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4"><StatusBadge status={booking.status} /></td>
-                    <td className="px-6 py-4 text-text-muted">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5"><StatusBadge status={booking.status} /></td>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         {trip && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => router.push(ROUTES.tripDetails(trip.id))}
+                            className="h-8 px-2 text-xs gap-1"
+                            title={t.actions.view}
                           >
-                            <Icon name="file-text" size={14} /> {t.actions.view}
+                            <Icon name="file-text" size={14} />
+                            <span className="hidden lg:inline">{t.actions.view}</span>
                           </Button>
                         )}
                         {booking.status === 'pending' && (
                           <>
-                            <Button size="sm" variant="secondary" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, acceptBooking)}>
-                              <Icon name="check" size={14} /> {t.actions.confirm}
+                            <Button 
+                              size="sm" 
+                              variant="secondary" 
+                              disabled={pendingBookingId === booking.id} 
+                              onClick={() => runBookingAction(booking.id, acceptBooking)}
+                              className="h-8 px-2 text-xs gap-1"
+                              title={t.actions.confirm}
+                            >
+                              <Icon name="check" size={14} />
+                              <span className="hidden lg:inline">{t.actions.confirm}</span>
                             </Button>
-                            <Button size="sm" variant="outline" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, rejectBooking)}>
-                              <Icon name="x" size={14} /> {t.actions.reject}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              disabled={pendingBookingId === booking.id} 
+                              onClick={() => runBookingAction(booking.id, rejectBooking)}
+                              className="h-8 px-2 text-xs gap-1"
+                              title={t.actions.reject}
+                            >
+                              <Icon name="x" size={14} />
+                              <span className="hidden lg:inline">{t.actions.reject}</span>
                             </Button>
                           </>
                         )}
                         {(booking.status === 'accepted' || booking.status === 'paid') && (
-                          <Button size="sm" variant="danger" disabled={pendingBookingId === booking.id} onClick={() => runBookingAction(booking.id, cancelBooking)}>
-                            <Icon name="ban" size={14} /> {t.actions.cancel}
+                          <Button 
+                            size="sm" 
+                            variant="danger" 
+                            disabled={pendingBookingId === booking.id} 
+                            onClick={() => runBookingAction(booking.id, cancelBooking)}
+                            className="h-8 px-2 text-xs gap-1"
+                            title={t.actions.cancel}
+                          >
+                            <Icon name="ban" size={14} />
+                            <span className="hidden lg:inline">{t.actions.cancel}</span>
                           </Button>
                         )}
                       </div>

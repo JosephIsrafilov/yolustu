@@ -12,6 +12,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    JSON,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -62,6 +63,7 @@ class Ride(Base):
         default=lambda: secrets.token_urlsafe(16),
     )
     description = Column(Text, nullable=True)
+    available_spots = Column(JSON, nullable=True)
     smoking_allowed = Column(Boolean, default=False)
     pets_allowed = Column(Boolean, default=False)
     music_allowed = Column(Boolean, default=True)

@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { useJsApiLoader } from '@react-google-maps/api';
+import { useGoogleMapsLoader } from './useGoogleMapsLoader';
 import { env } from '@/lib/env';
 import { SmartMapProps } from './types';
 import { useOsrmRoute } from './utils';
@@ -18,7 +18,7 @@ const SimpleMapRenderer = dynamic(() => import('./SimpleMapRenderer'), {
 });
 
 export default function SmartMap(props: SmartMapProps) {
-  const googleKey = env.googleMapsApiKey;
+  const googleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   const mapProvider = env.mapProvider.toLowerCase();
   const useGoogle = Boolean(googleKey) && mapProvider !== 'fallback';
   const fetchedRoute = useOsrmRoute(props.origin, props.destination);
@@ -30,14 +30,11 @@ export default function SmartMap(props: SmartMapProps) {
     return <SimpleMapRenderer {...finalProps} />;
   }
 
-  return <GoogleSmartMap googleKey={googleKey} mapProps={finalProps} />;
+  return <GoogleSmartMap mapProps={finalProps} />;
 }
 
-function GoogleSmartMap({ googleKey, mapProps }: { googleKey: string; mapProps: SmartMapProps }) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: googleKey,
-  });
+function GoogleSmartMap({ mapProps }: { mapProps: SmartMapProps }) {
+  const { isLoaded, loadError } = useGoogleMapsLoader();
 
   if (loadError) {
     return <SimpleMapRenderer {...mapProps} />;

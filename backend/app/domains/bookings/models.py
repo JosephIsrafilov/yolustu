@@ -8,6 +8,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    JSON,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -23,6 +24,7 @@ class Booking(Base):
     ride_id = Column(UUID(as_uuid=True), ForeignKey("rides.id"), nullable=False)
     passenger_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     seats_booked = Column(Integer, nullable=False)
+    selected_spots = Column(JSON, nullable=True)
     total_price = Column(Numeric(12, 2), nullable=True)
     status = Column(String(20), default="pending")
     payment_deadline = Column(DateTime(timezone=True), nullable=True)

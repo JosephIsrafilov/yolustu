@@ -263,12 +263,10 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
     setPage(1);
   }, [query, roleFilter, statusFilter, verificationFilter]);
 
   useEffect(() => {
-    // eslint-disable-next-line
     setIsLoading(true);
     const timeoutId = window.setTimeout(() => {
       void fetchUsers(page);
@@ -489,7 +487,7 @@ export default function AdminUsersPage() {
             <tr>
               <th 
                 onClick={() => handleSort('fullName')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.user}</span>
@@ -502,7 +500,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('role')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.role}</span>
@@ -515,7 +513,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('rating')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rating}</span>
@@ -528,7 +526,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -541,7 +539,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -554,7 +552,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('verificationStatus')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.verification}</span>
@@ -567,7 +565,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -580,7 +578,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="text-left px-6 py-4 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -591,41 +589,41 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full shrink-0" />
                       <div className="flex flex-col gap-1">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-3 w-24" />
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4"><Skeleton className="h-6 w-16 rounded-full" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
-                  <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-24 ml-auto" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-12 rounded-full" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-16" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5 text-right"><Skeleton className="h-8 w-20 ml-auto" /></td>
                 </tr>
               ))
             ) : loadError ? (
               <tr>
-                <td colSpan={9} className="px-6 py-8">
+                <td colSpan={9} className="px-3 py-8 text-center">
                   <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
                 </td>
               </tr>
             ) : sortedUsers.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-6 py-12 text-center text-text-muted">
+                <td colSpan={9} className="px-3 py-12 text-center text-text-muted">
                   {t.emptyState}
                 </td>
               </tr>
@@ -651,12 +649,13 @@ export default function AdminUsersPage() {
                         : 'muted';
                 const bookingCount = bookingsByPassengerId.get(u.id) ?? 0;
                 const isExpanded = expandedUserId === u.id;
+                const userEmailOrPhone = u.email || u.phone || t.placeholder;
 
                 return (
                   <React.Fragment key={u.id}>
                     <tr className="group hover:bg-surface-dim transition-colors duration-150">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                      <td className="px-3 py-3 md:px-4 md:py-3.5">
+                        <div className="flex items-center gap-2">
                           <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center overflow-hidden shrink-0 border border-border">
                             {u.avatarUrl ? (
                               <Image src={u.avatarUrl} alt="" width={32} height={32} className="h-full w-full object-cover" />
@@ -665,55 +664,104 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className="font-medium text-text break-words line-clamp-2 block">{u.fullName}</span>
-                            <span className="text-xs text-text-muted break-words line-clamp-2 block">{u.email || u.phone || t.placeholder}</span>
+                            <span 
+                              title={u.fullName}
+                              className="font-medium text-text max-w-[100px] md:max-w-[140px] truncate block"
+                            >
+                              {u.fullName}
+                            </span>
+                            <span 
+                              title={userEmailOrPhone}
+                              className="text-xs text-text-muted max-w-[120px] md:max-w-[160px] truncate block"
+                            >
+                              {userEmailOrPhone}
+                            </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-4 md:py-3.5">
                         <Badge variant={roleVariant}>{roleLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-4 md:py-3.5">
                         <div className="flex items-center gap-1 font-medium">
                           <Icon name="star" size={14} className="text-accent-500" fill="currentColor" />
                           {u.rating.toFixed(1)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-text">{u.totalTrips}</td>
-                      <td className="px-6 py-4 text-text">{bookingCount}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{u.totalTrips}</td>
+                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text font-medium">{bookingCount}</td>
+                      <td className="px-3 py-3 md:px-4 md:py-3.5">
                         <Badge variant={verificationVariant}>{verificationLabel}</Badge>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-4 md:py-3.5">
                         {u.isBlocked ? (
                            <Badge variant="danger">{t.status.blocked}</Badge>
                         ) : (
                           <Badge variant="success">{t.status.active}</Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-text">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                          <Button size="sm" variant="outline" onClick={() => setExpandedUserId(isExpanded ? null : u.id)}>
-                            <Icon name="file-text" size={14} /> {t.actions.view}
+                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
+                      <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setExpandedUserId(isExpanded ? null : u.id)}
+                            className="h-8 px-2 text-xs gap-1"
+                            title={t.actions.view}
+                          >
+                            <Icon name="file-text" size={14} />
+                            <span className="hidden lg:inline">{t.actions.view}</span>
                           </Button>
                           {u.verificationStatus === 'pending' && (
                             <>
-                              <Button size="sm" variant="secondary" disabled={pendingActionUserId === u.id} onClick={() => handleVerify(u.id)}>
-                                <Icon name="check" size={14} /> {t.actions.verify}
+                              <Button 
+                                size="sm" 
+                                variant="secondary" 
+                                disabled={pendingActionUserId === u.id} 
+                                onClick={() => handleVerify(u.id)}
+                                className="h-8 px-2 text-xs gap-1"
+                                title={t.actions.verify}
+                              >
+                                <Icon name="check" size={14} />
+                                <span className="hidden lg:inline">{t.actions.verify}</span>
                               </Button>
-                              <Button size="sm" variant="outline" disabled={pendingActionUserId === u.id} onClick={() => handleReject(u.id)}>
-                                <Icon name="x" size={14} /> {t.actions.reject}
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                disabled={pendingActionUserId === u.id} 
+                                onClick={() => handleReject(u.id)}
+                                className="h-8 px-2 text-xs gap-1"
+                                title={t.actions.reject}
+                              >
+                                <Icon name="x" size={14} />
+                                <span className="hidden lg:inline">{t.actions.reject}</span>
                               </Button>
                             </>
                           )}
                           {u.isBlocked ? (
-                            <Button size="sm" variant="secondary" disabled={pendingActionUserId === u.id} onClick={() => handleUnblock(u.id)}>
-                              <Icon name="shield-check" size={14} /> {t.actions.unblock}
+                            <Button 
+                              size="sm" 
+                              variant="secondary" 
+                              disabled={pendingActionUserId === u.id} 
+                              onClick={() => handleUnblock(u.id)}
+                              className="h-8 px-2 text-xs gap-1"
+                              title={t.actions.unblock}
+                            >
+                              <Icon name="shield-check" size={14} />
+                              <span className="hidden lg:inline">{t.actions.unblock}</span>
                             </Button>
                           ) : (
-                            <Button size="sm" variant="danger" disabled={pendingActionUserId === u.id} onClick={() => handleBlock(u.id)}>
-                              <Icon name="shield-off" size={14} /> {t.actions.block}
+                            <Button 
+                              size="sm" 
+                              variant="danger" 
+                              disabled={pendingActionUserId === u.id} 
+                              onClick={() => handleBlock(u.id)}
+                              className="h-8 px-2 text-xs gap-1"
+                              title={t.actions.block}
+                            >
+                              <Icon name="shield-off" size={14} />
+                              <span className="hidden lg:inline">{t.actions.block}</span>
                             </Button>
                           )}
                         </div>
@@ -722,8 +770,8 @@ export default function AdminUsersPage() {
                     {isExpanded && (
                       <tr>
                         <td colSpan={9} className="bg-surface-muted/50 p-0 border-b border-border">
-                          <div className="sticky left-0 w-full max-w-[100vw] px-6 py-4">
-                            <div className="grid gap-4 sm:grid-cols-5 text-sm">
+                          <div className="sticky left-0 w-full max-w-[100vw] px-3 py-3 md:px-4 md:py-3.5">
+                            <div className="grid gap-3 sm:grid-cols-5 text-sm">
                             <div>
                               <p className="text-xs text-text-muted">{t.details.email}</p>
                               <p className="font-semibold text-text">{u.email || t.placeholder}</p>

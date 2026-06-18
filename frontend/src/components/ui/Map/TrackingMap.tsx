@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { useJsApiLoader, GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import { useGoogleMapsLoader } from './useGoogleMapsLoader';
 import type { LatLng } from '@/hooks/useTracking';
 
 interface TrackingMapProps {
@@ -136,10 +137,7 @@ function InnerTrackingMap({ route, position, heading, className }: TrackingMapPr
 }
 
 function TrackingMapLoader(props: TrackingMapProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  });
+  const { isLoaded, loadError } = useGoogleMapsLoader();
 
   if (loadError) {
     return (

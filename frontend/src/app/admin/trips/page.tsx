@@ -338,7 +338,7 @@ export default function AdminTripsPage() {
             <tr>
               <th 
                 onClick={() => handleSort('route')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.route}</span>
@@ -351,7 +351,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('driver')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.driver}</span>
@@ -364,7 +364,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('date')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.date}</span>
@@ -377,7 +377,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('pricePerSeat')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.price}</span>
@@ -390,7 +390,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('seats')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.seats}</span>
@@ -403,7 +403,7 @@ export default function AdminTripsPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="px-6 py-4 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -414,41 +414,41 @@ export default function AdminTripsPage() {
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-24" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
                       <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-3 w-12" />
                     </div>
                   </td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-4 w-8" /></td>
-                  <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                  <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-20 ml-auto" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5">
+                    <div className="flex flex-col gap-1">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-3 w-8" />
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-10" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-4 w-6" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                  <td className="px-3 py-3 md:px-4 md:py-3.5 text-right"><Skeleton className="h-8 w-16 ml-auto" /></td>
                 </tr>
               ))
             ) : loadError ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8">
+                <td colSpan={7} className="px-3 py-8 text-center">
                   <ErrorBanner message={t.loadError} onRetry={retryFetch} retryLabel={t.retry} />
                 </td>
               </tr>
             ) : sortedTrips.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                <td colSpan={7} className="px-3 py-12 text-center text-text-muted">
                   {t.emptyState}
                 </td>
               </tr>
@@ -456,17 +456,21 @@ export default function AdminTripsPage() {
               sortedTrips.map((trip) => {
                 const driver = trip.driver ?? users.find((u) => u.id === trip.driverId);
                 const showDeactivate = trip.status === 'active';
+                const driverName = driver?.fullName || t.placeholder;
                 return (
                   <tr key={trip.id} className="transition-colors duration-150 hover:bg-surface-dim">
-                    <td className="px-6 py-4 font-medium text-text">
-                      <div className="flex items-center gap-2">
-                        <span className="break-words line-clamp-2">{trip.departureCity}</span>
-                        <Icon name="arrow-right" size={14} className="text-text-muted shrink-0" />
-                        <span className="break-words line-clamp-2">{trip.arrivalCity}</span>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">
+                      <div 
+                        title={`${trip.departureCity} → ${trip.arrivalCity}`}
+                        className="flex items-center gap-1 max-w-[150px] md:max-w-[200px]"
+                      >
+                        <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.departureCity}</span>
+                        <Icon name="arrow-right" size={12} className="text-text-muted shrink-0" />
+                        <span className="truncate block max-w-[65px] md:max-w-[85px]">{trip.arrivalCity}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text-muted">
-                      <div className="flex items-center gap-2 flex-wrap">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-text-muted">
+                      <div className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center">
                           {driver?.avatarUrl ? (
                             <Image src={driver.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" />
@@ -476,29 +480,49 @@ export default function AdminTripsPage() {
                             </div>
                           )}
                         </div>
-                        <span className="break-words line-clamp-2">{driver?.fullName || t.placeholder}</span>
+                        <span 
+                          title={driverName}
+                          className="truncate block max-w-[100px] md:max-w-[140px]"
+                        >
+                          {driverName}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-text">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-text">
                       <div className="flex flex-col">
-                        <span>{new Date(trip.date).toLocaleDateString(t.locale)}</span>
-                        <span className="text-xs text-text-muted">{trip.time}</span>
+                        <span className="text-xs">{new Date(trip.date).toLocaleDateString(t.locale)}</span>
+                        <span className="text-[11px] text-text-muted">{trip.time}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-medium text-text">{formatPrice(trip.pricePerSeat)}</td>
-                    <td className="px-6 py-4 font-medium text-text">
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">{formatPrice(trip.pricePerSeat)}</td>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">
                       <span className="font-medium">{trip.seatsAvailable}</span>
                       <span className="text-text-muted">/{trip.seatsTotal}</span>
                     </td>
-                    <td className="px-6 py-4"><StatusBadge status={trip.status} type="trip" /></td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/trips/${trip.id}`)}>
-                          <Icon name="file-text" size={14} /> {t.actions.view}
+                    <td className="px-3 py-3 md:px-4 md:py-3.5"><StatusBadge status={trip.status} type="trip" /></td>
+                    <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => router.push(`/trips/${trip.id}`)}
+                          className="h-8 px-2 text-xs gap-1"
+                          title={t.actions.view}
+                        >
+                          <Icon name="file-text" size={14} />
+                          <span className="hidden lg:inline">{t.actions.view}</span>
                         </Button>
                         {showDeactivate && (
-                          <Button size="sm" variant="danger" disabled={pendingTripId === trip.id} onClick={() => cancelTrip(trip.id)}>
-                            <Icon name="ban" size={14} /> {t.actions.delete}
+                          <Button 
+                            size="sm" 
+                            variant="danger" 
+                            disabled={pendingTripId === trip.id} 
+                            onClick={() => cancelTrip(trip.id)}
+                            className="h-8 px-2 text-xs gap-1"
+                            title={t.actions.delete}
+                          >
+                            <Icon name="ban" size={14} />
+                            <span className="hidden lg:inline">{t.actions.delete}</span>
                           </Button>
                         )}
                       </div>

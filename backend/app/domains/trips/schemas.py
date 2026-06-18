@@ -60,6 +60,7 @@ class RideBase(BaseModel):
     intermediate_cities: Optional[str] = None
     status: str = "active"
     description: Optional[str] = None
+    available_spots: Optional[list[str]] = None
     smoking_allowed: bool = False
     pets_allowed: bool = False
     music_allowed: bool = True
@@ -202,6 +203,7 @@ def ride_to_response(ride: Any) -> RideResponse:
         intermediate_cities=ride.intermediate_cities,
         status=ride.status,
         description=ride.description,
+        available_spots=ride.available_spots,
         smoking_allowed=ride.smoking_allowed,
         pets_allowed=ride.pets_allowed,
         music_allowed=ride.music_allowed,

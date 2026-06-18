@@ -78,13 +78,22 @@ export default function GoogleMapRenderer({
             options={{ strokeColor: '#054752', strokeWeight: 3, strokeOpacity: 0.55 }}
           />
         ))}
-        {markers.map((m, i) => (
-          <MarkerF
-            key={i}
-            position={{ lat: m.position[0], lng: m.position[1] }}
-            onClick={m.onClick}
-          />
-        ))}
+        {markers.map((m, i) => {
+          let iconUrl: string | undefined = undefined;
+          if (m.type === 'origin') {
+            iconUrl = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+          } else if (m.type === 'destination') {
+            iconUrl = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+          }
+          return (
+            <MarkerF
+              key={i}
+              position={{ lat: m.position[0], lng: m.position[1] }}
+              icon={iconUrl}
+              onClick={m.onClick}
+            />
+          );
+        })}
         {children}
       </GoogleMap>
     </div>
