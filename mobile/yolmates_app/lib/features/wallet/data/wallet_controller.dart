@@ -99,6 +99,8 @@ class WalletController extends AsyncNotifier<WalletState> {
       state = AsyncValue.data(WalletState(
         balance: balance,
         transactions: transactions,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
       ));
     } catch (e) {
       if (current != null) {
@@ -117,6 +119,8 @@ class WalletController extends AsyncNotifier<WalletState> {
       state = AsyncValue.data(WalletState(
         balance: balance,
         transactions: transactions,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
       ));
     } catch (e) {
       if (current != null) {
@@ -124,6 +128,38 @@ class WalletController extends AsyncNotifier<WalletState> {
       }
       throw Exception(e.toString());
     }
+  }
+
+  void selectCard(String cardId) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncValue.data(current.copyWith(selectedCardId: cardId));
+  }
+
+  void addCard({
+    required String holderName,
+    required String number,
+    required String expiry,
+  }) {
+    final current = state.value;
+    if (current == null) return;
+    final digits = number.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 12) {
+      throw ArgumentError('Card number is too short');
+    }
+    final card = WalletCard(
+      id: 'card-${DateTime.now().microsecondsSinceEpoch}',
+      holderName: holderName.trim().isEmpty ? 'CARD HOLDER' : holderName.trim(),
+      last4: digits.substring(digits.length - 4),
+      expiry: expiry.trim(),
+      brand: _detectBrand(digits),
+    );
+    state = AsyncValue.data(
+      current.copyWith(
+        cards: [...current.cards, card],
+        selectedCardId: card.id,
+      ),
+    );
   }
 }
 

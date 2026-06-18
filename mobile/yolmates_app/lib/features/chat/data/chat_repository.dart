@@ -42,9 +42,9 @@ class ApiChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation> getOrCreateRideConversation(String bookingId) async {
+  Future<Conversation> getOrCreateRideConversation(String rideId) async {
     final response =
-        await _client.post('/chats/ride', data: {'booking_id': bookingId});
+        await _client.post('/chats/ride', data: {'ride_id': rideId});
     return Conversation.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -152,12 +152,12 @@ class MockChatRepository implements ChatRepository {
   Future<Conversation> getOrCreateRideConversation(String rideId) async {
     await Future.delayed(_latency);
     return _conversations.firstWhere(
-      (c) => c.bookingId == bookingId,
+      (c) => c.rideId == rideId,
       orElse: () {
         final c = Conversation(
           id: 'ride-mock',
           type: 'ride',
-          bookingId: bookingId,
+          rideId: rideId,
           status: 'open',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

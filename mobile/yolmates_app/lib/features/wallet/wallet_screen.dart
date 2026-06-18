@@ -45,7 +45,7 @@ class WalletScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppConstants.spacing16),
               children: [
                 _BalanceCard(
-                  label: l10n.walletPassengerBalance,
+                  label: l10n.walletBalance,
                   description: l10n.walletPassengerBalanceDesc,
                   amount: balance.passengerBalance,
                   currency: balance.currency,
@@ -61,41 +61,16 @@ class WalletScreen extends ConsumerWidget {
                     title: l10n.walletTopUpBtn,
                     actionLabel: l10n.walletTopUpBtn,
                     quickAmounts: const [10, 25, 50, 100],
+                    cards: walletState.cards,
+                    selectedCardId: walletState.selectedCard?.id,
                     onSubmit: (amount) => ref
                         .read(walletControllerProvider.notifier)
                         .topUpPassenger(amount),
+                    onCardSelected: (cardId) => ref
+                        .read(walletControllerProvider.notifier)
+                        .selectCard(cardId),
                     successMessage: 'Mock top up completed',
                   ),
-                ),
-                const SizedBox(height: 12),
-                _BalanceCard(
-                  label: l10n.walletDriverBalance,
-                  description: l10n.walletDriverBalanceDesc,
-                  amount: balance.driverBalance,
-                  currency: balance.currency,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.navy,
-                      AppTheme.navy.withValues(alpha: 0.8),
-                    ],
-                  ),
-                  actionLabel: l10n.walletWithdraw,
-                  actionIcon: Icons.arrow_upward,
-                  onAction: balance.driverBalance > 0
-                      ? () => _showAmountSheet(
-                            context: context,
-                            title: l10n.walletWithdraw,
-                            actionLabel: l10n.walletWithdraw,
-                            quickAmounts: const [10, 25, 50],
-                            maxAmount: balance.driverBalance,
-                            onSubmit: (amount) => ref
-                                .read(walletControllerProvider.notifier)
-                                .withdrawDriver(amount),
-                            successMessage: 'Mock withdrawal completed',
-                          )
-                      : null,
                 ),
                 if (showDriverBalance) ...[
                   const SizedBox(height: 12),
@@ -196,11 +171,14 @@ class WalletScreen extends ConsumerWidget {
     required String title,
     required String actionLabel,
     required List<double> quickAmounts,
+    required List<WalletCard> cards,
+    required String? selectedCardId,
     required Future<void> Function(double amount) onSubmit,
+    required void Function(String cardId) onCardSelected,
     required String successMessage,
     double? maxAmount,
   }) async {
-    final amount = await showModalBottomSheet<double>(
+    final request = await showModalBottomSheet<_WalletActionRequest>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -211,13 +189,16 @@ class WalletScreen extends ConsumerWidget {
         actionLabel: actionLabel,
         quickAmounts: quickAmounts,
         maxAmount: maxAmount,
+        cards: cards,
+        selectedCardId: selectedCardId,
       ),
     );
 
-    if (amount == null || !context.mounted) return;
+    if (request == null || !context.mounted) return;
 
     try {
-      await onSubmit(amount);
+      onCardSelected(request.cardId);
+      await onSubmit(request.amount);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(successMessage)),
@@ -229,6 +210,52 @@ class WalletScreen extends ConsumerWidget {
       );
     }
   }
+
+  Future<void> _showAddCardSheet({
+    required BuildContext context,
+    required void Function(String holderName, String number, String expiry)
+        onSubmit,
+  }) async {
+    final card = await showModalBottomSheet<_NewCardInput>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const _AddCardSheet(),
+    );
+
+    if (card == null || !context.mounted) return;
+    try {
+      onSubmit(card.holderName, card.number, card.expiry);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Card added')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+}
+
+class _WalletActionRequest {
+  final double amount;
+  final String cardId;
+
+  const _WalletActionRequest({required this.amount, required this.cardId});
+}
+
+class _NewCardInput {
+  final String holderName;
+  final String number;
+  final String expiry;
+
+  const _NewCardInput({
+    required this.holderName,
+    required this.number,
+    required this.expiry,
+  });
 }
 
 class _AmountSheet extends StatefulWidget {
@@ -236,11 +263,15 @@ class _AmountSheet extends StatefulWidget {
   final String actionLabel;
   final List<double> quickAmounts;
   final double? maxAmount;
+  final List<WalletCard> cards;
+  final String? selectedCardId;
 
   const _AmountSheet({
     required this.title,
     required this.actionLabel,
     required this.quickAmounts,
+    required this.cards,
+    required this.selectedCardId,
     this.maxAmount,
   });
 
@@ -250,6 +281,7 @@ class _AmountSheet extends StatefulWidget {
 
 class _AmountSheetState extends State<_AmountSheet> {
   late final TextEditingController _controller;
+  late String? _selectedCardId;
   String? _error;
 
   @override
@@ -258,6 +290,8 @@ class _AmountSheetState extends State<_AmountSheet> {
     _controller = TextEditingController(
       text: widget.quickAmounts.first.toStringAsFixed(0),
     );
+    _selectedCardId = widget.selectedCardId ??
+        (widget.cards.isEmpty ? null : widget.cards.first.id);
   }
 
   @override
@@ -267,6 +301,10 @@ class _AmountSheetState extends State<_AmountSheet> {
   }
 
   void _submit() {
+    if (_selectedCardId == null) {
+      setState(() => _error = 'Add or choose a card first');
+      return;
+    }
     final amount = double.tryParse(_controller.text.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       setState(() => _error = 'Enter a valid amount');
@@ -276,7 +314,9 @@ class _AmountSheetState extends State<_AmountSheet> {
       setState(() => _error = 'Amount exceeds available balance');
       return;
     }
-    Navigator.of(context).pop(amount);
+    Navigator.of(context).pop(
+      _WalletActionRequest(amount: amount, cardId: _selectedCardId!),
+    );
   }
 
   @override
@@ -297,6 +337,33 @@ class _AmountSheetState extends State<_AmountSheet> {
                     color: AppTheme.navy,
                   ),
             ),
+            const SizedBox(height: 16),
+            Text(
+              'Card',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.navy,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            if (widget.cards.isEmpty)
+              const Text(
+                'No card added',
+                style: TextStyle(color: AppTheme.slate500),
+              )
+            else
+              ...widget.cards.map(
+                (card) => RadioListTile<String>(
+                  contentPadding: EdgeInsets.zero,
+                  value: card.id,
+                  // ignore: deprecated_member_use
+                  groupValue: _selectedCardId,
+                  // ignore: deprecated_member_use
+                  onChanged: (value) => setState(() => _selectedCardId = value),
+                  title: Text(card.label),
+                  subtitle: Text('${card.holderName} · ${card.expiry}'),
+                ),
+              ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 8,
@@ -335,6 +402,161 @@ class _AmountSheetState extends State<_AmountSheet> {
             ElevatedButton(
               onPressed: _submit,
               child: Text(widget.actionLabel),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodSection extends StatelessWidget {
+  final List<WalletCard> cards;
+  final WalletCard? selectedCard;
+  final String emptyLabel;
+  final String addLabel;
+  final ValueChanged<String> onSelect;
+  final VoidCallback onAdd;
+
+  const _PaymentMethodSection({
+    required this.cards,
+    required this.selectedCard,
+    required this.emptyLabel,
+    required this.addLabel,
+    required this.onSelect,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (cards.isEmpty)
+          Row(
+            children: [
+              const Icon(Icons.credit_card, color: AppTheme.slate500),
+              const SizedBox(width: 12),
+              Expanded(child: Text(emptyLabel)),
+            ],
+          )
+        else
+          ...cards.map(
+            (card) => RadioListTile<String>(
+              contentPadding: EdgeInsets.zero,
+              value: card.id,
+              // ignore: deprecated_member_use
+              groupValue: selectedCard?.id,
+              // ignore: deprecated_member_use
+              onChanged: (value) {
+                if (value != null) onSelect(value);
+              },
+              title: Text(card.label),
+              subtitle: Text('${card.holderName} · ${card.expiry}'),
+              secondary: const Icon(
+                Icons.credit_card,
+                color: AppTheme.slate500,
+              ),
+            ),
+          ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: onAdd,
+          icon: const Icon(Icons.add_card),
+          label: Text(addLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddCardSheet extends StatefulWidget {
+  const _AddCardSheet();
+
+  @override
+  State<_AddCardSheet> createState() => _AddCardSheetState();
+}
+
+class _AddCardSheetState extends State<_AddCardSheet> {
+  final _holder = TextEditingController();
+  final _number = TextEditingController();
+  final _expiry = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _holder.dispose();
+    _number.dispose();
+    _expiry.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final digits = _number.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 12 || _expiry.text.trim().length < 4) {
+      setState(() => _error = 'Check card number and expiry');
+      return;
+    }
+    Navigator.of(context).pop(
+      _NewCardInput(
+        holderName: _holder.text,
+        number: _number.text,
+        expiry: _expiry.text,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Add card',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navy,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _number,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Card number',
+                hintText: '4242 4242 4242 4242',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _holder,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(labelText: 'Card holder'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _expiry,
+              keyboardType: TextInputType.datetime,
+              decoration: const InputDecoration(
+                labelText: 'Expiry',
+                hintText: 'MM/YY',
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: TextStyle(color: Colors.red.shade600)),
+            ],
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _submit,
+              child: const Text('Add card'),
             ),
           ],
         ),

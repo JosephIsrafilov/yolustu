@@ -53,6 +53,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
       fromCity: widget.fromCity,
       toCity: widget.toCity,
       date: widget.date,
+      dateTo: widget.dateTo,
       passengers: widget.passengers,
     );
     final ridesAsync = ref.watch(rideSearchProvider(params));
@@ -94,7 +95,13 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final now = DateTime.now();
     var filtered = rides.where((r) => r.departureTime.isAfter(now)).toList();
     if (_verifiedOnly) {
-      filtered = filtered.where((r) => r.driver.rating >= 4.7).toList();
+      filtered = filtered.where((r) => r.driver.isVerified || r.driver.rating >= 4.7).toList();
+    }
+    if (_womenOnly) {
+      filtered = filtered.where((r) => r.femaleOnly).toList();
+    }
+    if (_noSmoking) {
+      filtered = filtered.where((r) => !r.allowSmoking).toList();
     }
 
     switch (_sort) {
@@ -126,6 +133,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
                 fromCity: widget.fromCity,
                 toCity: widget.toCity,
                 date: widget.date,
+                dateTo: widget.dateTo,
                 passengers: widget.passengers,
               ),
             ),

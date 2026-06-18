@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _from;
   String? _to;
-  DateTime? _date;
+  DateSelection? _dateSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -191,8 +191,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(height: 12),
                             DateSelector(
-                              selectedDate: _date,
-                              onChanged: (val) => setState(() => _date = val),
+                              selectedDate: _dateSelection,
+                              onChanged: (val) =>
+                                  setState(() => _dateSelection = val),
                               isDark: true,
                             ),
                             const SizedBox(height: 16),
@@ -204,9 +205,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     : () {
                                         String route =
                                             '${AppRoutes.rideResults}?from=$_from&to=$_to';
-                                        if (_date != null) {
-                                          route +=
-                                              '&date=${_date!.toIso8601String()}';
+                                        final sel = _dateSelection;
+                                        if (sel != null && sel.date != null) {
+                                          if (sel.isWeekRange &&
+                                              sel.dateTo != null) {
+                                            route +=
+                                                '&date_from=${sel.date!.toIso8601String()}'
+                                                '&date_to=${sel.dateTo!.toIso8601String()}';
+                                          } else {
+                                            route +=
+                                                '&date=${sel.date!.toIso8601String()}';
+                                          }
                                         }
                                         context.push(route);
                                       },
@@ -377,9 +386,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 context,
                                 routes[i].fromCity,
                                 routes[i].toCity,
-                                '${routes[i].averagePrice.toStringAsFixed(0)} AZN',
-                                l10n.homeDailyTrips.replaceAll(
-                                    '15+', '${routes[i].dailyTrips}+'),
+                                '15 AZN',
                               ),
                             ],
                           ],
@@ -397,7 +404,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildRouteCard(
-      String from, String to, String price, String dailyTrips) {
+      BuildContext context, String from, String to, String price) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(

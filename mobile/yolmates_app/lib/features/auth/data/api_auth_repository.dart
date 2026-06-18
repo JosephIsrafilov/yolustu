@@ -91,25 +91,6 @@ class ApiAuthRepository implements AuthRepository {
       final meResponse = await _client.get('/users/me');
       final userJson = meResponse.data as Map<String, dynamic>?;
 
-      // Backend returns AuthSessionResponse: {accessToken, refreshToken, user}
-      // Extract tokens (support both camelCase and snake_case)
-      final accessToken =
-          data['accessToken'] as String? ?? data['access_token'] as String?;
-      final refreshToken =
-          data['refreshToken'] as String? ?? data['refresh_token'] as String?;
-      final csrfToken = data['csrf_token'] as String?; // Optional
-
-      if (accessToken == null || refreshToken == null) {
-        throw const AuthException('Token alınmadı');
-      }
-
-      await _tokenStorage.saveTokens(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        csrfToken: csrfToken,
-      );
-
-      final userJson = data['user'] as Map<String, dynamic>?;
       if (userJson == null) {
         throw const AuthException('İstifadəçi məlumatı alınmadı');
       }

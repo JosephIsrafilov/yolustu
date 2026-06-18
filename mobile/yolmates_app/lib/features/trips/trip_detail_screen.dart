@@ -12,6 +12,7 @@ import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../auth/state/auth_controller.dart';
+import '../chat/data/chat_repository.dart';
 
 /// Ride detail with driver card, car/seat/preference blocks and a pinned
 /// booking bar. Resolves the ride from the mock dataset by [tripId].
