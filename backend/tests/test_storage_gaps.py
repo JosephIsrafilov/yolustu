@@ -102,9 +102,13 @@ def test_s3_storage_upload_sign_and_delete():
         patch("app.core.storage.settings.AWS_S3_BUCKET", "yolmates-test"),
         patch("app.core.storage.settings.AWS_REGION", "eu-central-1"),
         patch("app.core.storage.settings.BACKEND_URL", "https://api.example"),
-        patch("app.core.storage.boto3.client", return_value=client),
+        patch("app.core.storage.boto3.client", return_value=client) as boto3_client,
     ):
         storage = S3Storage()
+        assert (
+            boto3_client.call_args.kwargs["endpoint_url"]
+            == "https://s3.eu-central-1.amazonaws.com"
+        )
         avatar_url = storage.upload(b"image", "avatar_test.png", "image/png", "avatars")
         assert avatar_url == "https://api.example/api/v1/users/avatar/avatar_test.png"
         client.put_object.assert_called_once_with(

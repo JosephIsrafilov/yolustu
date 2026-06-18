@@ -23,8 +23,9 @@ from abc import ABC, abstractmethod
 import logging
 from pathlib import Path
 
-import httpx
 import boto3
+import httpx
+from botocore.config import Config
 
 from app.core.config import UPLOADS_DIR, VERIFICATION_UPLOADS_DIR, settings
 
@@ -133,7 +134,15 @@ class S3Storage(StorageBackend):
         if not settings.AWS_S3_BUCKET:
             raise RuntimeError("AWS_S3_BUCKET must be set when STORAGE_BACKEND=s3.")
         self.bucket = settings.AWS_S3_BUCKET
-        self.client = boto3.client("s3", region_name=settings.AWS_REGION)
+        self.client = boto3.client(
+            "s3",
+            region_name=settings.AWS_REGION,
+            endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "virtual"},
+            ),
+        )
 
     @staticmethod
     def _key(filename: str, bucket: str) -> str:
