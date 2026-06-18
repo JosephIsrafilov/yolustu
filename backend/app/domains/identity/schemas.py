@@ -137,5 +137,15 @@ class PasswordResetConfirmInput(BaseModel):
     new_password: str = Field(min_length=8, max_length=72)
 
 
+class PhonePasswordResetRequestInput(BaseModel):
+    phone: str
+
+
+class PhonePasswordResetConfirmInput(BaseModel):
+    phone: str
+    code: str
+    new_password: str = Field(min_length=8, max_length=72)
+
+
 class VerifyEmailInput(BaseModel):
     otp: str

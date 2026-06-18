@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/routes.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
+import '../../shared/models/user.dart';
 import '../auth/state/auth_controller.dart';
 import 'data/chat_controller.dart';
 import 'data/chat_models.dart';
@@ -66,6 +69,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(AppRoutes.messages);
+  }
+
   @override
   Widget build(BuildContext context) {
     final messagesAsync =
@@ -87,26 +98,49 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
     final otherName =
         conv.id.isNotEmpty ? conv.getOtherParticipantName(currentUserId) : '';
+    final otherParticipant = conv.getOtherParticipant(currentUserId);
     final title = conv.type == 'support'
         ? l10n.chatSupport
         : (otherName.isNotEmpty ? otherName : l10n.chatTitle);
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 18)),
-            if (conv.type != 'support')
-              const Text(
-                'Onlayn',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.tealLight,
-                  fontWeight: FontWeight.normal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goBack,
+        ),
+        title: GestureDetector(
+          onTap: otherParticipant == null
+              ? null
+              : () {
+                  final profileUser = User(
+                    id: otherParticipant.userId,
+                    name: otherParticipant.userName,
+                    phone: '',
+                    avatarUrl: otherParticipant.userAvatarUrl,
+                    rating: 0,
+                    tripCount: 0,
+                  );
+                  context.push(
+                    '${AppRoutes.publicProfile}/${otherParticipant.userId}',
+                    extra: profileUser,
+                  );
+                },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 18)),
+              if (conv.type != 'support')
+                const Text(
+                  'Onlayn',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.tealLight,
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(

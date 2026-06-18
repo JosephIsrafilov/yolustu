@@ -9,12 +9,14 @@ class AdaptiveRouteMapView extends StatefulWidget {
   final String destination;
   final double progress;
   final bool showCar;
+  final bool preferGoogleMap;
 
   const AdaptiveRouteMapView({
     required this.origin,
     required this.destination,
     this.progress = 0.0,
     this.showCar = false,
+    this.preferGoogleMap = true,
     super.key,
   });
 
@@ -33,9 +35,11 @@ class _AdaptiveRouteMapViewState extends State<AdaptiveRouteMapView> {
 
   Future<void> _checkGooglePlayServices() async {
     try {
-      final availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
+      final availability = await GoogleApiAvailability.instance
+          .checkGooglePlayServicesAvailability();
       setState(() {
-        _isGooglePlayServicesAvailable = availability == GooglePlayServicesAvailability.success;
+        _isGooglePlayServicesAvailable =
+            availability == GooglePlayServicesAvailability.success;
       });
     } catch (_) {
       setState(() {
@@ -50,7 +54,7 @@ class _AdaptiveRouteMapViewState extends State<AdaptiveRouteMapView> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_isGooglePlayServicesAvailable!) {
+    if (widget.preferGoogleMap && _isGooglePlayServicesAvailable!) {
       return GoogleRouteMapView(
         origin: widget.origin,
         destination: widget.destination,

@@ -48,6 +48,32 @@ class Conversation {
     this.unreadCount = 0,
   });
 
+  Conversation copyWith({
+    String? id,
+    String? type,
+    String? rideId,
+    String? bookingId,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<ConversationParticipant>? participants,
+    ChatMessage? lastMessage,
+    int? unreadCount,
+  }) {
+    return Conversation(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      rideId: rideId ?? this.rideId,
+      bookingId: bookingId ?? this.bookingId,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      participants: participants ?? this.participants,
+      lastMessage: lastMessage ?? this.lastMessage,
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+
   factory Conversation.fromJson(Map<String, dynamic> json) {
     return Conversation(
       id: json['id'] as String,
@@ -62,6 +88,10 @@ class Conversation {
                   ConversationParticipant.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      lastMessage: json['last_message'] is Map<String, dynamic>
+          ? ChatMessage.fromJson(json['last_message'] as Map<String, dynamic>)
+          : null,
+      unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -80,6 +110,15 @@ class Conversation {
     try {
       final other = participants.firstWhere((p) => p.userId != currentUserId);
       return other.userAvatarUrl;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  ConversationParticipant? getOtherParticipant(String currentUserId) {
+    if (type == 'support') return null;
+    try {
+      return participants.firstWhere((p) => p.userId != currentUserId);
     } catch (_) {
       return null;
     }

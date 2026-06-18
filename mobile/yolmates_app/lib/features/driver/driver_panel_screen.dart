@@ -109,37 +109,39 @@ class DriverPanelScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            Consumer(
-              builder: (context, ref, _) {
-                final walletAsync = ref.watch(walletControllerProvider);
-                final requestsAsync = ref.watch(passengerRequestsProvider);
-                
-                final income = walletAsync.valueOrNull?.balance.totalEarned ?? 0.0;
-                final pendingRequests = requestsAsync.valueOrNull?.where((r) => r.status.name == 'pending').length ?? 0;
+            Consumer(builder: (context, ref, _) {
+              final walletAsync = ref.watch(walletControllerProvider);
+              final requestsAsync = ref.watch(passengerRequestsProvider);
 
-                return Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Ümumi gəlir',
-                        value: '${income.toStringAsFixed(2)} AZN',
-                        icon: Icons.account_balance_wallet_outlined,
-                        color: AppTheme.teal,
-                      ),
+              final income =
+                  walletAsync.valueOrNull?.balance.totalEarned ?? 0.0;
+              final pendingRequests = requestsAsync.valueOrNull
+                      ?.where((r) => r.status.name == 'pending')
+                      .length ??
+                  0;
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Ümumi gəlir',
+                      value: '${income.toStringAsFixed(2)} AZN',
+                      icon: Icons.account_balance_wallet_outlined,
+                      color: AppTheme.teal,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Aktiv sorğular',
-                        value: pendingRequests.toString(),
-                        icon: Icons.group_add_outlined,
-                        color: pendingRequests > 0 ? Colors.red : Colors.orange,
-                      ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Aktiv sorğular',
+                      value: pendingRequests.toString(),
+                      icon: Icons.group_add_outlined,
+                      color: pendingRequests > 0 ? Colors.red : Colors.orange,
                     ),
-                  ],
-                );
-              }
-            ),
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: 32),
 
             Text(

@@ -28,7 +28,7 @@ class RouteMapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (forceCanvas || kIsWeb || !preferGoogleMap) {
+    if (forceCanvas || kIsWeb) {
       return CanvasRouteMapView(
         origin: origin,
         destination: destination,
@@ -41,6 +41,7 @@ class RouteMapView extends StatelessWidget {
       destination: destination,
       progress: progress,
       showCar: showCar,
+      preferGoogleMap: preferGoogleMap,
     );
   }
 }

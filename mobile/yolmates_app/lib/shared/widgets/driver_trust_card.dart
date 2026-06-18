@@ -12,6 +12,7 @@ class DriverTrustCard extends ConsumerWidget {
   final bool showVerificationBadge;
   final bool showMessageButton;
   final VoidCallback? onMessageTap;
+  final VoidCallback? onProfileTap;
   final bool compact;
 
   const DriverTrustCard({
@@ -19,6 +20,7 @@ class DriverTrustCard extends ConsumerWidget {
     this.showVerificationBadge = true,
     this.showMessageButton = false,
     this.onMessageTap,
+    this.onProfileTap,
     this.compact = false,
     super.key,
   });
@@ -91,13 +93,27 @@ class DriverTrustCard extends ConsumerWidget {
                 ),
               ),
               if (showMessageButton && onMessageTap != null)
-                IconButton(
-                  onPressed: onMessageTap,
-                  icon: const Icon(Icons.message_outlined),
-                  iconSize: compact ? 20 : 24,
-                  padding: const EdgeInsets.all(8),
-                  constraints:
-                      const BoxConstraints(minWidth: 40, minHeight: 40),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onProfileTap != null)
+                      IconButton(
+                        onPressed: onProfileTap,
+                        icon: const Icon(Icons.person_outline),
+                        iconSize: compact ? 20 : 24,
+                        padding: const EdgeInsets.all(8),
+                        constraints:
+                            const BoxConstraints(minWidth: 40, minHeight: 40),
+                      ),
+                    IconButton(
+                      onPressed: onMessageTap,
+                      icon: const Icon(Icons.message_outlined),
+                      iconSize: compact ? 20 : 24,
+                      padding: const EdgeInsets.all(8),
+                      constraints:
+                          const BoxConstraints(minWidth: 40, minHeight: 40),
+                    ),
+                  ],
                 ),
             ],
           ),

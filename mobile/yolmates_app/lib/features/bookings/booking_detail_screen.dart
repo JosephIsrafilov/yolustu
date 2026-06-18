@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/models/user.dart';
 import '../chat/data/chat_repository.dart';
 import '../reviews/presentation/review_dialog.dart';
 import 'data/booking.dart';
@@ -99,7 +101,7 @@ class _DetailState extends ConsumerState<_Detail> {
     try {
       final repo = ref.read(chatRepositoryProvider);
       final conversation =
-          await repo.getOrCreateRideConversation(widget.booking.id);
+          await repo.getOrCreateRideConversation(widget.booking.rideId);
       if (mounted) context.push('/messages/${conversation.id}');
     } catch (e) {
       if (mounted) {
@@ -110,6 +112,20 @@ class _DetailState extends ConsumerState<_Detail> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _openDriverProfile() {
+    final profileUser = User(
+      id: widget.booking.driverId,
+      name: widget.booking.driverName,
+      phone: '',
+      rating: 0,
+      tripCount: 0,
+    );
+    context.push(
+      '${AppRoutes.publicProfile}/${widget.booking.driverId}',
+      extra: profileUser,
+    );
   }
 
   Future<void> _cancel() async {
@@ -180,24 +196,43 @@ class _DetailState extends ConsumerState<_Detail> {
         const SizedBox(height: 20),
         _Timeline(status: b.status),
         const SizedBox(height: 24),
-        if (b.status == BookingStatus.confirmed ||
-            b.status == BookingStatus.paid) ...[
-          SizedBox(
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: _busy ? null : _startChat,
-              icon: _busy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.message_outlined),
-              label: Text(l10n.bookingDetailMessageDriver),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.slate500,
+        if (b.driverId.isNotEmpty) ...[
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _startChat,
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.message_outlined),
+                    label: Text(l10n.bookingDetailMessageDriver),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.slate500,
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: _openDriverProfile,
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text('Profil'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.navy,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
         ],

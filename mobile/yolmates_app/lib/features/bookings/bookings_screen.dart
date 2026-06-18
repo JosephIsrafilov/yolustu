@@ -6,10 +6,12 @@ import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../shared/models/user.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../chat/data/chat_repository.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -61,13 +63,13 @@ class BookingsScreen extends ConsumerWidget {
   }
 }
 
-class _BookingCard extends StatelessWidget {
+class _BookingCard extends ConsumerWidget {
   final Booking booking;
 
   const _BookingCard({required this.booking});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final time =
         '${booking.departureTime.hour.toString().padLeft(2, '0')}:${booking.departureTime.minute.toString().padLeft(2, '0')}';
     final date =
@@ -133,6 +135,57 @@ class _BookingCard extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.tealDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final conversation = await ref
+                            .read(chatRepositoryProvider)
+                            .getOrCreateRideConversation(booking.rideId);
+                        if (context.mounted) {
+                          context.push(
+                            '${AppRoutes.messages}/${conversation.id}',
+                          );
+                        }
+                      } catch (error) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Çat açıla bilmədi: $error'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.message_outlined),
+                    label: const Text('Chat'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final profileUser = User(
+                        id: booking.driverId,
+                        name: booking.driverName,
+                        phone: '',
+                        rating: 0,
+                        tripCount: 0,
+                      );
+                      context.push(
+                        '${AppRoutes.publicProfile}/${booking.driverId}',
+                        extra: profileUser,
+                      );
+                    },
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text('Profile'),
                   ),
                 ),
               ],

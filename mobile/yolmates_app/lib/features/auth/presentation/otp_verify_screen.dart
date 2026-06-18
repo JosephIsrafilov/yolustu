@@ -7,15 +7,22 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/routes.dart';
 import '../../../core/theme.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
-  final String phone;
+  final String target;
+  final String channel;
   final String? avatar;
 
-  const OtpVerifyScreen({required this.phone, this.avatar, super.key});
+  const OtpVerifyScreen({
+    required this.target,
+    this.channel = 'sms',
+    this.avatar,
+    super.key,
+  });
 
   @override
   ConsumerState<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -80,13 +87,20 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     });
 
     try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .verifyOtp(widget.phone, code);
+      if (widget.channel == 'email') {
+        await ref.read(authControllerProvider.notifier).verifyEmailOtp(code);
+      } else {
+        await ref
+            .read(authControllerProvider.notifier)
+            .verifyOtp(widget.target, code);
+      }
       if (widget.avatar != null && mounted) {
         await ref.read(authControllerProvider.notifier).updateProfile(
               avatarUrl: widget.avatar,
             );
+      }
+      if (mounted) {
+        context.go(AppRoutes.home);
       }
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -106,7 +120,13 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).sendOtp(widget.phone);
+      if (widget.channel == 'email') {
+        await ref
+            .read(authControllerProvider.notifier)
+            .requestEmailVerification();
+      } else {
+        await ref.read(authControllerProvider.notifier).sendOtp(widget.target);
+      }
       _startTimer();
     } catch (_) {
       if (!mounted) return;
@@ -140,7 +160,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                   children: [
                     TextSpan(text: l10n.otpSubtitlePrefix),
                     TextSpan(
-                      text: widget.phone,
+                      text: widget.target,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppTheme.navy,

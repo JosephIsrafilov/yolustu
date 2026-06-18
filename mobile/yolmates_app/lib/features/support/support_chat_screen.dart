@@ -31,10 +31,14 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   ];
 
   final Map<String, String> _suggestedAnswers = {
-    'Sürücü necə ola bilərəm?': 'Sürücü olmaq üçün profilinizdən "Sürücü Rejimi"nə keçid edə bilərsiniz.',
-    'Ödəniş üsulları hansılardır?': 'Ödənişlər hazırda nağd şəkildə və ya kartla qəbul edilir.',
-    'Səyahətimi necə ləğv edim?': 'Səyahəti ləğv etmək üçün "Sifarişlər" bölməsinə daxil olun.',
-    'Əşyamı avtomobildə unutmuşam': 'Narahat olmayın. Zəhmət olmasa operatorla əlaqə saxlayın, sürücü ilə əlaqə qurarıq.',
+    'Sürücü necə ola bilərəm?':
+        'Sürücü olmaq üçün profilinizdən "Sürücü Rejimi"nə keçid edə bilərsiniz.',
+    'Ödəniş üsulları hansılardır?':
+        'Ödənişlər hazırda nağd şəkildə və ya kartla qəbul edilir.',
+    'Səyahətimi necə ləğv edim?':
+        'Səyahəti ləğv etmək üçün "Sifarişlər" bölməsinə daxil olun.',
+    'Əşyamı avtomobildə unutmuşam':
+        'Narahat olmayın. Zəhmət olmasa operatorla əlaqə saxlayın, sürücü ilə əlaqə qurarıq.',
   };
 
   bool _operatorCalled = false;
@@ -79,7 +83,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       _controller.clear();
     });
 
-    final answer = _suggestedAnswers[text] ?? 'Sualınızı başa düşmədim, lakin operator tezliklə sizinlə əlaqə saxlayacaq.';
+    final answer = _suggestedAnswers[text] ??
+        'Sualınızı başa düşmədim, lakin operator tezliklə sizinlə əlaqə saxlayacaq.';
 
     // Mock AI response
     Future.delayed(const Duration(seconds: 1), () {
@@ -158,7 +163,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                             label: Text(q,
                                 style: const TextStyle(
                                     fontSize: 13, color: AppTheme.tealDark)),
-                            backgroundColor: AppTheme.teal.withValues(alpha: 0.1),
+                            backgroundColor:
+                                AppTheme.teal.withValues(alpha: 0.1),
                             side: BorderSide.none,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -169,7 +175,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                     ActionChip(
                       label: const Row(
                         children: [
-                          Icon(Icons.headset_mic, size: 14, color: AppTheme.navy),
+                          Icon(Icons.headset_mic,
+                              size: 14, color: AppTheme.navy),
                           SizedBox(width: 4),
                           Text('Operator çağır',
                               style: TextStyle(

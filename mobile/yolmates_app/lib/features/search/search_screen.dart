@@ -22,7 +22,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   DateSelection? _dateSelection;
   int _passengers = 1;
 
-  void _search() async {
+  Future<void> _search() async {
     final l10n = ref.read(l10nProvider);
     if (_from == null || _to == null) return;
     if (_from == _to && _from != l10n.allCities) {
@@ -36,19 +36,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     await repo.addSearch(_from!, _to!);
     ref.invalidate(recentSearchesProvider);
 
-    if (mounted) {
-      String route =
-          '${AppRoutes.rideResults}?from=$_from&to=$_to&passengers=$_passengers';
-      if (_dateSelection != null) {
-        if (_dateSelection!.date != null) {
-          route += '&date=${_dateSelection!.date!.toIso8601String()}';
-        }
-        if (_dateSelection!.dateTo != null) {
-          route += '&dateTo=${_dateSelection!.dateTo!.toIso8601String()}';
-        }
+    if (!mounted) return;
+    var route =
+        '${AppRoutes.rideResults}?from=$_from&to=$_to&passengers=$_passengers';
+    if (_dateSelection != null) {
+      if (_dateSelection!.date != null) {
+        route += '&date=${_dateSelection!.date!.toIso8601String()}';
       }
-      context.push(route);
+      if (_dateSelection!.dateTo != null) {
+        route += '&dateTo=${_dateSelection!.dateTo!.toIso8601String()}';
+      }
     }
+    context.push(route);
   }
 
   @override
@@ -56,11 +55,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.searchTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.searchTitle)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -72,6 +69,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   error: (_, __) => const SizedBox.shrink(),
                   data: (searches) {
                     if (searches.isEmpty) return const SizedBox.shrink();
+                    final items = searches.take(6).toList();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -84,53 +82,60 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: searches.take(3).map((search) {
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _from = search.fromCity;
-                                  _to = search.toCity;
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.teal.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppTheme.teal.withValues(alpha: 0.3),
+                        SizedBox(
+                          height: 46,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: items.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final search = items[index];
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _from = search.fromCity;
+                                    _to = search.toCity;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.history,
-                                      size: 14,
-                                      color: AppTheme.tealDark,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.teal.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color:
+                                          AppTheme.teal.withValues(alpha: 0.3),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${search.fromCity} → ${search.toCity}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.history,
+                                        size: 14,
                                         color: AppTheme.tealDark,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${search.fromCity} -> ${search.toCity}',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppTheme.tealDark,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            },
+                          ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                       ],
                     );
                   },
@@ -179,7 +184,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onChanged: (val) => setState(() => _dateSelection = val),
               isDark: false,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
@@ -219,7 +224,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: (_from == null || _to == null) ? null : _search,
               style: ElevatedButton.styleFrom(

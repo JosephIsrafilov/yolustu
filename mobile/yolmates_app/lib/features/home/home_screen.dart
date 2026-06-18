@@ -444,7 +444,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: AppTheme.teal.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),

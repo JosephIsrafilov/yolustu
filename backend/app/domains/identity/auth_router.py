@@ -20,6 +20,8 @@ from app.domains.identity.schemas import (
     UserCreate,
     PasswordResetRequestInput,
     PasswordResetConfirmInput,
+    PhonePasswordResetRequestInput,
+    PhonePasswordResetConfirmInput,
     VerifyEmailInput,
     UserResponse,
 )
@@ -53,6 +55,32 @@ def reset_password(
 ):
     return IdentityService(db).reset_password(
         reset_data.email, reset_data.code, reset_data.new_password, redis_client
+    )
+
+
+@router.post("/request-phone-password-reset")
+@limiter.limit("10/minute")
+def request_phone_password_reset(
+    request: Request,
+    reset_data: PhonePasswordResetRequestInput,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).request_phone_password_reset(
+        reset_data.phone, redis_client
+    )
+
+
+@router.post("/reset-password-phone")
+@limiter.limit("10/minute")
+def reset_password_phone(
+    request: Request,
+    reset_data: PhonePasswordResetConfirmInput,
+    db: Session = Depends(get_db),
+    redis_client=Depends(get_redis),
+):
+    return IdentityService(db).reset_password_phone(
+        reset_data.phone, reset_data.code, reset_data.new_password, redis_client
     )
 
 

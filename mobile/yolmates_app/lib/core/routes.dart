@@ -6,6 +6,7 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/otp_verify_screen.dart';
+import '../features/auth/presentation/password_reset_screen.dart';
 import '../features/auth/presentation/profile_setup_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/auth_intro_screen.dart';
@@ -28,6 +29,7 @@ import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/notifications/presentation/notification_detail_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/presentation/public_profile_screen.dart';
 import '../features/profile/presentation/profile_edit_screen.dart';
 import '../features/reviews/reviews_screen.dart';
 import '../features/search/search_screen.dart';
@@ -37,6 +39,7 @@ import '../features/support/support_chat_screen.dart';
 import '../features/trips/trip_list_screen.dart';
 import '../features/trips/trip_detail_screen.dart';
 import '../features/wallet/wallet_screen.dart';
+import '../shared/models/user.dart';
 import '../shared/widgets/main_shell.dart';
 
 /// Shared axis transition for secondary routes.
@@ -82,6 +85,8 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const otp = '/otp';
+  static const forgotPassword = '/forgot-password';
+  static const changePassword = '/change-password';
   static const profileSetup = '/profile-setup';
   static const modeTransition = '/mode-transition';
 
@@ -91,6 +96,7 @@ class AppRoutes {
   static const bookings = '/bookings';
   static const messages = '/messages';
   static const profile = '/profile';
+  static const publicProfile = '/profile';
 
   // Secondary / detail routes
   static const rideResults = '/trips-list';
@@ -141,7 +147,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.otp,
-        AppRoutes.authIntro
+        AppRoutes.authIntro,
+        AppRoutes.forgotPassword,
       };
       final onSplash = loc == AppRoutes.splash;
       final onAuth = authRoutes.contains(loc);
@@ -166,8 +173,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           return onProfileSetup ? null : AppRoutes.profileSetup;
 
         case AuthStatus.authenticated:
+          if (loc == AppRoutes.otp || loc == AppRoutes.changePassword) {
+            return null;
+          }
           // Bounce away from auth/splash into the app.
-          if (onSplash || onAuth || onProfileSetup || onOnboarding) {
+          if (onSplash || onProfileSetup || onOnboarding) {
             return AppRoutes.home;
           }
 
@@ -211,14 +221,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.otp,
         builder: (context, state) {
-          final phone = state.uri.queryParameters['phone'] ?? '';
+          final target = state.uri.queryParameters['target'] ??
+              state.uri.queryParameters['phone'] ??
+              '';
+          final channel = state.uri.queryParameters['channel'] ?? 'sms';
           final avatar = state.uri.queryParameters['avatar'];
-          return OtpVerifyScreen(phone: phone, avatar: avatar);
+          return OtpVerifyScreen(
+            target: target,
+            channel: channel,
+            avatar: avatar,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.profileSetup,
         builder: (_, __) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, __) => const PasswordResetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.changePassword,
+        builder: (_, __) => const PasswordResetScreen(isChangePassword: true),
       ),
       GoRoute(
         path: AppRoutes.modeTransition,
@@ -370,6 +395,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           context,
           state,
           const ProfileEditScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.publicProfile}/:id',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          PublicProfileScreen(
+            userId: state.pathParameters['id']!,
+            initialUser: state.extra is User ? state.extra as User : null,
+          ),
         ),
       ),
       GoRoute(

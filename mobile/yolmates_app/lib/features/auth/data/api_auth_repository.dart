@@ -79,6 +79,19 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> requestEmailVerification() async {
+    try {
+      await _client.post('/auth/request-email-verification');
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Unexpected error');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
   Future<AppUser> verifyOtp(String phone, String code) async {
     try {
       // Backend expects query params, not body
@@ -103,6 +116,27 @@ class ApiAuthRepository implements AuthRepository {
           ? e.error as ApiException
           : ApiException(
               code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
+  Future<AppUser> verifyEmailOtp(String code) async {
+    try {
+      await _client.post('/auth/verify-email', data: {'otp': code});
+      final meResponse = await _client.get('/users/me');
+      final userJson = meResponse.data as Map<String, dynamic>?;
+      if (userJson == null) {
+        throw const AuthException('User data was not returned');
+      }
+      final user = mapUserResponse(userJson);
+      await _persistUser(user);
+      return user;
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Unexpected error');
       throw AuthException(apiError.message);
     }
   }
@@ -295,6 +329,46 @@ class ApiAuthRepository implements AuthRepository {
           ? e.error as ApiException
           : ApiException(
               code: 'unknown', message: e.message ?? 'Xəta baş verdi');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
+  Future<void> requestPhonePasswordReset(String phone) async {
+    try {
+      await _client.post(
+        '/auth/request-phone-password-reset',
+        data: {'phone': phone},
+      );
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Unexpected error');
+      throw AuthException(apiError.message);
+    }
+  }
+
+  @override
+  Future<void> resetPasswordWithPhone({
+    required String phone,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.post(
+        '/auth/reset-password-phone',
+        data: {
+          'phone': phone,
+          'code': code,
+          'new_password': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      final apiError = e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              code: 'unknown', message: e.message ?? 'Unexpected error');
       throw AuthException(apiError.message);
     }
   }

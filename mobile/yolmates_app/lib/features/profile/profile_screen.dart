@@ -102,6 +102,11 @@ class ProfileScreen extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.settings),
               ),
               _MenuItem(
+                icon: Icons.lock_reset_outlined,
+                label: 'Change password',
+                onTap: () => context.push(AppRoutes.changePassword),
+              ),
+              _MenuItem(
                 icon: Icons.help_outline,
                 label: l10n.profileHelp,
                 onTap: () => context.push(AppRoutes.support),

@@ -163,7 +163,7 @@ export const createAuthSlice: StateCreator<
   logout: async () => {
     try {
       await authService.logout();
-    } catch (error) {
+    } catch {
       // Error handled silently
     } finally {
       get().clearSession();
@@ -214,7 +214,7 @@ export const createAuthSlice: StateCreator<
           lastError: null,
         });
       }
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -278,7 +278,7 @@ export const createAuthSlice: StateCreator<
       set((s) => ({
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -289,7 +289,7 @@ export const createAuthSlice: StateCreator<
       set((s) => ({
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -298,7 +298,7 @@ export const createAuthSlice: StateCreator<
     try {
       const response = await adminService.getUsers();
       set({ users: response.items });
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -307,7 +307,7 @@ export const createAuthSlice: StateCreator<
     try {
       const response = await adminService.getPendingVerifications();
       set({ pendingVerifications: response.items });
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -319,7 +319,7 @@ export const createAuthSlice: StateCreator<
         pendingVerifications: s.pendingVerifications.filter((u) => u.id !== userId),
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -331,7 +331,7 @@ export const createAuthSlice: StateCreator<
         pendingVerifications: s.pendingVerifications.filter((u) => u.id !== userId),
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
-    } catch (error) {
+    } catch {
       // Error handled silently
     }
   },
@@ -364,3 +364,4 @@ export const createAuthSlice: StateCreator<
     }
   },
 });
+

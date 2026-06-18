@@ -272,6 +272,47 @@ class IdentityService:
         redis_client.delete(f"pwd_reset:{email}")
         return {"message": "Password reset successfully"}
 
+    def request_phone_password_reset(self, phone: str, redis_client):
+        user = self.users.get_by_phone(phone)
+        if not user:
+            raise HTTPException(
+                status_code=404, detail="No account found with this phone."
+            )
+
+        otp = "123456"
+        redis_client.setex(f"pwd_reset_phone:{phone}", 600, otp)
+        logger.info("Phone password reset OTP (mock) for %s: %s", phone, otp)
+        return {
+            "message": "Password reset OTP sent to phone.",
+            "otp": otp,
+        }
+
+    def reset_password_phone(
+        self, phone: str, code: str, new_password: str, redis_client
+    ):
+        stored_code = redis_client.get(f"pwd_reset_phone:{phone}")
+        stored_code_str = (
+            stored_code.decode("utf-8")
+            if isinstance(stored_code, bytes)
+            else stored_code
+        )
+
+        if not stored_code_str or stored_code_str != code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset code",
+            )
+
+        user = self.users.get_by_phone(phone)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.hashed_password = get_password_hash(new_password)  # type: ignore[assignment]
+        self.users.db.commit()
+
+        redis_client.delete(f"pwd_reset_phone:{phone}")
+        return {"message": "Password reset successfully"}
+
     @staticmethod
     def _send_email_code(email: str, redis_client):
         from app.core.email import send_email

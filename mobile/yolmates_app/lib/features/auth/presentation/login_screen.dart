@@ -79,12 +79,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .loginWithPassword(phone, password);
       if (!mounted) return;
       final authState = ref.read(authControllerProvider);
-      if (authState.user != null && !authState.user!.isVerified) {
-        await ref.read(authControllerProvider.notifier).sendOtp(phone);
-        if (!mounted) return;
-        context.push('${AppRoutes.otp}?phone=${Uri.encodeComponent(phone)}');
+      if (authState.user != null) {
+        await _showOtpChoice(
+          phone: phone,
+          email: authState.user!.email,
+        );
       } else if (authState.status == AuthStatus.authenticated) {
-        // Show 1-second passenger mode splash, then router takes over to home
         context.push('${AppRoutes.modeTransition}?driver=false');
       }
     } on AuthException catch (e) {
@@ -96,6 +96,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<void> _showOtpChoice({
+    required String phone,
+    required String? email,
+  }) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Choose OTP delivery',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: email == null || email.trim().isEmpty
+                      ? null
+                      : () => Navigator.of(ctx).pop('email'),
+                  child: Text(
+                    email == null || email.trim().isEmpty
+                        ? 'Email OTP unavailable'
+                        : 'Send to email',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(ctx).pop('sms'),
+                  child: const Text('Send to SMS'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || choice == null) return;
+
+    if (choice == 'email' && email != null && email.trim().isNotEmpty) {
+      await ref
+          .read(authControllerProvider.notifier)
+          .requestEmailVerification();
+      if (!mounted) return;
+      context.push(
+        '${AppRoutes.otp}?target=${Uri.encodeComponent(email)}&channel=email',
+      );
+      return;
+    }
+
+    await ref.read(authControllerProvider.notifier).sendOtp(phone);
+    if (!mounted) return;
+    context.push(
+      '${AppRoutes.otp}?target=${Uri.encodeComponent(phone)}&channel=sms',
+    );
   }
 
   @override
@@ -176,6 +243,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ],
                 const SizedBox(height: 28),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _sending
+                        ? null
+                        : () => context.push(AppRoutes.forgotPassword),
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
                 SizedBox(
                   height: 52,
                   child: ElevatedButton(

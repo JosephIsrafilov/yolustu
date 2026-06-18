@@ -77,20 +77,34 @@ final bookingsControllerProvider =
 class BookingsController extends AsyncNotifier<List<Booking>> {
   BookingsRepository get _repo => ref.read(bookingsRepositoryProvider);
 
+  List<Booking> _visible(List<Booking> bookings) {
+    return bookings
+        .where(
+          (booking) =>
+              booking.status != BookingStatus.cancelled &&
+              booking.status != BookingStatus.rejected,
+        )
+        .toList();
+  }
+
   @override
-  Future<List<Booking>> build() => _repo.all();
+  Future<List<Booking>> build() async => _visible(await _repo.all());
 
   /// Create a booking and refresh the list. Returns the created booking.
   Future<Booking> createBooking(Booking booking) async {
     final created = await _repo.create(booking);
-    state = AsyncData(await _repo.all());
+    state = AsyncData(_visible(await _repo.all()));
     return created;
   }
 
   /// Transition a booking's status (cancel / pay) and refresh.
   Future<Booking> setStatus(String id, BookingStatus status) async {
     final updated = await _repo.updateStatus(id, status);
-    state = AsyncData(await _repo.all());
+    final current = state.valueOrNull ?? const <Booking>[];
+    state = AsyncData([
+      for (final booking in current)
+        if (booking.id == id) updated else booking,
+    ]);
     return updated;
   }
 
@@ -105,6 +119,6 @@ class BookingsController extends AsyncNotifier<List<Booking>> {
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _repo.all());
+    state = await AsyncValue.guard(() async => _visible(await _repo.all()));
   }
 }

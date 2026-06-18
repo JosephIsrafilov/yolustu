@@ -140,10 +140,17 @@ class AuthController extends Notifier<AuthState> {
   /// Send OTP. Throws [AuthException] on failure; UI handles loading/error.
   Future<void> sendOtp(String phone) => _repo.sendOtp(phone);
 
+  Future<void> requestEmailVerification() => _repo.requestEmailVerification();
+
   /// Verify OTP. On success advances state (-> setup or main).
   /// Throws [AuthException] on failure; UI handles loading/error.
   Future<void> verifyOtp(String phone, String code) async {
     final user = await _repo.verifyOtp(phone, code);
+    state = _resolve(user);
+  }
+
+  Future<void> verifyEmailOtp(String code) async {
+    final user = await _repo.verifyEmailOtp(code);
     state = _resolve(user);
   }
 
@@ -220,6 +227,22 @@ class AuthController extends Notifier<AuthState> {
       birthDate: birthDate,
     );
     state = _resolve(user);
+  }
+
+  Future<void> requestPhonePasswordReset(String phone) {
+    return _repo.requestPhonePasswordReset(phone);
+  }
+
+  Future<void> resetPasswordWithPhone({
+    required String phone,
+    required String code,
+    required String newPassword,
+  }) {
+    return _repo.resetPasswordWithPhone(
+      phone: phone,
+      code: code,
+      newPassword: newPassword,
+    );
   }
 
   /// Clear session and return to login.

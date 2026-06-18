@@ -29,10 +29,36 @@ class ApiChatRepository implements ChatRepository {
     final response = await _client.get('/chats');
     final data = response.data;
     if (data is! List) return const [];
-    return data
+    final conversations = data
         .whereType<Map<String, dynamic>>()
         .map(Conversation.fromJson)
         .toList();
+    final missingLastMessage =
+        conversations.where((c) => c.lastMessage == null);
+    if (missingLastMessage.isEmpty) {
+      return conversations;
+    }
+    final enriched = await Future.wait(
+      conversations.map((conversation) async {
+        if (conversation.lastMessage != null) {
+          return conversation;
+        }
+        try {
+          final messages = await getMessages(conversation.id);
+          if (messages.isEmpty) {
+            return conversation;
+          }
+          return conversation.copyWith(
+            lastMessage: messages.last,
+            updatedAt: messages.last.createdAt,
+          );
+        } catch (_) {
+          return conversation;
+        }
+      }),
+    );
+    enriched.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return enriched;
   }
 
   @override

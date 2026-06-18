@@ -9,7 +9,7 @@ export const createTripSlice: StateCreator<
   [],
   [],
   TripSlice
-> = (set, get) => ({
+> = (set) => ({
   trips: [],
   myTrips: [],
   isLoadingTrips: false,
@@ -124,7 +124,7 @@ export const createTripSlice: StateCreator<
         myTrips: state.myTrips.filter((t) => t.id !== tripId),
       }));
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },

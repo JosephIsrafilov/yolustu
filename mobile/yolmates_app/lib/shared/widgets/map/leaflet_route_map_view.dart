@@ -96,9 +96,10 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
       minLon -= 0.05;
       maxLon += 0.05;
     }
-    
+
     try {
-      final bounds = LatLngBounds(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
+      final bounds =
+          LatLngBounds(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: bounds,
@@ -146,7 +147,8 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
         point: LatLng(lat, lon),
         child: Transform.rotate(
           angle: heading * pi / 180,
-          child: const Icon(Icons.directions_car, color: AppTheme.tealDark, size: 30),
+          child: const Icon(Icons.directions_car,
+              color: AppTheme.tealDark, size: 30),
         ),
       ));
     }
@@ -173,18 +175,22 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
                   initialCenter: initialPos,
                   initialZoom: 8,
                   onMapReady: () {
-                    Future.delayed(const Duration(milliseconds: 400), _fitBounds);
+                    Future.delayed(
+                        const Duration(milliseconds: 400), _fitBounds);
                   },
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.yolmates.app',
                   ),
                   PolylineLayer(
                     polylines: [
                       Polyline(
-                        points: _routePoints.map((p) => LatLng(p.lat, p.lon)).toList(),
+                        points: _routePoints
+                            .map((p) => LatLng(p.lat, p.lon))
+                            .toList(),
                         strokeWidth: 5.0,
                         color: AppTheme.teal,
                       ),

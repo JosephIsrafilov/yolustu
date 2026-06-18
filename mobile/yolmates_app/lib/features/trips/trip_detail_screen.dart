@@ -7,6 +7,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/repositories/rides_repository.dart';
 import '../../core/theme.dart';
 import '../../shared/models/trip.dart';
+import '../../core/routes.dart';
 import '../../shared/widgets/driver_trust_card.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
@@ -107,7 +108,7 @@ class _Body extends ConsumerWidget {
             child: RouteMapView(
               origin: ride.fromCity,
               destination: ride.toCity,
-              forceCanvas: true,
+              preferGoogleMap: false,
             ),
           ),
 
@@ -127,6 +128,12 @@ class _Body extends ConsumerWidget {
                   driver: ride.driver,
                   showVerificationBadge: true,
                   showMessageButton: true,
+                  onProfileTap: () {
+                    context.push(
+                      '${AppRoutes.publicProfile}/${ride.driver.id}',
+                      extra: ride.driver,
+                    );
+                  },
                   onMessageTap: () async {
                     // Create or get the conversation for this ride
                     final repo = ref.read(chatRepositoryProvider);
@@ -134,14 +141,17 @@ class _Body extends ConsumerWidget {
                       // Note: getOrCreateRideConversation expects a booking ID or ride ID depending on backend implementation.
                       // The backend route is POST /chats/ride. If it takes booking_id but we just have ride, we might pass ride.id.
                       // Wait, let's just pass ride.id since we might not have booked it yet!
-                      final conv = await repo.getOrCreateRideConversation(ride.id);
+                      final conv =
+                          await repo.getOrCreateRideConversation(ride.id);
                       if (context.mounted) {
                         context.push('/messages/${conv.id}');
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Söhbət yaradıla bilmədi. Səbəb: ${e.toString()}')),
+                          SnackBar(
+                              content: Text(
+                                  'Söhbət yaradıla bilmədi. Səbəb: ${e.toString()}')),
                         );
                       }
                     }

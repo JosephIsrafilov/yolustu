@@ -77,8 +77,9 @@ class RideSearchParams {
   DateTime? get normalizedDate =>
       date == null ? null : DateTime(date!.year, date!.month, date!.day);
 
-  DateTime? get normalizedDateTo =>
-      dateTo == null ? null : DateTime(dateTo!.year, dateTo!.month, dateTo!.day);
+  DateTime? get normalizedDateTo => dateTo == null
+      ? null
+      : DateTime(dateTo!.year, dateTo!.month, dateTo!.day);
 
   @override
   bool operator ==(Object other) =>
@@ -90,8 +91,8 @@ class RideSearchParams {
       other.normalizedDateTo == normalizedDateTo;
 
   @override
-  int get hashCode =>
-      Object.hash(fromCity, toCity, passengers, normalizedDate, normalizedDateTo);
+  int get hashCode => Object.hash(
+      fromCity, toCity, passengers, normalizedDate, normalizedDateTo);
 }
 
 final rideSearchProvider =

@@ -18,6 +18,22 @@ import 'data/chat_controller.dart';
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
+  String _formatTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _buildPreviewLabel({
+    required String currentUserId,
+    required String conversationName,
+    required String senderId,
+    required String senderName,
+  }) {
+    if (senderId == currentUserId) return 'You';
+    if (senderName.trim().isNotEmpty) return senderName.trim();
+    return conversationName;
+  }
+
   Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(conversationsProvider);
     await ref.read(conversationsProvider.future);
@@ -74,10 +90,22 @@ class ChatListScreen extends ConsumerWidget {
                         : (otherName.isNotEmpty ? otherName : l10n.chatTitle);
                     final initial =
                         name.isNotEmpty ? name[0].toUpperCase() : '?';
-                    final lastMsg = c.lastMessage?.content ?? '';
-                    final timeStr = c.lastMessage != null
-                        ? '${c.lastMessage!.createdAt.hour.toString().padLeft(2, '0')}:${c.lastMessage!.createdAt.minute.toString().padLeft(2, '0')}'
-                        : '';
+                    final lastMessage = c.lastMessage;
+                    final lastMsg = lastMessage?.content.trim() ?? '';
+                    final timeStr = _formatTime(lastMessage?.createdAt);
+                    final isLastMessageMine =
+                        lastMessage?.senderId == currentUserId;
+                    final senderLabel = lastMessage == null
+                        ? ''
+                        : _buildPreviewLabel(
+                            currentUserId: currentUserId,
+                            conversationName: name,
+                            senderId: lastMessage.senderId,
+                            senderName: lastMessage.senderName,
+                          );
+                    final messagePreview = lastMsg.isEmpty
+                        ? l10n.chatStartConversation
+                        : '$senderLabel: $lastMsg';
 
                     final avatarUrl =
                         c.getOtherParticipantAvatar(currentUserId);
@@ -112,14 +140,38 @@ class ChatListScreen extends ConsumerWidget {
                               hasUnread ? FontWeight.bold : FontWeight.w500,
                         ),
                       ),
-                      subtitle: Text(
-                        lastMsg,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight:
-                              hasUnread ? FontWeight.w600 : FontWeight.normal,
-                          color: hasUnread ? AppTheme.navy : AppTheme.slate500,
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            if (lastMessage != null && isLastMessageMine) ...[
+                              Icon(
+                                lastMessage.readAt != null
+                                    ? Icons.done_all
+                                    : Icons.check,
+                                size: 15,
+                                color: lastMessage.readAt != null
+                                    ? AppTheme.teal
+                                    : AppTheme.slate500,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Expanded(
+                              child: Text(
+                                messagePreview,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: hasUnread && !isLastMessageMine
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  color: hasUnread && !isLastMessageMine
+                                      ? AppTheme.navy
+                                      : AppTheme.slate500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       trailing: Column(

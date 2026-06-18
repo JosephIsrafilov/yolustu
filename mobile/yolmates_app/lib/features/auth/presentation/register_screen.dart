@@ -25,6 +25,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _sending = false;
@@ -49,6 +50,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -100,6 +102,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _error = 'Passwords do not match');
+      return;
+    }
 
     setState(() {
       _sending = true;
@@ -124,13 +130,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
 
       if (!mounted) return;
-      // After registration, the backend creates the user and sends OTP.
-      // We need to navigate to OTP verify screen.
-      String route = '${AppRoutes.otp}?phone=${Uri.encodeComponent(phone)}';
-      if (_selectedAvatarPath != null) {
-        route += '&avatar=${Uri.encodeComponent(_selectedAvatarPath!)}';
-      }
-      context.push(route);
+      await _showOtpChoice(phone: phone, email: email);
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -140,6 +140,74 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<void> _showOtpChoice({
+    required String phone,
+    required String? email,
+  }) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Choose OTP delivery',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: email == null || email.trim().isEmpty
+                      ? null
+                      : () => Navigator.of(ctx).pop('email'),
+                  child: Text(
+                    email == null || email.trim().isEmpty
+                        ? 'Email OTP unavailable'
+                        : 'Send to email',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(ctx).pop('sms'),
+                  child: const Text('Send to SMS'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || choice == null) return;
+
+    String routeTarget;
+    String route = '${AppRoutes.otp}?channel=${Uri.encodeComponent(choice)}';
+    if (choice == 'email' && email != null && email.trim().isNotEmpty) {
+      await ref
+          .read(authControllerProvider.notifier)
+          .requestEmailVerification();
+      routeTarget = email;
+    } else {
+      await ref.read(authControllerProvider.notifier).sendOtp(phone);
+      routeTarget = phone;
+    }
+    route += '&target=${Uri.encodeComponent(routeTarget)}';
+    if (_selectedAvatarPath != null) {
+      route += '&avatar=${Uri.encodeComponent(_selectedAvatarPath!)}';
+    }
+    if (!mounted) return;
+    context.push(route);
   }
 
   @override
@@ -268,6 +336,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         });
                       },
                     ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  enabled: !_sending,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
+                  validator: _validatePassword,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm password',
                   ),
                 ),
 

@@ -32,6 +32,11 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> requestEmailVerification() async {
+    await Future.delayed(_latency);
+  }
+
+  @override
   Future<AppUser> verifyOtp(String phone, String code) async {
     await Future.delayed(_latency);
     if (code != _validCode) {
@@ -45,6 +50,21 @@ class MockAuthRepository implements AuthRepository {
         );
     await _persist(user);
     return user;
+  }
+
+  @override
+  Future<AppUser> verifyEmailOtp(String code) async {
+    await Future.delayed(_latency);
+    if (code != _validCode) {
+      throw const AuthException('Invalid or expired code');
+    }
+    final current = await currentUser();
+    if (current == null) {
+      throw const AuthException('No active session');
+    }
+    final updated = current.copyWith();
+    await _persist(updated);
+    return updated;
   }
 
   @override
@@ -130,6 +150,26 @@ class MockAuthRepository implements AuthRepository {
     );
     await _persist(updated);
     return updated;
+  }
+
+  @override
+  Future<void> requestPhonePasswordReset(String phone) async {
+    await Future.delayed(_latency);
+  }
+
+  @override
+  Future<void> resetPasswordWithPhone({
+    required String phone,
+    required String code,
+    required String newPassword,
+  }) async {
+    await Future.delayed(_latency);
+    if (code != _validCode) {
+      throw const AuthException('Invalid or expired code');
+    }
+    if (newPassword.length < 8) {
+      throw const AuthException('Password must be at least 8 characters');
+    }
   }
 
   @override

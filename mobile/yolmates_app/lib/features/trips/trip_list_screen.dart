@@ -95,7 +95,9 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final now = DateTime.now();
     var filtered = rides.where((r) => r.departureTime.isAfter(now)).toList();
     if (_verifiedOnly) {
-      filtered = filtered.where((r) => r.driver.isVerified || r.driver.rating >= 4.7).toList();
+      filtered = filtered
+          .where((r) => r.driver.isVerified || r.driver.rating >= 4.7)
+          .toList();
     }
     if (_womenOnly) {
       filtered = filtered.where((r) => r.femaleOnly).toList();
@@ -323,8 +325,8 @@ class _TripCard extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
     final timeStr =
         '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
-    
-    final dateStr = showDate 
+
+    final dateStr = showDate
         ? '${trip.departureTime.day.toString().padLeft(2, '0')}.${trip.departureTime.month.toString().padLeft(2, '0')} · '
         : '';
     final displayTime = '$dateStr$timeStr';

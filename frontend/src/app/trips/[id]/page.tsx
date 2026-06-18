@@ -198,7 +198,7 @@ export default function TripDetailsPage() {
         setLoadedTrip(tripData);
         setTripLoadError(false);
       })
-      .catch((error) => {
+      .catch(() => {
         setTripLoadError(true);
       });
   }, [tripId, trips]);
@@ -238,7 +238,7 @@ export default function TripDetailsPage() {
     let bookingId = '';
     try {
       bookingId = await createBooking(trip.id, seats);
-    } catch (error) {
+    } catch {
       bookingId = '';
     } finally {
       setIsBookingLoading(false);
