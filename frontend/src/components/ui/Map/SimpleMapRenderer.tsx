@@ -2,78 +2,12 @@ import React from 'react';
 import { SmartMapProps } from './types';
 import { cn } from '@/lib/utils';
 
-const TILE_SIZE = 256;
-const MAX_MERCATOR_LAT = 85.05112878;
-
-type WorldPoint = { x: number; y: number };
-type Viewport = { minX: number; minY: number; width: number; height: number };
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function toWorldPoint(point: [number, number], zoom: number): WorldPoint {
-  const [lat, lng] = point;
-  const clampedLat = clamp(lat, -MAX_MERCATOR_LAT, MAX_MERCATOR_LAT);
-  const sinLat = Math.sin((clampedLat * Math.PI) / 180);
-  const scale = TILE_SIZE * 2 ** zoom;
-
-  return {
-    x: ((lng + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
-  };
-}
-
-function projectWorldPoint(point: WorldPoint, viewport: Viewport) {
-  const x = ((point.x - viewport.minX) / viewport.width) * 100;
-  const y = ((point.y - viewport.minY) / viewport.height) * 100;
-  return [clamp(x, 2, 98), clamp(y, 2, 98)] as const;
-}
-
-function buildViewport(points: WorldPoint[]): Viewport {
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
-  const width = Math.max(maxX - minX, 180) + 180;
-  const height = Math.max(maxY - minY, 140) + 140;
-
-  return {
-    minX: centerX - width / 2,
-    minY: centerY - height / 2,
-    width,
-    height,
-  };
-}
-
-function buildTiles(viewport: Viewport, zoom: number) {
-  const maxTile = 2 ** zoom - 1;
-  const minTileX = clamp(Math.floor(viewport.minX / TILE_SIZE), 0, maxTile);
-  const maxTileX = clamp(Math.floor((viewport.minX + viewport.width) / TILE_SIZE), 0, maxTile);
-  const minTileY = clamp(Math.floor(viewport.minY / TILE_SIZE), 0, maxTile);
-  const maxTileY = clamp(Math.floor((viewport.minY + viewport.height) / TILE_SIZE), 0, maxTile);
-  const tiles: { x: number; y: number }[] = [];
-
-  for (let x = minTileX; x <= maxTileX; x += 1) {
-    for (let y = minTileY; y <= maxTileY; y += 1) {
-      tiles.push({ x, y });
-    }
-  }
-
-  return tiles;
-}
-
-function tileStyle(tile: { x: number; y: number }, viewport: Viewport): React.CSSProperties {
-  return {
-    left: `${((tile.x * TILE_SIZE - viewport.minX) / viewport.width) * 100}%`,
-    top: `${((tile.y * TILE_SIZE - viewport.minY) / viewport.height) * 100}%`,
-    width: `${(TILE_SIZE / viewport.width) * 100}%`,
-    height: `${(TILE_SIZE / viewport.height) * 100}%`,
-  };
+function projectPoint(point: [number, number], bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }) {
+  const latRange = bounds.maxLat - bounds.minLat || 1;
+  const lngRange = bounds.maxLng - bounds.minLng || 1;
+  const x = ((point[1] - bounds.minLng) / lngRange) * 100;
+  const y = (1 - (point[0] - bounds.minLat) / latRange) * 100;
+  return [Math.min(96, Math.max(4, x)), Math.min(92, Math.max(8, y))] as const;
 }
 
 export default function SimpleMapRenderer({
@@ -83,9 +17,7 @@ export default function SimpleMapRenderer({
   route,
   polylines = [],
   fitBounds,
-  zoom,
 }: SmartMapProps) {
-  const tileZoom = clamp(Math.round(zoom ?? 8), 6, 12);
   const points = [
     center,
     ...(route ?? []),
@@ -93,41 +25,38 @@ export default function SimpleMapRenderer({
     ...(fitBounds ?? []),
     ...markers.map((marker) => marker.position),
   ];
-  const worldPoints = points.map((point) => toWorldPoint(point, tileZoom));
-  const viewport = buildViewport(worldPoints);
-  const tiles = buildTiles(viewport, tileZoom);
-  const routePoints = (route ?? []).map((point) => projectWorldPoint(toWorldPoint(point, tileZoom), viewport));
-  const polylinePoints = polylines.map((path) =>
-    path.map((point) => projectWorldPoint(toWorldPoint(point, tileZoom), viewport)),
-  );
+
+  const lats = points.map(([lat]) => lat);
+  const lngs = points.map(([, lng]) => lng);
+  const bounds = {
+    minLat: Math.min(...lats) - 0.08,
+    maxLat: Math.max(...lats) + 0.08,
+    minLng: Math.min(...lngs) - 0.08,
+    maxLng: Math.max(...lngs) + 0.08,
+  };
+
+  const routePoints = (route ?? []).map((point) => projectPoint(point, bounds));
+  const polylinePoints = polylines.map((path) => path.map((point) => projectPoint(point, bounds)));
   const hasHeight = className && (className.includes('h-') || className.includes('min-h-'));
 
   return (
-    <div className={cn(!hasHeight && 'h-[400px]', 'relative w-full overflow-hidden rounded-2xl border border-border bg-[#dce9e9]', className)}>
-      <div className="absolute inset-0 bg-[#dce9e9]">
-        {tiles.map((tile) => (
-          <div
-            key={`${tileZoom}-${tile.x}-${tile.y}`}
-            className="absolute bg-cover bg-center"
-            style={{
-              ...tileStyle(tile, viewport),
-              backgroundImage: `url(https://tile.openstreetmap.org/${tileZoom}/${tile.x}/${tile.y}.png)`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="absolute inset-0 bg-white/10" />
-
+    <div className={cn(!hasHeight && 'h-[400px]', 'relative w-full overflow-hidden rounded-2xl border border-border bg-[#e8f4f6]', className)}>
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <pattern id="map-grid" width="12" height="12" patternUnits="userSpaceOnUse">
+            <path d="M 12 0 L 0 0 0 12" fill="none" stroke="rgba(5,71,82,0.08)" strokeWidth="0.4" />
+          </pattern>
+        </defs>
+        <rect width="100" height="100" fill="url(#map-grid)" />
+        <path d="M78 0 C72 22 83 38 76 57 C70 73 79 86 74 100 L100 100 L100 0 Z" fill="rgba(20,184,166,0.13)" />
         {polylinePoints.map((path, index) => (
           <polyline
             key={`poly-${index}`}
             points={path.map(([x, y]) => `${x},${y}`).join(' ')}
             fill="none"
             stroke="#0f766e"
-            strokeOpacity="0.58"
-            strokeWidth="1.7"
+            strokeOpacity="0.5"
+            strokeWidth="1.4"
             vectorEffect="non-scaling-stroke"
           />
         ))}
@@ -136,7 +65,7 @@ export default function SimpleMapRenderer({
             points={routePoints.map(([x, y]) => `${x},${y}`).join(' ')}
             fill="none"
             stroke="#054752"
-            strokeWidth="3"
+            strokeWidth="2.6"
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
@@ -145,7 +74,7 @@ export default function SimpleMapRenderer({
       </svg>
 
       {markers.map((marker, index) => {
-        const [x, y] = projectWorldPoint(toWorldPoint(marker.position, tileZoom), viewport);
+        const [x, y] = projectPoint(marker.position, bounds);
         const color = marker.type === 'origin' ? 'bg-emerald-600' : marker.type === 'destination' ? 'bg-red-600' : 'bg-[#054752]';
         return (
           <button
@@ -158,15 +87,6 @@ export default function SimpleMapRenderer({
           />
         );
       })}
-
-      <a
-        href="https://www.openstreetmap.org/copyright"
-        target="_blank"
-        rel="noreferrer"
-        className="absolute bottom-1 right-1 rounded bg-white/85 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
-      >
-        OpenStreetMap
-      </a>
     </div>
   );
 }

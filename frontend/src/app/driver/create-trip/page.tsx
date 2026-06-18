@@ -18,7 +18,7 @@ import Select from '@/components/ui/Select';
 import Icon from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
-import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan, normalizeNominatimCity } from '@/lib/utils';
+import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan } from '@/lib/utils';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
@@ -351,37 +351,55 @@ export default function CreateTripPage() {
   // ponytail: coords committed only after city validation passes — prevents race where eager setValue saves wrong-city coords
   const reverseGeocode = async (pos: { lat: number; lng: number }, field: 'meetingPoint' | 'dropoffPoint') => {
     const { lat, lng } = pos;
+    const isMeeting = field === 'meetingPoint';
+    const coordField = isMeeting ? 'origin' : 'destination';
+
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-      const data = await res.json();
-      if (data && data.address) {
-        const countryCode = data.address.country_code;
-        const isMeeting = field === 'meetingPoint';
-        const coordField = isMeeting ? 'origin' : 'destination';
+      if (typeof window !== 'undefined' && window.google?.maps?.Geocoder) {
+        const geocoder = new window.google.maps.Geocoder();
+        const { results } = await geocoder.geocode({ location: pos });
+        const result = results[0];
 
-        if (countryCode && countryCode.toLowerCase() !== 'az') {
-          setError(coordField, { type: 'manual', message: copy.onlyAzerbaijanError });
-          setValue(field, '');
+        if (result) {
+          const component = (...types: string[]) =>
+            result.address_components.find((part) => types.some((type) => part.types.includes(type)))?.long_name || '';
+          const countryCode =
+            result.address_components.find((part) => part.types.includes('country'))?.short_name || '';
+          const city =
+            component('locality') ||
+            component('administrative_area_level_2') ||
+            component('postal_town') ||
+            component('sublocality') ||
+            '';
+          const expectedCity = isMeeting ? getValues('departureCity') : getValues('arrivalCity');
+
+          if (countryCode && countryCode.toLowerCase() !== 'az') {
+            setError(coordField, { type: 'manual', message: copy.onlyAzerbaijanError });
+            setValue(field, '');
+            return;
+          }
+
+          if (expectedCity && city && city !== expectedCity) {
+            setError(coordField, { type: 'manual', message: copy.dropoffCityMismatchError });
+            setValue(field, '');
+            return;
+          }
+
+          clearErrors(coordField);
+          setValue(coordField, pos);
+          const road = component('route');
+          const houseNumber = component('street_number');
+          const shortName = road
+            ? `${road}${houseNumber ? ` ${houseNumber}` : ''}${city ? `, ${city}` : ''}`
+            : (result.formatted_address || `${lat}, ${lng}`).split(',').slice(0, 2).join(',');
+          setValue(field, shortName.replace(/,\s*$/, '').trim());
           return;
         }
-
-        const nominatimCity = data.address.city || data.address.town || data.address.village || '';
-        const normalized = normalizeNominatimCity(nominatimCity);
-        const expectedCity = isMeeting ? getValues('departureCity') : getValues('arrivalCity');
-        if (expectedCity && normalized && normalized !== expectedCity) {
-          setError(coordField, { type: 'manual', message: copy.dropoffCityMismatchError });
-          setValue(field, '');
-          return;
-        }
-
-        clearErrors(coordField);
-        setValue(coordField, pos);
-        const addr = data.address;
-        const shortName = addr.road
-          ? `${addr.road}${addr.house_number ? ' ' + addr.house_number : ''}, ${addr.city || addr.town || addr.suburb || ''}`
-          : data.display_name.split(',').slice(0, 2).join(',');
-        setValue(field, shortName.replace(/,\s*$/, '').trim());
       }
+
+      clearErrors(coordField);
+      setValue(coordField, pos);
+      setValue(field, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } catch (err) {
       // Error handled silently
     }
