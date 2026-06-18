@@ -236,10 +236,12 @@ export default function ProfilePage() {
     setProfileError('');
     clearError();
     try {
+      let avatarUrl = form.avatarUrl;
       if (avatarFile) {
         await useAppStore.getState().uploadAvatar(avatarFile);
+        avatarUrl = useAppStore.getState().currentUser?.avatarUrl || '';
       }
-      await updateProfile(form);
+      await updateProfile({ ...form, avatarUrl });
       setEditing(false);
       setAvatarFile(null);
       setShowProfileSuccess(true);

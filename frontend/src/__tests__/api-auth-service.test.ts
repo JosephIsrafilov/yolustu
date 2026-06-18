@@ -139,6 +139,27 @@ describe('apiAuthService', () => {
     expect(user.bio).toBe('Driver bio');
   });
 
+  it('does not persist a local data URL as the avatar', async () => {
+    mockedApiClient.put.mockResolvedValueOnce(apiUser);
+
+    await apiAuthService.updateProfile({
+      fullName: 'Elvin Mammadov',
+      phone: apiUser.phone,
+      city: 'Baku',
+      bio: '',
+      avatarUrl: 'data:image/png;base64,preview',
+    });
+
+    expect(mockedApiClient.put).toHaveBeenCalledWith('/users/me', {
+      phone: apiUser.phone,
+      first_name: 'Elvin',
+      last_name: 'Mammadov',
+      avatar_url: undefined,
+      city: 'Baku',
+      bio: '',
+    });
+  });
+
   it('submits verification document as FormData', async () => {
     mockedApiClient.post.mockResolvedValueOnce({
       ...apiUser,

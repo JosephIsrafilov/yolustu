@@ -99,6 +99,27 @@ def test_json_in_markdown_fence(mock_openai, monkeypatch):
 
 
 @patch("app.domains.ai.document_review.OpenAI")
+def test_json_after_answer_prefix_is_parsed(mock_openai, monkeypatch):
+    monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
+    content = (
+        "The image appears valid.\n\n"
+        '*Answer*: {"is_document": true, "is_azerbaijani": true, '
+        '"document_type": "drivers_license", "confidence": 0.95, '
+        '"issues": [], "recommendation": "approve"}'
+    )
+    mock_openai.return_value.chat.completions.create.return_value = _mock_completion(
+        content
+    )
+
+    result = dr.review_verification_document(
+        _png_image(), "image/png", "Elvin", "Mammadov"
+    )
+
+    assert result["is_document"] is True
+    assert result["confidence"] == 0.95
+
+
+@patch("app.domains.ai.document_review.OpenAI")
 def test_api_failure_falls_back(mock_openai, monkeypatch):
     monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
     mock_openai.return_value.chat.completions.create.side_effect = Exception("boom")

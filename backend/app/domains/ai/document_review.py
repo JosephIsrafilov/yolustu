@@ -479,7 +479,7 @@ def review_verification_document(
                 }
             ],
             temperature=0.2,
-            max_tokens=400,
+            max_tokens=700,
             timeout=REQUEST_TIMEOUT,
             stream=False,
         )
