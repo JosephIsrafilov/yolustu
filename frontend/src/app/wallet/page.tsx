@@ -317,6 +317,9 @@ function WalletSkeleton() {
 function WalletContent() {
   const language = useAppStore((state) => state.language);
   const currentUser = useAppStore((state) => state.currentUser);
+  const activeRole = useAppStore((state) => state.activeRole);
+  const isDriver = activeRole === 'driver';
+
   const copy = WALLET_COPY[language];
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -355,7 +358,7 @@ function WalletContent() {
   const payoutsQuery = useQuery({
     queryKey: ['wallet-payouts'],
     queryFn: () => paymentsService.getPayouts(1, 20),
-    enabled: isPayoutsOpen,
+    enabled: isPayoutsOpen && isDriver,
     staleTime: 60 * 1000,
   });
 
@@ -426,10 +429,38 @@ function WalletContent() {
   };
 
   const metricCards = [
-    { label: copy.pending, value: wallet.pendingBalance, icon: 'clock' as const, accent: 'border-amber-400' },
-    { label: copy.earned, value: wallet.totalEarned, icon: 'banknote' as const, accent: 'border-emerald-400' },
-    { label: copy.spent, value: wallet.totalSpent, icon: 'credit-card' as const, accent: 'border-slate-400' },
-    { label: copy.refunded, value: wallet.totalRefunded, icon: 'refresh-cw' as const, accent: 'border-sky-400' },
+    ...(isDriver
+      ? [
+          {
+            label: copy.pending,
+            value: wallet.pendingBalance,
+            icon: 'clock' as const,
+            bgIcon: 'bg-amber-50 text-amber-600',
+            bgCard: 'bg-white border-amber-100/70',
+          },
+          {
+            label: copy.earned,
+            value: wallet.totalEarned,
+            icon: 'banknote' as const,
+            bgIcon: 'bg-emerald-50 text-emerald-600',
+            bgCard: 'bg-white border-emerald-100/70',
+          },
+        ]
+      : []),
+    {
+      label: copy.spent,
+      value: wallet.totalSpent,
+      icon: 'credit-card' as const,
+      bgIcon: 'bg-slate-100 text-slate-600',
+      bgCard: 'bg-white border-slate-100/70',
+    },
+    {
+      label: copy.refunded,
+      value: wallet.totalRefunded,
+      icon: 'refresh-cw' as const,
+      bgIcon: 'bg-sky-50 text-sky-600',
+      bgCard: 'bg-white border-sky-100/70',
+    },
   ];
 
   return (
@@ -453,47 +484,61 @@ function WalletContent() {
             <WalletSkeleton />
           ) : (
             <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <Card className="overflow-hidden border-[#c7e2e7] p-0">
-                <div className="bg-[#052f36] p-6 text-white">
-                  <div className="flex items-start justify-between gap-4">
+              <Card className="overflow-hidden border border-[#cfdfe3] bg-[#f7fbfb] p-0 shadow-md">
+                <div className="relative overflow-hidden bg-[#052f36] bg-gradient-to-br from-[#063b43] via-[#052f36] to-[#021f24] p-6 text-white shadow-inner">
+                  {/* Decorative background glassmorphism glows */}
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 rounded-full bg-cyan-400/10 blur-2xl" />
+                  <div className="pointer-events-none absolute -left-8 -bottom-8 h-36 w-36 rounded-full bg-teal-400/10 blur-2xl" />
+
+                  <div className="relative z-10 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a8dbe3]">{copy.available}</p>
-                      <p className="mt-3 text-4xl font-black md:text-5xl">{formatPrice(wallet.availableBalance)}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a8dbe3]">{copy.available}</p>
+                      <p className="mt-3.5 text-4xl font-black tracking-tight md:text-5xl">{formatPrice(wallet.availableBalance)}</p>
                     </div>
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white/90 backdrop-blur-md">
                       <Icon name="credit-card" size={22} />
                     </span>
                   </div>
-                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <div className="relative z-10 mt-8 flex flex-col gap-3 sm:flex-row">
                     <Button
-                      className="bg-white text-[#052f36] hover:bg-[#edf8fa]"
+                      className="bg-white text-[#052f36] font-semibold hover:bg-[#edf8fa] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
                       onClick={() => document.getElementById('wallet-card-number')?.focus()}
                     >
                       <Icon name="plus" size={16} />
                       {copy.topup}
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsPayoutOpen(true)}
-                      disabled={wallet.availableBalance <= 0}
-                      className="border-white/30 bg-white/5 text-white hover:bg-white/10"
-                    >
-                      <Icon name="upload" size={16} />
-                      {copy.withdraw}
-                    </Button>
+                    {isDriver && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsPayoutOpen(true)}
+                        disabled={wallet.availableBalance <= 0}
+                        className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-white/5"
+                      >
+                        <Icon name="upload" size={16} />
+                        {copy.withdraw}
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="grid gap-0 sm:grid-cols-2">
+                <div className="grid gap-3.5 p-5 sm:grid-cols-2">
                   {metricCards.map((metric) => (
-                    <div key={metric.label} className={`border-l-2 border-t border-[#e2eef0] p-5 sm:border-r ${metric.accent}`}>
-                      <p className="text-sm font-semibold text-[#526970]">{metric.label}</p>
-                      <p className="mt-2 text-2xl font-bold text-[#002f37]">{formatPrice(metric.value)}</p>
+                    <div
+                      key={metric.label}
+                      className={`flex items-center gap-3.5 rounded-2xl border p-4 shadow-xs hover:shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${metric.bgCard}`}
+                    >
+                      <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${metric.bgIcon}`}>
+                        <Icon name={metric.icon} size={18} />
+                      </span>
+                      <div>
+                        <p className="text-xs font-semibold text-[#526970]">{metric.label}</p>
+                        <p className="mt-1 text-xl font-bold text-[#002f37]">{formatPrice(metric.value)}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </Card>
 
-              <Card className="p-5 md:p-6">
+              <Card className="p-5 md:p-6 shadow-md border border-[#cfdfe3]/80 bg-white">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-[#002f37]">{copy.cardTitle}</h2>
@@ -504,24 +549,27 @@ function WalletContent() {
                   </span>
                 </div>
 
-                <div className="relative mt-5 overflow-hidden rounded-2xl bg-linear-to-br from-[#0f4a56] to-[#1a7a8a] p-5 text-white shadow-lg">
-                  {/* shine strip */}
-                  <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rotate-45 bg-white/5" />
-                  <div className="flex items-start justify-between">
+                <div className="group relative mt-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#115e6e] via-[#0b3c43] to-[#041f24] p-5 text-white shadow-lg border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                  {/* shine effect overlay */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-75" />
+                  <div className="pointer-events-none absolute -left-1/3 -top-1/2 w-full h-full bg-white/5 blur-3xl rounded-full transition-transform duration-500 group-hover:translate-x-10" />
+                  <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rotate-45 bg-white/5 transition-transform duration-500 group-hover:-translate-y-2" />
+                  
+                  <div className="flex items-start justify-between relative z-10">
                     {/* chip SVG */}
-                    <svg width="38" height="30" viewBox="0 0 38 30" fill="none" className="opacity-90">
-                      <rect x="0.5" y="0.5" width="37" height="29" rx="4.5" fill="#c8a84b" stroke="#a8893a"/>
-                      <line x1="13" y1="0" x2="13" y2="30" stroke="#a8893a" strokeWidth="1"/>
-                      <line x1="25" y1="0" x2="25" y2="30" stroke="#a8893a" strokeWidth="1"/>
-                      <line x1="0" y1="10" x2="38" y2="10" stroke="#a8893a" strokeWidth="1"/>
-                      <line x1="0" y1="20" x2="38" y2="20" stroke="#a8893a" strokeWidth="1"/>
+                    <svg width="38" height="30" viewBox="0 0 38 30" fill="none" className="opacity-95 shadow-sm">
+                      <rect x="0.5" y="0.5" width="37" height="29" rx="4.5" fill="#d4af37" stroke="#b8931d"/>
+                      <line x1="13" y1="0" x2="13" y2="30" stroke="#b8931d" strokeWidth="1"/>
+                      <line x1="25" y1="0" x2="25" y2="30" stroke="#b8931d" strokeWidth="1"/>
+                      <line x1="0" y1="10" x2="38" y2="10" stroke="#b8931d" strokeWidth="1"/>
+                      <line x1="0" y1="20" x2="38" y2="20" stroke="#b8931d" strokeWidth="1"/>
                     </svg>
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">{networkMeta?.label?.toUpperCase() ?? 'WALLET CARD'}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">{networkMeta?.label?.toUpperCase() ?? 'WALLET CARD'}</span>
                   </div>
-                  <p className="mt-6 font-mono text-lg tracking-[0.22em]">{maskedCard}</p>
-                  <div className="mt-4 flex justify-between gap-4 text-xs font-semibold uppercase text-white/70">
-                    <span className="truncate">{cardholder || copy.cardholder}</span>
-                    <span>{expiry || 'MM/YY'}</span>
+                  <p className="mt-7 font-mono text-lg tracking-[0.24em] relative z-10 select-all">{maskedCard}</p>
+                  <div className="mt-5 flex justify-between gap-4 text-xs font-semibold uppercase text-white/80 relative z-10">
+                    <span className="truncate tracking-wide">{cardholder || copy.cardholder}</span>
+                    <span className="font-mono">{expiry || 'MM/YY'}</span>
                   </div>
                 </div>
 
@@ -538,7 +586,7 @@ function WalletContent() {
                         const nextNetwork = detectCardNetwork(event.target.value);
                         setCardNumber(formatCardNumber(event.target.value, nextNetwork));
                       }}
-                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
                       placeholder="4242 4242 4242 4242"
                     />
                   </label>
@@ -550,7 +598,7 @@ function WalletContent() {
                       autoComplete="cc-name"
                       value={cardholder}
                       onChange={(event) => setCardholder(event.target.value.toUpperCase())}
-                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
                       placeholder="ELVIN MAMMADOV"
                     />
                   </label>
@@ -564,7 +612,7 @@ function WalletContent() {
                         autoComplete="cc-exp"
                         value={expiry}
                         onChange={(event) => setExpiry(formatExpiry(event.target.value))}
-                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
                         placeholder="MM/YY"
                       />
                     </label>
@@ -576,7 +624,7 @@ function WalletContent() {
                         autoComplete="cc-csc"
                         value={cvc}
                         onChange={(event) => setCvc(digitsOnly(event.target.value).slice(0, networkMeta?.cvc ?? 3))}
-                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
                         placeholder={network === 'amex' ? '1234' : '123'}
                       />
                     </label>
@@ -592,7 +640,7 @@ function WalletContent() {
                       value={amount}
                       onChange={(event) => setAmount(Number(event.target.value) || '')}
                       placeholder="0.00"
-                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
                     />
                   </label>
 
@@ -604,7 +652,7 @@ function WalletContent() {
                           key={value}
                           type="button"
                           onClick={() => setAmount(value)}
-                          className={`h-9 rounded-lg border text-sm font-semibold transition-transform hover:scale-[1.03] ${amount === value ? 'border-[#054752] bg-[#054752] text-white' : 'border-[#d7e5e8] bg-white text-[#314f56]'}`}
+                          className={`h-9 rounded-lg border text-sm font-semibold transition-all duration-150 hover:scale-[1.03] active:scale-[0.97] ${amount === value ? 'border-[#054752] bg-[#054752] text-white shadow-xs' : 'border-[#d7e5e8] bg-white text-[#314f56] hover:bg-slate-50'}`}
                         >
                           {value} ₼
                         </button>
@@ -618,15 +666,15 @@ function WalletContent() {
                     </div>
                   )}
 
-                  <Button onClick={handleTopup} loading={topupMutation.isPending} className="w-full">
+                  <Button onClick={handleTopup} loading={topupMutation.isPending} className="w-full h-11 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-sm hover:shadow-md">
                     <Icon name="credit-card" size={16} />
                     {copy.pay}
                   </Button>
                 </div>
               </Card>
 
-              <Card className="p-5 md:p-6 lg:col-span-2">
-                <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
+              <Card className="p-5 md:p-6 lg:col-span-2 shadow-md border border-[#cfdfe3]/85 bg-white">
+                <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 md:flex-row md:items-end md:justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-[#002f37]">{copy.history}</h2>
                     <p className="mt-1 text-sm text-[#526970]">{copy.emptyDesc}</p>
@@ -637,10 +685,10 @@ function WalletContent() {
                         key={filter}
                         type="button"
                         onClick={() => setActiveFilter(filter)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 ${
                           activeFilter === filter
-                            ? 'bg-[#054752] text-white'
-                            : 'bg-[#f2f8f9] text-[#486067] hover:bg-[#e4f2f5]'
+                            ? 'bg-[#054752] text-white shadow-sm hover:bg-[#043c45]'
+                            : 'bg-[#f2f8f9] text-[#486067] hover:bg-[#e4f2f5] active:scale-95'
                         }`}
                       >
                         {copy.filters[filter]}
@@ -691,9 +739,9 @@ function WalletContent() {
                     <div className="space-y-6">
                       {groupedTransactions.map((group) => (
                         <div key={group.key} className="space-y-3">
-                          <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/95 py-2 backdrop-blur-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#7a8b8f]">{group.label}</span>
-                            <span className="h-px flex-1 bg-border" />
+                          <div className="sticky top-0 z-10 flex items-center gap-3 bg-white/95 py-2 backdrop-blur-sm">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#526970] bg-[#f8fbfb] px-3 py-1.5 rounded-lg border border-[#e4eff1]">{group.label}</span>
+                            <span className="h-px flex-1 bg-slate-100" />
                           </div>
                           {group.transactions.map((transaction) => {
                             const meta = getTransactionMeta(transaction.type);
@@ -716,9 +764,9 @@ function WalletContent() {
                                       }
                                     : undefined
                                 }
-                                className={`flex flex-col gap-3 rounded-2xl border border-border bg-[#fbfeff] p-4 md:flex-row md:items-center md:justify-between ${
-                                  transaction.direction === 'credit' ? 'border-l-2 border-l-emerald-400' : 'border-l-2 border-l-slate-300'
-                                } ${isInteractive ? 'cursor-pointer hover:border-brand-200 hover:bg-[#f4fbfd]' : ''}`}
+                                className={`flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                                  transaction.direction === 'credit' ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-slate-400'
+                                } ${isInteractive ? 'cursor-pointer hover:border-brand-300/40 hover:bg-[#f4fbfd]/50' : ''}`}
                               >
                                 <div className="flex items-start gap-3">
                                   <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
@@ -763,76 +811,78 @@ function WalletContent() {
                 </div>
               </Card>
 
-              <Card className="p-5 md:p-6 lg:col-span-2">
-                <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-[#002f37]">{copy.payouts}</h2>
-                    <p className="mt-1 text-sm text-[#526970]">{copy.payoutsHint}</p>
+              {isDriver && (
+                <Card className="p-5 md:p-6 lg:col-span-2 shadow-md border border-[#cfdfe3]/85 bg-white">
+                  <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-[#002f37]">{copy.payouts}</h2>
+                      <p className="mt-1 text-sm text-[#526970]">{copy.payoutsHint}</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setIsPayoutsOpen((open) => !open)}>
+                      <Icon name={isPayoutsOpen ? 'chevron-up' : 'chevron-down'} size={16} />
+                      {isPayoutsOpen ? copy.hidePayouts : copy.showPayouts}
+                    </Button>
                   </div>
-                  <Button variant="outline" onClick={() => setIsPayoutsOpen((open) => !open)}>
-                    <Icon name={isPayoutsOpen ? 'chevron-up' : 'chevron-down'} size={16} />
-                    {isPayoutsOpen ? copy.hidePayouts : copy.showPayouts}
-                  </Button>
-                </div>
 
-                {isPayoutsOpen && (
-                  <div className="pt-5">
-                    {payoutsQuery.isLoading ? (
-                      <div className="space-y-3">
-                        {[0, 1].map((i) => (
-                          <Skeleton key={i} className="h-20 rounded-2xl" />
-                        ))}
-                      </div>
-                    ) : payoutsQuery.isError ? (
-                      <EmptyState
-                        className="py-12"
-                        icon={<Icon name="alert-triangle" size={28} />}
-                        title={copy.loadError}
-                        action={
-                          <Button variant="outline" onClick={() => void payoutsQuery.refetch()}>
-                            <Icon name="refresh-cw" size={16} />
-                            {copy.retry}
-                          </Button>
-                        }
-                      />
-                    ) : payouts.length === 0 ? (
-                      <EmptyState
-                        className="py-12"
-                        icon={<Icon name="upload" size={28} />}
-                        title={copy.payoutsEmpty}
-                        description={copy.payoutsHint}
-                      />
-                    ) : (
-                      <div className="space-y-3">
-                        {payouts.map((payout: Payout) => (
-                          <div
-                            key={payout.id}
-                            className="flex flex-col gap-3 rounded-2xl border border-border bg-[#fbfeff] p-4 md:flex-row md:items-center md:justify-between"
-                          >
-                            <div className="flex items-start gap-3">
-                              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                                <Icon name="upload" size={16} />
-                              </span>
-                              <div>
-                                <p className="font-semibold text-[#002f37]">{copy.withdraw}</p>
-                                <p className="mt-1 text-sm text-[#526970]" title={formatAbsoluteTime(payout.createdAt, language)}>
-                                  {formatRelativeTime(payout.createdAt, language)}
-                                </p>
+                  {isPayoutsOpen && (
+                    <div className="pt-5">
+                      {payoutsQuery.isLoading ? (
+                        <div className="space-y-3">
+                          {[0, 1].map((i) => (
+                            <Skeleton key={i} className="h-20 rounded-2xl" />
+                          ))}
+                        </div>
+                      ) : payoutsQuery.isError ? (
+                        <EmptyState
+                          className="py-12"
+                          icon={<Icon name="alert-triangle" size={28} />}
+                          title={copy.loadError}
+                          action={
+                            <Button variant="outline" onClick={() => void payoutsQuery.refetch()}>
+                              <Icon name="refresh-cw" size={16} />
+                              {copy.retry}
+                            </Button>
+                          }
+                        />
+                      ) : payouts.length === 0 ? (
+                        <EmptyState
+                          className="py-12"
+                          icon={<Icon name="upload" size={28} />}
+                          title={copy.payoutsEmpty}
+                          description={copy.payoutsHint}
+                        />
+                      ) : (
+                        <div className="space-y-3">
+                          {payouts.map((payout: Payout) => (
+                            <div
+                              key={payout.id}
+                              className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 md:flex-row md:items-center md:justify-between shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                                  <Icon name="upload" size={16} />
+                                </span>
+                                <div>
+                                  <p className="font-semibold text-[#002f37]">{copy.withdraw}</p>
+                                  <p className="mt-1 text-sm text-[#526970]" title={formatAbsoluteTime(payout.createdAt, language)}>
+                                    {formatRelativeTime(payout.createdAt, language)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 md:flex-col md:items-end md:gap-1">
+                                <p className="text-lg font-bold text-[#002f37]">-{formatPrice(payout.amount)}</p>
+                                <Badge variant={PAYOUT_STATUS_VARIANT[payout.status]}>
+                                  {copy.payoutStatuses[payout.status]}
+                                </Badge>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3 md:flex-col md:items-end md:gap-1">
-                              <p className="text-lg font-bold text-[#002f37]">-{formatPrice(payout.amount)}</p>
-                              <Badge variant={PAYOUT_STATUS_VARIANT[payout.status]}>
-                                {copy.payoutStatuses[payout.status]}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )}
             </div>
           )}
 

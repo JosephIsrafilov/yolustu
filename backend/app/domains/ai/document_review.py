@@ -23,7 +23,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-VLM_MODEL = "meta/llama-3.2-11b-vision-instruct"
+VLM_MODEL = "meta/llama-3.2-90b-vision-instruct"
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 REQUEST_TIMEOUT = 30.0
 
@@ -158,7 +158,7 @@ def _parse_model_output(text: str) -> dict[str, Any]:
             "license_title_present": True if is_license else None,
             "license_categories": categories,
             "visible_text": quoted_text,
-            "confidence": 0.75,
+            "confidence": 0.3,
             "issues": ["structured_output_unavailable"],
         }
     raise ValueError("Could not parse JSON or key-value pairs from model response")
@@ -495,25 +495,43 @@ def review_verification_document(
     try:
         b64 = base64.b64encode(image_bytes).decode("utf-8")
         client = OpenAI(base_url=NVIDIA_BASE_URL, api_key=settings.NVIDIA_API_KEY)
-        completion = client.chat.completions.create(
-            model=VLM_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": _build_prompt()},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:{mime};base64,{b64}"},
-                        },
-                    ],
-                }
-            ],
-            temperature=0.2,
-            max_tokens=700,
-            timeout=REQUEST_TIMEOUT,
-            stream=False,
-        )
+        messages: list[Any] = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": _build_prompt()},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime};base64,{b64}"},
+                    },
+                ],
+            }
+        ]
+        # Force structured output so the model stops emitting prose essays we
+        # cannot reliably parse. Some endpoints/models reject response_format;
+        # if so, retry once without it and lean on the text parsers.
+        try:
+            completion = client.chat.completions.create(
+                model=VLM_MODEL,
+                messages=messages,
+                temperature=0.0,
+                max_tokens=700,
+                timeout=REQUEST_TIMEOUT,
+                stream=False,
+                response_format={"type": "json_object"},
+            )
+        except Exception as fmt_exc:  # noqa: BLE001 - endpoint may not support it
+            logger.info(
+                "json_object response_format rejected, retrying plain: %s", fmt_exc
+            )
+            completion = client.chat.completions.create(
+                model=VLM_MODEL,
+                messages=messages,
+                temperature=0.0,
+                max_tokens=700,
+                timeout=REQUEST_TIMEOUT,
+                stream=False,
+            )
         content = (completion.choices[0].message.content or "").strip()
         data = _parse_model_output(content)
         return _normalize(

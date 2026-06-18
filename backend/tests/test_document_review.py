@@ -361,3 +361,52 @@ def test_prompt_describes_modern_and_legacy_azerbaijani_licences():
     assert "Legacy layout" in prompt
     assert "two-sided" in prompt
     assert "national ID card, passport" in prompt
+
+
+@patch("app.domains.ai.document_review.OpenAI")
+def test_requests_json_response_format(mock_openai, monkeypatch):
+    """We force structured output so the model stops emitting prose essays."""
+    monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
+    create = mock_openai.return_value.chat.completions.create
+    create.return_value = _mock_completion(
+        '{"is_document": true, "is_azerbaijani": true, '
+        '"document_type": "drivers_license", "extracted_name": "Elvin Mammadov", '
+        '"is_expired": false, "portrait_present": true, '
+        '"document_number_present": true, "license_title_present": true, '
+        '"license_categories": ["B"], "visible_text": ["AZƏRBAYCAN"], '
+        '"confidence": 0.95, "issues": []}'
+    )
+
+    dr.review_verification_document(_png_image(), "image/png", "Elvin", "Mammadov")
+
+    kwargs = create.call_args.kwargs
+    assert kwargs["response_format"] == {"type": "json_object"}
+    assert kwargs["temperature"] == 0.0
+
+
+@patch("app.domains.ai.document_review.OpenAI")
+def test_retries_without_response_format_when_endpoint_rejects_it(
+    mock_openai, monkeypatch
+):
+    """If the endpoint refuses json_object, we retry plain and still parse text."""
+    monkeypatch.setattr(dr.settings, "NVIDIA_API_KEY", "key")
+    good = _mock_completion(
+        '{"is_document": true, "is_azerbaijani": true, '
+        '"document_type": "drivers_license", "extracted_name": "Elvin Mammadov", '
+        '"is_expired": false, "portrait_present": true, '
+        '"document_number_present": true, "license_title_present": true, '
+        '"license_categories": ["B"], '
+        '"visible_text": ["AZƏRBAYCAN", "Sürücülük vəsiqəsi"], '
+        '"confidence": 0.95, "issues": []}'
+    )
+    create = mock_openai.return_value.chat.completions.create
+    create.side_effect = [Exception("response_format unsupported"), good]
+
+    result = dr.review_verification_document(
+        _png_image(), "image/png", "Elvin", "Mammadov"
+    )
+
+    assert create.call_count == 2
+    assert "response_format" not in create.call_args_list[1].kwargs
+    assert result["extracted_name"] == "Elvin Mammadov"
+    assert result["name_matches_profile"] is True
