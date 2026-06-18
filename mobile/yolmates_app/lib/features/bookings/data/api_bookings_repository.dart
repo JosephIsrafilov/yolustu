@@ -47,7 +47,7 @@ class ApiBookingsRepository implements BookingsRepository {
   @override
   Future<Booking> create(Booking booking) async {
     try {
-      final response = await _client.post('/bookings/', data: {
+      final response = await _client.post('/bookings', data: {
         'ride_id': booking.rideId,
         'seats_booked': booking.seats,
       });

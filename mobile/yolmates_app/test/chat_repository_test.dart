@@ -9,8 +9,8 @@ void main() {
       final support = await repo.getOrCreateSupportConversation();
       expect(support.type, 'support');
 
-      final ride = await repo.getOrCreateRideConversation('booking-123');
-      expect(ride.bookingId, 'booking-123');
+      final ride = await repo.getOrCreateRideConversation('ride-123');
+      expect(ride.rideId, 'ride-123');
 
       final conversations = await repo.getConversations();
       expect(conversations, hasLength(2));
@@ -19,7 +19,7 @@ void main() {
     test('markAsRead and sendMessage update conversation state', () async {
       final repo = MockChatRepository();
 
-      final ride = await repo.getOrCreateRideConversation('booking-123');
+      final ride = await repo.getOrCreateRideConversation('ride-123');
       final message = await repo.sendMessage(ride.id, 'On my way');
       final messages = await repo.getMessages(ride.id);
 

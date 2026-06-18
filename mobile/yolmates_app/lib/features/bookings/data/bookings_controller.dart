@@ -62,6 +62,12 @@ final bookingsRepositoryProvider = Provider<BookingsRepository>(
   },
 );
 
+/// Exposes the count of active bookings (pending, confirmed, paid).
+final activeBookingsCountProvider = Provider<int>((ref) {
+  final bookings = ref.watch(bookingsControllerProvider).valueOrNull ?? [];
+  return bookings.where((b) => b.status.isActive).length;
+});
+
 /// Reactive list of the current user's bookings.
 final bookingsControllerProvider =
     AsyncNotifierProvider<BookingsController, List<Booking>>(

@@ -94,7 +94,7 @@ class ApiReviewsRepository implements ReviewsRepository {
     String? comment,
   }) async {
     try {
-      await _client.post('/reviews/', data: {
+      await _client.post('/reviews', data: {
         'target_id': targetId,
         'ride_id': rideId,
         'rating': rating,

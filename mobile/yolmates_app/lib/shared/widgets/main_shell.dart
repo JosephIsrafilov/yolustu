@@ -6,6 +6,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../features/auth/state/auth_controller.dart';
+import '../../features/bookings/data/bookings_controller.dart';
 import '../../features/chat/data/chat_controller.dart';
 import '../../features/notifications/data/notifications_controller.dart';
 
@@ -53,6 +54,7 @@ class MainShell extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
     final unreadChatCount = ref.watch(unreadChatCountProvider);
     final unreadNotificationCount = ref.watch(unreadNotificationCountProvider);
+    final activeBookingsCount = ref.watch(activeBookingsCountProvider);
     final isDriverMode = ref.watch(driverModeProvider);
 
     return Scaffold(
@@ -128,8 +130,14 @@ class MainShell extends ConsumerWidget {
                   label: l10n.navSearch,
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.confirmation_number_outlined),
-                  activeIcon: const Icon(Icons.confirmation_number),
+                  icon: _NavBadgeIcon(
+                    icon: Icons.confirmation_number_outlined,
+                    count: activeBookingsCount,
+                  ),
+                  activeIcon: _NavBadgeIcon(
+                    icon: Icons.confirmation_number,
+                    count: activeBookingsCount,
+                  ),
                   label: l10n.navTrips,
                 ),
                 BottomNavigationBarItem(
