@@ -20,6 +20,10 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+# next start reads next.config.ts at runtime for image remotePatterns;
+# without it the optimizer rejects every remote image ("url not allowed").
+COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 EXPOSE 3000
 ENV PORT=3000
 CMD ["npx", "next", "start"]
