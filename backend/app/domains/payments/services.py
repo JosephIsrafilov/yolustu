@@ -585,6 +585,15 @@ class PaymentService:
         if not settings.STRIPE_ENABLED:
             raise HTTPException(status_code=500, detail="STRIPE_NOT_CONFIGURED")
 
+        success_url = (
+            settings.STRIPE_CHECKOUT_SUCCESS_URL
+            or f"{settings.FRONTEND_URL.rstrip('/')}/payments/stripe/success?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+        cancel_url = (
+            settings.STRIPE_CHECKOUT_CANCEL_URL
+            or f"{settings.FRONTEND_URL.rstrip('/')}/payments/stripe/cancel"
+        )
+
         try:
             session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
@@ -601,8 +610,8 @@ class PaymentService:
                     }
                 ],
                 mode="payment",
-                success_url=settings.STRIPE_CHECKOUT_SUCCESS_URL,
-                cancel_url=settings.STRIPE_CHECKOUT_CANCEL_URL,
+                success_url=success_url,
+                cancel_url=cancel_url,
                 client_reference_id=str(current_user.id),
                 metadata={
                     "type": "wallet_top_up",
