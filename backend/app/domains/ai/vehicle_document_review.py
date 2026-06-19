@@ -83,10 +83,16 @@ def _normalize(data: dict[str, Any], expected_type: str) -> dict[str, Any]:
     is_document = _opt_bool(data.get("is_document"))
     is_azerbaijani = _opt_bool(data.get("is_azerbaijani"))
     is_expired = _opt_bool(data.get("is_expired"))
-    document_type_detected = str(data.get("document_type_detected") or "").strip().lower() or None
+    document_type_detected = (
+        str(data.get("document_type_detected") or "").strip().lower() or None
+    )
     plate_number = str(data.get("plate_number") or "").strip() or None
     raw_vt = data.get("visible_text") or []
-    visible_text = [str(i).strip() for i in raw_vt if str(i).strip()] if isinstance(raw_vt, list) else []
+    visible_text = (
+        [str(i).strip() for i in raw_vt if str(i).strip()]
+        if isinstance(raw_vt, list)
+        else []
+    )
 
     rejection = False
     incomplete = False
@@ -123,7 +129,9 @@ def _normalize(data: dict[str, Any], expected_type: str) -> dict[str, Any]:
         _add("low_confidence")
         incomplete = True
 
-    recommendation = "reject" if rejection else "needs_review" if incomplete else "approve"
+    recommendation = (
+        "reject" if rejection else "needs_review" if incomplete else "approve"
+    )
 
     return {
         "recommendation": recommendation,
@@ -183,7 +191,10 @@ def review_vehicle_document(
                 "role": "user",
                 "content": [
                     {"type": "text", "text": _build_prompt(document_type)},
-                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{b64}"}},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{b64}"},
+                    },
                 ],
             }
         ]
@@ -245,13 +256,16 @@ def run_vehicle_document_review_task(
             doc.ai_confidence = review.get("confidence")  # type: ignore[assignment]
             doc.ai_issues = review.get("issues")  # type: ignore[assignment]
             doc.ai_metadata = {
-                k: v for k, v in review.items()
+                k: v
+                for k, v in review.items()
                 if k not in ("recommendation", "confidence", "issues")
             }
             doc.processing_status = "completed"  # type: ignore[assignment]
             db.commit()
     except Exception as exc:
-        logger.warning("AI vehicle review persist failed for doc %s: %s", document_id, exc)
+        logger.warning(
+            "AI vehicle review persist failed for doc %s: %s", document_id, exc
+        )
         db.rollback()
     finally:
         db.close()

@@ -3,14 +3,25 @@ import logging
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.storage import get_storage
 from app.core.config import settings
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.identity.users_router import VERIFICATION_UPLOAD_TYPES, _validate_and_read_file
+from app.domains.identity.users_router import (
+    VERIFICATION_UPLOAD_TYPES,
+    _validate_and_read_file,
+)
 from app.domains.trips.schemas import (
     VehicleCreate,
     VehicleDocumentResponse,
@@ -104,7 +115,9 @@ async def upload_vehicle_document(
     storage = get_storage()
 
     try:
-        storage.upload(file_bytes, storage_key, content_type, settings.STORAGE_BUCKET_VERIFICATIONS)
+        storage.upload(
+            file_bytes, storage_key, content_type, settings.STORAGE_BUCKET_VERIFICATIONS
+        )
     except Exception as exc:
         logger.exception("Vehicle document upload failed for vehicle %s", vehicle_id)
         raise HTTPException(
@@ -128,7 +141,9 @@ async def upload_vehicle_document(
         raise
     except Exception as exc:
         storage.delete(storage_key, settings.STORAGE_BUCKET_VERIFICATIONS)
-        logger.exception("Vehicle document record creation failed for vehicle %s", vehicle_id)
+        logger.exception(
+            "Vehicle document record creation failed for vehicle %s", vehicle_id
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Document record could not be created.",
@@ -136,7 +151,10 @@ async def upload_vehicle_document(
 
     # AI pre-screen (images only; PDFs go straight to manual review)
     if content_type in ("image/jpeg", "image/png"):
-        from app.domains.ai.vehicle_document_review import run_vehicle_document_review_task
+        from app.domains.ai.vehicle_document_review import (
+            run_vehicle_document_review_task,
+        )
+
         background_tasks.add_task(
             run_vehicle_document_review_task,
             file_bytes,
@@ -158,7 +176,9 @@ def get_vehicle_documents(
     return TripsService(db).get_vehicle_documents(vehicle_id, current_user)
 
 
-@router.get("/{vehicle_id}/verification", response_model=VehicleVerificationStatusResponse)
+@router.get(
+    "/{vehicle_id}/verification", response_model=VehicleVerificationStatusResponse
+)
 def get_vehicle_verification_status(
     vehicle_id: UUID,
     db: Session = Depends(get_db),

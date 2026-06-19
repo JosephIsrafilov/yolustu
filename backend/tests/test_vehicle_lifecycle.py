@@ -46,7 +46,9 @@ class FakeVehicles:
         return vehicle if vehicle and vehicle.user_id == user_id else None
 
     def list_for_user(self, user_id: UUID):
-        return [vehicle for vehicle in self.items.values() if vehicle.user_id == user_id]
+        return [
+            vehicle for vehicle in self.items.values() if vehicle.user_id == user_id
+        ]
 
     def find_active_by_plate(self, normalized_plate: str, exclude_id=None):
         return next(
@@ -61,7 +63,9 @@ class FakeVehicles:
         )
 
     def create(self, user_id: UUID, vehicle_in: VehicleCreate):
-        active = [v for v in self.items.values() if v.user_id == user_id and v.is_active]
+        active = [
+            v for v in self.items.values() if v.user_id == user_id and v.is_active
+        ]
         vehicle = FakeVehicle(
             id=uuid4(),
             user_id=user_id,
@@ -245,9 +249,7 @@ def test_inactive_vehicle_and_excess_capacity_are_rejected_for_ride():
 
 def test_set_default_requires_active_vehicle():
     owner_id = uuid4()
-    first = FakeVehicle(
-        uuid4(), owner_id, "10-AA-100", "10AA100", is_default=True
-    )
+    first = FakeVehicle(uuid4(), owner_id, "10-AA-100", "10AA100", is_default=True)
     second = FakeVehicle(uuid4(), owner_id, "10-BB-200", "10BB200")
     service, _ = service_with([first, second])
 
@@ -263,9 +265,7 @@ def test_set_default_requires_active_vehicle():
 
 def test_deactivation_blocks_dependencies_and_reassigns_default():
     owner_id = uuid4()
-    first = FakeVehicle(
-        uuid4(), owner_id, "10-AA-100", "10AA100", is_default=True
-    )
+    first = FakeVehicle(uuid4(), owner_id, "10-AA-100", "10AA100", is_default=True)
     second = FakeVehicle(uuid4(), owner_id, "10-BB-200", "10BB200")
     service, repo = service_with([first, second])
     repo.blocked_vehicle_ids.add(first.id)
@@ -299,9 +299,7 @@ def test_patch_plate_rechecks_normalized_duplicate():
 def test_inactive_vehicle_may_share_an_active_plate():
     owner_id = uuid4()
     active = FakeVehicle(uuid4(), owner_id, "10-AA-100", "10AA100")
-    inactive = FakeVehicle(
-        uuid4(), owner_id, "10-BB-200", "10BB200", is_active=False
-    )
+    inactive = FakeVehicle(uuid4(), owner_id, "10-BB-200", "10BB200", is_active=False)
     service, _ = service_with([active, inactive])
 
     result = service.update_vehicle(

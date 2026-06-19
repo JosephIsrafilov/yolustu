@@ -20,7 +20,12 @@ from app.core.config import UPLOADS_DIR, settings
 from app.core.database import get_db
 from app.core.storage import get_storage
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.identity.schemas import DeviceTokenInput, UserResponse, PublicUserResponse, UserUpdate
+from app.domains.identity.schemas import (
+    DeviceTokenInput,
+    UserResponse,
+    PublicUserResponse,
+    UserUpdate,
+)
 from app.domains.identity.services import IdentityService
 
 router = APIRouter()

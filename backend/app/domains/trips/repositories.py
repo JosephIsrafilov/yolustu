@@ -4,7 +4,13 @@ from geoalchemy2 import Geography
 from sqlalchemy import and_, cast, func, or_
 from sqlalchemy.orm import Session
 
-from app.domains.trips.models import Ride, RideSeat, SEAT_SPOTS, Vehicle, VehicleDocument
+from app.domains.trips.models import (
+    Ride,
+    RideSeat,
+    SEAT_SPOTS,
+    Vehicle,
+    VehicleDocument,
+)
 from app.domains.trips.schemas import (
     RideCreate,
     RideSearch,
@@ -434,7 +440,11 @@ class VehicleDocumentRepository:
         return doc
 
     def get(self, document_id: UUID) -> VehicleDocument | None:
-        return self.db.query(VehicleDocument).filter(VehicleDocument.id == document_id).first()
+        return (
+            self.db.query(VehicleDocument)
+            .filter(VehicleDocument.id == document_id)
+            .first()
+        )
 
     def list_current_for_vehicle(self, vehicle_id: UUID) -> list[VehicleDocument]:
         return (
@@ -482,6 +492,7 @@ class VehicleDocumentRepository:
 
         if doc.version != expected_version:
             from fastapi import HTTPException
+
             raise HTTPException(
                 status_code=409,
                 detail=f"Document was modified (version {doc.version}), reload and retry",

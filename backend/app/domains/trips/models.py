@@ -29,9 +29,7 @@ SEAT_SPOTS = ("front_right", "back_left", "back_middle", "back_right")
 class Vehicle(Base):
     __tablename__ = "vehicles"
     __table_args__ = (
-        CheckConstraint(
-            "seats_count BETWEEN 1 AND 4", name="ck_vehicles_seats_count"
-        ),
+        CheckConstraint("seats_count BETWEEN 1 AND 4", name="ck_vehicles_seats_count"),
         CheckConstraint("year BETWEEN 1886 AND 2100", name="ck_vehicles_year"),
     )
 
@@ -177,7 +175,9 @@ class VehicleDocument(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     vehicle_id = Column(
-        UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("vehicles.id", ondelete="CASCADE"),
+        nullable=False,
     )
     document_type = Column(String(50), nullable=False)
     storage_key = Column(String(500), nullable=False)

@@ -347,7 +347,7 @@ class BookingsService:
         available = self.seats.available_spots(ride.id)
         ride.available_spots = available  # type: ignore[assignment]
         ride.available_seats = len(available)  # type: ignore[assignment]
-        
+
         redis = get_redis()
         invalidate_cache(redis, f"ride:{ride.id}*")
         invalidate_cache(redis, "rides:search*")

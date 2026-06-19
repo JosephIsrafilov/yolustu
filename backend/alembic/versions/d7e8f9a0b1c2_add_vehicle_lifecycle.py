@@ -24,7 +24,9 @@ def upgrade() -> None:
     )
     op.add_column(
         "vehicles",
-        sa.Column("is_default", sa.Boolean(), server_default=sa.false(), nullable=False),
+        sa.Column(
+            "is_default", sa.Boolean(), server_default=sa.false(), nullable=False
+        ),
     )
     op.add_column(
         "vehicles", sa.Column("normalized_plate", sa.String(length=20), nullable=True)
@@ -38,9 +40,10 @@ def upgrade() -> None:
     )
 
     bind = op.get_bind()
-    invalid = bind.execute(
-        sa.text(
-            """
+    invalid = (
+        bind.execute(
+            sa.text(
+                """
             SELECT id, plate_number, seats_count, year
             FROM vehicles
             WHERE normalized_plate IS NULL
@@ -50,8 +53,11 @@ def upgrade() -> None:
             ORDER BY id
             LIMIT 1
             """
+            )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
     if invalid is not None:
         raise RuntimeError(
             "Vehicle lifecycle migration found invalid legacy vehicle "
