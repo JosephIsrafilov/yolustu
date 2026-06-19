@@ -15,6 +15,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
 import { ROUTES } from '@/lib/routes';
 import { messagesService } from '@/services';
+import { formatSeatLabels } from '@/lib/seats';
 
 interface BookingCardProps {
   booking: Booking;
@@ -113,7 +114,11 @@ export default function BookingCard({
 
         <div className="flex items-center gap-4 text-sm text-text-secondary mb-3 h-5">
           <span className="font-semibold text-brand-600 shrink-0 flex-none">{formatPrice(trip.pricePerSeat)}</span>
-          <span className="truncate block">{booking.seatsRequested} {localCopy.seatsUnit}</span>
+          <span className="truncate block" title={formatSeatLabels(booking.selectedSpots, language)}>
+            {booking.selectedSpots.length
+              ? formatSeatLabels(booking.selectedSpots, language)
+              : `${booking.seatsRequested} ${localCopy.seatsUnit}`}
+          </span>
           {['pending', 'accepted'].includes(booking.status) && booking.paymentDeadline && (
             <span className="truncate block ml-auto text-xs text-red-500 font-medium">
               {localCopy.expiresIn} {new Date(booking.paymentDeadline).toLocaleString()}

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.domains.identity.schemas import UserResponse
+from app.domains.identity.schemas import PublicUserResponse
 from app.domains.trips.schemas import RideResponse, ride_to_response
 
 
@@ -29,7 +29,7 @@ class BookingResponse(BookingBase):
     payment_deadline: Optional[datetime] = None
     created_at: datetime
     ride: Optional[RideResponse] = None
-    passenger: Optional[UserResponse] = None
+    passenger: Optional[PublicUserResponse] = None
 
 
 def booking_to_response(booking: Any) -> BookingResponse:

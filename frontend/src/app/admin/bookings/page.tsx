@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/routes';
 import AdminTableShell from '@/components/admin/AdminTableShell';
+import { formatSeatLabels } from '@/lib/seats';
 
 const STATUSES: (BookingStatus | 'all')[] = ['all', 'pending', 'accepted', 'rejected', 'cancelled', 'paid', 'completed'];
 
@@ -521,7 +522,14 @@ export default function AdminBookingsPage() {
                         </div>
                       ) : t.placeholder}
                     </td>
-                    <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">{booking.seatsRequested}</td>
+                    <td
+                      className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text"
+                      title={formatSeatLabels(booking.selectedSpots, language)}
+                    >
+                      {booking.selectedSpots.length
+                        ? formatSeatLabels(booking.selectedSpots, language)
+                        : booking.seatsRequested}
+                    </td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5 font-medium text-text">
                       <div className="flex flex-col">
                         <span>{totalPrice}</span>

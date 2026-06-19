@@ -18,6 +18,8 @@ abstract class DriverRepository {
 
   Future<List<Vehicle>> vehicles();
   Future<Vehicle> saveVehicle(Vehicle vehicle);
+  Future<Vehicle> setDefaultVehicle(String id);
+  Future<Vehicle> deactivateVehicle(String id);
   Future<void> deleteVehicle(String id);
 }
 
@@ -53,6 +55,7 @@ class ApiDriverRepository implements DriverRepository {
       final origin = CityCoordinates.get(ride.fromCity);
       final dest = CityCoordinates.get(ride.toCity);
       final response = await _client.post('/rides', data: {
+        'vehicle_id': ride.vehicleId,
         'origin_city': ride.fromCity,
         'destination_city': ride.toCity,
         'departure_time': ride.departureTime.toIso8601String(),
@@ -158,6 +161,32 @@ class ApiDriverRepository implements DriverRepository {
   }
 
   @override
+  Future<Vehicle> setDefaultVehicle(String id) async {
+    try {
+      final response = await _client.patch('/vehicles/$id/default');
+      return _vehicleFromResponse(response.data);
+    } on DioException catch (e) {
+      final err = e.error as ApiException;
+      throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    }
+  }
+
+  @override
+  Future<Vehicle> deactivateVehicle(String id) async {
+    try {
+      final response = await _client.patch('/vehicles/$id/deactivate');
+      return _vehicleFromResponse(response.data);
+    } on DioException catch (e) {
+      final err = e.error as ApiException;
+      throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    }
+  }
+
+  @override
   Future<void> deleteVehicle(String id) async {
     try {
       await _client.delete('/vehicles/$id');
@@ -172,6 +201,7 @@ class ApiDriverRepository implements DriverRepository {
   DriverRide _rideFromDto(RideDto dto) {
     return DriverRide(
       id: dto.id,
+      vehicleId: dto.vehicleId,
       fromCity: dto.originCity,
       toCity: dto.destinationCity,
       departureTime: dto.departureTime,
@@ -212,7 +242,16 @@ class ApiDriverRepository implements DriverRepository {
       plate: json['plate_number'] as String,
       seats: json['seats_count'] as int? ?? 4,
       variations: json['variations'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      isDefault: json['is_default'] as bool? ?? false,
     );
+  }
+
+  Vehicle _vehicleFromResponse(dynamic data) {
+    final json = data is Map<String, dynamic>
+        ? (data['data'] as Map<String, dynamic>? ?? data)
+        : data as Map<String, dynamic>;
+    return _vehicleFromJson(json);
   }
 }
 
@@ -265,6 +304,34 @@ class MockDriverRepository implements DriverRepository {
       _vehicles[i] = vehicle;
     }
     return vehicle;
+  }
+
+  @override
+  Future<Vehicle> setDefaultVehicle(String id) async {
+    await Future.delayed(_latency);
+    final i = _vehicles.indexWhere((vehicle) => vehicle.id == id);
+    if (i == -1) throw StateError('Vehicle $id not found');
+    if (!_vehicles[i].isActive) {
+      throw StateError('Vehicle $id is inactive');
+    }
+    for (var index = 0; index < _vehicles.length; index++) {
+      _vehicles[index] = _vehicles[index].copyWith(
+        isDefault: index == i,
+      );
+    }
+    return _vehicles[i];
+  }
+
+  @override
+  Future<Vehicle> deactivateVehicle(String id) async {
+    await Future.delayed(_latency);
+    final i = _vehicles.indexWhere((vehicle) => vehicle.id == id);
+    if (i == -1) throw StateError('Vehicle $id not found');
+    _vehicles[i] = _vehicles[i].copyWith(
+      isActive: false,
+      isDefault: false,
+    );
+    return _vehicles[i];
   }
 
   @override
@@ -325,6 +392,16 @@ class VehiclesController extends AsyncNotifier<List<Vehicle>> {
 
   Future<void> remove(String id) async {
     await _repo.deleteVehicle(id);
+    state = AsyncData(await _repo.vehicles());
+  }
+
+  Future<void> setDefault(String id) async {
+    await _repo.setDefaultVehicle(id);
+    state = AsyncData(await _repo.vehicles());
+  }
+
+  Future<void> deactivate(String id) async {
+    await _repo.deactivateVehicle(id);
     state = AsyncData(await _repo.vehicles());
   }
 }

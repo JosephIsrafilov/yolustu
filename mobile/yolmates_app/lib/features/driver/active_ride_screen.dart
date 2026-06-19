@@ -171,6 +171,7 @@ Təcili yardım: 112
           } catch (_) {
             ride = DriverRide(
               id: widget.rideId,
+              vehicleId: '',
               fromCity: 'Bakı',
               toCity: 'Gəncə',
               departureTime: DateTime.now().add(const Duration(hours: 2)),

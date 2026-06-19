@@ -2,9 +2,11 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
+from sqlalchemy import case, exists
 from sqlalchemy.orm import Session
 
-from app.domains.bookings.models import Booking
+from app.domains.bookings.models import Booking, BookingSeat
+from app.domains.trips.models import RideSeat, SEAT_SPOTS
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_CANCELLED,
@@ -175,16 +177,95 @@ class BookingRepository:
         return booking
 
     def get_accepted_with_deadline_before(self, deadline: datetime) -> list[Booking]:
-        """Get all accepted bookings with payment deadline before the given time."""
+        """Get held bookings with a deadline before the given time."""
         from sqlalchemy.orm import joinedload
 
         return (
             self.db.query(Booking)
             .options(joinedload(Booking.ride))
             .filter(
-                Booking.status == BOOKING_ACCEPTED,
+                Booking.status.in_([BOOKING_PENDING, BOOKING_ACCEPTED]),
                 Booking.payment_deadline.isnot(None),
                 Booking.payment_deadline < deadline,
             )
             .all()
+        )
+
+
+class SeatReservationRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def available_spots(self, ride_id: UUID) -> list[str]:
+        active_assignment = exists().where(
+            BookingSeat.ride_seat_id == RideSeat.id,
+            BookingSeat.released_at.is_(None),
+        )
+        rows = (
+            self.db.query(RideSeat.spot)
+            .filter(
+                RideSeat.ride_id == ride_id,
+                RideSeat.is_enabled.is_(True),
+                ~active_assignment,
+            )
+            .order_by(
+                case(
+                    {spot: index for index, spot in enumerate(SEAT_SPOTS)},
+                    value=RideSeat.spot,
+                )
+            )
+            .all()
+        )
+        return [row[0] for row in rows]
+
+    def allocate(
+        self, booking: Booking, ride_id: UUID, selected_spots: list[str]
+    ) -> None:
+        seats = (
+            self.db.query(RideSeat)
+            .filter(
+                RideSeat.ride_id == ride_id,
+                RideSeat.is_enabled.is_(True),
+                RideSeat.spot.in_(selected_spots),
+            )
+            .with_for_update()
+            .all()
+        )
+        seats_by_spot: dict[str, RideSeat] = {str(seat.spot): seat for seat in seats}
+        if len(seats_by_spot) != len(selected_spots):
+            raise ValueError("Invalid seat selection")
+
+        occupied = (
+            self.db.query(BookingSeat.ride_seat_id)
+            .filter(
+                BookingSeat.ride_seat_id.in_(
+                    [seat.id for seat in seats_by_spot.values()]
+                ),
+                BookingSeat.released_at.is_(None),
+            )
+            .first()
+        )
+        if occupied:
+            raise ValueError("Selected seat is not available")
+
+        for spot in selected_spots:
+            self.db.add(
+                BookingSeat(
+                    booking_id=booking.id,
+                    ride_seat_id=seats_by_spot[spot].id,
+                )
+            )
+        self.db.flush()
+
+    def release(self, booking_id: UUID, released_at: datetime) -> int:
+        return (
+            self.db.query(BookingSeat)
+            .filter(
+                BookingSeat.booking_id == booking_id,
+                BookingSeat.released_at.is_(None),
+            )
+            .update(
+                {BookingSeat.released_at: released_at},
+                synchronize_session=False,
+            )
         )

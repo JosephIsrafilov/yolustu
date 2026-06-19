@@ -54,9 +54,13 @@ export const createBookingSlice: StateCreator<
     }
   },
 
-  createBooking: async (tripId, seats) => {
+  createBooking: async (tripId, selectedSpots) => {
     try {
-      const booking = await bookingsService.createBooking({ tripId, seatsRequested: seats });
+      const booking = await bookingsService.createBooking({
+        tripId,
+        seatsRequested: selectedSpots.length,
+        selectedSpots,
+      });
       set((state) => ({
         bookings: [booking, ...state.bookings],
         trips: booking.trip

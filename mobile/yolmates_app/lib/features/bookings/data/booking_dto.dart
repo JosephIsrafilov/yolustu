@@ -20,7 +20,7 @@ class BookingDto {
   final int seatsBooked;
   final List<String> selectedSpots;
   final String status;
-  final double totalPrice;
+  final double? totalPrice;
   final DateTime? paymentDeadline;
   final DateTime createdAt;
   final RideDto? ride;
@@ -65,9 +65,9 @@ class BookingDto {
     );
   }
 
-  static double _parseDecimal(dynamic value) {
+  static double? _parseDecimal(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) return double.parse(value);
-    return 0.0;
+    return null;
   }
 }

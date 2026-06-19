@@ -92,6 +92,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
               plate: _plate.text.trim().toUpperCase(),
               seats: _seats,
               variations: _variations.text.trim().isEmpty ? null : _variations.text.trim(),
+              isActive: widget.vehicle?.isActive ?? true,
+              isDefault: widget.vehicle?.isDefault ?? false,
             ),
           );
       if (!mounted) return;
@@ -277,7 +279,7 @@ class _SeatStepper extends StatelessWidget {
                       fontSize: 18, fontWeight: FontWeight.bold)),
               IconButton(
                 onPressed:
-                    enabled && value < 7 ? () => onChanged(value + 1) : null,
+                    enabled && value < 4 ? () => onChanged(value + 1) : null,
                 icon: const Icon(Icons.add_circle_outline),
               ),
             ],

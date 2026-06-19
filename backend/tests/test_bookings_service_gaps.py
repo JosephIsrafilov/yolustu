@@ -12,7 +12,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.bookings.services import BookingsService
-from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.repositories import (
+    BookingRepository,
+    SeatReservationRepository,
+)
 from app.domains.bookings.schemas import BookingCreate
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.trips.ports import RideLookupPort
@@ -155,6 +158,74 @@ class FakeNotificationService:
         return None
 
 
+class FakeSeatReservationRepository:
+    def __init__(self, rides, bookings):
+        self.rides = {ride.id: ride for ride in rides}
+        self.available = {
+            ride.id: [
+                "front_right",
+                "back_left",
+                "back_middle",
+                "back_right",
+            ][: ride.available_seats]
+            for ride in rides
+        }
+        self.assignments = {
+            booking.id: list(booking.selected_spots)
+            if booking.selected_spots
+            else (
+                [
+                    spot
+                    for spot in [
+                        "front_right",
+                        "back_left",
+                        "back_middle",
+                        "back_right",
+                    ][: self.rides[booking.ride_id].total_seats]
+                    if spot not in self.available[booking.ride_id]
+                ][: booking.seats_booked]
+                if booking.ride_id in self.rides
+                else []
+            )
+            for booking in bookings
+        }
+        self.booking_rides = {booking.id: booking.ride_id for booking in bookings}
+
+    def available_spots(self, ride_id: UUID) -> list[str]:
+        return list(self.available.get(ride_id, []))
+
+    def allocate(
+        self, booking: FakeBooking, ride_id: UUID, selected_spots: list[str]
+    ) -> None:
+        available = self.available.get(ride_id, [])
+        if any(spot not in available for spot in selected_spots):
+            raise ValueError("Selected seat is not available")
+        self.assignments[booking.id] = list(selected_spots)
+        self.booking_rides[booking.id] = ride_id
+        self.available[ride_id] = [
+            spot for spot in available if spot not in selected_spots
+        ]
+
+    def release(self, booking_id: UUID, released_at: datetime) -> int:
+        released = self.assignments.pop(booking_id, [])
+        booking_ride_id = self.booking_rides.get(booking_id)
+        if booking_ride_id is None:
+            return 0
+        ride = self.rides[booking_ride_id]
+        current = self.available[booking_ride_id]
+        self.available[booking_ride_id] = [
+            spot
+            for spot in [
+                "front_right",
+                "back_left",
+                "back_middle",
+                "back_right",
+            ][: ride.total_seats]
+            if spot in current or spot in released
+        ]
+        return len(released)
+
+
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
@@ -168,12 +239,18 @@ def make_current_user(user_id: UUID, role: str) -> CurrentUser:
 
 
 def make_service(rides=None, bookings=None, db=None):
+    rides = rides or []
+    bookings = bookings or []
     service = BookingsService(db=cast(Session, db))
-    ride_repo = FakeRideLookupPort(rides or [])
-    booking_repo = FakeBookingRepository(bookings or [])
+    ride_repo = FakeRideLookupPort(rides)
+    booking_repo = FakeBookingRepository(bookings)
     notification_svc = FakeNotificationService()
 
     service.bookings = cast(BookingRepository, booking_repo)
+    service.seats = cast(
+        SeatReservationRepository,
+        FakeSeatReservationRepository(rides, bookings),
+    )
     service.rides = cast(RideLookupPort, ride_repo)
     service.notifications = cast(NotificationService, notification_svc)
 
@@ -264,8 +341,7 @@ def test_create_booking_admin_role_forbidden():
     assert "Admin cannot book rides" in exc.value.detail
 
 
-@patch("app.domains.bookings.services.PaymentService")
-def test_create_booking_db_commit_and_refresh(mock_ps_class):
+def test_create_booking_db_commit_and_refresh():
     driver_id = uuid4()
     ride = FakeRide(
         id=uuid4(),
@@ -279,12 +355,6 @@ def test_create_booking_db_commit_and_refresh(mock_ps_class):
     service, _, _, notifications = make_service(rides=[ride], db=mock_db)
     passenger = make_current_user(uuid4(), "passenger")
 
-    mock_ps_instance = mock_ps_class.return_value
-    mock_wallet = MagicMock()
-    mock_wallet.available_balance = Decimal("100.0")
-    mock_wallet.pending_balance = Decimal("0.0")
-    mock_ps_instance.wallets.get_or_create_for_update.return_value = mock_wallet
-
     res = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
     )
@@ -292,6 +362,7 @@ def test_create_booking_db_commit_and_refresh(mock_ps_class):
     assert ride.available_seats == 1
     mock_db.commit.assert_called_once()
     mock_db.refresh.assert_called_once()
+    mock_db.query.assert_not_called()
     assert len(notifications.sent_notifications) == 1
     assert notifications.sent_notifications[0]["user_id"] == driver_id
     assert notifications.sent_notifications[0]["title"] == "New Booking Request"

@@ -9,6 +9,7 @@ import '../../core/localization/app_localizations.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 import 'data/ai_pricing_repository.dart';
+import 'data/vehicle.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../../shared/widgets/city_dropdown.dart';
 
@@ -33,6 +34,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   DateTime _date = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
   int _seats = 3;
+  String? _selectedVehicleId;
   bool _allowLuggage = true;
   bool _allowSmoking = false;
   bool _allowMusic = true;
@@ -106,6 +108,14 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   Future<void> _publish() async {
     final l10n = ref.read(l10nProvider);
     FocusScope.of(context).unfocus();
+    final activeVehicles = (ref.read(vehiclesProvider).valueOrNull ?? [])
+        .where((vehicle) => vehicle.isActive)
+        .toList();
+    final selectedVehicle = _selectedVehicle(activeVehicles);
+    if (selectedVehicle == null) {
+      setState(() => _error = 'Gediş yaratmaq üçün aktiv avtomobil əlavə edin.');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     if (_from == _to) {
       setState(() => _error = l10n.createRideSameLocationError);
@@ -120,6 +130,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
     try {
       final ride = DriverRide(
         id: 'dr-${DateTime.now().millisecondsSinceEpoch}',
+        vehicleId: selectedVehicle.id,
         fromCity: _from,
         toCity: _to,
         departureTime: DateTime(
@@ -178,6 +189,25 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
+    final vehiclesAsync = ref.watch(vehiclesProvider);
+    final activeVehicles = vehiclesAsync.valueOrNull
+            ?.where((vehicle) => vehicle.isActive)
+            .toList() ??
+        const <Vehicle>[];
+    final selectedVehicle = _selectedVehicle(activeVehicles);
+    if (selectedVehicle != null &&
+        (_selectedVehicleId != selectedVehicle.id ||
+            _seats > selectedVehicle.seats)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedVehicleId = selectedVehicle.id;
+          if (_seats > selectedVehicle.seats) {
+            _seats = selectedVehicle.seats;
+          }
+        });
+      });
+    }
     return Scaffold(
       appBar: AppBar(title: Text(l10n.createRideTitle)),
       body: SafeArea(
@@ -215,6 +245,71 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              _label('Avtomobil'),
+              vehiclesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => OutlinedButton.icon(
+                  onPressed: () => ref.invalidate(vehiclesProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Avtomobilləri yenidən yüklə'),
+                ),
+                data: (_) => activeVehicles.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Gediş yaratmaq üçün aktiv avtomobil lazımdır.',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              key: const Key('add-active-vehicle'),
+                              onPressed: () =>
+                                  context.push(AppRoutes.addVehicle),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Avtomobil əlavə et'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : DropdownButtonFormField<String>(
+                        key: const Key('ride-vehicle-selector'),
+                        initialValue: selectedVehicle?.id,
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.directions_car_outlined),
+                        ),
+                        items: [
+                          for (final vehicle in activeVehicles)
+                            DropdownMenuItem(
+                              value: vehicle.id,
+                              child: Text(
+                                '${vehicle.displayName} • ${vehicle.plate} • ${vehicle.seats} yer',
+                              ),
+                            ),
+                        ],
+                        onChanged: _publishing
+                            ? null
+                            : (id) {
+                                final vehicle = activeVehicles
+                                    .firstWhere((item) => item.id == id);
+                                setState(() {
+                                  _selectedVehicleId = id;
+                                  if (_seats > vehicle.seats) {
+                                    _seats = vehicle.seats;
+                                  }
+                                  _error = null;
+                                });
+                              },
+                      ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -240,6 +335,8 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
               _label(l10n.createRideSeats),
               _SeatsStepper(
                 seats: _seats,
+                maxSeats: selectedVehicle?.seats ?? 1,
+                enabled: selectedVehicle != null && !_publishing,
                 onChanged: (s) => setState(() => _seats = s),
                 label: l10n.createRideSeatsLabel,
               ),
@@ -416,7 +513,9 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _publishing ? null : _publish,
+                  key: const Key('publish-ride'),
+                  onPressed:
+                      _publishing || selectedVehicle == null ? null : _publish,
                   child: _publishing
                       ? const SizedBox(
                           width: 22,
@@ -460,6 +559,17 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 fontWeight: FontWeight.w600,
                 color: AppTheme.navy)),
       );
+
+  Vehicle? _selectedVehicle(List<Vehicle> activeVehicles) {
+    if (activeVehicles.isEmpty) return null;
+    for (final vehicle in activeVehicles) {
+      if (vehicle.id == _selectedVehicleId) return vehicle;
+    }
+    for (final vehicle in activeVehicles) {
+      if (vehicle.isDefault) return vehicle;
+    }
+    return activeVehicles.first;
+  }
 }
 
 class _PickerTile extends StatelessWidget {
@@ -508,11 +618,17 @@ class _PickerTile extends StatelessWidget {
 
 class _SeatsStepper extends StatelessWidget {
   final int seats;
+  final int maxSeats;
+  final bool enabled;
   final ValueChanged<int> onChanged;
   final String label;
 
   const _SeatsStepper(
-      {required this.seats, required this.onChanged, required this.label});
+      {required this.seats,
+      required this.maxSeats,
+      required this.enabled,
+      required this.onChanged,
+      required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -529,14 +645,17 @@ class _SeatsStepper extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: seats > 1 ? () => onChanged(seats - 1) : null,
+                onPressed:
+                    enabled && seats > 1 ? () => onChanged(seats - 1) : null,
                 icon: const Icon(Icons.remove_circle_outline),
               ),
               Text('$seats',
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               IconButton(
-                onPressed: seats < 4 ? () => onChanged(seats + 1) : null,
+                onPressed: enabled && seats < maxSeats
+                    ? () => onChanged(seats + 1)
+                    : null,
                 icon: const Icon(Icons.add_circle_outline),
               ),
             ],

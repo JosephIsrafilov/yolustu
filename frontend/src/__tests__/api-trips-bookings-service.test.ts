@@ -35,6 +35,7 @@ const baseBooking: ApiBooking = {
   passenger_id: 'passenger-1',
   status: 'pending',
   seats_booked: 1,
+  selected_spots: ['front_right'],
   created_at: '2026-05-23T08:30:00Z',
 };
 
@@ -76,6 +77,7 @@ describe('api trips/bookings services', () => {
       vehicleId: 'vehicle-1',
       origin: { lat: 40.4, lng: 49.8 },
       destination: { lat: 40.7, lng: 46.3 },
+      availableSpots: ['front_right', 'back_left', 'back_middle'],
     });
 
     expect(mockedApiClient.post).toHaveBeenCalledWith('/rides', {
@@ -90,13 +92,37 @@ describe('api trips/bookings services', () => {
       destination: { lat: 40.7, lon: 46.3 },
       car_model: 'Toyota Prius',
       description: 'No smoking',
+      available_spots: ['front_right', 'back_left', 'back_middle'],
     });
+  });
+
+  it('requires an explicit vehicle before creating a trip', async () => {
+    await expect(apiTripsService.createTrip({
+      departureCity: 'Baku',
+      arrivalCity: 'Ganja',
+      meetingPoint: '',
+      dropoffPoint: '',
+      date: '2026-05-24',
+      time: '10:30',
+      seatsTotal: 1,
+      pricePerSeat: 15,
+      carModel: '',
+      comment: '',
+      vehicleId: '',
+    })).rejects.toThrow('A vehicle must be selected');
+
+    expect(mockedApiClient.get).not.toHaveBeenCalled();
+    expect(mockedApiClient.post).not.toHaveBeenCalled();
   });
 
   it('calls booking endpoints with correct routes and payload', async () => {
     mockedApiClient.post.mockResolvedValue(baseBooking);
 
-    await apiBookingsService.createBooking({ tripId: 'trip-1', seatsRequested: 2 });
+    await apiBookingsService.createBooking({
+      tripId: 'trip-1',
+      seatsRequested: 2,
+      selectedSpots: ['front_right', 'back_left'],
+    });
     await apiBookingsService.acceptBooking('booking-1');
     await apiBookingsService.rejectBooking('booking-1');
     await apiBookingsService.cancelBooking('booking-1');
@@ -104,6 +130,7 @@ describe('api trips/bookings services', () => {
     expect(mockedApiClient.post).toHaveBeenNthCalledWith(1, '/bookings', {
       ride_id: 'trip-1',
       seats_booked: 2,
+      selected_spots: ['front_right', 'back_left'],
     });
     expect(mockedApiClient.post).toHaveBeenNthCalledWith(2, '/bookings/booking-1/confirm');
     expect(mockedApiClient.post).toHaveBeenNthCalledWith(3, '/bookings/booking-1/reject');
@@ -121,6 +148,20 @@ describe('api trips/bookings services', () => {
 
     expect(mapped.meetingPoint).toBe('Shaki');
     expect(mapped.dropoffPoint).toBe('Baku');
+  });
+
+  it('maps available and selected seat spots', () => {
+    const trip = mapApiTripToTrip({
+      ...baseTrip,
+      available_spots: ['back_left', 'back_right'],
+    });
+    const booking = mapApiBookingToBooking({
+      ...baseBooking,
+      selected_spots: ['front_right'],
+    });
+
+    expect(trip.availableSpots).toEqual(['back_left', 'back_right']);
+    expect(booking.selectedSpots).toEqual(['front_right']);
   });
 
   it.each<[BookingStatus]>([

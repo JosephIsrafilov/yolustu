@@ -188,10 +188,16 @@ class _DetailState extends ConsumerState<_Detail> {
             _InfoRow(Icons.access_time, l10n.bookingDetailTime, time),
             _InfoRow(Icons.person, l10n.bookingDetailDriver, b.driverName),
             _InfoRow(Icons.event_seat, l10n.bookingDetailSeats, '${b.seats}'),
+            if (b.selectedSpots.isNotEmpty)
+              _InfoRow(
+                Icons.airline_seat_recline_normal,
+                'Seçilmiş yerlər',
+                b.selectedSpots.map(_seatLabel).join(', '),
+              ),
             _InfoRow(
               Icons.payments_outlined,
               l10n.bookingDetailTotal,
-              '${b.total.toStringAsFixed(0)} AZN',
+              '${b.total.toStringAsFixed(2)} AZN',
             ),
           ],
         ),
@@ -241,18 +247,22 @@ class _DetailState extends ConsumerState<_Detail> {
           const SizedBox(height: 12),
         ],
         // Passenger mock ride flow buttons
-        if (b.status != BookingStatus.cancelled && b.status != BookingStatus.rejected) ...[
+        if (b.status != BookingStatus.cancelled &&
+            b.status != BookingStatus.rejected) ...[
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),
-          const Text('Demo Actions (Passenger)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const Text('Demo Actions (Passenger)',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           SizedBox(
             height: 52,
             child: ElevatedButton.icon(
               onPressed: () {
                 // Mock confirmation and redirect to PassengerActiveRideScreen
-                context.push('${AppRoutes.bookings}/${b.id}/active', extra: b.rideId);
+                context.push('${AppRoutes.bookings}/${b.id}/active',
+                    extra: b.rideId);
               },
               icon: const Icon(Icons.directions_car),
               label: const Text('Start Ride (Demo)'),
@@ -367,7 +377,10 @@ class _Timeline extends StatelessWidget {
       BookingStatus.pending => 1,
       BookingStatus.confirmed => 2,
       BookingStatus.paid => 3,
+      BookingStatus.boarded => 3,
       BookingStatus.completed => 4,
+      BookingStatus.noShow => 3,
+      BookingStatus.expired => 2,
       BookingStatus.rejected => 1,
       BookingStatus.cancelled => 1,
     };
@@ -417,5 +430,20 @@ class _Timeline extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _seatLabel(String spot) {
+  switch (spot) {
+    case 'front_right':
+      return 'Ön sağ';
+    case 'back_left':
+      return 'Arxa sol';
+    case 'back_middle':
+      return 'Arxa orta';
+    case 'back_right':
+      return 'Arxa sağ';
+    default:
+      return spot;
   }
 }

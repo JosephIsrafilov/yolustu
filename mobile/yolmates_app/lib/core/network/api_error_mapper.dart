@@ -56,7 +56,12 @@ class ApiErrorMapper {
         } else if (detail is String) {
           message = detail;
         }
-        return ApiException.validation(message);
+        return ApiException(
+          statusCode: response?.statusCode,
+          code:
+              response?.statusCode == 422 ? 'VALIDATION_ERROR' : 'BAD_REQUEST',
+          message: message,
+        );
       }
     }
 

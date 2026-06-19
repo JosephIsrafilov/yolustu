@@ -9,7 +9,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.bookings.services import BookingsService
-from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.repositories import (
+    BookingRepository,
+    SeatReservationRepository,
+)
 from app.domains.bookings.schemas import BookingCreate
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.trips.ports import RideLookupPort
@@ -125,6 +128,41 @@ class FakeNotificationService:
         return None
 
 
+class FakeSeatReservationRepository:
+    def __init__(self, ride: FakeRide):
+        self.ride = ride
+        self.available = [
+            "front_right",
+            "back_left",
+            "back_middle",
+            "back_right",
+        ][: ride.available_seats]
+        self.assignments: dict[UUID, list[str]] = {}
+
+    def available_spots(self, ride_id: UUID) -> list[str]:
+        return list(self.available) if ride_id == self.ride.id else []
+
+    def allocate(
+        self, booking: FakeBooking, ride_id: UUID, selected_spots: list[str]
+    ) -> None:
+        if ride_id != self.ride.id or any(
+            spot not in self.available for spot in selected_spots
+        ):
+            raise ValueError("Selected seat is not available")
+        self.assignments[booking.id] = list(selected_spots)
+        self.available = [spot for spot in self.available if spot not in selected_spots]
+
+    def release(self, booking_id: UUID, released_at: datetime) -> int:
+        released = self.assignments.pop(booking_id, [])
+        layout = ["front_right", "back_left", "back_middle", "back_right"]
+        self.available = [
+            spot
+            for spot in layout[: self.ride.total_seats]
+            if spot in self.available or spot in released
+        ]
+        return len(released)
+
+
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
@@ -169,6 +207,7 @@ def make_service(
 
     service = BookingsService(db=db_mock)
     service.bookings = cast(BookingRepository, FakeBookingRepository())
+    service.seats = cast(SeatReservationRepository, FakeSeatReservationRepository(ride))
     service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
     service.notifications = cast(NotificationService, FakeNotificationService())
 
@@ -201,7 +240,50 @@ def test_create_booking_decrements_seats():
     )
 
     assert response.status == "pending"
+    assert response.selected_spots == ["front_right", "back_left"]
     assert ride.available_seats == 1
+    assert response.payment_deadline is not None
+
+
+def test_selected_spot_count_must_match_seats_booked():
+    service, ride, _, passenger = make_service()
+
+    with pytest.raises(HTTPException) as exc:
+        service.create_booking(
+            BookingCreate(
+                ride_id=ride.id,
+                seats_booked=2,
+                selected_spots=["front_right"],
+            ),
+            passenger,
+        )
+
+    assert exc.value.status_code == 400
+    assert "count must match" in str(exc.value.detail)
+
+
+def test_exact_seat_conflict_returns_409():
+    service, ride, _, passenger = make_service()
+    service.create_booking(
+        BookingCreate(
+            ride_id=ride.id,
+            seats_booked=1,
+            selected_spots=["front_right"],
+        ),
+        passenger,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        service.create_booking(
+            BookingCreate(
+                ride_id=ride.id,
+                seats_booked=1,
+                selected_spots=["front_right"],
+            ),
+            make_current_user(uuid4(), role="passenger"),
+        )
+
+    assert exc.value.status_code == 409
 
 
 def test_confirm_booking_does_not_change_seats():

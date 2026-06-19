@@ -10,7 +10,10 @@ enum BookingStatus {
   rejected,
   cancelled,
   paid,
+  boarded,
+  noShow,
   completed,
+  expired,
 }
 
 extension BookingStatusX on BookingStatus {
@@ -27,8 +30,14 @@ extension BookingStatusX on BookingStatus {
         return 'Ləğv edildi';
       case BookingStatus.paid:
         return 'Ödənildi';
+      case BookingStatus.boarded:
+        return 'Mindiyi təsdiqləndi';
+      case BookingStatus.noShow:
+        return 'Gəlmədi';
       case BookingStatus.completed:
         return 'Tamamlandı';
+      case BookingStatus.expired:
+        return 'Vaxtı bitdi';
     }
   }
 
@@ -41,8 +50,13 @@ extension BookingStatusX on BookingStatus {
         return (AppTheme.teal.withValues(alpha: 0.1), AppTheme.tealDark);
       case BookingStatus.paid:
         return (Colors.green.shade50, Colors.green.shade700);
+      case BookingStatus.boarded:
+        return (Colors.blue.shade50, Colors.blue.shade700);
       case BookingStatus.completed:
         return (AppTheme.slate100, AppTheme.slate700);
+      case BookingStatus.noShow:
+      case BookingStatus.expired:
+        return (Colors.red.shade50, Colors.red.shade700);
       case BookingStatus.rejected:
         return (Colors.red.shade50, Colors.red.shade700);
       case BookingStatus.cancelled:
@@ -53,7 +67,8 @@ extension BookingStatusX on BookingStatus {
   bool get isActive =>
       this == BookingStatus.pending ||
       this == BookingStatus.confirmed ||
-      this == BookingStatus.paid;
+      this == BookingStatus.paid ||
+      this == BookingStatus.boarded;
 
   /// Confirmed-but-unpaid bookings expose a payment action.
   bool get needsPayment => this == BookingStatus.confirmed;
@@ -70,6 +85,7 @@ class Booking {
   final int seats;
   final List<String> selectedSpots;
   final double pricePerSeat;
+  final double? totalPrice;
   final BookingStatus status;
   final DateTime createdAt;
 
@@ -84,11 +100,12 @@ class Booking {
     required this.seats,
     this.selectedSpots = const [],
     required this.pricePerSeat,
+    this.totalPrice,
     required this.status,
     required this.createdAt,
   });
 
-  double get total => pricePerSeat * seats;
+  double get total => totalPrice ?? pricePerSeat * seats;
 
   Booking copyWith({BookingStatus? status}) {
     return Booking(
@@ -102,6 +119,7 @@ class Booking {
       seats: seats,
       selectedSpots: selectedSpots,
       pricePerSeat: pricePerSeat,
+      totalPrice: totalPrice,
       status: status ?? this.status,
       createdAt: createdAt,
     );

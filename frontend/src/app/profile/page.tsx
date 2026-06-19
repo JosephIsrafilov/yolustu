@@ -831,6 +831,7 @@ function AnimatedAlertModal({ isOpen, message, onClose }: { isOpen: boolean, mes
 
 function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver: boolean }) {
   const { language } = useAppStore();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ brand: '', model: '', year: new Date().getFullYear(), color: '' });
@@ -924,7 +925,7 @@ function DriverVehiclesSection({ copy, isDriver }: { copy: ProfileCopy, isDriver
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-text">{copy.vehiclesTitle}</h3>
         {!adding && (
-          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+          <Button size="sm" variant="outline" onClick={() => router.push(ROUTES.driverVehicle)}>
             <Icon name="plus" size={14} /> <span className="hidden sm:inline ml-1">{copy.addVehicleBtn}</span>
           </Button>
         )}

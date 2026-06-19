@@ -35,6 +35,7 @@ extension DriverRideStatusX on DriverRideStatus {
 
 class DriverRide {
   final String id;
+  final String vehicleId;
   final String fromCity;
   final String toCity;
   final DateTime departureTime;
@@ -48,6 +49,7 @@ class DriverRide {
 
   const DriverRide({
     required this.id,
+    required this.vehicleId,
     required this.fromCity,
     required this.toCity,
     required this.departureTime,
@@ -63,6 +65,7 @@ class DriverRide {
   DriverRide copyWith({DriverRideStatus? status}) {
     return DriverRide(
       id: id,
+      vehicleId: vehicleId,
       fromCity: fromCity,
       toCity: toCity,
       departureTime: departureTime,

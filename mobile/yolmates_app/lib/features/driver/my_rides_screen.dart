@@ -220,6 +220,7 @@ class _RideCard extends ConsumerWidget {
       BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     final copy = DriverRide(
       id: 'dr-${DateTime.now().millisecondsSinceEpoch}',
+      vehicleId: ride.vehicleId,
       fromCity: ride.fromCity,
       toCity: ride.toCity,
       departureTime: ride.departureTime.add(const Duration(days: 1)),

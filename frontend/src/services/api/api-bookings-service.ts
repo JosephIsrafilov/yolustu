@@ -7,6 +7,7 @@ export const apiBookingsService: BookingsService = {
     const backendInput = {
       ride_id: input.tripId,
       seats_booked: input.seatsRequested,
+      selected_spots: input.selectedSpots,
     };
     const response = await apiClient.post<ApiBooking>('/bookings', backendInput);
     return mapApiBookingToBooking(response);

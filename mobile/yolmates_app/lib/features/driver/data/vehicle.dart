@@ -11,6 +11,8 @@ class Vehicle {
   final String plate;
   final int seats;
   final String? variations;
+  final bool isActive;
+  final bool isDefault;
 
   const Vehicle({
     required this.id,
@@ -21,6 +23,8 @@ class Vehicle {
     required this.plate,
     required this.seats,
     this.variations,
+    this.isActive = true,
+    this.isDefault = false,
   });
 
   String get displayName => '$brand $model';
@@ -33,6 +37,8 @@ class Vehicle {
     String? plate,
     int? seats,
     String? variations,
+    bool? isActive,
+    bool? isDefault,
   }) {
     return Vehicle(
       id: id,
@@ -43,6 +49,8 @@ class Vehicle {
       plate: plate ?? this.plate,
       seats: seats ?? this.seats,
       variations: variations ?? this.variations,
+      isActive: isActive ?? this.isActive,
+      isDefault: isDefault ?? this.isDefault,
     );
   }
 }

@@ -4,10 +4,8 @@ import type { TripSearchFilters } from '@/types';
 import { getCityCoordinates } from '@/lib/utils';
 import {
   mapApiTripToTrip,
-  mapApiVehicleToVehicle,
   mapCreateTripToApiRideCreate,
   type ApiTrip,
-  type ApiVehicle,
 } from './mappers';
 
 interface ApiPublicTrack {
@@ -31,33 +29,6 @@ interface ApiPaginatedResponse<T> {
 
 function isPaginatedResponse<T>(value: T[] | ApiPaginatedResponse<T>): value is ApiPaginatedResponse<T> {
   return !Array.isArray(value);
-}
-
-async function resolveVehicleId(input: Parameters<TripsService['createTrip']>[0]): Promise<string> {
-  if (input.vehicleId) return input.vehicleId;
-
-  if (input.newVehicle) {
-    const vehicle = await apiClient.post<ApiVehicle>('/vehicles', {
-      brand: input.newVehicle.brand,
-      model: input.newVehicle.model,
-      year: input.newVehicle.year,
-      color: input.newVehicle.color,
-      plate_number: input.newVehicle.plateNumber,
-    });
-    return vehicle.id;
-  }
-
-  const vehicles = await apiClient.get<ApiVehicle[]>('/vehicles/my');
-  if (vehicles[0]) return mapApiVehicleToVehicle(vehicles[0]).id;
-
-  const vehicle = await apiClient.post<ApiVehicle>('/vehicles', {
-    brand: 'Other',
-    model: input.carModel || 'Car',
-    year: 2020,
-    color: 'Unknown',
-    plate_number: `AUTO-${Date.now().toString().slice(-6)}`,
-  });
-  return vehicle.id;
 }
 
 function resolveCoordinates(
@@ -123,10 +94,12 @@ export const apiTripsService: TripsService = {
   },
 
   async createTrip(input) {
-    const vehicleId = await resolveVehicleId(input);
+    if (!input.vehicleId) {
+      throw new Error('A vehicle must be selected before creating a trip.');
+    }
     const origin = resolveCoordinates(input.origin, input.departureCity);
     const destination = resolveCoordinates(input.destination, input.arrivalCity);
-    const backendInput = mapCreateTripToApiRideCreate(input, vehicleId, origin, destination);
+    const backendInput = mapCreateTripToApiRideCreate(input, origin, destination);
     const response = await apiClient.post<ApiTrip>('/rides', backendInput);
     return mapApiTripToTrip(response);
   },

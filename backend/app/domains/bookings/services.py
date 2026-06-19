@@ -2,17 +2,23 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.domains.bookings.models import Booking
-from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.repositories import (
+    BookingRepository,
+    SeatReservationRepository,
+)
 from app.domains.bookings.schemas import (
     BookingCreate,
     BookingResponse,
     booking_to_response,
 )
+from app.core.redis import get_redis
+from app.core.cache import invalidate_cache
 from app.domains.identity.dependencies import CurrentUser
-from app.domains.payments.services import PaymentService, money
+from app.domains.payments.services import money
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_BOARDED,
@@ -27,16 +33,18 @@ from app.domains.lifecycle import (
     RIDE_COMPLETED,
     can_transition_booking,
 )
+from app.domains.trips.models import SEAT_SPOTS
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 
-SEAT_SPOTS = ("front_right", "back_left", "back_middle", "back_right")
+PENDING_SEAT_HOLD_MINUTES = 15
 
 
 class BookingsService:
     def __init__(self, db: Session):
         self.db = db
         self.bookings = BookingRepository(db)
+        self.seats = SeatReservationRepository(db)
         self.rides = RideLookupPort(db)
         self.notifications = NotificationService(db)
 
@@ -64,28 +72,11 @@ class BookingsService:
         if ride.driver_id == current_user.id:
             raise HTTPException(status_code=403, detail="You cannot book your own ride")
 
-        selected_spots = self._validate_and_reserve_spots(
+        selected_spots = self._validate_spots(
             ride, booking_in.seats_booked, booking_in.selected_spots
         )
 
-        from app.core.config import settings
-
         amount = money(ride.price_per_seat * booking_in.seats_booked)
-        if self.db is not None:
-            payment_service = PaymentService(self.db)
-            wallet = payment_service.wallets.get_or_create_for_update(
-                current_user.id, settings.PAYMENT_CURRENCY
-            )
-            if wallet.available_balance < amount:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Insufficient wallet balance for this booking",
-                )
-
-            # Hold the funds
-            wallet.available_balance = money(wallet.available_balance - amount)
-            wallet.pending_balance = money(wallet.pending_balance + amount)
-
         booking = self.bookings.create(
             ride_id=ride.id,  # type: ignore[arg-type]
             passenger_id=current_user.id,
@@ -93,24 +84,18 @@ class BookingsService:
             total_price=amount,  # type: ignore[arg-type]
             selected_spots=selected_spots,
         )
-
-        # Record wallet transaction for the hold
-        if self.db is not None:
-            payment_service._ledger(
-                user_id=current_user.id,
-                payment=None,
-                booking_id=booking.id,  # type: ignore[arg-type]
-                ride_id=ride.id,  # type: ignore[arg-type]
-                tx_type="reservation_hold",
-                direction="debit",
-                amount=amount,
-                status="pending",
-                description="Funds reserved for booking",
-                idempotency_key=f"booking:{booking.id}:reservation_hold",
+        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(
+            minutes=PENDING_SEAT_HOLD_MINUTES
+        )
+        try:
+            self.seats.allocate(booking, ride.id, selected_spots)  # type: ignore[arg-type]
+        except (IntegrityError, ValueError):
+            if self.db is not None:
+                self.db.rollback()
+            raise HTTPException(
+                status_code=409, detail="Selected seat is not available"
             )
-
-        ride.available_seats -= booking_in.seats_booked  # type: ignore[assignment]
-        ride.available_spots = self._available_spots_after(ride, selected_spots)  # type: ignore[assignment]
+        self._sync_ride_seat_projection(ride)
         if self.db is not None:
             self.db.commit()
             self.db.refresh(booking)
@@ -177,36 +162,7 @@ class BookingsService:
 
         booking.status = BOOKING_REJECTED  # type: ignore[assignment]
         if ride.status != RIDE_COMPLETED:
-            ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                ride.total_seats, ride.available_seats + booking.seats_booked
-            )
-            ride.available_spots = self._available_spots_after(ride)  # type: ignore[assignment]
-
-        # Release held funds
-        if self.db is not None:
-            from app.domains.payments.services import PaymentService, money
-
-            payment_service = PaymentService(self.db)
-            wallet = payment_service.wallets.get_or_create_for_update(
-                booking.passenger_id,
-                "AZN",  # type: ignore[arg-type]
-            )
-            amount = money(booking.total_price or 0)  # type: ignore[arg-type]
-            wallet.available_balance = money(wallet.available_balance + amount)
-            wallet.pending_balance = money(wallet.pending_balance - amount)
-
-            payment_service._ledger(
-                user_id=booking.passenger_id,  # type: ignore[arg-type]
-                payment=None,
-                booking_id=booking.id,  # type: ignore[arg-type]
-                ride_id=ride.id,  # type: ignore[arg-type]
-                tx_type="reservation_release",
-                direction="credit",
-                amount=amount,
-                status="posted",
-                description="Funds released due to rejected booking",
-                idempotency_key=f"booking:{booking.id}:reservation_release_reject",
-            )
+            self._release_seats(booking, ride)
 
         self.bookings.save(booking)
 
@@ -253,39 +209,7 @@ class BookingsService:
         if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)
             if ride.status != RIDE_COMPLETED:
-                ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                    ride.total_seats, ride.available_seats + booking.seats_booked
-                )
-                ride.available_spots = self._available_spots_after(
-                    ride, released_booking_id=booking.id
-                )  # type: ignore[assignment]
-
-        if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]:
-            # Release held funds
-            if self.db is not None:
-                from app.domains.payments.services import PaymentService, money
-
-                payment_service = PaymentService(self.db)
-                wallet = payment_service.wallets.get_or_create_for_update(
-                    booking.passenger_id,
-                    "AZN",  # type: ignore[arg-type]
-                )
-                amount = money(booking.total_price or 0)  # type: ignore[arg-type]
-                wallet.available_balance = money(wallet.available_balance + amount)
-                wallet.pending_balance = money(wallet.pending_balance - amount)
-
-                payment_service._ledger(
-                    user_id=booking.passenger_id,  # type: ignore[arg-type]
-                    payment=None,
-                    booking_id=booking.id,  # type: ignore[arg-type]
-                    ride_id=ride.id,  # type: ignore[arg-type]
-                    tx_type="reservation_release",
-                    direction="credit",
-                    amount=amount,
-                    status="posted",
-                    description="Funds released due to cancelled booking",
-                    idempotency_key=f"booking:{booking.id}:reservation_release_cancel",
-                )
+                self._release_seats(booking, ride)
 
         booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
         self.bookings.save(booking)
@@ -363,7 +287,7 @@ class BookingsService:
         expired = []
         for booking in bookings:
             if (
-                booking.status == BOOKING_ACCEPTED
+                booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]
                 and booking.payment_deadline
                 and booking.payment_deadline < now
             ):
@@ -373,37 +297,7 @@ class BookingsService:
             booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
             ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
             if ride and ride.status != RIDE_COMPLETED:
-                ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                    ride.total_seats,
-                    ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
-                )
-                ride.available_spots = self._available_spots_after(ride)  # type: ignore[assignment]
-
-            # Release held funds
-            if self.db is not None:
-                from app.domains.payments.services import PaymentService, money
-
-                payment_service = PaymentService(self.db)
-                wallet = payment_service.wallets.get_or_create_for_update(
-                    booking.passenger_id,
-                    "AZN",  # type: ignore[arg-type]
-                )
-                amount = money(booking.total_price or 0)  # type: ignore[arg-type]
-                wallet.available_balance = money(wallet.available_balance + amount)
-                wallet.pending_balance = money(wallet.pending_balance - amount)
-
-                payment_service._ledger(
-                    user_id=booking.passenger_id,  # type: ignore[arg-type]
-                    payment=None,
-                    booking_id=booking.id,  # type: ignore[arg-type]
-                    ride_id=ride.id if ride else booking.ride_id,  # type: ignore[arg-type]
-                    tx_type="reservation_release",
-                    direction="credit",
-                    amount=amount,
-                    status="posted",
-                    description="Funds released due to expired booking",
-                    idempotency_key=f"booking:{booking.id}:reservation_release_expire",
-                )
+                self._release_seats(booking, ride)
 
             self.bookings.save(booking)
             self.notifications.send_push_notification(
@@ -416,25 +310,7 @@ class BookingsService:
     def _seat_layout(self, ride) -> list[str]:
         return list(SEAT_SPOTS[: ride.total_seats])
 
-    def _taken_spots(self, ride, exclude_booking_id: UUID | None = None) -> set[str]:
-        taken: set[str] = set()
-        for booking in self.bookings.list_active_for_ride(ride.id):  # type: ignore[arg-type]
-            if exclude_booking_id is not None and booking.id == exclude_booking_id:
-                continue
-            taken.update(booking.selected_spots or [])
-        return taken
-
-    def _available_spots_after(
-        self,
-        ride,
-        newly_selected: list[str] | None = None,
-        released_booking_id: UUID | None = None,
-    ) -> list[str]:
-        taken = self._taken_spots(ride, exclude_booking_id=released_booking_id)
-        taken.update(newly_selected or [])
-        return [spot for spot in self._seat_layout(ride) if spot not in taken]
-
-    def _validate_and_reserve_spots(
+    def _validate_spots(
         self, ride, seats_booked: int, selected_spots: list[str] | None
     ) -> list[str]:
         layout = self._seat_layout(ride)
@@ -450,16 +326,29 @@ class BookingsService:
         if unknown:
             raise HTTPException(status_code=400, detail="Invalid seat selection")
 
-        taken = self._taken_spots(ride)
-        if any(spot in taken for spot in selected):
+        available = self.seats.available_spots(ride.id)
+        if any(spot not in available for spot in selected):
             raise HTTPException(
-                status_code=400, detail="Selected seat is not available"
+                status_code=409, detail="Selected seat is not available"
             )
 
         if selected:
             return selected
 
-        available = [spot for spot in layout if spot not in taken]
         if len(available) < seats_booked:
             raise HTTPException(status_code=400, detail="Not enough available seats")
         return available[:seats_booked]
+
+    def _release_seats(self, booking: Booking, ride) -> None:
+        self.seats.release(booking.id, datetime.now(timezone.utc))  # type: ignore[arg-type]
+        self._sync_ride_seat_projection(ride)
+
+    def _sync_ride_seat_projection(self, ride) -> None:
+        available = self.seats.available_spots(ride.id)
+        ride.available_spots = available  # type: ignore[assignment]
+        ride.available_seats = len(available)  # type: ignore[assignment]
+        
+        redis = get_redis()
+        invalidate_cache(redis, f"ride:{ride.id}*")
+        invalidate_cache(redis, "rides:search*")
+        invalidate_cache(redis, "rides:my*")

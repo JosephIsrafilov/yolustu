@@ -40,7 +40,7 @@ class ApiBookingsRepository implements BookingsRepository {
           .toList();
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
-      throw Exception(apiError.message);
+      throw apiError;
     }
   }
 
@@ -69,7 +69,7 @@ class ApiBookingsRepository implements BookingsRepository {
       return BookingMapper.toBooking(BookingDto.fromJson(bookingJson));
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
-      throw Exception(apiError.message);
+      throw apiError;
     }
   }
 
@@ -99,7 +99,7 @@ class ApiBookingsRepository implements BookingsRepository {
       return BookingMapper.toBooking(BookingDto.fromJson(bookingJson));
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
-      throw Exception(apiError.message);
+      throw apiError;
     }
   }
 }

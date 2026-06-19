@@ -13,6 +13,7 @@ void main() {
         'ride_id': '123e4567-e89b-12d3-a456-426614174000',
         'passenger_id': '789e0123-e89b-12d3-a456-426614174111',
         'seats_booked': 2,
+        'selected_spots': ['front_right', 'back_middle'],
         'status': 'pending',
         'total_price': 30.00,
         'payment_deadline': '2024-06-20T12:00:00Z',
@@ -49,6 +50,7 @@ void main() {
       expect(dto.id, '550e8400-e29b-41d4-a716-446655440000');
       expect(dto.rideId, '123e4567-e89b-12d3-a456-426614174000');
       expect(dto.seatsBooked, 2);
+      expect(dto.selectedSpots, ['front_right', 'back_middle']);
       expect(dto.status, 'pending');
       expect(dto.totalPrice, 30.00);
       expect(dto.paymentDeadline, isNotNull);
@@ -87,6 +89,20 @@ void main() {
 
       final dto = BookingDto.fromJson(json);
       expect(dto.paymentDeadline, isNull);
+    });
+
+    test('keeps missing total_price nullable for price-per-seat fallback', () {
+      final json = {
+        'id': '1',
+        'ride_id': '2',
+        'passenger_id': '3',
+        'seats_booked': 2,
+        'status': 'pending',
+        'total_price': null,
+        'created_at': '2024-06-15T10:30:00Z',
+      };
+
+      expect(BookingDto.fromJson(json).totalPrice, isNull);
     });
 
     test('handles missing nested ride', () {
@@ -151,6 +167,7 @@ void main() {
       expect(booking.toCity, 'Gəncə');
       expect(booking.driverName, 'Rəşad Süleymanov');
       expect(booking.seats, 2);
+      expect(booking.selectedSpots, isEmpty);
       expect(booking.pricePerSeat, 15.00);
       expect(booking.total, 30.00);
       expect(booking.status, BookingStatus.pending);
@@ -204,6 +221,57 @@ void main() {
 
       final booking = BookingMapper.toBooking(dto);
       expect(booking.status, BookingStatus.cancelled);
+    });
+
+    for (final entry in {
+      'boarded': BookingStatus.boarded,
+      'no_show': BookingStatus.noShow,
+      'expired': BookingStatus.expired,
+    }.entries) {
+      test('maps status "${entry.key}" correctly', () {
+        final dto = BookingDto(
+          id: '1',
+          rideId: '2',
+          passengerId: '3',
+          seatsBooked: 1,
+          status: entry.key,
+          totalPrice: 10.00,
+          createdAt: DateTime(2024, 6, 15),
+        );
+
+        expect(BookingMapper.toBooking(dto).status, entry.value);
+      });
+    }
+
+    test('uses backend total price as canonical booking total', () {
+      final dto = BookingDto(
+        id: '1',
+        rideId: '2',
+        passengerId: '3',
+        seatsBooked: 2,
+        status: 'pending',
+        totalPrice: 19.99,
+        createdAt: DateTime(2024, 6, 15),
+        ride: RideDto(
+          id: '2',
+          driverId: 'drv-1',
+          vehicleId: 'veh-1',
+          departureTime: DateTime(2024, 6, 18),
+          totalSeats: 4,
+          availableSeats: 2,
+          pricePerSeat: 10,
+          originCity: 'Bakı',
+          destinationCity: 'Gəncə',
+          status: 'active',
+          smokingAllowed: false,
+          petsAllowed: false,
+          musicAllowed: true,
+          femaleOnly: false,
+          createdAt: DateTime(2024, 6, 10),
+        ),
+      );
+
+      expect(BookingMapper.toBooking(dto).total, 19.99);
     });
 
     test('maps unknown status to pending fallback', () {

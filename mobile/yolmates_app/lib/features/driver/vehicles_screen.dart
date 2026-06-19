@@ -67,13 +67,13 @@ class VehiclesScreen extends ConsumerWidget {
   }
 }
 
-class _VehicleCard extends StatelessWidget {
+class _VehicleCard extends ConsumerWidget {
   final Vehicle vehicle;
 
   const _VehicleCard({required this.vehicle});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -113,16 +113,102 @@ class _VehicleCard extends StatelessWidget {
                     style: const TextStyle(color: AppTheme.tealDark, fontSize: 13),
                   ),
                 ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _Badge(
+                      label: vehicle.isActive ? 'Aktiv' : 'Deaktiv',
+                      color: vehicle.isActive
+                          ? AppTheme.tealDark
+                          : AppTheme.slate500,
+                    ),
+                    if (vehicle.isDefault)
+                      const _Badge(
+                        label: 'Əsas avtomobil',
+                        color: AppTheme.navy,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {
-              context.push(AppRoutes.addVehicle, extra: vehicle);
-            },
-            icon: const Icon(Icons.edit_outlined, color: AppTheme.slate500),
+          PopupMenuButton<_VehicleAction>(
+            tooltip: 'Avtomobil əməliyyatları',
+            onSelected: (action) => _handleAction(context, ref, action),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _VehicleAction.edit,
+                child: Text('Redaktə et'),
+              ),
+              if (vehicle.isActive && !vehicle.isDefault)
+                const PopupMenuItem(
+                  value: _VehicleAction.setDefault,
+                  child: Text('Əsas avtomobil et'),
+                ),
+              if (vehicle.isActive)
+                const PopupMenuItem(
+                  value: _VehicleAction.deactivate,
+                  child: Text('Deaktiv et'),
+                ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    _VehicleAction action,
+  ) async {
+    if (action == _VehicleAction.edit) {
+      context.push(AppRoutes.addVehicle, extra: vehicle);
+      return;
+    }
+
+    try {
+      final controller = ref.read(vehiclesProvider.notifier);
+      if (action == _VehicleAction.setDefault) {
+        await controller.setDefault(vehicle.id);
+      } else {
+        await controller.deactivate(vehicle.id);
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Əməliyyat uğursuz oldu: $error')),
+        );
+      }
+    }
+  }
+}
+
+enum _VehicleAction { edit, setDefault, deactivate }
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _Badge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

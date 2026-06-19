@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../core/repositories/rides_repository.dart';
@@ -48,23 +49,14 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
     return _seatOrder.take(ride.availableSeats).toList();
   }
 
-  void _syncSelectedSpots(Trip ride) {
-    final available = _availableSpotsFor(ride);
-    if (available.isNotEmpty && _seats > available.length) {
-      _seats = available.length;
-    }
-    final next = _selectedSpots.where(available.contains).take(_seats).toList();
-    for (final spot in available) {
-      if (next.length == _seats) break;
-      if (!next.contains(spot)) next.add(spot);
-    }
-    _selectedSpots = next;
-  }
-
   void _setSeats(Trip ride, int seats) {
     setState(() {
       _seats = seats;
-      _syncSelectedSpots(ride);
+      _selectedSpots = _selectedSpots
+          .where(_availableSpotsFor(ride).contains)
+          .take(seats)
+          .toList();
+      _error = null;
     });
   }
 
@@ -80,23 +72,21 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
         next.add(spot);
       }
       _selectedSpots = next;
+      _error = null;
     });
   }
 
   Future<void> _confirm(Trip ride) async {
-    _syncSelectedSpots(ride);
     if (_selectedSpots.length != _seats) {
       setState(() => _error = 'Zəhmət olmasa $_seats yer seçin.');
       return;
     }
 
     // Check wallet balance before booking
-    const serviceFeePercent = 0.10;
-    final total = ride.price * _seats * (1 + serviceFeePercent);
+    final total = ride.price * _seats;
     final walletState = ref.read(walletControllerProvider).valueOrNull;
     if (walletState != null && walletState.balance.passengerBalance < total) {
-      _showErrorDialog(
-          'Balans kifayət deyil',
+      _showErrorDialog('Balans kifayət deyil',
           'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.passengerBalance.toStringAsFixed(2)} AZN var.');
       return;
     }
@@ -123,7 +113,8 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
           .read(bookingsControllerProvider.notifier)
           .createBooking(booking);
       if (!mounted) return;
-      await _showSuccess();
+      ref.invalidate(rideByIdProvider(ride.id));
+      await _showSuccess(created.selectedSpots);
       if (!mounted) return;
 
       // Navigate to chat and send automated message
@@ -149,12 +140,42 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
       if (!mounted) return;
       context.go('${AppRoutes.messages}/${conversation.id}');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (_isSeatConflict(e)) {
+        ref.invalidate(rideByIdProvider(ride.id));
+        final refreshed = await ref.read(rideByIdProvider(ride.id).future);
+        if (!mounted) return;
+        setState(() {
+          final available = refreshed == null
+              ? const <String>[]
+              : _availableSpotsFor(refreshed);
+          _selectedSpots =
+              _selectedSpots.where(available.contains).take(_seats).toList();
+          if (available.isNotEmpty && _seats > available.length) {
+            _seats = available.length;
+            _selectedSpots = _selectedSpots.take(_seats).toList();
+          }
+          _error = 'Seçdiyiniz yerlərdən biri artıq tutulub. Yerlər yeniləndi.';
+        });
+      } else {
+        _showErrorDialog(
+            'Xəta', 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.message}');
+      }
     } catch (e) {
       if (!mounted) return;
-      _showErrorDialog('Xəta', 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
+      _showErrorDialog(
+          'Xəta', 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  bool _isSeatConflict(ApiException error) {
+    final message = error.message.toLowerCase();
+    return error.statusCode == 409 ||
+        message.contains('selected seat is not available') ||
+        message.contains('not enough available seats');
   }
 
   void _showErrorDialog(String title, String message) {
@@ -172,12 +193,16 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
                 color: Colors.red.shade50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline, color: Colors.red.shade400, size: 40),
+              child: Icon(Icons.error_outline,
+                  color: Colors.red.shade400, size: 40),
             ),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.navy),
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.navy),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -204,7 +229,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
     );
   }
 
-  Future<void> _showSuccess() {
+  Future<void> _showSuccess(List<String> selectedSpots) {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -229,6 +254,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
             ),
             const SizedBox(height: 8),
             Text(
+              'Yerlər: ${selectedSpots.map(_seatLabel).join(', ')}\n'
               'Sürücünün təsdiqini gözləyin.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppTheme.slate500),
@@ -268,18 +294,15 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
               )
             : _submitting
                 ? const LoadingView(message: 'Rezervasiya yaradılır...')
-                : Builder(builder: (context) {
-                    _syncSelectedSpots(ride);
-                    return _Content(
-                      ride: ride,
-                      seats: _seats,
-                      selectedSpots: _selectedSpots,
-                      error: _error,
-                      onSeatsChanged: (s) => _setSeats(ride, s),
-                      onSpotToggle: (spot) => _toggleSpot(ride, spot),
-                      onConfirm: () => _confirm(ride),
-                    );
-                  }),
+                : _Content(
+                    ride: ride,
+                    seats: _seats,
+                    selectedSpots: _selectedSpots,
+                    error: _error,
+                    onSeatsChanged: (s) => _setSeats(ride, s),
+                    onSpotToggle: (spot) => _toggleSpot(ride, spot),
+                    onConfirm: () => _confirm(ride),
+                  ),
       ),
     );
   }
@@ -321,10 +344,8 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const serviceFeePercent = 0.10; // 10% platform fee
-    final subtotal = ride.price * seats;
-    final serviceFee = subtotal * serviceFeePercent;
-    final total = subtotal + serviceFee;
+    final total = ride.price * seats;
+    final isValid = selectedSpots.length == seats && seats > 0;
 
     final time =
         '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
@@ -455,10 +476,7 @@ class _Content extends StatelessWidget {
                 child: Column(
                   children: [
                     _row('${ride.price.toStringAsFixed(0)} AZN × $seats yer',
-                        '${subtotal.toStringAsFixed(2)} AZN'),
-                    const SizedBox(height: 8),
-                    _row('Platforma xidmət haqqı (10%)',
-                        '${serviceFee.toStringAsFixed(2)} AZN'),
+                        '${total.toStringAsFixed(2)} AZN'),
                     const Divider(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -524,7 +542,10 @@ class _Content extends StatelessWidget {
             ],
           ),
         ),
-        _BottomBar(total: total, onConfirm: onConfirm),
+        _BottomBar(
+          total: total,
+          onConfirm: isValid ? onConfirm : null,
+        ),
       ],
     );
   }
@@ -776,7 +797,7 @@ class _SectionCard extends StatelessWidget {
 
 class _BottomBar extends StatelessWidget {
   final double total;
-  final VoidCallback onConfirm;
+  final VoidCallback? onConfirm;
 
   const _BottomBar({required this.total, required this.onConfirm});
 

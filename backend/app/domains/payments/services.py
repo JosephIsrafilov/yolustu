@@ -9,12 +9,17 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.notifications import NotificationService
 from app.core.pagination import create_paginated_response
-from app.domains.bookings.repositories import BookingRepository
+from app.domains.bookings.repositories import (
+    BookingRepository,
+    SeatReservationRepository,
+)
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_CANCELLED,
+    BOOKING_EXPIRED,
     BOOKING_PAID,
+    PAYMENT_CANCELLED,
     PAYMENT_FAILED,
     PAYMENT_PENDING,
     PAYMENT_REFUNDED,
@@ -48,6 +53,7 @@ class PaymentService:
         self.wallets = WalletRepository(db)
         self.payouts = PayoutRepository(db)
         self.bookings = BookingRepository(db)
+        self.seats = SeatReservationRepository(db)
         self.rides = RideLookupPort(db)
         self.notifications = NotificationService(db)
 
@@ -166,9 +172,21 @@ class PaymentService:
         ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
+        now = datetime.now(timezone.utc)
+        if booking.status != BOOKING_ACCEPTED or (
+            booking.payment_deadline is not None and booking.payment_deadline < now
+        ):
+            if booking.status == BOOKING_ACCEPTED:
+                booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
+                if ride.status != RIDE_COMPLETED:
+                    self._release_booking_seats(booking.id, ride)  # type: ignore[arg-type]
+            payment.status = PAYMENT_CANCELLED  # type: ignore[assignment]
+            payment.failure_reason = "Booking is no longer payable"  # type: ignore[assignment]
+            self.db.commit()
+            raise HTTPException(status_code=409, detail="Booking is no longer payable")
 
         payment.status = PAYMENT_SUCCEEDED  # type: ignore[assignment]
-        payment.paid_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        payment.paid_at = now  # type: ignore[assignment]
         booking.status = BOOKING_PAID  # type: ignore[assignment]
 
         self._ledger(
@@ -263,10 +281,7 @@ class PaymentService:
         }
         booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
         if ride.status != RIDE_COMPLETED:
-            ride.available_seats = min(  # type: ignore[assignment,arg-type]
-                ride.total_seats,
-                ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
-            )
+            self._release_booking_seats(booking.id, ride)  # type: ignore[arg-type]
 
         self._ledger(
             user_id=payment.passenger_id,  # type: ignore[arg-type]
@@ -380,6 +395,15 @@ class PaymentService:
             raise HTTPException(status_code=403, detail="Not authorized")
         if booking.status != BOOKING_ACCEPTED:
             raise HTTPException(status_code=400, detail="Booking must be accepted")
+        if (
+            booking.payment_deadline is not None
+            and booking.payment_deadline < datetime.now(timezone.utc)
+        ):
+            booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
+            if ride.status != RIDE_COMPLETED:
+                self._release_booking_seats(booking.id, ride)  # type: ignore[arg-type]
+            self.db.commit()
+            raise HTTPException(status_code=409, detail="Booking is no longer payable")
         if ride.departure_time <= datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=400,
@@ -390,20 +414,9 @@ class PaymentService:
         wallet = self.wallets.get_or_create_for_update(
             current_user.id, settings.PAYMENT_CURRENCY
         )
-        if wallet.pending_balance < amount:
-            # Fallback if somehow pending balance is less than amount
-            if wallet.available_balance + wallet.pending_balance < amount:
-                raise HTTPException(
-                    status_code=400, detail="Insufficient wallet balance"
-                )
-            # Pull remaining from available
-            remaining = amount - wallet.pending_balance
-            wallet.available_balance = money(wallet.available_balance - remaining)
-            wallet.pending_balance = money(0)
-        else:
-            wallet.pending_balance = money(  # type: ignore[assignment,arg-type]
-                wallet.pending_balance - amount
-            )
+        if wallet.available_balance < amount:
+            raise HTTPException(status_code=400, detail="Insufficient wallet balance")
+        wallet.available_balance = money(wallet.available_balance - amount)
 
         fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
         service_fee = money(amount * fee_percent / Decimal("100"))
@@ -710,3 +723,9 @@ class PaymentService:
     def _payout_idempotency_key(payout: PayoutRequest) -> str:
         metadata = cast(dict[str, Any] | None, payout.payout_metadata)
         return str((metadata or {}).get("idempotency_key", ""))
+
+    def _release_booking_seats(self, booking_id: UUID, ride) -> None:
+        self.seats.release(booking_id, datetime.now(timezone.utc))
+        available = self.seats.available_spots(ride.id)
+        ride.available_spots = available  # type: ignore[assignment]
+        ride.available_seats = len(available)  # type: ignore[assignment]

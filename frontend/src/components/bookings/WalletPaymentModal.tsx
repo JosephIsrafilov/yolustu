@@ -8,12 +8,14 @@ import { paymentsService } from '@/services';
 import type { Booking } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import TopUpModal from '@/app/wallet/TopUpModal';
+import { formatSeatLabels } from '@/lib/seats';
 
 const MODAL_COPY = {
   az: {
     title: 'Cüzdanla ödəniş',
     balance: 'Cari balans',
     tripPrice: 'Səfər qiyməti',
+    seats: 'Yerlər',
     missing: 'Çatışmayan məbləğ',
     paySuccess: 'Ödəniş uğurludur!',
     done: 'Bağla',
@@ -29,6 +31,7 @@ const MODAL_COPY = {
     title: 'Оплата с кошелька',
     balance: 'Текущий баланс',
     tripPrice: 'Стоимость поездки',
+    seats: 'Места',
     missing: 'Не хватает',
     paySuccess: 'Оплата прошла успешно!',
     done: 'Закрыть',
@@ -44,6 +47,7 @@ const MODAL_COPY = {
     title: 'Wallet Payment',
     balance: 'Current Balance',
     tripPrice: 'Trip Price',
+    seats: 'Seats',
     missing: 'Missing Amount',
     paySuccess: 'Payment successful!',
     done: 'Close',
@@ -175,6 +179,12 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
                   <span className="text-text-muted">{copy.tripPrice}:</span>
                   <span className="font-bold text-text">{formatPrice(price)}</span>
                 </div>
+                {booking.selectedSpots.length > 0 && (
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-text-muted">{copy.seats}:</span>
+                    <span className="text-right font-bold text-text">{formatSeatLabels(booking.selectedSpots, language)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-text-muted">{copy.balance}:</span>
                   <span className="font-bold text-text">{formatPrice(currentBalance)}</span>

@@ -20,7 +20,7 @@ from app.core.config import UPLOADS_DIR, settings
 from app.core.database import get_db
 from app.core.storage import get_storage
 from app.domains.identity.dependencies import CurrentUser, get_current_user
-from app.domains.identity.schemas import DeviceTokenInput, UserResponse, UserUpdate
+from app.domains.identity.schemas import DeviceTokenInput, UserResponse, PublicUserResponse, UserUpdate
 from app.domains.identity.services import IdentityService
 
 router = APIRouter()
@@ -123,6 +123,7 @@ def mock_verify_user(
     db: Session = Depends(get_db),
 ):
     """Mocks the verification process. Sets user to approved instantly."""
+    raise HTTPException(status_code=403, detail="Mock verification is disabled")
     user = IdentityService(db).get_current_user_model(current_user)
     user.is_verified = True  # type: ignore[assignment]
     user.verification_status = "approved"  # type: ignore[assignment]
@@ -286,6 +287,6 @@ def register_device_token(
     return {"detail": "Device token registered successfully"}
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=PublicUserResponse)
 def read_user(user_id: UUID, db: Session = Depends(get_db)):
     return IdentityService(db).get_user(user_id)

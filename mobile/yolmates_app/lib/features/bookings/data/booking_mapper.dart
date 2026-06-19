@@ -38,6 +38,7 @@ class BookingMapper {
       seats: dto.seatsBooked,
       selectedSpots: dto.selectedSpots,
       pricePerSeat: pricePerSeat,
+      totalPrice: dto.totalPrice,
       status: _parseStatus(dto.status),
       createdAt: dto.createdAt,
     );
@@ -61,8 +62,14 @@ class BookingMapper {
         return BookingStatus.cancelled;
       case 'paid':
         return BookingStatus.paid;
+      case 'boarded':
+        return BookingStatus.boarded;
+      case 'no_show':
+        return BookingStatus.noShow;
       case 'completed':
         return BookingStatus.completed;
+      case 'expired':
+        return BookingStatus.expired;
       default:
         return BookingStatus.pending; // Safe fallback
     }

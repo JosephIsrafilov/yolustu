@@ -290,6 +290,25 @@ class FakeNotificationService:
         return None
 
 
+class FakeSeatReservationRepository:
+    def __init__(self, ride: FakeRide, booking: FakeBooking):
+        self.ride = ride
+        self.booking = booking
+        self.released = False
+
+    def release(self, booking_id: UUID, released_at: datetime) -> int:
+        if booking_id != self.booking.id or self.released:
+            return 0
+        self.released = True
+        return self.booking.seats_booked
+
+    def available_spots(self, ride_id: UUID) -> list[str]:
+        count = self.ride.available_seats
+        if self.released:
+            count += self.booking.seats_booked
+        return ["front_right", "back_left", "back_middle", "back_right"][:count]
+
+
 def make_current_user(user_id: UUID, role: str = "passenger") -> CurrentUser:
     return CurrentUser(
         id=user_id,
@@ -340,6 +359,7 @@ def make_service(
     service_any.wallets = cast(WalletRepository, wallet_repo)
     service_any.payouts = cast(PayoutRepository, payout_repo)
     service_any.bookings = FakeBookingRepository(booking)
+    service_any.seats = FakeSeatReservationRepository(ride, booking)
     service_any.rides = FakeRideLookup(ride)
     service_any.notifications = FakeNotificationService()
     return service, booking, ride, payment_repo, wallet_repo
@@ -364,6 +384,55 @@ def test_create_payment_for_confirmed_booking():
     assert response["service_fee"] == Decimal("2.50")
     assert response["driver_amount"] == Decimal("22.50")
     assert payment.status == "pending"
+
+
+@pytest.mark.parametrize("inactive_status", ["cancelled", "rejected", "expired"])
+def test_late_payment_cannot_revive_inactive_booking(inactive_status):
+    service, booking, _, payment_repo, _ = make_service("accepted")
+    payment_id = service.create_payment_session(
+        booking.id, make_current_user(booking.passenger_id)
+    )["payment_id"]
+    booking.status = inactive_status
+
+    with pytest.raises(HTTPException) as exc:
+        service.mark_payment_succeeded(payment_id)
+
+    assert exc.value.status_code == 409
+    assert booking.status == inactive_status
+    assert payment_repo.get(payment_id).status == "cancelled"
+
+
+def test_late_payment_expires_booking_and_releases_exact_seat():
+    service, booking, ride, payment_repo, _ = make_service("accepted")
+    payment_id = service.create_payment_session(
+        booking.id, make_current_user(booking.passenger_id)
+    )["payment_id"]
+    booking.payment_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
+
+    with pytest.raises(HTTPException) as exc:
+        service.mark_payment_succeeded(payment_id)
+
+    assert exc.value.status_code == 409
+    assert booking.status == "expired"
+    assert payment_repo.get(payment_id).status == "cancelled"
+    assert ride.available_seats == 3
+
+
+def test_late_wallet_payment_expires_booking_before_debit():
+    service, booking, ride, _, wallet_repo = make_service("accepted")
+    wallet = wallet_repo.get_or_create(booking.passenger_id)
+    wallet.available_balance = Decimal("100.00")
+    booking.payment_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
+
+    with pytest.raises(HTTPException) as exc:
+        service.pay_booking_from_wallet(
+            booking.id, make_current_user(booking.passenger_id)
+        )
+
+    assert exc.value.status_code == 409
+    assert booking.status == "expired"
+    assert wallet.available_balance == Decimal("100.00")
+    assert ride.available_seats == 3
 
 
 def test_cannot_pay_someone_else_booking():

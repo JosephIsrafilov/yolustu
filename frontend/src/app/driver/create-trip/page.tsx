@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,11 +23,12 @@ import { AZ_CITIES, getCityCoordinates, isWithinAzerbaijan } from '@/lib/utils';
 import type { Vehicle } from '@/types';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { MapContainer, LocationPicker } from '@/components/ui/Map';
-import { apiClient } from '@/services/api-client';
-import { mapApiVehicleToVehicle, type ApiVehicle } from '@/services/api/mappers';
+import { vehiclesService } from '@/services';
 import { apiAiService, type PricingSuggestionResponse } from '@/services/api/api-ai-service';
 import { I18N } from '@/lib/i18n';
 import SuccessModal from '@/components/ui/SuccessModal';
+import SeatMap from '@/components/trips/SeatMap';
+import { SEAT_SPOTS } from '@/lib/seats';
 
 const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string, seatsErrorMsg: string, priceErrorMsg: string) => {
   return z.object({
@@ -36,8 +38,8 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
     dropoffPoint: z.string().optional(),
     date: z.string().min(1, requiredErrorMsg),
     time: z.string().min(1, requiredErrorMsg),
-    seatsTotal: z.number().int().min(1, seatsErrorMsg).max(8, seatsErrorMsg),
-    availableSpots: z.array(z.string()).optional(),
+    seatsTotal: z.number().int().min(1, seatsErrorMsg).max(4, seatsErrorMsg),
+    availableSpots: z.array(z.enum(['front_right', 'back_left', 'back_middle', 'back_right'])).optional(),
     pricePerSeat: z.number().min(0.01, priceErrorMsg),
     comment: z.string().optional(),
     origin: z.object({ lat: z.number(), lng: z.number() }).optional(),
@@ -46,7 +48,7 @@ const getValidationSchema = (requiredErrorMsg: string, sameCityErrorMsg: string,
     petsAllowed: z.boolean().optional(),
     musicAllowed: z.boolean().optional(),
     femaleOnly: z.boolean().optional(),
-    vehicleId: z.string().optional(),
+    vehicleId: z.string().min(1, requiredErrorMsg),
   }).superRefine((data, ctx) => {
     if (data.departureCity === data.arrivalCity && data.departureCity) {
       ctx.addIssue({
@@ -77,6 +79,9 @@ const CREATE_TRIP_PAGE_I18N = {
     seatsUnit: 'yer',
     saving: 'Yadda saxlanılır...',
     calcRecommendedPrice: 'Tövsiyə olunan qiyməti hesabla',
+    noVehicleTitle: 'Aktiv avtomobil yoxdur',
+    noVehicleBody: 'Gediş yaratmaq üçün əvvəlcə aktiv avtomobil əlavə edin.',
+    manageVehicles: 'Avtomobilləri idarə et',
   },
   ru: {
     addVehicleToProfile: 'Добавить автомобиль в профиль',
@@ -94,6 +99,9 @@ const CREATE_TRIP_PAGE_I18N = {
     seatsUnit: 'мест',
     saving: 'Сохранение...',
     calcRecommendedPrice: 'Рассчитать рекомендуемую цену',
+    noVehicleTitle: 'Нет активного автомобиля',
+    noVehicleBody: 'Чтобы создать поездку, сначала добавьте активный автомобиль.',
+    manageVehicles: 'Управление автомобилями',
   },
   en: {
     addVehicleToProfile: 'Add vehicle to profile',
@@ -111,6 +119,9 @@ const CREATE_TRIP_PAGE_I18N = {
     seatsUnit: 'seats',
     saving: 'Saving...',
     calcRecommendedPrice: 'Calculate recommended price',
+    noVehicleTitle: 'No active vehicle',
+    noVehicleBody: 'Add an active vehicle before you can offer a ride.',
+    manageVehicles: 'Manage vehicles',
   },
 } as const;
 
@@ -127,7 +138,6 @@ export default function CreateTripPage() {
   const [maxStepReached, setMaxStepReached] = useState(0);
   const [pickerMode, setPickerMode] = useState<'origin' | 'destination'>('origin');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [carLayout, setCarLayout] = useState<'5-seater' | '7-seater'>('5-seater');
   const [isDrafting, setIsDrafting] = useState(false);
   const [priceSuggestion, setPriceSuggestion] = useState<PricingSuggestionResponse | null>(null);
   const [isPriceFetching, setIsPriceFetching] = useState(false);
@@ -135,17 +145,14 @@ export default function CreateTripPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 
-  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+  const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['my-vehicles'],
-    queryFn: async () => {
-      try {
-        const response = await apiClient.get<ApiVehicle[]>('/vehicles/my');
-        return response.map(mapApiVehicleToVehicle);
-      } catch {
-        return [];
-      }
-    },
+    queryFn: () => vehiclesService.getMyVehicles(),
   });
+  const activeVehicles = useMemo(
+    () => vehicles.filter((vehicle) => vehicle.isActive),
+    [vehicles],
+  );
 
   const validationSchema = useMemo(() => {
     return getValidationSchema(
@@ -180,6 +187,11 @@ export default function CreateTripPage() {
   });
 
   const formValues = useWatch({ control }) as FormValues;
+  const selectedVehicle = activeVehicles.find((vehicle) => vehicle.id === formValues.vehicleId);
+  const vehicleSeatSpots = useMemo(
+    () => SEAT_SPOTS.slice(0, selectedVehicle?.seatsCount ?? 0),
+    [selectedVehicle?.seatsCount],
+  );
 
   if (formValues.departureCity !== prevCities.dep || formValues.arrivalCity !== prevCities.arr) {
     setPrevCities({ dep: formValues.departureCity || '', arr: formValues.arrivalCity || '' });
@@ -187,10 +199,31 @@ export default function CreateTripPage() {
   }
 
   useEffect(() => {
-    if (vehicles.length > 0 && !formValues.vehicleId) {
-      setValue('vehicleId', vehicles[0].id);
+    if (activeVehicles.length === 0) {
+      if (formValues.vehicleId) setValue('vehicleId', '');
+      return;
     }
-  }, [vehicles, setValue, formValues.vehicleId]);
+
+    if (!activeVehicles.some((vehicle) => vehicle.id === formValues.vehicleId)) {
+      const preferredVehicle = activeVehicles.find((vehicle) => vehicle.isDefault) ?? activeVehicles[0];
+      setValue('vehicleId', preferredVehicle.id, { shouldValidate: true });
+    }
+  }, [activeVehicles, setValue, formValues.vehicleId]);
+
+  useEffect(() => {
+    if (!selectedVehicle) {
+      if ((formValues.availableSpots ?? []).length > 0) setValue('availableSpots', []);
+      if (formValues.seatsTotal !== 0) setValue('seatsTotal', 0);
+      return;
+    }
+
+    const currentSpots = formValues.availableSpots ?? [];
+    const validSpots = currentSpots.filter((spot) => vehicleSeatSpots.includes(spot));
+    if (validSpots.length !== currentSpots.length) {
+      setValue('availableSpots', validSpots);
+      setValue('seatsTotal', validSpots.length, { shouldValidate: true });
+    }
+  }, [selectedVehicle, vehicleSeatSpots, formValues.availableSpots, formValues.seatsTotal, setValue]);
 
   const mapCenter = useMemo((): [number, number] => {
     if (pickerMode === 'origin') {
@@ -231,8 +264,8 @@ export default function CreateTripPage() {
         language: language,
         origin_coords: values.origin || undefined,
         destination_coords: values.destination || undefined,
-        car_model: vehicles.find(v => v.id === values.vehicleId)?.brand
-          ? `${vehicles.find(v => v.id === values.vehicleId)!.brand} ${vehicles.find(v => v.id === values.vehicleId)!.model}`
+        car_model: activeVehicles.find(v => v.id === values.vehicleId)?.brand
+          ? `${activeVehicles.find(v => v.id === values.vehicleId)!.brand} ${activeVehicles.find(v => v.id === values.vehicleId)!.model}`
           : undefined,
         seats_total: values.seatsTotal || 4,
       });
@@ -248,8 +281,8 @@ export default function CreateTripPage() {
     const values = getValues();
     if (!values.departureCity || !values.arrivalCity || !values.time) return;
     setIsDrafting(true);
-    const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
-    const carModel = selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : 'Standard Vehicle';
+    const descriptionVehicle = activeVehicles.find(v => v.id === values.vehicleId);
+    const carModel = descriptionVehicle ? `${descriptionVehicle.brand} ${descriptionVehicle.model}` : '';
 
     try {
       const prefs: string[] = [];
@@ -280,7 +313,19 @@ export default function CreateTripPage() {
   const validateStep = async () => {
     if (step === 0) return await trigger(['departureCity', 'arrivalCity']);
     if (step === 1) return await trigger(['date', 'time']);
-    if (step === 2) return await trigger(['seatsTotal', 'pricePerSeat']);
+    if (step === 2) {
+      const isValid = await trigger(['vehicleId', 'seatsTotal', 'pricePerSeat']);
+      const vehicle = activeVehicles.find((item) => item.id === getValues('vehicleId'));
+      if (!vehicle) {
+        setError('vehicleId', { type: 'manual', message: copy.requiredError });
+        return false;
+      }
+      if (getValues('seatsTotal') > vehicle.seatsCount) {
+        setError('seatsTotal', { type: 'manual', message: copy.seatsError });
+        return false;
+      }
+      return isValid;
+    }
     return true;
   };
 
@@ -297,7 +342,10 @@ export default function CreateTripPage() {
 
   const createTripMutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const selectedVehicle = vehicles.find(v => v.id === values.vehicleId) || vehicles[0];
+      const tripVehicle = activeVehicles.find(v => v.id === values.vehicleId);
+      if (!tripVehicle) {
+        throw new Error(pageCopy.noVehicleBody);
+      }
       const baseTripData = {
         departureCity: values.departureCity,
         arrivalCity: values.arrivalCity,
@@ -308,11 +356,11 @@ export default function CreateTripPage() {
         seatsTotal: values.seatsTotal,
         availableSpots: values.availableSpots || [],
         pricePerSeat: values.pricePerSeat,
-        carModel: selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.model}` : '',
+        carModel: `${tripVehicle.brand} ${tripVehicle.model}`,
         comment: values.comment || '',
         origin: values.origin,
         destination: values.destination,
-        vehicleId: selectedVehicle?.id || '',
+        vehicleId: tripVehicle.id,
         smokingAllowed: values.smokingAllowed ?? false,
         petsAllowed: values.petsAllowed ?? false,
         musicAllowed: values.musicAllowed ?? true,
@@ -400,35 +448,6 @@ export default function CreateTripPage() {
       setValue(field, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } catch {
     }
-  };
-
-  const toggleSpot = (spotId: string) => {
-    const current = getValues('availableSpots') || [];
-    let next = [];
-    if (current.includes(spotId)) {
-      next = current.filter(id => id !== spotId);
-    } else {
-      next = [...current, spotId];
-    }
-    setValue('availableSpots', next);
-    setValue('seatsTotal', next.length, { shouldValidate: true });
-  };
-
-  const renderSpot = (id: string, label: string) => {
-    const isSelected = formValues.availableSpots?.includes(id);
-    return (
-      <button 
-        type="button" 
-        onClick={() => toggleSpot(id)}
-        className={`w-full py-2.5 rounded-xl border-2 font-bold text-xs transition-all active:scale-95 ${
-          isSelected 
-            ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm' 
-            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
-        }`}
-      >
-        {label}
-      </button>
-    );
   };
 
   return (
@@ -597,41 +616,61 @@ export default function CreateTripPage() {
               {/* STEP 3: SEATS & PRICE */}
               {step === 2 && (
                 <div className="flex flex-col gap-6">
-                  {vehicles.length > 0 && (
+                  {isLoadingVehicles ? (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                      ...
+                    </div>
+                  ) : activeVehicles.length > 0 ? (
                     <Controller name="vehicleId" control={control} render={({ field }) => (
-                      <Select value={field.value || ''} onChange={(val) => { field.onChange(val); }} options={vehicles.map(v => ({ value: v.id, label: `${v.brand} ${v.model} (${v.plateNumber})` }))} placeholder="Select vehicle" />
+                      <div>
+                        <Select
+                          label={copy.stepVehicle}
+                          value={field.value || ''}
+                          onChange={(val) => field.onChange(val)}
+                          options={activeVehicles.map(v => ({
+                            value: v.id,
+                            label: `${v.brand} ${v.model} (${v.plateNumber})${v.isDefault ? ` · ${pageCopy.standardVehicle}` : ''}`,
+                          }))}
+                          placeholder={copy.stepVehicle}
+                        />
+                        {errors.vehicleId && (
+                          <p className="mt-1 text-xs font-semibold text-red-500">{errors.vehicleId.message}</p>
+                        )}
+                      </div>
                     )} />
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                      <h3 className="font-bold text-amber-900">{pageCopy.noVehicleTitle}</h3>
+                      <p className="mt-1 text-sm text-amber-800">{pageCopy.noVehicleBody}</p>
+                      <Link
+                        href={ROUTES.driverVehicle}
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-900 px-4 py-2.5 text-sm font-bold text-white"
+                      >
+                        <Icon name="car" size={16} />
+                        {pageCopy.manageVehicles}
+                      </Link>
+                    </div>
                   )}
 
                   {/* Dynamic Seat Selector */}
                   <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5">
                     <div className="flex items-center justify-between mb-4">
                       <label className="text-sm font-bold text-slate-900">Select Available Spots</label>
-                      <div className="flex bg-white rounded-lg border border-slate-200 p-1">
-                        <button type="button" onClick={() => {setCarLayout('5-seater'); setValue('availableSpots', []); setValue('seatsTotal', 0);}} className={`px-2 py-1 text-xs font-bold rounded-md ${carLayout === '5-seater' ? 'bg-slate-100 text-slate-900' : 'text-slate-500'}`}>5-Seater</button>
-                        <button type="button" onClick={() => {setCarLayout('7-seater'); setValue('availableSpots', []); setValue('seatsTotal', 0);}} className={`px-2 py-1 text-xs font-bold rounded-md ${carLayout === '7-seater' ? 'bg-slate-100 text-slate-900' : 'text-slate-500'}`}>7-Seater</button>
-                      </div>
+                      <span className="text-xs font-bold text-slate-500">
+                        {selectedVehicle ? `${selectedVehicle.seatsCount} ${pageCopy.seatsUnit}` : '—'}
+                      </span>
                     </div>
 
-                    <div className="mx-auto w-56 flex flex-col gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                      <div className="flex gap-2">
-                        <div className="w-1/2 py-2.5 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 border-2 border-transparent">
-                          <Icon name="car" size={16} />
-                        </div>
-                        <div className="w-1/2">{renderSpot('front_passenger', 'Front')}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="w-1/3">{renderSpot('rear_left', 'Rear L')}</div>
-                        <div className="w-1/3">{renderSpot('rear_middle', 'Rear M')}</div>
-                        <div className="w-1/3">{renderSpot('rear_right', 'Rear R')}</div>
-                      </div>
-                      {carLayout === '7-seater' && (
-                        <div className="flex gap-2 justify-center">
-                          <div className="w-1/2">{renderSpot('third_row_left', '3rd Row L')}</div>
-                          <div className="w-1/2">{renderSpot('third_row_right', '3rd Row R')}</div>
-                        </div>
-                      )}
-                    </div>
+                    <SeatMap
+                      availableSpots={vehicleSeatSpots}
+                      selectedSpots={formValues.availableSpots ?? []}
+                      onChange={(spots) => {
+                        setValue('availableSpots', spots);
+                        setValue('seatsTotal', spots.length, { shouldValidate: true });
+                      }}
+                      language={language}
+                      label="Available passenger seats"
+                    />
                     
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-500">Total spots offered:</span>
@@ -839,7 +878,7 @@ export default function CreateTripPage() {
                     {copy.nextBtn}
                   </Button>
                 ) : (
-                  <Button className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white" onClick={publish} disabled={createTripMutation.isPending}>
+                  <Button className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white" onClick={publish} disabled={createTripMutation.isPending || !selectedVehicle}>
                     {createTripMutation.isPending ? pageCopy.saving : copy.publishBtn}
                   </Button>
                 )}

@@ -25,6 +25,10 @@ import { getUserCapabilities } from '@/lib/access-control';
 import UserAvatar from '@/components/ui/UserAvatar';
 import WalletPaymentModal from '@/components/bookings/WalletPaymentModal';
 import SuccessModal from '@/components/ui/SuccessModal';
+import SeatMap from '@/components/trips/SeatMap';
+import { formatSeatLabels } from '@/lib/seats';
+import { toApiError } from '@/services/api-error';
+import type { SeatSpot } from '@/types';
 
 const TRIP_DETAILS_I18N = {
   az: {
@@ -171,7 +175,8 @@ export default function TripDetailsPage() {
     activeMode,
     switchRole,
   } = useAppStore();
-  const [seats, setSeats] = useState(1);
+  const [selectedSpots, setSelectedSpots] = useState<SeatSpot[]>([]);
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [hasBookingSucceeded, setHasBookingSucceeded] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -208,7 +213,7 @@ export default function TripDetailsPage() {
     fetchBookings();
   }, [isAuthenticated, fetchBookings]);
 
-  const trip = trips.find((t) => t.id === tripId) ?? loadedTrip;
+  const trip = loadedTrip ?? trips.find((t) => t.id === tripId);
   if (!trip && !tripLoadError) {
     return (
       <WebLayout title={copy.tripTitle} showBack>
@@ -227,6 +232,9 @@ export default function TripDetailsPage() {
   const durationMin = estimateDurationMinutes(trip.origin, trip.destination, trip.departureCity, trip.arrivalCity);
   const departureCity = getLocalizedCityName(trip.departureCity, language);
   const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
+  const bookableSelectedSpots = selectedSpots.filter((spot) =>
+    trip.availableSpots?.includes(spot),
+  );
 
   const handleBook = async () => {
     if (!isAuthenticated) {
@@ -234,11 +242,30 @@ export default function TripDetailsPage() {
       return;
     }
     if (isOwnTrip || existingBooking || isBookingLoading) return;
+    if (bookableSelectedSpots.length === 0) {
+      setBookingError('Select at least one available seat.');
+      return;
+    }
+    setBookingError(null);
     setIsBookingLoading(true);
     let bookingId = '';
     try {
-      bookingId = await createBooking(trip.id, seats);
-    } catch {
+      bookingId = await createBooking(trip.id, bookableSelectedSpots);
+    } catch (error) {
+      const apiError = toApiError(error);
+      if (apiError.status === 409 || apiError.code === 'CONFLICT') {
+        clearError();
+        setBookingError('One or more selected seats were just booked. The seat map has been refreshed.');
+        try {
+          const refreshedTrip = await tripsService.getTripById(trip.id);
+          setLoadedTrip(refreshedTrip);
+          setSelectedSpots((current) =>
+            current.filter((spot) => refreshedTrip.availableSpots?.includes(spot)),
+          );
+        } catch {
+          setBookingError('Those seats are no longer available. Refresh the page and choose again.');
+        }
+      }
       bookingId = '';
     } finally {
       setIsBookingLoading(false);
@@ -427,20 +454,25 @@ export default function TripDetailsPage() {
                   <p className="text-base font-bold text-text">{copy.bookingRequestTitle}</p>
                   <p className="text-xs text-text-muted">{copy.bookingRequestDesc}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{copy.howManySeats}</span>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setSeats(Math.max(1, seats - 1))} className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-muted font-bold">
-                      <Icon name="minus" size={14} />
-                    </button>
-                    <span className="w-8 text-center font-bold">{seats}</span>
-                    <button onClick={() => setSeats(Math.min(trip.seatsAvailable, seats + 1))} className="h-9 w-9 rounded-lg bg-surface-muted flex items-center justify-center font-bold">+</button>
-                  </div>
-                </div>
+                <SeatMap
+                  availableSpots={trip.availableSpots ?? []}
+                  selectedSpots={bookableSelectedSpots}
+                  onChange={(spots) => {
+                    setBookingError(null);
+                    setSelectedSpots(spots);
+                  }}
+                  language={language}
+                  label={copy.howManySeats}
+                />
+                {bookingError && (
+                  <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                    {bookingError}
+                  </p>
+                )}
                 <div className="rounded-xl bg-surface-muted p-3 text-sm">
-                  <div className="flex items-center justify-between"><span className="text-text-muted">{copy.selectedSeats}</span><span className="font-semibold">{seats}</span></div>
+                  <div className="flex items-start justify-between gap-3"><span className="text-text-muted">{copy.selectedSeats}</span><span className="text-right font-semibold">{bookableSelectedSpots.length ? formatSeatLabels(bookableSelectedSpots, language) : '—'}</span></div>
                   <div className="mt-2 flex items-center justify-between"><span className="text-text-muted">{copy.perSeat}</span><span className="font-semibold">{formatPrice(trip.pricePerSeat)}</span></div>
-                  <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">{copy.totalLabel}</span><span className="text-lg font-bold text-brand-600">{formatPrice(trip.pricePerSeat * seats)}</span></div>
+                  <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">{copy.totalLabel}</span><span className="text-lg font-bold text-brand-600">{formatPrice(trip.pricePerSeat * bookableSelectedSpots.length)}</span></div>
                 </div>
                 <div className="flex items-start gap-2 rounded-xl bg-[#fff8e8] p-3 text-xs leading-5 text-[#6b4b00]">
                   <Icon name="shield-check" size={16} className="mt-0.5 shrink-0" />
@@ -451,7 +483,7 @@ export default function TripDetailsPage() {
                   size="lg" 
                   onClick={handleBook}
                   loading={isBookingLoading}
-                  disabled={isBookingLoading}
+                  disabled={isBookingLoading || bookableSelectedSpots.length === 0}
                 >
                   {copy.submitRequestBtn}
                 </Button>
@@ -465,7 +497,7 @@ export default function TripDetailsPage() {
                     <StatusBadge status={existingBooking.status} />
                   </div>
                   <div className="rounded-xl bg-surface-muted p-3 text-sm">
-                    <div className="flex items-center justify-between"><span className="text-text-muted">{copy.selectedSeats}</span><span className="font-semibold">{existingBooking.seatsRequested}</span></div>
+                    <div className="flex items-start justify-between gap-3"><span className="text-text-muted">{copy.selectedSeats}</span><span className="text-right font-semibold">{existingBooking.selectedSpots.length ? formatSeatLabels(existingBooking.selectedSpots, language) : existingBooking.seatsRequested}</span></div>
                     <div className="mt-2 flex items-center justify-between border-t border-border pt-2"><span className="font-semibold text-text">{copy.totalLabel}</span><span className="text-lg font-bold text-brand-600">{formatPrice(existingBooking.totalPrice || (trip.pricePerSeat * existingBooking.seatsRequested))}</span></div>
                   </div>
                   

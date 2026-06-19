@@ -20,6 +20,7 @@ import { ROUTES } from '@/lib/routes';
 import { I18N } from '@/lib/i18n';
 import { getLocalizedCityName } from '@/lib/cities';
 import type { Trip, Booking } from '@/types';
+import { formatSeatLabels } from '@/lib/seats';
 
 const ACTIVE_BOOKING_STATUSES = new Set(['accepted', 'paid', 'boarded', 'no_show']);
 
@@ -296,7 +297,9 @@ export default function DriverTripManagePage({
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-text">{name}</p>
                         <p className="text-xs text-text-secondary">
-                          {copy.seats(booking.seatsRequested)} ·{' '}
+                          {booking.selectedSpots.length
+                            ? formatSeatLabels(booking.selectedSpots, language)
+                            : copy.seats(booking.seatsRequested)} ·{' '}
                           <StatusBadge status={booking.status} type="booking" />
                         </p>
                       </div>

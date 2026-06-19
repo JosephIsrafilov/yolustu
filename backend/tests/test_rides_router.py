@@ -63,6 +63,7 @@ def test_rides_create_endpoint(monkeypatch):
         "/api/v1/rides/",
         headers={"Authorization": f"Bearer {token}"},
         json={
+            "vehicle_id": str(uuid4()),
             "departure_time": datetime.now(timezone.utc).isoformat(),
             "total_seats": 4,
             "available_seats": 4,

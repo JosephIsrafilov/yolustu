@@ -1,8 +1,9 @@
-import type { Booking } from '@/types';
+import type { Booking, SeatSpot } from '@/types';
 
 export interface CreateBookingInput {
   tripId: string;
   seatsRequested: number;
+  selectedSpots: SeatSpot[];
 }
 
 export interface BookingsService {

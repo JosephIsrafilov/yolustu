@@ -1,4 +1,4 @@
-import type { User, Trip, Booking, Review, TripSearchFilters, CreateTripData } from '@/types';
+import type { User, Trip, Booking, Review, TripSearchFilters, CreateTripData, SeatSpot } from '@/types';
 import type { UpdateProfileInput } from '@/services/contracts/auth-service';
 import type { Language } from '@/lib/i18n';
 import type { ActiveMode } from '@/lib/access-control';
@@ -63,7 +63,7 @@ export interface BookingSlice {
 
   fetchBookings: () => Promise<void>;
   fetchBookingRequests: () => Promise<void>;
-  createBooking: (tripId: string, seats: number) => Promise<string>;
+  createBooking: (tripId: string, selectedSpots: SeatSpot[]) => Promise<string>;
   acceptBooking: (bookingId: string) => Promise<boolean>;
   rejectBooking: (bookingId: string) => Promise<boolean>;
   cancelBooking: (bookingId: string) => Promise<boolean>;

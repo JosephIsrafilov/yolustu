@@ -9,6 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { getLocalizedCityName } from '@/lib/cities';
 import { ROUTES } from '@/lib/routes';
 import type { Booking, Trip, User } from '@/types';
+import { formatSeatLabels } from '@/lib/seats';
 
 interface BookingRequestCardProps {
   booking: Booking;
@@ -74,7 +75,11 @@ export default function BookingRequestCard({
       <div className="grid grid-cols-2 gap-3 text-xs text-text-secondary mb-3 h-5 items-center">
         <span className="flex items-center gap-1 min-w-0">
           <Icon name="users" size={13} className="shrink-0 flex-none" />
-          <span className="truncate block w-full">{booking.seatsRequested} yer istəyir</span>
+          <span className="truncate block w-full" title={formatSeatLabels(booking.selectedSpots, language)}>
+            {booking.selectedSpots.length
+              ? formatSeatLabels(booking.selectedSpots, language)
+              : `${booking.seatsRequested} yer istəyir`}
+          </span>
         </span>
         <span className="truncate block w-full text-right">
           {departureCity} → {arrivalCity}

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yolmates_app/features/driver/create_ride_screen.dart';
 import 'package:yolmates_app/features/driver/data/ai_pricing_repository.dart';
+import 'package:yolmates_app/features/driver/data/driver_controller.dart';
+import 'package:yolmates_app/features/driver/data/driver_ride.dart';
+import 'package:yolmates_app/features/driver/data/vehicle.dart';
 
 class MockAiPricingRepository implements AiPricingRepository {
   bool failNext = false;
@@ -30,6 +33,9 @@ void main() {
       ProviderScope(
         overrides: [
           aiPricingRepositoryProvider.overrideWithValue(mockRepo),
+          driverRepositoryProvider.overrideWithValue(
+            _VehicleDriverRepository(),
+          ),
         ],
         child: const MaterialApp(
           home: CreateRideScreen(),
@@ -74,6 +80,9 @@ void main() {
       ProviderScope(
         overrides: [
           aiPricingRepositoryProvider.overrideWithValue(mockRepo),
+          driverRepositoryProvider.overrideWithValue(
+            _VehicleDriverRepository(),
+          ),
         ],
         child: const MaterialApp(
           home: CreateRideScreen(),
@@ -93,4 +102,46 @@ void main() {
     // App shouldn't crash
     expect(find.byType(CreateRideScreen), findsOneWidget);
   });
+}
+
+class _VehicleDriverRepository implements DriverRepository {
+  static const vehicle = Vehicle(
+    id: 'vehicle-1',
+    brand: 'Toyota',
+    model: 'Prius',
+    year: 2022,
+    color: 'White',
+    plate: '90-AA-001',
+    seats: 4,
+    isDefault: true,
+  );
+
+  @override
+  Future<List<Vehicle>> vehicles() async => [vehicle];
+
+  @override
+  Future<List<DriverRide>> rides() async => [];
+
+  @override
+  Future<DriverRide> publishRide(DriverRide ride) async => ride;
+
+  @override
+  Future<Vehicle> saveVehicle(Vehicle vehicle) async => vehicle;
+
+  @override
+  Future<Vehicle> setDefaultVehicle(String id) async => vehicle;
+
+  @override
+  Future<Vehicle> deactivateVehicle(String id) async => vehicle;
+
+  @override
+  Future<void> deleteVehicle(String id) async {}
+
+  @override
+  Future<DriverRide> updateRideStatus(
+    String id,
+    DriverRideStatus status,
+  ) {
+    throw UnimplementedError();
+  }
 }

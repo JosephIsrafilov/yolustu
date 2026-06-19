@@ -63,7 +63,7 @@ def test_ride_to_response_converts_ewkb_geometry_locations():
 
 
 def test_user_response_handles_null_values():
-    from app.domains.identity.schemas import UserResponse
+    from app.domains.identity.schemas import PublicUserResponse
 
     user_data = SimpleNamespace(
         id=uuid4(),
@@ -86,10 +86,8 @@ def test_user_response_handles_null_values():
         created_at=datetime.now(timezone.utc),
     )
 
-    response = UserResponse.model_validate(user_data)
-    assert response.is_blocked is False
+    response = PublicUserResponse.model_validate(user_data)
     assert response.is_verified is False
-    assert response.is_email_verified is False
     assert response.rating == 0.0
     assert response.total_rides == 0
 
