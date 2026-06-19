@@ -88,7 +88,7 @@ class BookingReservationWalletService:
 
         if hold is not None and hold.status == "pending":
             wallet.pending_balance = self._subtract_pending(wallet.pending_balance, amount)  # type: ignore[arg-type,assignment]
-            hold.status = "captured"  # type: ignore[assignment]
+            hold.status = "posted"  # type: ignore[assignment]
             hold.description = "Reservation hold captured after driver confirmation"  # type: ignore[assignment]
         else:
             # Backward-compatible fallback for older accepted bookings that were
