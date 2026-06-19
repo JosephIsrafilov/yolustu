@@ -247,10 +247,10 @@ def test_create_booking_decrements_seats():
 
 
 def test_create_booking_reserves_wallet_amount():
-    service, ride, _, passenger = make_service()
+    service, _, _, passenger = make_service()
 
     response = service.create_booking(
-        BookingCreate(ride_id=ride.id, seats_booked=2), passenger
+        BookingCreate(ride_id=service.rides.ride.id, seats_booked=2), passenger
     )
 
     reservations = cast(Any, service).reservations
