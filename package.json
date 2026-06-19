@@ -10,6 +10,6 @@
     "lint": "eslint . --ext .js,.ts,.tsx",
     "audit": "npm audit && npm run lint && powershell ./scripts/security_audit.ps1",
     "format-backend": "cd backend && venv\\Scripts\\ruff.exe format app/ alembic/",
-    "postinstall": "cd frontend && npm install --include=optional --package-lock-only --no-audit --no-fund"
+    "sync-frontend-lock": "cd frontend && npm install --include=optional --package-lock-only --no-audit --no-fund"
   }
 }
