@@ -88,6 +88,7 @@ class BookingReservationWalletService:
 
         existing_payment = self.payments.get_succeeded_for_booking(booking.id)
         if existing_payment is not None:
+            self._mark_hold_captured(booking)
             booking.status = BOOKING_PAID  # type: ignore[assignment]
             booking.payment_deadline = None  # type: ignore[assignment]
             return existing_payment
@@ -101,14 +102,8 @@ class BookingReservationWalletService:
         )
 
         if hold is not None and hold.status == "pending":
-            wallet.pending_balance = self._subtract_pending(  # type: ignore[assignment]
-                wallet.pending_balance,  # type: ignore[arg-type]
-                amount,
-            )
-            hold.status = "captured"  # type: ignore[assignment]
-            hold.description = (  # type: ignore[assignment]
-                "Reservation hold captured after driver confirmation"
-            )
+            reconciled = self._consume_pending(wallet, amount)
+            self._set_hold_captured(hold, reconciled=reconciled)
         else:
             # Backward-compatible fallback for older accepted bookings that were
             # created before wallet holds existed.
@@ -183,44 +178,54 @@ class BookingReservationWalletService:
         booking.payment_deadline = None  # type: ignore[assignment]
         return payment
 
-    def release_for_booking(self, booking, ride) -> None:
+    def release_for_booking(self, booking, ride=None) -> bool:
         hold = self.wallets.get_transaction_by_idempotency_key(
             self._hold_key(booking.id)
         )
         if hold is None or hold.status != "pending":
-            return
+            return False
+
+        release_key = self._release_key(booking.id)
+        if self.wallets.get_transaction_by_idempotency_key(release_key) is not None:
+            hold.status = "reversed"  # type: ignore[assignment]
+            hold.description = "Reservation hold already released"  # type: ignore[assignment]
+            return True
 
         amount = money(hold.amount)
         wallet = self.wallets.get_or_create_for_update(
             booking.passenger_id,
             hold.currency or settings.PAYMENT_CURRENCY,  # type: ignore[arg-type]
         )
-        wallet.pending_balance = self._subtract_pending(  # type: ignore[assignment]
-            wallet.pending_balance,  # type: ignore[arg-type]
-            amount,
-        )
+        reconciled = self._consume_pending(wallet, amount)
         wallet.available_balance = money(  # type: ignore[assignment,arg-type]
             wallet.available_balance + amount
         )
         hold.status = "reversed"  # type: ignore[assignment]
-        hold.description = "Reservation hold released"  # type: ignore[assignment]
+        hold.description = (  # type: ignore[assignment]
+            "Reservation hold released"
+            if not reconciled
+            else "Reservation hold released and pending balance reconciled"
+        )
 
-        release_key = self._release_key(booking.id)
-        if self.wallets.get_transaction_by_idempotency_key(release_key) is None:
-            self.wallets.add_transaction(
-                WalletTransaction(
-                    user_id=booking.passenger_id,
-                    booking_id=booking.id,
-                    ride_id=ride.id,
-                    type="reservation_release",
-                    direction="credit",
-                    amount=amount,
-                    currency=hold.currency or settings.PAYMENT_CURRENCY,
-                    status="posted",
-                    description="Reserved booking amount returned to wallet",
-                    idempotency_key=release_key,
-                )
+        self.wallets.add_transaction(
+            WalletTransaction(
+                user_id=booking.passenger_id,
+                booking_id=booking.id,
+                ride_id=(
+                    getattr(ride, "id", None)
+                    or hold.ride_id
+                    or getattr(booking, "ride_id", None)
+                ),
+                type="reservation_release",
+                direction="credit",
+                amount=amount,
+                currency=hold.currency or settings.PAYMENT_CURRENCY,
+                status="posted",
+                description="Reserved booking amount returned to wallet",
+                idempotency_key=release_key,
             )
+        )
+        return True
 
     def _ledger(
         self,
@@ -274,16 +279,34 @@ class BookingReservationWalletService:
             )
         )
 
+    def _mark_hold_captured(self, booking) -> None:
+        hold = self.wallets.get_transaction_by_idempotency_key(
+            self._hold_key(booking.id)
+        )
+        if hold is None or hold.status != "pending":
+            return
+        wallet = self.wallets.get_or_create_for_update(
+            booking.passenger_id,
+            hold.currency or settings.PAYMENT_CURRENCY,  # type: ignore[arg-type]
+        )
+        reconciled = self._consume_pending(wallet, money(hold.amount))
+        self._set_hold_captured(hold, reconciled=reconciled)
+
     @staticmethod
-    def _subtract_pending(current: Decimal, amount: Decimal) -> Decimal:
-        current = money(current)
+    def _set_hold_captured(hold, *, reconciled: bool) -> None:
+        hold.status = "captured"
+        hold.description = (
+            "Reservation hold captured after driver confirmation"
+            if not reconciled
+            else "Reservation hold captured and pending balance reconciled"
+        )
+
+    @staticmethod
+    def _consume_pending(wallet, amount: Decimal) -> bool:
+        current = money(wallet.pending_balance)
         amount = money(amount)
-        if current < amount:
-            raise HTTPException(
-                status_code=409,
-                detail="Wallet pending balance is lower than the reserved amount",
-            )
-        return money(current - amount)
+        wallet.pending_balance = money(max(ZERO, current - amount))
+        return current < amount
 
     @staticmethod
     def _hold_key(booking_id: UUID) -> str:

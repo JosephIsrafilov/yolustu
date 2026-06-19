@@ -17,6 +17,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.domains.payments import providers as providers_module
+from app.domains.payments.models import WalletTransaction
 from app.domains.payments.services import PaymentService
 
 from tests.test_payments_service import (
@@ -280,6 +281,23 @@ def test_cancel_cascade_refunds_paid_and_releases_pending():
     service = make_cascade_service(ride, [paid, pending])
     payment = _seed_paid_booking(service, ride, paid)
     wallet_repo = cast(Any, service).wallets
+    passenger_wallet = wallet_repo.get_or_create(pending.passenger_id)
+    passenger_wallet.available_balance = Decimal("75.00")
+    passenger_wallet.pending_balance = Decimal("25.00")
+    wallet_repo.add_transaction(
+        WalletTransaction(
+            user_id=pending.passenger_id,
+            booking_id=pending.id,
+            ride_id=ride.id,
+            type="reservation_hold",
+            direction="debit",
+            amount=Decimal("25.00"),
+            currency="AZN",
+            status="pending",
+            description="Reservation hold",
+            idempotency_key=f"booking:{pending.id}:reservation_hold",
+        )
+    )
 
     affected = service.cancel_ride_bookings(ride)
 
@@ -291,6 +309,11 @@ def test_cancel_cascade_refunds_paid_and_releases_pending():
     assert ride.available_seats == 2
     # Driver pending earning reversed to zero.
     assert wallet_repo.wallets[driver_id].pending_balance == Decimal("0.00")
+    assert passenger_wallet.available_balance == Decimal("100.00")
+    assert passenger_wallet.pending_balance == Decimal("0.00")
+    assert any(
+        tx.type == "reservation_release" for tx in wallet_repo.transactions.values()
+    )
     # Refund recorded for the passenger.
     assert any(tx.type == "refund" for tx in wallet_repo.transactions.values())
 

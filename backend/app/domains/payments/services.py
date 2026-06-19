@@ -399,6 +399,11 @@ class PaymentService:
 
         Assumes the ride row is already locked FOR UPDATE by the caller.
         """
+        from app.domains.payments.reservations import BookingReservationWalletService
+
+        reservations = BookingReservationWalletService(self.db)
+        reservations.wallets = self.wallets
+        reservations.payments = self.payments
         active = self.bookings.list_active_for_ride(ride.id)
         affected = 0
         for booking in active:
@@ -412,6 +417,7 @@ class PaymentService:
                         self._notify_cancellation(booking)
                         continue
             # Pending/accepted (or paid without a payment row): just release.
+            reservations.release_for_booking(booking, ride)
             booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
             if ride.status != RIDE_COMPLETED:
                 self._release_booking_seats(booking.id, ride)  # type: ignore[arg-type]

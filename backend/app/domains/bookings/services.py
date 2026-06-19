@@ -293,30 +293,38 @@ class BookingsService:
 
     def _lazy_expire_bookings(self, bookings: list[Booking]) -> None:
         now = datetime.now(timezone.utc)
-        expired = []
+        reconciled_terminal_hold = False
         for booking in bookings:
-            if (
+            newly_expired = (
                 booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]
                 and booking.payment_deadline
                 and booking.payment_deadline < now
-            ):
-                expired.append(booking)
+            )
+            if newly_expired:
+                booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
 
-        for booking in expired:
-            booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
-            ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
-            if ride:
-                self.reservations.release_for_booking(booking, ride)
-                if ride.status != RIDE_COMPLETED:
+            if booking.status in [
+                BOOKING_CANCELLED,
+                BOOKING_REJECTED,
+                BOOKING_EXPIRED,
+            ]:
+                ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
+                released = self.reservations.release_for_booking(booking, ride)
+                reconciled_terminal_hold = reconciled_terminal_hold or released
+                if newly_expired and ride and ride.status != RIDE_COMPLETED:
                     self._release_seats(booking, ride)
 
-            self.bookings.save(booking)
-            self.notifications.send_push_notification(
-                user_id=booking.passenger_id,  # type: ignore[arg-type]
-                title="Rezerv vaxtı bitdi",
-                body="Ödəniş edilmədiyi üçün rezerviniz ləğv edildi.",
-                data={"booking_id": str(booking.id), "type": "booking_expired"},
-            )
+            if newly_expired:
+                self.bookings.save(booking)
+                self.notifications.send_push_notification(
+                    user_id=booking.passenger_id,  # type: ignore[arg-type]
+                    title="Rezerv vaxtı bitdi",
+                    body="Ödəniş edilmədiyi üçün rezerviniz ləğv edildi.",
+                    data={"booking_id": str(booking.id), "type": "booking_expired"},
+                )
+
+        if reconciled_terminal_hold and self.db is not None:
+            self.db.commit()
 
     def _seat_layout(self, ride) -> list[str]:
         return list(SEAT_SPOTS[: ride.total_seats])

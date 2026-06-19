@@ -245,8 +245,11 @@ class FakeReservationWalletService:
         booking.status = "paid"
         booking.payment_deadline = None
 
-    def release_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
+    def release_for_booking(
+        self, booking: FakeBooking, ride: FakeRide | None = None
+    ) -> bool:
         self.released.append(booking.id)
+        return True
 
 
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
@@ -466,6 +469,32 @@ def test_get_booking_requests_lazy_expires():
     assert ride.available_seats == 3
     assert booking.id in cast(Any, service).reservations.released
     assert len(notifications.sent_notifications) == 1
+
+
+@pytest.mark.parametrize("terminal_status", ["cancelled", "rejected", "expired"])
+def test_listing_reconciles_historical_terminal_booking_hold(terminal_status: str):
+    passenger_id = uuid4()
+    ride = FakeRide(
+        id=uuid4(),
+        driver_id=uuid4(),
+        available_seats=3,
+        total_seats=4,
+        price_per_seat=Decimal("10.0"),
+    )
+    booking = FakeBooking(
+        id=uuid4(),
+        ride_id=ride.id,
+        passenger_id=passenger_id,
+        seats_booked=1,
+        total_price=Decimal("10.0"),
+        status=terminal_status,
+        ride=ride,
+    )
+    service, _, _, _ = make_service(rides=[ride], bookings=[booking])
+
+    service.get_my_bookings(make_current_user(passenger_id, "passenger"))
+
+    assert booking.id in cast(Any, service).reservations.released
 
 
 # --- confirm_booking Edge Cases ---
