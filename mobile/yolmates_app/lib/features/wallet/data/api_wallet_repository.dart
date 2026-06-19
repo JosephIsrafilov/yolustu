@@ -11,7 +11,7 @@ class ApiWalletRepository implements WalletRepository {
 
   @override
   Future<WalletBalance> getBalance() async {
-    final response = await _client.get('wallet/me');
+    final response = await _client.get('/wallet/me');
     return WalletBalanceDTO.fromJson(response.data as Map<String, dynamic>)
         .toDomain();
   }
@@ -20,7 +20,7 @@ class ApiWalletRepository implements WalletRepository {
   Future<List<WalletTransaction>> getTransactions(
       {int page = 1, int limit = 20}) async {
     final response = await _client.get(
-      'wallet/me/transactions',
+      '/wallet/me/transactions',
       queryParameters: {'page': page, 'limit': limit},
     );
 
@@ -34,7 +34,7 @@ class ApiWalletRepository implements WalletRepository {
 
   @override
   Future<WalletBalance> topUpPassenger(double amount) async {
-    await _client.post('wallet/me/topup', data: {
+    await _client.post('/wallet/me/topup', data: {
       'amount': amount,
       'idempotency_key':
           'mobile-topup-${DateTime.now().microsecondsSinceEpoch}',
@@ -44,7 +44,7 @@ class ApiWalletRepository implements WalletRepository {
 
   @override
   Future<WalletBalance> withdrawDriver(double amount) async {
-    await _client.post('wallet/me/payouts', data: {
+    await _client.post('/wallet/me/payouts', data: {
       'amount': amount,
       'idempotency_key':
           'mobile-payout-${DateTime.now().microsecondsSinceEpoch}',
@@ -62,7 +62,7 @@ class ApiWalletRepository implements WalletRepository {
   @override
   Future<Map<String, dynamic>> createStripeTopUp(double amount) async {
     final response = await _client.post(
-      'payments/stripe/wallet-top-up',
+      '/payments/stripe/wallet-top-up',
       data: {'amount': amount},
     );
     return response.data as Map<String, dynamic>;
@@ -70,7 +70,7 @@ class ApiWalletRepository implements WalletRepository {
 
   @override
   Future<Map<String, dynamic>> getStripeTopUpStatus(String sessionId) async {
-    final response = await _client.get('payments/stripe/session/$sessionId');
+    final response = await _client.get('/payments/stripe/session/$sessionId');
     return response.data as Map<String, dynamic>;
   }
 }

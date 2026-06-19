@@ -20,7 +20,7 @@ void main() {
 
   test('createStripeTopUp uses the wallet top-up endpoint', () async {
     adapter.onPost(
-      'payments/stripe/wallet-top-up',
+      '/payments/stripe/wallet-top-up',
       (server) => server.reply(200, {
         'checkout_url': 'https://checkout.stripe.test/session',
         'session_id': 'cs_test_123',
@@ -37,7 +37,7 @@ void main() {
 
   test('Stripe Not Found is normalized as ApiException 404', () async {
     adapter.onPost(
-      'payments/stripe/wallet-top-up',
+      '/payments/stripe/wallet-top-up',
       (server) => server.reply(404, {'detail': 'Not Found'}),
       data: {'amount': 25.0},
     );
