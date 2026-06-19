@@ -81,7 +81,10 @@ class BookingReservationWalletService:
     def capture_for_booking(self, booking, ride) -> Payment:
         amount = money(booking.total_price or ZERO)
         if amount <= ZERO:
-            raise HTTPException(status_code=400, detail="Payment amount must be positive")
+            raise HTTPException(
+                status_code=400,
+                detail="Payment amount must be positive",
+            )
 
         existing_payment = self.payments.get_succeeded_for_booking(booking.id)
         if existing_payment is not None:
@@ -98,8 +101,9 @@ class BookingReservationWalletService:
         )
 
         if hold is not None and hold.status == "pending":
-            wallet.pending_balance = self._subtract_pending(  # type: ignore[arg-type,assignment]
-                wallet.pending_balance, amount
+            wallet.pending_balance = self._subtract_pending(  # type: ignore[assignment]
+                wallet.pending_balance,  # type: ignore[arg-type]
+                amount,
             )
             hold.status = "posted"  # type: ignore[assignment]
             hold.description = (  # type: ignore[assignment]
@@ -109,7 +113,10 @@ class BookingReservationWalletService:
             # Backward-compatible fallback for older accepted bookings that were
             # created before wallet holds existed.
             if money(wallet.available_balance) < amount:  # type: ignore[arg-type]
-                raise HTTPException(status_code=400, detail="Insufficient wallet balance")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Insufficient wallet balance",
+                )
             wallet.available_balance = money(  # type: ignore[assignment,arg-type]
                 wallet.available_balance - amount
             )
@@ -188,8 +195,9 @@ class BookingReservationWalletService:
             booking.passenger_id,
             hold.currency or settings.PAYMENT_CURRENCY,  # type: ignore[arg-type]
         )
-        wallet.pending_balance = self._subtract_pending(  # type: ignore[arg-type,assignment]
-            wallet.pending_balance, amount
+        wallet.pending_balance = self._subtract_pending(  # type: ignore[assignment]
+            wallet.pending_balance,  # type: ignore[arg-type]
+            amount,
         )
         wallet.available_balance = money(  # type: ignore[assignment,arg-type]
             wallet.available_balance + amount
