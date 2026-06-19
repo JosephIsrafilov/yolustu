@@ -34,7 +34,9 @@ class BookingReservationWalletService:
     def reserve_for_booking(self, booking, ride, current_user: CurrentUser) -> None:
         amount = money(booking.total_price or ZERO)
         if amount <= ZERO:
-            raise HTTPException(status_code=400, detail="Reservation amount must be positive")
+            raise HTTPException(
+                status_code=400, detail="Reservation amount must be positive"
+            )
 
         hold_key = self._hold_key(booking.id)
         existing_hold = self.wallets.get_transaction_by_idempotency_key(hold_key)
@@ -51,8 +53,12 @@ class BookingReservationWalletService:
                 detail="Insufficient wallet balance for reservation",
             )
 
-        wallet.available_balance = money(wallet.available_balance - amount)  # type: ignore[assignment,arg-type]
-        wallet.pending_balance = money(wallet.pending_balance + amount)  # type: ignore[assignment,arg-type]
+        wallet.available_balance = money(  # type: ignore[assignment,arg-type]
+            wallet.available_balance - amount
+        )
+        wallet.pending_balance = money(  # type: ignore[assignment,arg-type]
+            wallet.pending_balance + amount
+        )
 
         self.wallets.add_transaction(
             WalletTransaction(
@@ -64,7 +70,10 @@ class BookingReservationWalletService:
                 amount=amount,
                 currency=settings.PAYMENT_CURRENCY,
                 status="pending",
-                description=f"{amount} {settings.PAYMENT_CURRENCY} reserved for booking until driver confirmation",
+                description=(
+                    f"{amount} {settings.PAYMENT_CURRENCY} reserved for booking "
+                    "until driver confirmation"
+                ),
                 idempotency_key=hold_key,
             )
         )
@@ -80,22 +89,30 @@ class BookingReservationWalletService:
             booking.payment_deadline = None  # type: ignore[assignment]
             return existing_payment
 
-        hold = self.wallets.get_transaction_by_idempotency_key(self._hold_key(booking.id))
+        hold = self.wallets.get_transaction_by_idempotency_key(
+            self._hold_key(booking.id)
+        )
         wallet = self.wallets.get_or_create_for_update(
             booking.passenger_id,
             settings.PAYMENT_CURRENCY,
         )
 
         if hold is not None and hold.status == "pending":
-            wallet.pending_balance = self._subtract_pending(wallet.pending_balance, amount)  # type: ignore[arg-type,assignment]
+            wallet.pending_balance = self._subtract_pending(  # type: ignore[arg-type,assignment]
+                wallet.pending_balance, amount
+            )
             hold.status = "posted"  # type: ignore[assignment]
-            hold.description = "Reservation hold captured after driver confirmation"  # type: ignore[assignment]
+            hold.description = (  # type: ignore[assignment]
+                "Reservation hold captured after driver confirmation"
+            )
         else:
             # Backward-compatible fallback for older accepted bookings that were
             # created before wallet holds existed.
             if money(wallet.available_balance) < amount:  # type: ignore[arg-type]
                 raise HTTPException(status_code=400, detail="Insufficient wallet balance")
-            wallet.available_balance = money(wallet.available_balance - amount)  # type: ignore[assignment,arg-type]
+            wallet.available_balance = money(  # type: ignore[assignment,arg-type]
+                wallet.available_balance - amount
+            )
 
         fee_percent = Decimal(str(settings.PLATFORM_FEE_PERCENT))
         service_fee = money(amount * fee_percent / Decimal("100"))
@@ -160,7 +177,9 @@ class BookingReservationWalletService:
         return payment
 
     def release_for_booking(self, booking, ride) -> None:
-        hold = self.wallets.get_transaction_by_idempotency_key(self._hold_key(booking.id))
+        hold = self.wallets.get_transaction_by_idempotency_key(
+            self._hold_key(booking.id)
+        )
         if hold is None or hold.status != "pending":
             return
 
@@ -169,8 +188,12 @@ class BookingReservationWalletService:
             booking.passenger_id,
             hold.currency or settings.PAYMENT_CURRENCY,  # type: ignore[arg-type]
         )
-        wallet.pending_balance = self._subtract_pending(wallet.pending_balance, amount)  # type: ignore[arg-type,assignment]
-        wallet.available_balance = money(wallet.available_balance + amount)  # type: ignore[assignment,arg-type]
+        wallet.pending_balance = self._subtract_pending(  # type: ignore[arg-type,assignment]
+            wallet.pending_balance, amount
+        )
+        wallet.available_balance = money(  # type: ignore[assignment,arg-type]
+            wallet.available_balance + amount
+        )
         hold.status = "reversed"  # type: ignore[assignment]
         hold.description = "Reservation hold released"  # type: ignore[assignment]
 
@@ -213,12 +236,19 @@ class BookingReservationWalletService:
 
         amount = money(amount)
         currency = payment.currency if payment else settings.PAYMENT_CURRENCY
-        wallet = self.wallets.get_or_create_for_update(user_id, currency)  # type: ignore[arg-type]
+        wallet = self.wallets.get_or_create_for_update(
+            user_id,
+            currency,  # type: ignore[arg-type]
+        )
         sign = Decimal("1") if direction == "credit" else Decimal("-1")
         if balance_bucket == "pending":
-            wallet.pending_balance = money(wallet.pending_balance + amount * sign)  # type: ignore[assignment,arg-type]
+            wallet.pending_balance = money(  # type: ignore[assignment,arg-type]
+                wallet.pending_balance + amount * sign
+            )
         elif balance_bucket == "available":
-            wallet.available_balance = money(wallet.available_balance + amount * sign)  # type: ignore[assignment,arg-type]
+            wallet.available_balance = money(  # type: ignore[assignment,arg-type]
+                wallet.available_balance + amount * sign
+            )
 
         self.wallets.add_transaction(
             WalletTransaction(
