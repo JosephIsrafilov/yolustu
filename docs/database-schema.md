@@ -246,7 +246,20 @@ Sürücülərin nəqliyyat vasitələri.
 | year | INTEGER | NOT NULL |
 | color | VARCHAR(30) | NOT NULL |
 | plate_number | VARCHAR(20) | NOT NULL |
+| normalized_plate | VARCHAR(20) | NOT NULL; uppercase alphanumeric identity |
+| seats_count | INTEGER | NOT NULL, CHECK 1..4 |
+| variations | VARCHAR(100) | |
+| is_active | BOOLEAN | NOT NULL, DEFAULT TRUE |
+| is_default | BOOLEAN | NOT NULL, DEFAULT FALSE |
 | created_at | TIMESTAMP | DEFAULT NOW() |
+
+Constraints and indexes:
+
+- `CHECK (year BETWEEN 1886 AND 2100)`
+- partial unique index on `normalized_plate WHERE is_active = true`
+- partial unique index on `user_id WHERE is_active = true AND is_default = true`
+- migration deterministically selects the oldest active vehicle as each
+  owner's default
 
 ---
 
@@ -266,6 +279,7 @@ Sürücülər tərəfindən elan edilən gedişlər. Koordinatlar üçün PostGI
 | departure_time | TIMESTAMP | NOT NULL |
 | total_seats | INTEGER | NOT NULL |
 | available_seats | INTEGER | NOT NULL |
+| available_spots | JSON | Compatibility projection of currently free seat codes |
 | price_per_seat | NUMERIC(12,2) | NOT NULL |
 | status | VARCHAR(20) | DEFAULT 'active' (active, cancelled, completed) |
 | description | TEXT | |
@@ -290,13 +304,44 @@ Sərnişinlərin gedişlərə göndərdikləri rezervasiya sorğuları.
 | ride_id | UUID | NOT NULL, FOREIGN KEY (rides.id) |
 | passenger_id | UUID | NOT NULL, FOREIGN KEY (users.id) |
 | seats_booked | INTEGER | NOT NULL |
+| selected_spots | JSON | Compatibility projection of allocated seat codes |
 | total_price | NUMERIC(12,2) | |
-| status | VARCHAR(20) | DEFAULT 'pending' (pending, accepted, rejected, cancelled, completed) |
+| status | VARCHAR(20) | DEFAULT 'pending' (pending, accepted, paid, boarded, no_show, rejected, cancelled, expired, completed) |
+| payment_deadline | TIMESTAMP | Pending hold/payment expiry |
 | created_at | TIMESTAMP | DEFAULT NOW() |
 
 ---
 
-### 5. payments
+### 5. ride_seats
+Authoritative seat inventory snapshot for each ride.
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY |
+| ride_id | UUID | NOT NULL, FOREIGN KEY (rides.id), ON DELETE CASCADE |
+| spot | VARCHAR(20) | NOT NULL |
+| is_enabled | BOOLEAN | NOT NULL, DEFAULT TRUE |
+| created_at | TIMESTAMP | DEFAULT NOW() |
+
+Unique constraint: `(ride_id, spot)`.
+
+### 6. booking_seats
+Exact seat allocations. Released rows remain as history.
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY |
+| booking_id | UUID | NOT NULL, FOREIGN KEY (bookings.id), ON DELETE CASCADE |
+| ride_seat_id | UUID | NOT NULL, FOREIGN KEY (ride_seats.id), ON DELETE CASCADE |
+| released_at | TIMESTAMP | NULL while active |
+| created_at | TIMESTAMP | DEFAULT NOW() |
+
+Partial unique index on `ride_seat_id WHERE released_at IS NULL` prevents
+double-booking the same seat.
+
+---
+
+### 7. payments
 Booking-lə bağlı ödəniş tranzaksiyaları və provider metadata.
 
 | Sütun | Tip | Məhdudiyyətlər (Constraints) |
@@ -311,7 +356,7 @@ Booking-lə bağlı ödəniş tranzaksiyaları və provider metadata.
 
 ---
 
-### 6. messages
+### 8. messages
 Gediş iştirakçıları (sürücü və təsdiqlənmiş sərnişinlər) arasında WebSocket vasitəsilə göndərilən mesajlar.
 
 | Sütun | Tip | Məhdudiyyətlər (Constraints) |
@@ -324,7 +369,7 @@ Gediş iştirakçıları (sürücü və təsdiqlənmiş sərnişinlər) arasınd
 
 ---
 
-### 7. reviews
+### 9. reviews
 Tamamlanmış gedişlərdən sonra sürücü və sərnişinlərin bir-birinə yazdıqları rəylər.
 
 | Sütun | Tip | Məhdudiyyətlər (Constraints) |
@@ -343,7 +388,7 @@ Tamamlanmış gedişlərdən sonra sürücü və sərnişinlərin bir-birinə ya
 
 ---
 
-### 8. device_tokens
+### 10. device_tokens
 Cihazların FCM/APNs push bildiriş tokenləri.
 
 | Sütun | Tip | Məhdudiyyətlər (Constraints) |
@@ -352,3 +397,44 @@ Cihazların FCM/APNs push bildiriş tokenləri.
 | user_id | UUID | NOT NULL, FOREIGN KEY (users.id, ON DELETE CASCADE) |
 | token | VARCHAR(255) | NOT NULL, UNIQUE |
 | created_at | TIMESTAMP | DEFAULT NOW() |
+
+---
+
+### 11. vehicle_documents
+
+Phase 3 addition. Stores driver vehicle document uploads for admin review.
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY |
+| vehicle_id | UUID | NOT NULL, FK vehicles.id ON DELETE CASCADE |
+| document_type | VARCHAR(50) | NOT NULL, CHECK IN ('registration','insurance','inspection') |
+| storage_key | VARCHAR(500) | NOT NULL |
+| mime_type | VARCHAR(100) | NOT NULL |
+| size_bytes | INTEGER | NOT NULL |
+| sha256 | VARCHAR(64) | NOT NULL |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'pending' |
+| processing_status | VARCHAR(20) | NOT NULL, DEFAULT 'pending' |
+| expires_at | TIMESTAMPTZ | NULL |
+| ai_recommendation | VARCHAR(20) | NULL ('approve','needs_review','reject') |
+| ai_confidence | NUMERIC(4,3) | NULL |
+| ai_issues | JSON | NULL |
+| ai_metadata | JSON | NULL |
+| reviewed_by | UUID | NULL, FK users.id |
+| reviewed_at | TIMESTAMPTZ | NULL |
+| rejection_reason | TEXT | NULL |
+| version | INTEGER | NOT NULL, DEFAULT 1 |
+| is_current | BOOLEAN | NOT NULL, DEFAULT TRUE |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+
+Indexes:
+
+- `ix_vehicle_documents_vehicle_id` ON vehicle_documents(vehicle_id)
+- `uq_vehicle_documents_current` UNIQUE (vehicle_id, document_type) WHERE is_current = true
+
+Rules:
+
+- Uploading a new doc retires the previous `is_current` doc of the same type
+- `version` increments on every admin decision; returns 409 if `expected_version` mismatches (optimistic lock)
+- `sync_vehicle_verification_status()` recomputes `vehicles.verification_status` after each decision
+- `POST /rides/` returns 403 if `vehicles.verification_status != 'approved'`
