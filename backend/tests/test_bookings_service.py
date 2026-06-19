@@ -1,22 +1,23 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, cast
+from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.domains.bookings.services import BookingsService
+from app.core.notifications import NotificationService
 from app.domains.bookings.repositories import (
     BookingRepository,
     SeatReservationRepository,
 )
 from app.domains.bookings.schemas import BookingCreate
+from app.domains.bookings.services import BookingsService
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.trips.ports import RideLookupPort
-from app.core.notifications import NotificationService
 
 
 @dataclass
@@ -186,7 +187,7 @@ class FakeReservationWalletService:
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
-        phone="+994000000000",
+        phone="+10000000000",
         first_name="Test",
         last_name="User",
         role=role,
@@ -198,8 +199,6 @@ def make_current_user(user_id: UUID, role: str) -> CurrentUser:
 def make_service(
     ride_available_seats: int = 3,
 ) -> tuple[BookingsService, FakeRide, CurrentUser, CurrentUser]:
-    from unittest.mock import MagicMock
-
     driver_id = uuid4()
     passenger_id = uuid4()
     ride = FakeRide(
@@ -342,7 +341,7 @@ def test_cancel_pending_booking_restores_seats_and_releases_wallet_hold():
 
 
 def test_cannot_create_booking_when_seats_are_insufficient():
-    service, _, driver, passenger = make_service(ride_available_seats=1)
+    service, _, _, passenger = make_service(ride_available_seats=1)
     service.create_booking(
         BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), passenger
     )
@@ -372,8 +371,6 @@ def test_multiple_bookings_allowed_for_passenger():
 
 
 def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
-    from unittest.mock import patch, MagicMock
-
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=1), passenger
@@ -418,7 +415,7 @@ def test_double_reject_booking_fails():
 
 
 def test_double_cancel_booking_fails():
-    service, ride, driver, passenger = make_service()
+    service, ride, _, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=1), passenger
     )
