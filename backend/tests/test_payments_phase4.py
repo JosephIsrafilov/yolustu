@@ -7,7 +7,7 @@ and the ride-cancellation cascade. Uses the in-memory fakes from
 """
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any, cast
@@ -17,10 +17,6 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.domains.payments import providers as providers_module
-from app.domains.payments.repositories import (
-    PaymentRepository,
-    WalletRepository,
-)
 from app.domains.payments.services import PaymentService
 
 from tests.test_payments_service import (
