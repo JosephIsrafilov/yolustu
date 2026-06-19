@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -10,10 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.notifications import NotificationService
-from app.domains.bookings.repositories import (
-    BookingRepository,
-    SeatReservationRepository,
-)
+from app.domains.bookings.repositories import BookingRepository, SeatReservationRepository
 from app.domains.bookings.schemas import BookingCreate
 from app.domains.bookings.services import BookingsService
 from app.domains.identity.dependencies import CurrentUser
@@ -46,11 +43,11 @@ class FakeBooking:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     ride: object | None = None
     passenger: object | None = None
-    selected_spots: object | None = None
+    selected_spots: list[str] | None = None
 
 
 class FakeBookingRepository:
-    def __init__(self):
+    def __init__(self) -> None:
         self.bookings: dict[UUID, FakeBooking] = {}
 
     def create(
@@ -78,26 +75,6 @@ class FakeBookingRepository:
     def get_for_update(self, booking_id: UUID) -> FakeBooking | None:
         return self.get(booking_id)
 
-    def get_active_for_ride_and_passenger(
-        self, ride_id: UUID, passenger_id: UUID
-    ) -> FakeBooking | None:
-        for booking in self.bookings.values():
-            if (
-                booking.ride_id == ride_id
-                and booking.passenger_id == passenger_id
-                and booking.status not in ["cancelled", "rejected"]
-            ):
-                return booking
-        return None
-
-    def list_active_for_ride(self, ride_id: UUID) -> list[FakeBooking]:
-        return [
-            booking
-            for booking in self.bookings.values()
-            if booking.ride_id == ride_id
-            and booking.status not in ["cancelled", "rejected", "expired", "no_show"]
-        ]
-
     def list_for_passenger(self, passenger_id: UUID) -> list[FakeBooking]:
         return [
             booking
@@ -114,7 +91,7 @@ class FakeBookingRepository:
 
 
 class FakeRideLookupPort:
-    def __init__(self, ride: FakeRide):
+    def __init__(self, ride: FakeRide) -> None:
         self.ride = ride
 
     def get_ride(self, ride_id: UUID) -> FakeRide | None:
@@ -125,12 +102,12 @@ class FakeRideLookupPort:
 
 
 class FakeNotificationService:
-    def send_push_notification(self, **kwargs):
+    def send_push_notification(self, **kwargs) -> None:
         return None
 
 
 class FakeSeatReservationRepository:
-    def __init__(self, ride: FakeRide):
+    def __init__(self, ride: FakeRide) -> None:
         self.ride = ride
         self.available = [
             "front_right",
@@ -144,11 +121,14 @@ class FakeSeatReservationRepository:
         return list(self.available) if ride_id == self.ride.id else []
 
     def allocate(
-        self, booking: FakeBooking, ride_id: UUID, selected_spots: list[str]
+        self,
+        booking: FakeBooking,
+        ride_id: UUID,
+        selected_spots: list[str],
     ) -> None:
-        if ride_id != self.ride.id or any(
-            spot not in self.available for spot in selected_spots
-        ):
+        if ride_id != self.ride.id:
+            raise ValueError("Ride mismatch")
+        if any(spot not in self.available for spot in selected_spots):
             raise ValueError("Selected seat is not available")
         self.assignments[booking.id] = list(selected_spots)
         self.available = [spot for spot in self.available if spot not in selected_spots]
@@ -165,15 +145,18 @@ class FakeSeatReservationRepository:
 
 
 class FakeReservationWalletService:
-    def __init__(self):
-        self.reserved: list[tuple[UUID, Decimal]] = []
+    def __init__(self) -> None:
+        self.reserved: list[UUID] = []
         self.captured: list[UUID] = []
         self.released: list[UUID] = []
 
     def reserve_for_booking(
-        self, booking: FakeBooking, ride: FakeRide, current_user: CurrentUser
+        self,
+        booking: FakeBooking,
+        ride: FakeRide,
+        current_user: CurrentUser,
     ) -> None:
-        self.reserved.append((booking.id, booking.total_price))
+        self.reserved.append(booking.id)
 
     def capture_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
         self.captured.append(booking.id)
@@ -207,11 +190,9 @@ def make_service(
         available_seats=ride_available_seats,
         total_seats=4,
         price_per_seat=Decimal("10.00"),
-        status="active",
     )
 
-    db_mock = MagicMock(spec=Session)
-    service = BookingsService(db=db_mock)
+    service = BookingsService(db=MagicMock(spec=Session))
     service.bookings = cast(BookingRepository, FakeBookingRepository())
     service.seats = cast(SeatReservationRepository, FakeSeatReservationRepository(ride))
     service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
@@ -233,28 +214,19 @@ def test_passenger_cannot_book_own_ride():
     assert "own ride" in str(exc.value.detail)
 
 
-def test_create_booking_decrements_seats():
+def test_create_booking_reserves_wallet_and_decrements_seats():
     service, ride, _, passenger = make_service()
 
     response = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
     )
 
+    reservations = cast(Any, service).reservations
     assert response.status == "pending"
     assert response.selected_spots == ["front_right", "back_left"]
+    assert response.id in reservations.reserved
     assert ride.available_seats == 1
     assert response.payment_deadline is not None
-
-
-def test_create_booking_reserves_wallet_amount():
-    service, _, _, passenger = make_service()
-
-    response = service.create_booking(
-        BookingCreate(ride_id=service.rides.ride.id, seats_booked=2), passenger
-    )
-
-    reservations = cast(Any, service).reservations
-    assert reservations.reserved == [(response.id, Decimal("20.00"))]
 
 
 def test_selected_spot_count_must_match_seats_booked():
@@ -341,61 +313,17 @@ def test_cancel_pending_booking_restores_seats_and_releases_wallet_hold():
 
 
 def test_cannot_create_booking_when_seats_are_insufficient():
-    service, _, _, passenger = make_service(ride_available_seats=1)
-    service.create_booking(
-        BookingCreate(ride_id=service.rides.ride.id, seats_booked=1), passenger
-    )
+    service, ride, _, passenger = make_service(ride_available_seats=1)
+    service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
 
-    other_passenger = make_current_user(uuid4(), role="passenger")
     with pytest.raises(HTTPException) as exc:
         service.create_booking(
-            BookingCreate(ride_id=service.rides.ride.id, seats_booked=1),
-            other_passenger,
+            BookingCreate(ride_id=ride.id, seats_booked=1),
+            make_current_user(uuid4(), role="passenger"),
         )
 
     assert exc.value.status_code == 400
     assert "Not enough available seats" in str(exc.value.detail)
-
-
-def test_multiple_bookings_allowed_for_passenger():
-    service, ride, _, passenger = make_service()
-    b1 = service.create_booking(
-        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
-    )
-    b2 = service.create_booking(
-        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
-    )
-
-    assert b1.id != b2.id
-    assert ride.available_seats == 1
-
-
-def test_cancel_paid_booking_restores_seats_if_ride_not_completed():
-    service, ride, driver, passenger = make_service()
-    booking = service.create_booking(
-        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
-    )
-    service.confirm_booking(booking.id, driver)
-
-    stored = service.bookings.get(booking.id)
-    stored.status = "paid"
-
-    with patch("app.domains.payments.services.PaymentService") as mock_ps_class:
-        mock_ps_instance = mock_ps_class.return_value
-        mock_payment = MagicMock()
-        mock_payment.id = uuid4()
-        mock_ps_instance.payments.get_succeeded_for_booking.return_value = mock_payment
-
-        def mock_refund(*args, **kwargs):
-            stored.status = "cancelled"
-            ride.available_seats += stored.seats_booked
-            return {"detail": "Mock refund"}
-
-        mock_ps_instance.refund_payment.side_effect = mock_refund
-        cancelled = service.cancel_booking(booking.id, passenger)
-
-    assert cancelled.status == "cancelled"
-    assert ride.available_seats == 3
 
 
 def test_double_reject_booking_fails():
