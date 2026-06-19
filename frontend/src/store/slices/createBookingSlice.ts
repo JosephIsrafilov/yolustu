@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AppState, BookingSlice } from '../types';
 import { bookingsService } from '@/services';
+import { invalidateWalletQueries } from '@/lib/query-client';
 
 import { toApiError } from '@/services/api-error';
 
@@ -70,6 +71,7 @@ export const createBookingSlice: StateCreator<
       }));
       await get().fetchBookings();
       await get().fetchTrips();
+      await invalidateWalletQueries();
       return booking.id;
     } catch (error) {
       const apiError = toApiError(error);
@@ -92,6 +94,7 @@ export const createBookingSlice: StateCreator<
       }));
       await get().fetchBookingRequests();
       await get().fetchTrips();
+      await invalidateWalletQueries();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -113,6 +116,7 @@ export const createBookingSlice: StateCreator<
         lastError: null,
       }));
       await get().fetchBookingRequests();
+      await invalidateWalletQueries();
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -135,6 +139,7 @@ export const createBookingSlice: StateCreator<
       }));
       await get().fetchBookings();
       await get().fetchTrips();
+      await invalidateWalletQueries();
       return true;
     } catch (error) {
       const apiError = toApiError(error);

@@ -15,6 +15,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { I18N } from '@/lib/i18n';
 import { ROUTES } from '@/lib/routes';
 import { messagesService } from '@/services';
+import { effectiveBookingStatus } from '@/lib/bookings';
 import { formatSeatLabels } from '@/lib/seats';
 
 interface BookingCardProps {
@@ -34,21 +35,21 @@ const BOOKING_CARD_I18N = {
     chat: 'Söhbət',
     seatsUnit: 'yer',
     walletPay: 'Cüzdanla ödə',
-    expiresIn: 'Son tarix:',
+    expiresIn: 'Rezerv bu tarixədək qüvvədədir:',
     waitingApproval: 'Sürücü təsdiqi gözlənilir',
   },
   ru: {
     chat: 'Чат',
     seatsUnit: 'мест',
     walletPay: 'Оплатить с кошелька',
-    expiresIn: 'Срок:',
+    expiresIn: 'Резерв действует до:',
     waitingApproval: 'Ожидание подтверждения водителя',
   },
   en: {
     chat: 'Chat',
     seatsUnit: 'seats',
     walletPay: 'Pay from wallet',
-    expiresIn: 'Expires:',
+    expiresIn: 'Reserved until:',
     waitingApproval: 'Waiting for driver approval',
   },
 } as const;
@@ -76,8 +77,10 @@ export default function BookingCard({
 
   const departureCity = getLocalizedCityName(trip.departureCity, language);
   const arrivalCity = getLocalizedCityName(trip.arrivalCity, language);
-  const canCancel = booking.status === 'pending' || booking.status === 'accepted';
-  const canReview = booking.status === 'completed';
+  const status = effectiveBookingStatus(booking.status, booking.paymentDeadline);
+  const canCancel = status === 'pending' || status === 'accepted';
+  const canReview = status === 'completed';
+  const hasActions = canReview || ['pending', 'accepted', 'paid'].includes(status);
 
   const openRideChat = async () => {
     if (isOpeningChat) return;
@@ -108,7 +111,7 @@ export default function BookingCard({
             </div>
           </div>
           <div className="shrink-0 flex-none h-6 flex items-center">
-            <StatusBadge status={booking.status} />
+            <StatusBadge status={status} />
           </div>
         </div>
 
@@ -119,7 +122,7 @@ export default function BookingCard({
               ? formatSeatLabels(booking.selectedSpots, language)
               : `${booking.seatsRequested} ${localCopy.seatsUnit}`}
           </span>
-          {['pending', 'accepted'].includes(booking.status) && booking.paymentDeadline && (
+          {['pending', 'accepted'].includes(status) && booking.paymentDeadline && (
             <span className="truncate block ml-auto text-xs text-red-500 font-medium">
               {localCopy.expiresIn} {new Date(booking.paymentDeadline).toLocaleString()}
             </span>
@@ -127,7 +130,7 @@ export default function BookingCard({
         </div>
 
         {driver && (
-          <div className={`grid ${['pending', 'accepted', 'paid'].includes(booking.status) ? 'grid-cols-[28px_1fr_36px]' : 'grid-cols-[28px_1fr]'} gap-2 py-2 border-t border-border items-center h-11`}>
+          <div className={`grid ${['pending', 'accepted', 'paid'].includes(status) ? 'grid-cols-[28px_1fr_36px]' : 'grid-cols-[28px_1fr]'} gap-2 py-2 border-t border-border items-center h-11`}>
             <Link
               href={ROUTES.profileDetails(driver.id)}
               className="contents"
@@ -146,7 +149,7 @@ export default function BookingCard({
                 </p>
               </div>
             </Link>
-            {['pending', 'accepted', 'paid'].includes(booking.status) && (
+            {['pending', 'accepted', 'paid'].includes(status) && (
               <button
                 type="button"
                 onClick={openRideChat}
@@ -160,14 +163,14 @@ export default function BookingCard({
           </div>
         )}
 
-        {(canCancel || canReview || (booking.status === 'accepted' && (onPay || onWalletPaySuccess)) || ['pending', 'accepted', 'paid'].includes(booking.status)) && (
+        {hasActions && (
           <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border w-full">
-            {booking.status === 'pending' && (
+            {status === 'pending' && (
               <div className="text-sm font-semibold text-brand-600 text-center py-1 bg-brand-50 rounded-lg">
                 {localCopy.waitingApproval}
               </div>
             )}
-            {booking.status === 'accepted' && (onPay || onWalletPaySuccess) && (
+            {status === 'accepted' && (onPay || onWalletPaySuccess) && (
               <div className="flex gap-2 w-full">
                 {onPay && (
                   <Button variant="primary" size="sm" onClick={onPay} className="flex-1">
@@ -184,7 +187,7 @@ export default function BookingCard({
               </div>
             )}
             <div className="flex gap-2 flex-nowrap items-center h-12 w-full">
-              {['accepted', 'paid'].includes(booking.status) && (
+              {['accepted', 'paid'].includes(status) && (
                 <Button
                   variant="outline"
                   size="sm"
