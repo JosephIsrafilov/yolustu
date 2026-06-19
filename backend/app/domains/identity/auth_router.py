@@ -63,11 +63,12 @@ def reset_password(
 def request_phone_password_reset(
     request: Request,
     reset_data: PhonePasswordResetRequestInput,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     redis_client=Depends(get_redis),
 ):
     return IdentityService(db).request_phone_password_reset(
-        reset_data.phone, redis_client
+        reset_data.phone, redis_client, background_tasks
     )
 
 
@@ -89,10 +90,11 @@ def reset_password_phone(
 def request_otp(
     request: Request,
     phone: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     redis_client=Depends(get_redis),
 ):
-    return IdentityService(db).request_otp(phone, redis_client)
+    return IdentityService(db).request_otp(phone, redis_client, background_tasks)
 
 
 @router.post("/verify-otp")

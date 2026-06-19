@@ -161,12 +161,13 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
                   backgroundColor: request.status.colors.$1,
                   foregroundColor: request.status.colors.$2,
                 ),
-              IconButton(
-                onPressed: _busy ? null : _openChat,
-                icon: const Icon(Icons.chat_bubble_outline),
-                color: AppTheme.tealDark,
-                tooltip: 'Söhbət',
-              ),
+              if (request.status != RequestStatus.rejected)
+                IconButton(
+                  onPressed: _busy ? null : _openChat,
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  color: AppTheme.tealDark,
+                  tooltip: 'Söhbət',
+                ),
             ],
           ),
           const SizedBox(height: 12),

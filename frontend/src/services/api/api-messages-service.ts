@@ -24,7 +24,7 @@ export const apiMessagesService: MessagesService = {
   },
 
   async getChats() {
-    return apiClient.get<Conversation[]>('/chats/');
+    return apiClient.get<Conversation[]>('/chats');
   },
 
   async getChat(conversationId: string) {

@@ -34,8 +34,11 @@ class IdentityService:
     def __init__(self, db: Session):
         self.users = UserRepository(db)
 
-    def request_otp(self, phone: str, redis_client):
-        self._send_otp(phone, redis_client)
+    def request_otp(self, phone: str, redis_client, background_tasks: BackgroundTasks):
+        otp = self._send_otp(phone, redis_client)
+        user = self.users.get_by_phone(phone)
+        if user and user.email:
+            background_tasks.add_task(self._send_email_otp, user.email, otp)
         return {"message": "OTP sent successfully", "phone": phone}
 
     def verify_otp(self, phone: str, otp: str, redis_client):
@@ -279,16 +282,20 @@ class IdentityService:
         redis_client.delete(f"pwd_reset:{email}")
         return {"message": "Password reset successfully"}
 
-    def request_phone_password_reset(self, phone: str, redis_client):
+    def request_phone_password_reset(self, phone: str, redis_client, background_tasks: BackgroundTasks):
         user = self.users.get_by_phone(phone)
         if not user:
             raise HTTPException(
                 status_code=404, detail="No account found with this phone."
             )
 
-        otp = "123456"
+        otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"pwd_reset_phone:{phone}", 600, otp)
-        logger.info("Phone password reset OTP (mock) for %s: %s", phone, otp)
+        logger.info("Phone password reset OTP for %s: %s", phone, otp)
+        
+        if user.email:
+            background_tasks.add_task(self._send_email_otp, user.email, otp)
+
         return {
             "message": "Password reset OTP sent to phone.",
             "otp": otp,
@@ -336,6 +343,18 @@ class IdentityService:
 
         logger.info("Password reset OTP generated for %s", email)
         return otp
+
+    @staticmethod
+    def _send_email_otp(email: str, otp: str):
+        from app.core.email import send_email
+
+        send_email(
+            to_email=email,
+            subject="Yolmates - Your OTP Code",
+            html_content=f"<p>Your OTP code is: <strong>{otp}</strong></p><p>This code will expire in a few minutes.</p>",
+            text_content=f"Your OTP code is: {otp}\n\nThis code will expire in a few minutes.",
+        )
+        logger.info("Email OTP sent for %s: %s", email, otp)
 
     def request_email_verification(
         self,

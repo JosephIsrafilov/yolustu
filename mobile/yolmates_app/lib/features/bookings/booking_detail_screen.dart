@@ -201,26 +201,28 @@ class _DetailState extends ConsumerState<_Detail> {
         if (b.driverId.isNotEmpty) ...[
           Row(
             children: [
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: _busy ? null : _startChat,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.message_outlined),
-                    label: Text(l10n.bookingDetailMessageDriver),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.slate500,
+              if (b.status.isActive) ...[
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : _startChat,
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.message_outlined),
+                      label: Text(l10n.bookingDetailMessageDriver),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.slate500,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: SizedBox(
                   height: 52,

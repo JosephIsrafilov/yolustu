@@ -501,7 +501,7 @@ def test_send_chat_message_no_conversation_id():
             )
         assert exc.value.status_code == 400
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
 
 def test_send_chat_message_conv_not_found():
@@ -514,7 +514,7 @@ def test_send_chat_message_conv_not_found():
             )
         assert exc.value.status_code == 404
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
 
 def test_send_chat_message_not_participant():
@@ -528,7 +528,7 @@ def test_send_chat_message_not_participant():
             )
         assert exc.value.status_code == 403
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
 
 def test_send_chat_message_success():
@@ -543,7 +543,7 @@ def test_send_chat_message_success():
         )
         assert result.content == "hello"
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
 
 # ---- send_message legacy ride_id path ----
@@ -561,7 +561,7 @@ def test_send_message_ride_not_found():
             )
         assert exc.value.status_code == 404
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
 
 def test_send_message_ride_not_participant():
@@ -578,4 +578,4 @@ def test_send_message_ride_not_participant():
             )
         assert exc.value.status_code == 403
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())

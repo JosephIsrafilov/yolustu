@@ -142,36 +142,38 @@ class _BookingCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      try {
-                        final conversation = await ref
-                            .read(chatRepositoryProvider)
-                            .getOrCreateRideConversation(
-                              rideId: booking.rideId,
-                              bookingId: booking.id,
+                if (booking.status.isActive) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        try {
+                          final conversation = await ref
+                              .read(chatRepositoryProvider)
+                              .getOrCreateRideConversation(
+                                rideId: booking.rideId,
+                                bookingId: booking.id,
+                              );
+                          if (context.mounted) {
+                            context.push(
+                              '${AppRoutes.messages}/${conversation.id}',
                             );
-                        if (context.mounted) {
-                          context.push(
-                            '${AppRoutes.messages}/${conversation.id}',
-                          );
+                          }
+                        } catch (error) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Çat açıla bilmədi: $error'),
+                              ),
+                            );
+                          }
                         }
-                      } catch (error) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Çat açıla bilmədi: $error'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.message_outlined),
-                    label: const Text('Chat'),
+                      },
+                      icon: const Icon(Icons.message_outlined),
+                      label: const Text('Chat'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {

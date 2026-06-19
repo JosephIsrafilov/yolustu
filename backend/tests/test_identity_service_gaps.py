@@ -153,7 +153,7 @@ def make_cu(user_id: UUID, role="passenger") -> CurrentUser:
 # request_otp
 def test_request_otp_stores_key():
     svc, _, redis = make_service()
-    r = svc.request_otp("+994501234567", redis)
+    r = svc.request_otp("+994501234567", redis, BackgroundTasks())
     assert r["phone"] == "+994501234567"
     assert "otp:+994501234567" in redis.store
     assert redis.ttls["otp:+994501234567"] == 300
@@ -165,7 +165,7 @@ def test_request_otp_sms_disabled_stores_otp_without_sns(monkeypatch):
     monkeypatch.setattr(settings, "SMS_ENABLED", False)
     monkeypatch.setattr(identity_services.secrets, "randbelow", lambda _: 23456)
 
-    response = svc.request_otp("+994501234567", redis)
+    response = svc.request_otp("+994501234567", redis, BackgroundTasks())
 
     assert response == {
         "message": "OTP sent successfully",
@@ -189,7 +189,7 @@ def test_request_otp_sms_enabled_calls_sns_publish(monkeypatch, caplog):
     monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=boto3_client))
 
     with caplog.at_level("INFO", logger="app.domains.identity.services"):
-        response = svc.request_otp("+994513944224", redis)
+        response = svc.request_otp("+994513944224", redis, BackgroundTasks())
 
     assert response == {
         "message": "OTP sent successfully",
@@ -234,7 +234,7 @@ def test_request_otp_sms_enabled_sns_failure_raises_500(monkeypatch):
     )
 
     with pytest.raises(HTTPException) as exc:
-        svc.request_otp("+994513944224", redis)
+        svc.request_otp("+994513944224", redis, BackgroundTasks())
 
     assert exc.value.status_code == 500
     assert exc.value.detail == "Failed to send OTP"
