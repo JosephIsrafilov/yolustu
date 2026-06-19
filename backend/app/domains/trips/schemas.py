@@ -6,9 +6,9 @@ from typing import Any, Optional
 from uuid import UUID
 
 from geoalchemy2.elements import WKBElement, WKTElement
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.domains.identity.schemas import UserResponse
+from app.domains.identity.schemas import PublicUserResponse
 
 _POINT_WKT_RE = re.compile(
     r"^\s*(?:SRID=\d+;\s*)?POINT\s*(?:Z|M|ZM)?\s*\(\s*"
@@ -31,8 +31,29 @@ class VehicleBase(BaseModel):
     year: int
     color: str
     plate_number: str
-    seats_count: int = 4
+    seats_count: int = Field(default=4, ge=1, le=4)
     variations: Optional[str] = None
+
+    @field_validator("year")
+    @classmethod
+    def validate_year(cls, value: int) -> int:
+        if value < 1886 or value > datetime.now().year + 1:
+            raise ValueError("year must be between 1886 and next year")
+        return value
+
+    @field_validator("plate_number")
+    @classmethod
+    def validate_plate_number(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        normalized = normalize_plate(cleaned)
+        if (
+            len(cleaned) > 20
+            or len(normalized) < 5
+            or len(normalized) > 10
+            or not normalized.isascii()
+        ):
+            raise ValueError("plate_number must contain 5 to 10 letters or digits")
+        return cleaned
 
 
 class VehicleCreate(VehicleBase):
@@ -45,8 +66,31 @@ class VehicleUpdate(BaseModel):
     year: Optional[int] = None
     color: Optional[str] = None
     plate_number: Optional[str] = None
-    seats_count: Optional[int] = None
+    seats_count: Optional[int] = Field(default=None, ge=1, le=4)
     variations: Optional[str] = None
+
+    @field_validator("year")
+    @classmethod
+    def validate_year(cls, value: Optional[int]) -> Optional[int]:
+        if value is not None and (value < 1886 or value > datetime.now().year + 1):
+            raise ValueError("year must be between 1886 and next year")
+        return value
+
+    @field_validator("plate_number")
+    @classmethod
+    def validate_plate_number(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        cleaned = value.strip().upper()
+        normalized = normalize_plate(cleaned)
+        if (
+            len(cleaned) > 20
+            or len(normalized) < 5
+            or len(normalized) > 10
+            or not normalized.isascii()
+        ):
+            raise ValueError("plate_number must contain 5 to 10 letters or digits")
+        return cleaned
 
 
 class VehicleResponse(VehicleBase):
@@ -54,6 +98,11 @@ class VehicleResponse(VehicleBase):
 
     id: UUID
     user_id: UUID
+    normalized_plate: str
+    verification_status: str
+    document_url: Optional[str] = None
+    is_active: bool
+    is_default: bool
     created_at: datetime
 
 
@@ -80,10 +129,13 @@ class RideBase(BaseModel):
 
 
 class RideCreate(RideBase):
-    vehicle_id: Optional[UUID] = None
-    car_model: Optional[str] = None
+    vehicle_id: UUID
     origin: Location
     destination: Location
+
+
+def normalize_plate(value: str) -> str:
+    return "".join(char for char in value.upper() if char.isalnum())
 
 
 class RideSearch(BaseModel):
@@ -115,7 +167,7 @@ class RideResponse(RideBase):
     origin_location: Location
     destination_location: Location
     vehicle: Optional[VehicleResponse] = None
-    driver: Optional[UserResponse] = None
+    driver: Optional[PublicUserResponse] = None
 
     @field_validator("origin_location", "destination_location", mode="before")
     @classmethod
@@ -225,6 +277,51 @@ def ride_to_response(ride: Any) -> RideResponse:
         vehicle=ride.vehicle,
         driver=ride.driver,
     )
+
+
+class VehicleDocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    vehicle_id: UUID
+    document_type: str
+    mime_type: str
+    size_bytes: int
+    sha256: str
+    status: str
+    processing_status: str
+    expires_at: Optional[datetime] = None
+    ai_recommendation: Optional[str] = None
+    ai_confidence: Optional[float] = None
+    ai_issues: Optional[list] = None
+    reviewed_by: Optional[UUID] = None
+    reviewed_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    version: int
+    is_current: bool
+    created_at: datetime
+
+
+class VehicleVerificationStatusResponse(BaseModel):
+    vehicle_id: UUID
+    verification_status: str
+    required_documents: list[str]
+    submitted: dict[str, VehicleDocumentResponse]
+    missing: list[str]
+    all_approved: bool
+
+
+class AdminDocumentDecision(BaseModel):
+    decision: str  # "approved" | "rejected"
+    reason: Optional[str] = None
+    expected_version: int
+
+    @field_validator("decision")
+    @classmethod
+    def validate_decision(cls, v: str) -> str:
+        if v not in {"approved", "rejected"}:
+            raise ValueError("decision must be 'approved' or 'rejected'")
+        return v
 
 
 class PublicTrackResponse(BaseModel):

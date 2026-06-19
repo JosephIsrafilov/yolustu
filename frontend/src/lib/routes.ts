@@ -31,4 +31,5 @@ export const ROUTES = {
   adminBookings: '/admin/bookings',
   adminPayments: '/admin/payments',
   adminVerifications: '/admin/verifications',
+  adminVehicleDocuments: '/admin/vehicle-documents',
 } as const;

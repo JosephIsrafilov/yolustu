@@ -1,6 +1,7 @@
 
 
 export type UserRole = 'passenger' | 'driver' | 'admin';
+export type SeatSpot = 'front_right' | 'back_left' | 'back_middle' | 'back_right';
 
 export interface AiDocumentReview {
   recommendation: 'approve' | 'needs_review' | 'reject';
@@ -52,7 +53,44 @@ export interface Vehicle {
   year: number;
   color: string;
   plateNumber: string;
+  seatsCount: number;
+  isActive: boolean;
+  isDefault: boolean;
+  verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+
+export type VehicleDocumentType = 'registration' | 'insurance' | 'inspection';
+export type VehicleDocumentStatus = 'pending' | 'approved' | 'rejected';
+
+export interface VehicleDocument {
+  id: string;
+  vehicleId: string;
+  documentType: VehicleDocumentType;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  status: VehicleDocumentStatus;
+  processingStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  expiresAt?: string | null;
+  aiRecommendation?: string | null;
+  aiConfidence?: number | null;
+  aiIssues?: string[] | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
+  version: number;
+  isCurrent: boolean;
+  createdAt: string;
+}
+
+export interface VehicleVerificationStatus {
+  vehicleId: string;
+  verificationStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  requiredDocuments: VehicleDocumentType[];
+  submitted: Partial<Record<VehicleDocumentType, VehicleDocument>>;
+  missing: VehicleDocumentType[];
+  allApproved: boolean;
 }
 
 export interface Profile {
@@ -91,7 +129,7 @@ export interface Trip {
   petsAllowed?: boolean;
   musicAllowed?: boolean;
   femaleOnly?: boolean;
-  availableSpots?: string[];
+  availableSpots?: SeatSpot[];
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'paid' | 'boarded' | 'no_show' | 'completed' | 'expired';
@@ -170,6 +208,7 @@ export interface Booking {
   passengerId: string;
   status: BookingStatus;
   seatsRequested: number;
+  selectedSpots: SeatSpot[];
   totalPrice?: number;
   createdAt: string;
   paymentDeadline?: string;
@@ -258,17 +297,10 @@ export interface CreateTripData {
   comment: string;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
-  vehicleId?: string;
-  newVehicle?: {
-    brand: string;
-    model: string;
-    year: number;
-    color: string;
-    plateNumber: string;
-  };
+  vehicleId: string;
   smokingAllowed?: boolean;
   petsAllowed?: boolean;
   musicAllowed?: boolean;
   femaleOnly?: boolean;
-  availableSpots?: string[];
+  availableSpots?: SeatSpot[];
 }

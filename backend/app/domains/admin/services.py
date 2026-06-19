@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.domains.admin.repositories import AdminRepository, AuditLogRepository
 from app.domains.bookings.repositories import BookingRepository
 from app.domains.bookings.schemas import booking_to_response
@@ -10,8 +11,8 @@ from app.core.security import get_password_hash
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.identity.repositories import UserRepository
 from app.domains.identity.schemas import AdminUserCreate
-from app.domains.trips.repositories import RideRepository
-from app.domains.trips.schemas import ride_to_response
+from app.domains.trips.repositories import RideRepository, VehicleDocumentRepository
+from app.domains.trips.schemas import AdminDocumentDecision, VehicleDocumentResponse, ride_to_response
 from app.core.pagination import create_paginated_response
 from app.domains.gamification.services import check_and_award_badge
 from app.domains.lifecycle import RIDE_CANCELLED, can_transition_ride
@@ -25,6 +26,7 @@ class AdminService:
         self.users = UserRepository(db)
         self.rides = RideRepository(db)
         self.bookings = BookingRepository(db)
+        self.vehicle_docs = VehicleDocumentRepository(db)
 
     @staticmethod
     def require_admin(current_user: CurrentUser):
@@ -374,3 +376,85 @@ class AdminService:
             check_and_award_badge(self.db, driver.id, "veteran")  # type: ignore[arg-type]
 
         return {"message": "Mock journey created successfully", "ride_id": ride.id}
+
+    def list_vehicle_documents(
+        self, current_user: CurrentUser, page: int = 1, limit: int = 20
+    ):
+        self.require_admin(current_user)
+        skip = (page - 1) * limit
+        items = self.vehicle_docs.list_all_pending(skip=skip, limit=limit)
+        total = self.vehicle_docs.count_all_pending()
+        return create_paginated_response(
+            [VehicleDocumentResponse.model_validate(d) for d in items], total, page, limit
+        )
+
+    def get_vehicle_document(self, document_id: UUID, current_user: CurrentUser):
+        self.require_admin(current_user)
+        doc = self.vehicle_docs.get(document_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return VehicleDocumentResponse.model_validate(doc)
+
+    def serve_vehicle_document_content(self, document_id: UUID, current_user: CurrentUser):
+        from fastapi.responses import FileResponse, RedirectResponse
+        from app.core.storage import get_storage, S3Storage, SupabaseStorage, LocalStorage
+
+        self.require_admin(current_user)
+        doc = self.vehicle_docs.get(document_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        storage = get_storage()
+        filename = doc.storage_key.rsplit("/", 1)[-1]
+
+        if isinstance(storage, (S3Storage, SupabaseStorage)):
+            try:
+                signed_url = storage.get_signed_url(
+                    doc.storage_key, settings.STORAGE_BUCKET_VERIFICATIONS, expires_in=300
+                )
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Document temporarily unavailable") from exc
+            return RedirectResponse(url=signed_url, headers={"Cache-Control": "private, no-store"})
+
+        if isinstance(storage, LocalStorage):
+            file_path = storage.get_local_path(doc.storage_key, settings.STORAGE_BUCKET_VERIFICATIONS)
+            if file_path and file_path.is_file():
+                return FileResponse(str(file_path), filename=filename, headers={"Cache-Control": "private, no-store"})
+
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    def decide_vehicle_document(
+        self, document_id: UUID, payload: AdminDocumentDecision, current_user: CurrentUser
+    ) -> VehicleDocumentResponse:
+        self.require_admin(current_user)
+        doc = self.vehicle_docs.get(document_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        updated = self.vehicle_docs.apply_decision(
+            doc=doc,
+            decision=payload.decision,
+            reviewer_id=current_user.id,
+            reason=payload.reason,
+            expected_version=payload.expected_version,
+        )
+
+        # sync vehicle verification_status after decision
+        from app.domains.trips.services import TripsService
+        TripsService(self.db).sync_vehicle_verification_status(updated.vehicle_id)
+
+        self.audit.create(
+            admin_user_id=current_user.id,
+            admin_name=f"{current_user.first_name} {current_user.last_name}",
+            action=f"vehicle_document_{payload.decision}",
+            resource_type="vehicle_document",
+            resource_id=document_id,
+            description=(
+                f"{payload.decision.capitalize()} vehicle document "
+                f"{updated.document_type} for vehicle {updated.vehicle_id}"
+            ),
+            changes={"status": {"old": "pending", "new": payload.decision}},
+            extra_data={"reason": payload.reason, "version": updated.version},
+        )
+
+        return VehicleDocumentResponse.model_validate(updated)

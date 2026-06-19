@@ -14,23 +14,24 @@ from app.domains.lifecycle import (
     RIDE_COMPLETED,
     can_transition_ride,
 )
-from app.domains.trips.models import Ride, Vehicle
-from app.domains.trips.repositories import RideRepository, VehicleRepository
+from app.domains.trips.models import Ride, SEAT_SPOTS, Vehicle, VehicleDocument
+from app.domains.trips.repositories import RideRepository, VehicleRepository, VehicleDocumentRepository, REQUIRED_DOCUMENT_TYPES
 from app.domains.trips.schemas import (
     PublicTrackResponse,
     RideCreate,
     RideResponse,
     RideSearch,
     VehicleCreate,
+    VehicleDocumentResponse,
     VehicleUpdate,
+    VehicleVerificationStatusResponse,
     geometry_to_location,
+    normalize_plate,
     ride_to_public_track,
     ride_to_response,
 )
 from app.domains.gamification.services import check_and_award_badge
 from app.core.pagination import PaginatedResponse, create_paginated_response
-
-SEAT_SPOTS = ("front_right", "back_left", "back_middle", "back_right")
 
 
 class TripsService:
@@ -39,6 +40,7 @@ class TripsService:
         self.rides = RideRepository(db)
         self.vehicles = VehicleRepository(db)
         self.users = UserRepository(db)
+        self.vehicle_docs = VehicleDocumentRepository(db)
 
     def create_ride(
         self, ride_in: RideCreate, current_user: CurrentUser
@@ -65,16 +67,21 @@ class TripsService:
                 status_code=400, detail="price_per_seat must be positive"
             )
 
-        if ride_in.vehicle_id:
-            vehicle = self.vehicles.get_owned(ride_in.vehicle_id, current_user.id)
-            if not vehicle:
-                raise HTTPException(status_code=404, detail="Vehicle not found")
-        else:
-            vehicle = self.vehicles.get_first_for_user(current_user.id)
-            if not vehicle:
-                vehicle = self.vehicles.create_default(
-                    current_user.id, ride_in.car_model or "Car"
-                )
+        vehicle = self.vehicles.get_owned(ride_in.vehicle_id, current_user.id)
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        if not vehicle.is_active:
+            raise HTTPException(status_code=409, detail="Vehicle is inactive")
+        if vehicle.verification_status != "approved":
+            raise HTTPException(
+                status_code=403,
+                detail="Vehicle must be verified and approved before creating rides",
+            )
+        if ride_in.total_seats > vehicle.seats_count:
+            raise HTTPException(
+                status_code=400,
+                detail="total_seats cannot exceed vehicle seats_count",
+            )
 
         available_spots = ride_in.available_spots or list(
             SEAT_SPOTS[: ride_in.available_seats]
@@ -260,6 +267,11 @@ class TripsService:
             raise HTTPException(
                 status_code=403, detail="Only drivers can create vehicles"
             )
+        normalized_plate = normalize_plate(vehicle_in.plate_number)
+        if self.vehicles.find_active_by_plate(normalized_plate):
+            raise HTTPException(
+                status_code=409, detail="An active vehicle with this plate already exists"
+            )
         return self.vehicles.create(current_user.id, vehicle_in)
 
     def get_my_vehicles(self, current_user: CurrentUser) -> list[Vehicle]:
@@ -268,30 +280,115 @@ class TripsService:
     def update_vehicle(
         self, vehicle_id: UUID, vehicle_in: VehicleUpdate, current_user: CurrentUser
     ) -> Vehicle:
+        vehicle = self.get_vehicle(vehicle_id, current_user)
+
+        update_data = vehicle_in.model_dump(exclude_unset=True)
+        plate_number = update_data.get("plate_number")
+        if plate_number is not None:
+            normalized_plate = normalize_plate(plate_number)
+            if vehicle.is_active and self.vehicles.find_active_by_plate(
+                normalized_plate, vehicle.id
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="An active vehicle with this plate already exists",
+                )
+            update_data["normalized_plate"] = normalized_plate
+        return self.vehicles.update(vehicle, update_data)
+
+    def get_vehicle(
+        self, vehicle_id: UUID, current_user: CurrentUser
+    ) -> Vehicle:
         vehicle = self.vehicles.get(vehicle_id)
         if not vehicle:
             raise HTTPException(status_code=404, detail="Vehicle not found")
         if vehicle.user_id != current_user.id and current_user.role != "admin":
-            raise HTTPException(
-                status_code=403, detail="Not authorized to edit this vehicle"
-            )
-
-        update_data = vehicle_in.model_dump(exclude_unset=True)
-        return self.vehicles.update(vehicle, update_data)
-
-    def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
-        vehicle = self.vehicles.get(vehicle_id)
-        if not vehicle:
-            raise HTTPException(status_code=404, detail="Vehicle not found")
+            raise HTTPException(status_code=403, detail="Not authorized")
         return vehicle
+
+    def set_default_vehicle(
+        self, vehicle_id: UUID, current_user: CurrentUser
+    ) -> Vehicle:
+        vehicle = self.get_vehicle(vehicle_id, current_user)
+        if not vehicle.is_active:
+            raise HTTPException(status_code=409, detail="Inactive vehicle cannot be default")
+        return self.vehicles.set_default(vehicle)
 
     def delete_vehicle(self, vehicle_id: UUID, current_user: CurrentUser):
         if current_user.role not in ["driver", "admin"]:
             raise HTTPException(
                 status_code=403, detail="Only drivers can delete vehicles"
             )
-        vehicle = self.get_vehicle(vehicle_id)
-        if vehicle.user_id != current_user.id and current_user.role != "admin":
-            raise HTTPException(status_code=403, detail="Not authorized")
-        self.vehicles.delete(vehicle)
-        return {"message": "Vehicle deleted"}
+        vehicle = self.get_vehicle(vehicle_id, current_user)
+        if not vehicle.is_active:
+            return {"message": "Vehicle already inactive"}
+        if self.vehicles.has_active_or_future_rides(vehicle.id):
+            raise HTTPException(
+                status_code=409,
+                detail="Vehicle has active or future rides and cannot be deactivated",
+            )
+        self.vehicles.deactivate(vehicle)
+        return {"message": "Vehicle deactivated"}
+
+    def upload_vehicle_document(
+        self,
+        vehicle_id: UUID,
+        current_user: CurrentUser,
+        document_type: str,
+        storage_key: str,
+        mime_type: str,
+        size_bytes: int,
+        sha256: str,
+    ) -> VehicleDocument:
+        vehicle = self.get_vehicle(vehicle_id, current_user)
+        if not vehicle.is_active:
+            raise HTTPException(status_code=400, detail="Cannot upload document for inactive vehicle")
+        if document_type not in REQUIRED_DOCUMENT_TYPES:
+            raise HTTPException(status_code=400, detail=f"document_type must be one of {REQUIRED_DOCUMENT_TYPES}")
+        doc = self.vehicle_docs.create(vehicle_id, document_type, storage_key, mime_type, size_bytes, sha256)
+        if vehicle.verification_status == "none":
+            vehicle.verification_status = "pending"  # type: ignore[assignment]
+            self.db.commit()
+        return doc
+
+    def get_vehicle_documents(
+        self, vehicle_id: UUID, current_user: CurrentUser
+    ) -> list[VehicleDocument]:
+        self.get_vehicle(vehicle_id, current_user)
+        return self.vehicle_docs.list_current_for_vehicle(vehicle_id)
+
+    def get_vehicle_verification_status(
+        self, vehicle_id: UUID, current_user: CurrentUser
+    ) -> VehicleVerificationStatusResponse:
+        vehicle = self.get_vehicle(vehicle_id, current_user)
+        docs = self.vehicle_docs.list_current_for_vehicle(vehicle_id)
+        submitted = {d.document_type: VehicleDocumentResponse.model_validate(d) for d in docs}
+        missing = [t for t in REQUIRED_DOCUMENT_TYPES if t not in submitted]
+        all_approved = not missing and all(d.status == "approved" for d in docs)
+        return VehicleVerificationStatusResponse(
+            vehicle_id=vehicle.id,
+            verification_status=vehicle.verification_status,
+            required_documents=list(REQUIRED_DOCUMENT_TYPES),
+            submitted=submitted,
+            missing=missing,
+            all_approved=all_approved,
+        )
+
+    def sync_vehicle_verification_status(self, vehicle_id: UUID) -> None:
+        """Recompute vehicle.verification_status from its current documents."""
+        docs = self.vehicle_docs.list_current_for_vehicle(vehicle_id)
+        all_types = set(REQUIRED_DOCUMENT_TYPES)
+        submitted_types = {d.document_type for d in docs}
+        if not all_types.issubset(submitted_types):
+            return
+        statuses = {d.status for d in docs}
+        if statuses == {"approved"}:
+            new_status = "approved"
+        elif "rejected" in statuses:
+            new_status = "rejected"
+        else:
+            new_status = "pending"
+        vehicle = self.vehicles.get(vehicle_id)
+        if vehicle and vehicle.verification_status != new_status:
+            vehicle.verification_status = new_status  # type: ignore[assignment]
+            self.db.commit()

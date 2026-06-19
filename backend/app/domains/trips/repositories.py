@@ -1,12 +1,17 @@
 from uuid import UUID
 
 from geoalchemy2 import Geography
-from sqlalchemy import cast, func
+from sqlalchemy import and_, cast, func, or_
 from sqlalchemy.orm import Session
 
-from app.domains.trips.models import Ride, Vehicle
-from app.domains.trips.schemas import RideCreate, RideSearch, VehicleCreate
-from app.domains.lifecycle import RIDE_ACTIVE
+from app.domains.trips.models import Ride, RideSeat, SEAT_SPOTS, Vehicle, VehicleDocument
+from app.domains.trips.schemas import (
+    RideCreate,
+    RideSearch,
+    VehicleCreate,
+    normalize_plate,
+)
+from app.domains.lifecycle import RIDE_ACTIVE, RIDE_BOARDING
 from datetime import date as date_type, datetime, time, timezone
 
 
@@ -30,7 +35,19 @@ class VehicleRepository:
         self.db = db
 
     def create(self, user_id: UUID, vehicle_in: VehicleCreate) -> Vehicle:
-        vehicle = Vehicle(user_id=user_id, **vehicle_in.model_dump())
+        is_first_active = (
+            self.db.query(Vehicle.id)
+            .filter(Vehicle.user_id == user_id, Vehicle.is_active.is_(True))
+            .first()
+            is None
+        )
+        vehicle = Vehicle(
+            user_id=user_id,
+            normalized_plate=normalize_plate(vehicle_in.plate_number),
+            is_active=True,
+            is_default=is_first_active,
+            **vehicle_in.model_dump(),
+        )
         self.db.add(vehicle)
         self.db.commit()
         self.db.refresh(vehicle)
@@ -43,19 +60,6 @@ class VehicleRepository:
         self.db.refresh(vehicle)
         return vehicle
 
-    def create_default(self, user_id: UUID, model_name: str) -> Vehicle:
-        vehicle = Vehicle(
-            user_id=user_id,
-            brand="Other",
-            model=model_name,
-            year=2020,
-            color="Unknown",
-            plate_number=f"AUTO-{str(user_id)[:8]}",
-        )
-        self.db.add(vehicle)
-        self.db.flush()
-        return vehicle
-
     def get(self, vehicle_id: UUID) -> Vehicle | None:
         return self.db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
@@ -66,15 +70,79 @@ class VehicleRepository:
             .first()
         )
 
-    def get_first_for_user(self, user_id: UUID) -> Vehicle | None:
-        return self.db.query(Vehicle).filter(Vehicle.user_id == user_id).first()
-
     def list_for_user(self, user_id: UUID) -> list[Vehicle]:
-        return self.db.query(Vehicle).filter(Vehicle.user_id == user_id).all()
+        return (
+            self.db.query(Vehicle)
+            .filter(Vehicle.user_id == user_id)
+            .order_by(
+                Vehicle.is_active.desc(),
+                Vehicle.is_default.desc(),
+                Vehicle.created_at.asc(),
+                Vehicle.id.asc(),
+            )
+            .all()
+        )
 
-    def delete(self, vehicle: Vehicle):
-        self.db.delete(vehicle)
+    def find_active_by_plate(
+        self, normalized_plate: str, exclude_id: UUID | None = None
+    ) -> Vehicle | None:
+        query = self.db.query(Vehicle).filter(
+            Vehicle.normalized_plate == normalized_plate,
+            Vehicle.is_active.is_(True),
+        )
+        if exclude_id is not None:
+            query = query.filter(Vehicle.id != exclude_id)
+        return query.first()
+
+    def set_default(self, vehicle: Vehicle) -> Vehicle:
+        self.db.query(Vehicle).filter(
+            Vehicle.user_id == vehicle.user_id,
+            Vehicle.is_active.is_(True),
+            Vehicle.id != vehicle.id,
+        ).update({Vehicle.is_default: False}, synchronize_session=False)
+        vehicle.is_default = True  # type: ignore[assignment]
         self.db.commit()
+        self.db.refresh(vehicle)
+        return vehicle
+
+    def has_active_or_future_rides(self, vehicle_id: UUID) -> bool:
+        now = datetime.now(timezone.utc)
+        return (
+            self.db.query(Ride.id)
+            .filter(
+                Ride.vehicle_id == vehicle_id,
+                or_(
+                    Ride.status.in_((RIDE_ACTIVE, RIDE_BOARDING)),
+                    and_(
+                        Ride.departure_time >= now,
+                        Ride.status.notin_(("cancelled", "completed")),
+                    ),
+                ),
+            )
+            .first()
+            is not None
+        )
+
+    def deactivate(self, vehicle: Vehicle) -> Vehicle:
+        was_default = bool(vehicle.is_default)
+        vehicle.is_active = False  # type: ignore[assignment]
+        vehicle.is_default = False  # type: ignore[assignment]
+        if was_default:
+            replacement = (
+                self.db.query(Vehicle)
+                .filter(
+                    Vehicle.user_id == vehicle.user_id,
+                    Vehicle.is_active.is_(True),
+                    Vehicle.id != vehicle.id,
+                )
+                .order_by(Vehicle.created_at.asc(), Vehicle.id.asc())
+                .first()
+            )
+            if replacement is not None:
+                replacement.is_default = True  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(vehicle)
+        return vehicle
 
 
 class RideRepository:
@@ -103,6 +171,15 @@ class RideRepository:
             female_only=ride_in.female_only,
         )
         self.db.add(ride)
+        self.db.flush()
+        for spot in SEAT_SPOTS[: ride_in.total_seats]:
+            self.db.add(
+                RideSeat(
+                    ride_id=ride.id,
+                    spot=spot,
+                    is_enabled=spot in (ride_in.available_spots or []),
+                )
+            )
         self.db.commit()
         self.db.refresh(ride)
         return ride
@@ -314,3 +391,106 @@ class RideRepository:
     def delete(self, ride: Ride):
         self.db.delete(ride)
         self.db.commit()
+
+
+REQUIRED_DOCUMENT_TYPES = ("registration", "insurance", "inspection")
+
+
+class VehicleDocumentRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(
+        self,
+        vehicle_id: UUID,
+        document_type: str,
+        storage_key: str,
+        mime_type: str,
+        size_bytes: int,
+        sha256: str,
+    ) -> VehicleDocument:
+        # retire any existing current document of the same type
+        self.db.query(VehicleDocument).filter(
+            VehicleDocument.vehicle_id == vehicle_id,
+            VehicleDocument.document_type == document_type,
+            VehicleDocument.is_current.is_(True),
+        ).update({VehicleDocument.is_current: False}, synchronize_session=False)
+
+        doc = VehicleDocument(
+            vehicle_id=vehicle_id,
+            document_type=document_type,
+            storage_key=storage_key,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            sha256=sha256,
+            status="pending",
+            processing_status="pending",
+            is_current=True,
+            version=1,
+        )
+        self.db.add(doc)
+        self.db.commit()
+        self.db.refresh(doc)
+        return doc
+
+    def get(self, document_id: UUID) -> VehicleDocument | None:
+        return self.db.query(VehicleDocument).filter(VehicleDocument.id == document_id).first()
+
+    def list_current_for_vehicle(self, vehicle_id: UUID) -> list[VehicleDocument]:
+        return (
+            self.db.query(VehicleDocument)
+            .filter(
+                VehicleDocument.vehicle_id == vehicle_id,
+                VehicleDocument.is_current.is_(True),
+            )
+            .order_by(VehicleDocument.document_type)
+            .all()
+        )
+
+    def list_all_pending(self, skip: int = 0, limit: int = 50) -> list[VehicleDocument]:
+        return (
+            self.db.query(VehicleDocument)
+            .filter(
+                VehicleDocument.is_current.is_(True),
+                VehicleDocument.status == "pending",
+            )
+            .order_by(VehicleDocument.created_at.asc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def count_all_pending(self) -> int:
+        return (
+            self.db.query(VehicleDocument)
+            .filter(
+                VehicleDocument.is_current.is_(True),
+                VehicleDocument.status == "pending",
+            )
+            .count()
+        )
+
+    def apply_decision(
+        self,
+        doc: VehicleDocument,
+        decision: str,
+        reviewer_id: UUID,
+        reason: str | None,
+        expected_version: int,
+    ) -> VehicleDocument:
+        from datetime import datetime, timezone
+
+        if doc.version != expected_version:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=409,
+                detail=f"Document was modified (version {doc.version}), reload and retry",
+            )
+        doc.status = decision  # type: ignore[assignment]
+        doc.reviewed_by = reviewer_id  # type: ignore[assignment]
+        doc.reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        doc.rejection_reason = reason  # type: ignore[assignment]
+        doc.version = doc.version + 1  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(doc)
+        return doc

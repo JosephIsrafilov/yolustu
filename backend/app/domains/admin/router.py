@@ -21,7 +21,8 @@ from app.domains.identity.schemas import (
 )
 from app.domains.payments.schemas import PayoutRequestResponse
 from app.domains.payments.services import PaymentService
-from app.domains.trips.schemas import RideResponse
+from app.domains.trips.schemas import RideResponse, VehicleDocumentResponse, AdminDocumentDecision
+from app.domains.trips.repositories import REQUIRED_DOCUMENT_TYPES
 
 router = APIRouter()
 
@@ -305,3 +306,43 @@ def get_recent_audit_activity(
     AdminService.require_admin(current_user)
     audit_repo = AuditLogRepository(db)
     return audit_repo.get_recent_activity(limit=limit)
+
+
+# ── Vehicle document review ──────────────────────────────────────────────────
+
+@router.get("/vehicle-documents", response_model=PaginatedResponse[VehicleDocumentResponse])
+def list_pending_vehicle_documents(
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+):
+    return AdminService(db).list_vehicle_documents(current_user, page=page, limit=limit)
+
+
+@router.get("/vehicle-documents/{document_id}", response_model=VehicleDocumentResponse)
+def get_vehicle_document(
+    document_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return AdminService(db).get_vehicle_document(document_id, current_user)
+
+
+@router.get("/vehicle-documents/{document_id}/content")
+def get_vehicle_document_content(
+    document_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return AdminService(db).serve_vehicle_document_content(document_id, current_user)
+
+
+@router.patch("/vehicle-documents/{document_id}/decision", response_model=VehicleDocumentResponse)
+def decide_vehicle_document(
+    document_id: UUID,
+    payload: AdminDocumentDecision,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_admin),
+):
+    return AdminService(db).decide_vehicle_document(document_id, payload, current_user)

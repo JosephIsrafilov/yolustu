@@ -27,6 +27,11 @@ class FakeVehicle:
     year: int = 2020
     color: str = "White"
     plate_number: str = "99-AB-123"
+    normalized_plate: str = "99AB123"
+    seats_count: int = 4
+    is_active: bool = True
+    is_default: bool = False
+    verification_status: str = "approved"
 
 
 @dataclass
@@ -73,14 +78,6 @@ class FakeVehicleRepository:
         v = self.vehicles.get(vid)
         return v if v and v.user_id == uid else None
 
-    def get_first_for_user(self, uid):
-        return next((v for v in self.vehicles.values() if v.user_id == uid), None)
-
-    def create_default(self, uid, model_name):
-        v = FakeVehicle(id=uuid4(), user_id=uid, model=model_name)
-        self.vehicles[v.id] = v
-        return v
-
     def create(self, uid, vehicle_in):
         v = FakeVehicle(
             id=uuid4(),
@@ -97,8 +94,25 @@ class FakeVehicleRepository:
     def list_for_user(self, uid):
         return [v for v in self.vehicles.values() if v.user_id == uid]
 
-    def delete(self, v):
-        self.vehicles.pop(v.id, None)
+    def find_active_by_plate(self, normalized_plate, exclude_id=None):
+        return next(
+            (
+                v
+                for v in self.vehicles.values()
+                if v.normalized_plate == normalized_plate
+                and v.is_active
+                and v.id != exclude_id
+            ),
+            None,
+        )
+
+    def has_active_or_future_rides(self, vehicle_id):
+        return False
+
+    def deactivate(self, v):
+        v.is_active = False
+        v.is_default = False
+        return v
 
 
 class FakeRideRepository:
@@ -263,24 +277,26 @@ def test_create_ride_zero_price_raises_400():
     assert exc.value.status_code == 400
 
 
-def test_create_ride_auto_creates_default_vehicle():
+def test_create_ride_requires_explicit_vehicle():
     driver_id = uuid4()
-    svc, ride_repo, vehicle_repo, _ = make_service()  # no vehicles
+    svc, _, _, _ = make_service()
     driver = make_cu(driver_id, "driver")
-    result = svc.create_ride(
-        RideCreate(
-            departure_time=datetime.now(timezone.utc) + timedelta(days=1),
-            total_seats=3,
-            available_seats=2,
-            price_per_seat=Decimal("10"),
-            origin_city="A",
-            destination_city="B",
-            origin=Location(lat=40.0, lon=49.0),
-            destination=Location(lat=40.6, lon=46.3),
-        ),
-        driver,
-    )
-    assert result.total_seats == 3
+    with pytest.raises(HTTPException) as exc:
+        svc.create_ride(
+            RideCreate(
+                vehicle_id=uuid4(),
+                departure_time=datetime.now(timezone.utc) + timedelta(days=1),
+                total_seats=3,
+                available_seats=2,
+                price_per_seat=Decimal("10"),
+                origin_city="A",
+                destination_city="B",
+                origin=Location(lat=40.0, lon=49.0),
+                destination=Location(lat=40.6, lon=46.3),
+            ),
+            driver,
+        )
+    assert exc.value.status_code == 404
 
 
 # --- get_ride_model / get_ride ---
@@ -581,7 +597,7 @@ def test_verify_share_token_correct():
 def test_get_vehicle_not_found_raises_404():
     svc, _, _, _ = make_service()
     with pytest.raises(HTTPException) as exc:
-        svc.get_vehicle(uuid4())
+        svc.get_vehicle(uuid4(), make_cu(uuid4()))
     assert exc.value.status_code == 404
 
 

@@ -1,5 +1,6 @@
 import { apiClient } from '@/services/api-client';
 import type { AdminService, AdminStats } from '@/services/contracts/admin-service';
+import { env } from '@/lib/env';
 
 interface ApiPaginated<T> {
   items: T[];
@@ -12,9 +13,11 @@ import {
   mapApiBookingToBooking,
   mapApiTripToTrip,
   mapApiUserToUser,
+  mapApiVehicleDocumentToVehicleDocument,
   type ApiBooking,
   type ApiTrip,
   type ApiUser,
+  type ApiVehicleDocument,
 } from './mappers';
 
 function paginationQuery(page = 1, limit = 10) {
@@ -129,5 +132,30 @@ export const apiAdminService: AdminService = {
       throw new Error('Document popup was blocked');
     }
     popup.location.href = url.toString();
+  },
+
+  async getPendingVehicleDocuments(page = 1, limit = 10) {
+    const params = paginationQuery(page, limit);
+    const res = await apiClient.get<ApiPaginated<ApiVehicleDocument>>(
+      `/admin/vehicle-documents?${params.toString()}`,
+    );
+    return { ...res, items: res.items.map(mapApiVehicleDocumentToVehicleDocument) };
+  },
+
+  async getVehicleDocument(docId: string) {
+    const doc = await apiClient.get<ApiVehicleDocument>(`/admin/vehicle-documents/${docId}`);
+    return mapApiVehicleDocumentToVehicleDocument(doc);
+  },
+
+  async decideVehicleDocument(docId, decision, reason, expectedVersion) {
+    const doc = await apiClient.patch<ApiVehicleDocument>(
+      `/admin/vehicle-documents/${docId}/decision`,
+      { decision, reason: reason ?? undefined, expected_version: expectedVersion },
+    );
+    return mapApiVehicleDocumentToVehicleDocument(doc);
+  },
+
+  getVehicleDocumentContentUrl(docId: string) {
+    return `${env.apiUrl}/admin/vehicle-documents/${docId}/content`;
   },
 };

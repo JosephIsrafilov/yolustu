@@ -274,6 +274,52 @@ Response (200):
 
 ---
 
+### Vehicle lifecycle
+
+All vehicle endpoints require authentication.
+
+- `POST /api/v1/vehicles` creates an active vehicle. The owner's first active
+  vehicle becomes the default.
+- `GET /api/v1/vehicles/my` returns active and inactive owned vehicles with
+  `is_active`, `is_default`, and `normalized_plate`.
+- `GET /api/v1/vehicles/{vehicle_id}` is restricted to the owner or an admin.
+- `PATCH /api/v1/vehicles/{vehicle_id}` is preferred for partial updates.
+  `PUT` remains supported with the same partial-update behavior.
+- `POST /api/v1/vehicles/{vehicle_id}/set-default` selects an active default.
+- `DELETE /api/v1/vehicles/{vehicle_id}` deactivates the vehicle. It returns
+  `409` while active or future rides reference it. If it was the default, the
+  oldest remaining active vehicle becomes default.
+
+Vehicle responses include:
+
+```json
+{
+  "id": "uuid",
+  "user_id": "uuid",
+  "brand": "Toyota",
+  "model": "Prius",
+  "year": 2022,
+  "color": "White",
+  "plate_number": "99-AB-123",
+  "normalized_plate": "99AB123",
+  "seats_count": 4,
+  "variations": null,
+  "is_active": true,
+  "is_default": true,
+  "created_at": "2026-06-19T20:00:00Z"
+}
+```
+
+Plate comparison ignores case and non-alphanumeric separators. Active plates
+are globally unique. Capacity is 1 through 4; API model years are 1886 through
+next year.
+
+Ride creation requires an explicit `vehicle_id`. It must identify an active
+vehicle owned by the authenticated driver, and `total_seats` cannot exceed
+that vehicle's `seats_count`. Placeholder vehicles are not created.
+
+---
+
 ## 4. Bookings & Payments (Rezervasiya və Ödənişlər)
 
 ### POST /api/v1/bookings/
@@ -512,19 +558,34 @@ Create booking request body:
 ```json
 {
   "ride_id": "uuid",
-  "seats_booked": 1
+  "seats_booked": 2,
+  "selected_spots": ["front_right", "back_left"]
 }
 ```
+
+Canonical seat identifiers for the four-seat MVP:
+
+```text
+front_right | back_left | back_middle | back_right
+```
+
+`selected_spots` is optional for backward compatibility. Count-only clients
+receive deterministic automatic allocation. When supplied, its length must
+equal `seats_booked`. A seat lost to a concurrent booking returns HTTP `409`.
+
+Ride responses expose `available_spots`; booking responses expose
+`selected_spots`.
 
 ### Status lifecycle
 
 Booking statuses:
 
 ```text
-pending -> accepted -> paid
+pending -> accepted -> paid -> boarded -> completed
 pending -> rejected
 pending/accepted/paid -> cancelled
-accepted/paid -> completed (later flow)
+pending/accepted -> expired
+paid -> no_show
 ```
 
 Trip statuses:
@@ -536,11 +597,12 @@ active -> completed
 
 ### Seat accounting rules
 
-- Creating `pending` booking does not decrement ride seats.
-- Confirming booking decrements `available_seats`.
-- Rejecting booking does not change seat counters.
-- Cancelling `accepted`/`paid` booking restores seats (capped by `total_seats`) if ride is not completed.
-- Confirm is forbidden when `available_seats < seats_booked`.
+- Creating a `pending` booking atomically holds exact seats for 15 minutes.
+- Driver confirmation changes the booking to `accepted` and starts the payment deadline.
+- Rejection, cancellation, expiry, and refund release the exact held seats.
+- `ride_seats` and `booking_seats` are authoritative; count/JSON fields remain compatibility projections.
+- Wallet funds are not held at booking creation. They are debited only when wallet payment succeeds.
+- Late payment callbacks cannot revive rejected, cancelled, or expired bookings.
 - Passenger cannot book own ride.
 - Duplicate active booking for same passenger+ride is forbidden.
 
@@ -727,3 +789,130 @@ Authenticated users can subscribe only to conversations they can access. Broadca
 - No attachments.
 - Admin users act as support agents for MVP.
 - Existing `/api/v1/messages/*` ride chat endpoints remain for backward compatibility.
+
+---
+
+## 10. Vehicle Document Verification Contract (2026-06-19)
+
+### Vehicle document statuses
+
+```text
+pending | approved | rejected
+```
+
+### Document types (all three required before a vehicle can create rides)
+
+```text
+registration | insurance | inspection
+```
+
+### Vehicle verification statuses
+
+```text
+none | pending | approved | rejected
+```
+
+`sync_vehicle_verification_status()` rule:
+- all three current docs `approved` → vehicle `approved`
+- any current doc `rejected` → vehicle `rejected`
+- otherwise → vehicle `pending`
+
+### POST /api/v1/vehicles/{vehicle_id}/documents?document_type=...
+
+Upload a document for a vehicle. Authenticated driver only (must own vehicle).
+
+- `document_type`: `registration` | `insurance` | `inspection`
+- Body: `multipart/form-data` with field `file` (JPEG/PNG/PDF, max 10MB)
+- Retires previous current doc of same type (`is_current=false`)
+- SHA256 stored; AI pre-screen triggered in background for images
+
+Response (201): `VehicleDocumentResponse`
+
+```json
+{
+  "id": "uuid",
+  "vehicle_id": "uuid",
+  "document_type": "registration",
+  "mime_type": "image/jpeg",
+  "size_bytes": 204800,
+  "sha256": "abc123...",
+  "status": "pending",
+  "processing_status": "pending",
+  "expires_at": null,
+  "ai_recommendation": null,
+  "ai_confidence": null,
+  "ai_issues": null,
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "rejection_reason": null,
+  "version": 1,
+  "is_current": true,
+  "created_at": "2026-06-19T10:00:00Z"
+}
+```
+
+### GET /api/v1/vehicles/{vehicle_id}/documents
+
+Returns list of current documents for the vehicle. Driver must own vehicle.
+
+### GET /api/v1/vehicles/{vehicle_id}/verification
+
+Returns verification status summary.
+
+```json
+{
+  "vehicle_id": "uuid",
+  "verification_status": "pending",
+  "required_documents": ["registration", "insurance", "inspection"],
+  "submitted": {
+    "registration": { ...VehicleDocumentResponse }
+  },
+  "missing": ["insurance", "inspection"],
+  "all_approved": false
+}
+```
+
+### GET /api/v1/admin/vehicle-documents
+
+Admin only. Returns paginated pending documents.
+
+Query: `page`, `limit`
+
+### GET /api/v1/admin/vehicle-documents/{id}
+
+Admin only. Returns single document.
+
+### GET /api/v1/admin/vehicle-documents/{id}/content
+
+Admin only. Streams the raw file content with correct `Content-Type`.
+
+### PATCH /api/v1/admin/vehicle-documents/{id}/decision
+
+Admin only. Approve or reject a document.
+
+Request:
+```json
+{
+  "decision": "approved",
+  "reason": null,
+  "expected_version": 1
+}
+```
+
+- `decision`: `approved` | `rejected`
+- `reason`: required text when rejecting (optional string, stored as `rejection_reason`)
+- `expected_version`: optimistic lock — returns `409` if `doc.version != expected_version`
+
+On success: updates doc status, increments `version`, calls `sync_vehicle_verification_status()`, writes audit log with `resource_type=vehicle_document`.
+
+### Ride creation enforcement
+
+`POST /api/v1/rides/` returns `403` if `vehicle.verification_status != "approved"`.
+
+### AI pre-screening
+
+- NVIDIA VLM (`meta/llama-3.2-90b-vision-instruct`) runs as a background task after upload
+- Advisory only — never auto-approves
+- Degrades gracefully to `needs_review` on API unavailable or unsupported format (PDF)
+- Result fields: `ai_recommendation` (`approve` | `needs_review` | `reject`), `ai_confidence` (0–1), `ai_issues` (string array)
+

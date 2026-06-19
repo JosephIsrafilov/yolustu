@@ -24,6 +24,11 @@ class FakeVehicle:
     year: int = 2020
     color: str = "White"
     plate_number: str = "99-AB-123"
+    normalized_plate: str = "99AB123"
+    seats_count: int = 4
+    is_active: bool = True
+    is_default: bool = False
+    verification_status: str = "approved"
 
 
 @dataclass
@@ -79,36 +84,32 @@ class FakeVehicleRepository:
             return None
         return vehicle
 
-    def get_first_for_user(self, user_id: UUID) -> FakeVehicle | None:
-        return next(
-            (
-                vehicle
-                for vehicle in self.vehicles.values()
-                if vehicle.user_id == user_id
-            ),
-            None,
-        )
-
-    def create_default(self, user_id: UUID, model_name: str) -> FakeVehicle:
-        vehicle = FakeVehicle(
-            id=uuid4(),
-            user_id=user_id,
-            brand="Other",
-            model=model_name,
-            year=2020,
-            color="Unknown",
-            plate_number=f"AUTO-{str(user_id)[:8]}",
-        )
-        self.vehicles[vehicle.id] = vehicle
-        return vehicle
-
     def list_for_user(self, user_id: UUID) -> list[FakeVehicle]:
         return [
             vehicle for vehicle in self.vehicles.values() if vehicle.user_id == user_id
         ]
 
-    def delete(self, vehicle: FakeVehicle) -> None:
-        self.vehicles.pop(vehicle.id, None)
+    def find_active_by_plate(
+        self, normalized_plate: str, exclude_id: UUID | None = None
+    ) -> FakeVehicle | None:
+        return next(
+            (
+                vehicle
+                for vehicle in self.vehicles.values()
+                if vehicle.normalized_plate == normalized_plate
+                and vehicle.is_active
+                and vehicle.id != exclude_id
+            ),
+            None,
+        )
+
+    def has_active_or_future_rides(self, vehicle_id: UUID) -> bool:
+        return False
+
+    def deactivate(self, vehicle: FakeVehicle) -> FakeVehicle:
+        vehicle.is_active = False
+        vehicle.is_default = False
+        return vehicle
 
 
 class FakeRideRepository:
@@ -209,8 +210,8 @@ def test_vehicle_create_list_and_delete_for_owner():
     assert my_vehicles[0].id == created.id
 
     response = service.delete_vehicle(created.id, owner)
-    assert response["message"] == "Vehicle deleted"
-    assert vehicle_repo.get(created.id) is None
+    assert response["message"] == "Vehicle deactivated"
+    assert vehicle_repo.get(created.id).is_active is False
 
 
 def test_cannot_delete_other_users_vehicle():
@@ -263,5 +264,5 @@ def test_deleted_vehicle_cannot_be_used_for_new_ride():
     with pytest.raises(HTTPException) as exc:
         service.create_ride(make_ride_create(own_vehicle.id), driver)
 
-    assert exc.value.status_code == 404
-    assert "Vehicle not found" in str(exc.value.detail)
+    assert exc.value.status_code == 409
+    assert "inactive" in str(exc.value.detail)

@@ -301,6 +301,10 @@ class ApiClient {
     return this.request<T>('POST', path, body);
   }
 
+  postForm<T>(path: string, formData: FormData): Promise<T> {
+    return this.request<T>('POST', path, formData);
+  }
+
   put<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>('PUT', path, body);
   }

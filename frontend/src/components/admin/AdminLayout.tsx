@@ -21,6 +21,7 @@ const ADMIN_LAYOUT_I18N = {
       trips: 'Gedişlər',
       bookings: 'Rezervlər',
       verifications: 'Təsdiqləmələr',
+      vehicleDocs: 'Nəql. sənədlər',
     },
   },
   ru: {
@@ -33,6 +34,7 @@ const ADMIN_LAYOUT_I18N = {
       trips: 'Поездки',
       bookings: 'Бронирования',
       verifications: 'Документы',
+      vehicleDocs: 'Авто-документы',
     },
   },
   en: {
@@ -45,6 +47,7 @@ const ADMIN_LAYOUT_I18N = {
       trips: 'Trips',
       bookings: 'Bookings',
       verifications: 'Verifications',
+      vehicleDocs: 'Vehicle docs',
     },
   },
 } as const;
@@ -65,6 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: ROUTES.adminBookings, label: t.tabs.bookings, icon: 'calendar-check' },
     { href: ROUTES.adminPayments, label: paymentsLabel, icon: 'credit-card' },
     { href: ROUTES.adminVerifications, label: t.tabs.verifications, icon: 'shield-check' },
+    { href: ROUTES.adminVehicleDocuments, label: t.tabs.vehicleDocs, icon: 'file-text' },
   ];
 
   const handleSignOut = async () => {

@@ -1,5 +1,6 @@
-import type { CreateTripData, Trip, Booking, User, AiDocumentReview, Review, Vehicle } from '@/types';
+import type { CreateTripData, Trip, Booking, User, AiDocumentReview, Review, Vehicle, VehicleDocument, VehicleVerificationStatus, SeatSpot } from '@/types';
 import { buildApiAssetUrl } from '@/lib/env';
+import { SEAT_SPOTS } from '@/lib/seats';
 
 export interface ApiAiDocumentReview {
   recommendation?: string | null;
@@ -52,7 +53,41 @@ export interface ApiVehicle {
   year: number;
   color: string;
   plate_number: string;
+  seats_count?: number | null;
+  is_active?: boolean | null;
+  is_default?: boolean | null;
+  verification_status?: string | null;
   created_at: string;
+}
+
+export interface ApiVehicleDocument {
+  id: string;
+  vehicle_id: string;
+  document_type: string;
+  mime_type: string;
+  size_bytes: number;
+  sha256: string;
+  status: string;
+  processing_status: string;
+  expires_at?: string | null;
+  ai_recommendation?: string | null;
+  ai_confidence?: number | null;
+  ai_issues?: string[] | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  rejection_reason?: string | null;
+  version: number;
+  is_current: boolean;
+  created_at: string;
+}
+
+export interface ApiVehicleVerificationStatus {
+  vehicle_id: string;
+  verification_status: string;
+  required_documents: string[];
+  submitted: Record<string, ApiVehicleDocument>;
+  missing: string[];
+  all_approved: boolean;
 }
 
 export interface ApiTrip {
@@ -78,7 +113,7 @@ export interface ApiTrip {
   pets_allowed?: boolean;
   music_allowed?: boolean;
   female_only?: boolean;
-  available_spots?: string[];
+  available_spots?: SeatSpot[];
 }
 
 export interface ApiBooking {
@@ -87,6 +122,7 @@ export interface ApiBooking {
   passenger_id: string;
   status: Booking['status'];
   seats_booked: number;
+  selected_spots?: SeatSpot[] | null;
   total_price?: number | string;
   created_at: string;
   payment_deadline?: string | null;
@@ -120,7 +156,7 @@ export interface ApiRideCreateInput {
   pets_allowed?: boolean;
   music_allowed?: boolean;
   female_only?: boolean;
-  available_spots?: string[];
+  available_spots?: SeatSpot[];
 }
 
 export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
@@ -132,7 +168,49 @@ export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
     year: apiVehicle.year,
     color: apiVehicle.color,
     plateNumber: apiVehicle.plate_number,
+    seatsCount: apiVehicle.seats_count ?? 4,
+    isActive: apiVehicle.is_active ?? true,
+    isDefault: apiVehicle.is_default ?? false,
+    verificationStatus: (apiVehicle.verification_status ?? 'none') as Vehicle['verificationStatus'],
     createdAt: apiVehicle.created_at,
+  };
+}
+
+export function mapApiVehicleDocumentToVehicleDocument(doc: ApiVehicleDocument): VehicleDocument {
+  return {
+    id: doc.id,
+    vehicleId: doc.vehicle_id,
+    documentType: doc.document_type as VehicleDocument['documentType'],
+    mimeType: doc.mime_type,
+    sizeBytes: doc.size_bytes,
+    sha256: doc.sha256,
+    status: doc.status as VehicleDocument['status'],
+    processingStatus: doc.processing_status as VehicleDocument['processingStatus'],
+    expiresAt: doc.expires_at ?? null,
+    aiRecommendation: doc.ai_recommendation ?? null,
+    aiConfidence: doc.ai_confidence ?? null,
+    aiIssues: doc.ai_issues ?? null,
+    reviewedBy: doc.reviewed_by ?? null,
+    reviewedAt: doc.reviewed_at ?? null,
+    rejectionReason: doc.rejection_reason ?? null,
+    version: doc.version,
+    isCurrent: doc.is_current,
+    createdAt: doc.created_at,
+  };
+}
+
+export function mapApiVerificationStatus(api: ApiVehicleVerificationStatus): VehicleVerificationStatus {
+  const submitted: VehicleVerificationStatus['submitted'] = {};
+  for (const [key, doc] of Object.entries(api.submitted)) {
+    submitted[key as VehicleDocument['documentType']] = mapApiVehicleDocumentToVehicleDocument(doc);
+  }
+  return {
+    vehicleId: api.vehicle_id,
+    verificationStatus: api.verification_status as VehicleVerificationStatus['verificationStatus'],
+    requiredDocuments: api.required_documents as VehicleDocument['documentType'][],
+    submitted,
+    missing: api.missing as VehicleDocument['documentType'][],
+    allApproved: api.all_approved,
   };
 }
 
@@ -167,13 +245,12 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     petsAllowed: apiTrip.pets_allowed ?? false,
     musicAllowed: apiTrip.music_allowed ?? true,
     femaleOnly: apiTrip.female_only ?? false,
-    availableSpots: apiTrip.available_spots ?? [],
+    availableSpots: apiTrip.available_spots ?? SEAT_SPOTS.slice(0, apiTrip.available_seats),
   };
 }
 
 export function mapCreateTripToApiRideCreate(
   input: CreateTripData,
-  vehicleId: string,
   origin: { lat: number; lon: number },
   destination: { lat: number; lon: number },
 ): ApiRideCreateInput {
@@ -184,7 +261,7 @@ export function mapCreateTripToApiRideCreate(
     price_per_seat: input.pricePerSeat,
     origin_city: input.departureCity,
     destination_city: input.arrivalCity,
-    vehicle_id: vehicleId,
+    vehicle_id: input.vehicleId,
     origin,
     destination,
     car_model: input.carModel || undefined,
@@ -204,6 +281,7 @@ export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
     passengerId: apiBooking.passenger_id,
     status: apiBooking.status,
     seatsRequested: apiBooking.seats_booked,
+    selectedSpots: apiBooking.selected_spots ?? [],
     totalPrice: apiBooking.total_price ? Number(apiBooking.total_price) : undefined,
     createdAt: apiBooking.created_at,
     paymentDeadline: apiBooking.payment_deadline ?? undefined,

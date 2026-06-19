@@ -17,7 +17,8 @@ export type IconName =
   | 'venus' | 'cigarette' | 'paw-print' | 'music' | 'info'
   | 'zap'
   | 'camera'
-  | 'eye' | 'eye-off';
+  | 'eye' | 'eye-off'
+  | 'external-link';
 
 const PATHS: Record<IconName, string> = {
   'search': 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z',
@@ -82,6 +83,7 @@ const PATHS: Record<IconName, string> = {
   'camera': 'M4 7h4l2-2h4l2 2h4v10H4z M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   'eye': 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 15a3 3 0 100-6 3 3 0 000 6z',
   'eye-off': 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22',
+  'external-link': 'M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3',
 };
 
 export default function Icon({ name, size = 24, className = '', strokeWidth = 2, fill = 'none' }: IconProps) {

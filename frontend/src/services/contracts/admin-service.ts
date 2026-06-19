@@ -1,4 +1,4 @@
-import type { Booking, Trip, User, UserRole } from '@/types';
+import type { Booking, Trip, User, UserRole, VehicleDocument } from '@/types';
 
 export interface Paginated<T> {
   items: T[];
@@ -61,4 +61,8 @@ export interface AdminService {
   rejectVerification(userId: string): Promise<User>;
   simulateJourney(): Promise<{ message: string; ride_id: string }>;
   openVerificationDocument(documentUrl: string): Promise<void>;
+  getPendingVehicleDocuments(page?: number, limit?: number): Promise<Paginated<VehicleDocument>>;
+  getVehicleDocument(docId: string): Promise<VehicleDocument>;
+  decideVehicleDocument(docId: string, decision: 'approved' | 'rejected', reason: string | null, expectedVersion: number): Promise<VehicleDocument>;
+  getVehicleDocumentContentUrl(docId: string): string;
 }
