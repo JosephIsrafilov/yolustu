@@ -183,6 +183,22 @@ def test_release_returns_held_amount_to_available_balance():
     assert release.status == "posted"
 
 
+def test_release_uses_ledger_ride_id_when_ride_is_unavailable():
+    service, wallets, _, booking, ride = make_service()
+    booking.ride_id = ride.id
+    service.reserve_for_booking(
+        booking,
+        ride,
+        make_current_user(booking.passenger_id),
+    )
+
+    service.release_for_booking(booking)
+
+    release = wallets.transactions[f"booking:{booking.id}:reservation_release"]
+    assert release.ride_id == ride.id
+    assert wallets.wallets[booking.passenger_id].available_balance == Decimal("100.00")
+
+
 def test_reservation_rejects_insufficient_wallet_balance():
     service, wallets, _, booking, ride = make_service()
     wallets.wallets[booking.passenger_id].available_balance = Decimal("19.99")
@@ -201,7 +217,7 @@ def test_reservation_rejects_insufficient_wallet_balance():
     assert wallets.transactions == {}
 
 
-def test_release_does_not_create_money_when_pending_balance_is_inconsistent():
+def test_release_reconciles_historical_pending_balance_mismatch():
     service, wallets, _, booking, ride = make_service()
     service.reserve_for_booking(
         booking,
@@ -210,9 +226,53 @@ def test_release_does_not_create_money_when_pending_balance_is_inconsistent():
     )
     wallets.wallets[booking.passenger_id].pending_balance = Decimal("10.00")
 
-    with pytest.raises(HTTPException) as exc:
-        service.release_for_booking(booking, ride)
+    service.release_for_booking(booking, ride)
 
-    assert exc.value.status_code == 409
-    assert wallets.wallets[booking.passenger_id].available_balance == Decimal("80.00")
-    assert wallets.wallets[booking.passenger_id].pending_balance == Decimal("10.00")
+    wallet = wallets.wallets[booking.passenger_id]
+    hold = wallets.transactions[f"booking:{booking.id}:reservation_hold"]
+    assert wallet.available_balance == Decimal("100.00")
+    assert wallet.pending_balance == Decimal("0.00")
+    assert hold.status == "reversed"
+    assert "reconciled" in str(hold.description)
+
+
+def test_reconciled_release_is_idempotent():
+    service, wallets, _, booking, ride = make_service()
+    service.reserve_for_booking(
+        booking,
+        ride,
+        make_current_user(booking.passenger_id),
+    )
+    wallets.wallets[booking.passenger_id].pending_balance = Decimal("10.00")
+
+    first = service.release_for_booking(booking, ride)
+    second = service.release_for_booking(booking, ride)
+
+    wallet = wallets.wallets[booking.passenger_id]
+    releases = [
+        tx for tx in wallets.transactions.values() if tx.type == "reservation_release"
+    ]
+    assert first is True
+    assert second is False
+    assert wallet.available_balance == Decimal("100.00")
+    assert wallet.pending_balance == Decimal("0.00")
+    assert len(releases) == 1
+
+
+def test_capture_reconciles_historical_pending_balance_mismatch():
+    service, wallets, _, booking, ride = make_service()
+    service.reserve_for_booking(
+        booking,
+        ride,
+        make_current_user(booking.passenger_id),
+    )
+    wallets.wallets[booking.passenger_id].pending_balance = Decimal("10.00")
+
+    service.capture_for_booking(booking, ride)
+
+    wallet = wallets.wallets[booking.passenger_id]
+    hold = wallets.transactions[f"booking:{booking.id}:reservation_hold"]
+    assert wallet.available_balance == Decimal("80.00")
+    assert wallet.pending_balance == Decimal("0.00")
+    assert hold.status == "captured"
+    assert "reconciled" in str(hold.description)
