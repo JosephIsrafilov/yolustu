@@ -1,7 +1,7 @@
 import type { Payment, PaymentStatus, Payout, Wallet, WalletTransaction } from '@/types';
 import type { Paginated } from './admin-service';
 
-export type WalletTransactionFilter = 'all' | 'payments' | 'refunds' | 'income' | 'topups' | 'reservations';
+export type WalletTransactionFilter = 'all' | 'payments' | 'refunds' | 'income' | 'topups';
 
 export interface PaymentSessionResponse {
   paymentId: string;
