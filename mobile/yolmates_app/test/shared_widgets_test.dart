@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yolmates_app/core/theme.dart';
 import 'package:yolmates_app/shared/widgets/app_card.dart';
 import 'package:yolmates_app/shared/widgets/empty_state.dart';
-import 'package:yolmates_app/shared/widgets/status_badge.dart';
 
 Widget _wrap(Widget child, {ThemeData? theme}) {
   return MaterialApp(

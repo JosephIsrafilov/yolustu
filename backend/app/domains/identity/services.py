@@ -41,9 +41,7 @@ class IdentityService:
     def verify_otp(self, phone: str, otp: str, redis_client):
         stored_otp = redis_client.get(f"otp:{phone}")
         stored_otp_str = (
-            stored_otp.decode("utf-8")
-            if isinstance(stored_otp, bytes)
-            else stored_otp
+            stored_otp.decode("utf-8") if isinstance(stored_otp, bytes) else stored_otp
         )
         if not stored_otp_str or stored_otp_str != otp:
             raise HTTPException(
