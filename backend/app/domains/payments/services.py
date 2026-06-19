@@ -166,21 +166,26 @@ class PaymentService:
 
         if provider_name == "stripe":
             import stripe
+
             try:
                 event = stripe.Webhook.construct_event(
-                    body, headers.get("stripe-signature", headers.get("Stripe-Signature", "")), settings.STRIPE_WEBHOOK_SECRET
+                    body,
+                    headers.get(
+                        "stripe-signature", headers.get("Stripe-Signature", "")
+                    ),
+                    settings.STRIPE_WEBHOOK_SECRET,
                 )
                 if event.type == "checkout.session.completed":
                     session = event.data.object
-                    metadata = self._stripe_metadata_to_dict(getattr(session, "metadata", None))
+                    metadata = self._stripe_metadata_to_dict(
+                        getattr(session, "metadata", None)
+                    )
                     if metadata.get("type") == "wallet_top_up":
                         user_id_str = metadata.get("user_id")
                         amount_str = metadata.get("amount")
                         if user_id_str and amount_str:
                             self._process_wallet_topup_success(
-                                session.id,
-                                UUID(user_id_str),
-                                Decimal(amount_str)
+                                session.id, UUID(user_id_str), Decimal(amount_str)
                             )
                         return {"detail": "Wallet top-up processed"}
             except Exception:
@@ -540,13 +545,17 @@ class PaymentService:
         self.db.commit()
         return {"detail": "Topup successful", "new_balance": wallet.available_balance}
 
-    def _process_wallet_topup_success(self, session_id: str, user_id: UUID, amount: Decimal):
+    def _process_wallet_topup_success(
+        self, session_id: str, user_id: UUID, amount: Decimal
+    ):
         scoped_key = f"stripe_topup:{session_id}"
         existing = self.wallets.get_transaction_by_idempotency_key(scoped_key)
         if existing:
             return
 
-        wallet = self.wallets.get_or_create_for_update(user_id, settings.PAYMENT_CURRENCY)
+        wallet = self.wallets.get_or_create_for_update(
+            user_id, settings.PAYMENT_CURRENCY
+        )
         wallet.available_balance = money(wallet.available_balance + amount)
 
         tx = WalletTransaction(
@@ -566,6 +575,7 @@ class PaymentService:
         self, amount: Decimal, current_user: CurrentUser
     ) -> dict:
         import stripe
+
         stripe.api_key = settings.STRIPE_SECRET_KEY
 
         amount = money(amount)
@@ -604,13 +614,16 @@ class PaymentService:
             return {
                 "checkout_url": session.url,
                 "session_id": session.id,
-                "payment_id": None
+                "payment_id": None,
             }
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Stripe error: {str(exc)}")
 
-    def get_stripe_topup_status(self, session_id: str, current_user: CurrentUser) -> dict:
+    def get_stripe_topup_status(
+        self, session_id: str, current_user: CurrentUser
+    ) -> dict:
         import stripe
+
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
             session = stripe.checkout.Session.retrieve(session_id)
@@ -623,7 +636,9 @@ class PaymentService:
             raise HTTPException(status_code=400, detail="Not a wallet top-up session")
 
         if metadata.get("user_id") != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Not authorized for this session")
+            raise HTTPException(
+                status_code=403, detail="Not authorized for this session"
+            )
 
         status = "pending"
         if session.payment_status == "paid":
@@ -633,9 +648,7 @@ class PaymentService:
 
         if status == "completed":
             self._process_wallet_topup_success(
-                session_id,
-                current_user.id,
-                Decimal(metadata.get("amount", "0"))
+                session_id, current_user.id, Decimal(metadata.get("amount", "0"))
             )
 
         wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
