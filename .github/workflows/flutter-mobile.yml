@@ -10,6 +10,9 @@ on:
       - 'mobile/yolmates_app/**'
       - '.github/workflows/flutter-mobile.yml'
 
+permissions:
+  contents: read
+
 jobs:
   flutter:
     runs-on: ubuntu-latest

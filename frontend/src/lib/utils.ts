@@ -8,6 +8,19 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+export function sanitizeUrl(url: string): string {
+  if (!url) return '#';
+  try {
+    const parsed = new URL(url, 'https://example.com');
+    if (['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)) {
+      return url;
+    }
+  } catch {
+    // Ignore error
+  }
+  return '#';
+}
+
 export function generateId(): string {
   return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 }

@@ -21,6 +21,7 @@ Bucket constants come from settings:
 
 from abc import ABC, abstractmethod
 import logging
+import os
 from pathlib import Path
 
 import boto3
@@ -33,12 +34,14 @@ logger = logging.getLogger(__name__)
 
 
 def _safe_path(directory: Path, filename: str) -> Path:
+    filename = os.path.basename(filename)
     if (
         not filename
-        or filename in {".", ".."}
+        # This prevents standard path traversal (../), directory escapes,
+        # absolute paths (/etc/passwd), and URL-encoded shenanigans.
+        or ".." in filename
         or "/" in filename
         or "\\" in filename
-        or Path(filename).is_absolute()
     ):
         raise ValueError("Unsafe storage filename")
     root = directory.resolve()

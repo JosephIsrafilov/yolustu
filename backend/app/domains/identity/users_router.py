@@ -179,7 +179,9 @@ def get_avatar(filename: str):
             url=signed_url, headers={"Cache-Control": "public, max-age=240"}
         )
 
+    import os
     if isinstance(storage, LocalStorage):
+        filename = os.path.basename(filename)
         file_path = storage.get_local_path(filename, settings.STORAGE_BUCKET_AVATARS)
         if file_path:
             return FileResponse(file_path)

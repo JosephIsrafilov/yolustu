@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import { useChat } from '@/hooks/useChat';
 import { messagesService } from '@/services';
+import { sanitizeUrl } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 
 const COPY = {
@@ -181,13 +182,13 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
                           isImageAttachment(attachment) || message.message_type === 'photo' ? (
                             <a
                               key={attachment}
-                              href={attachment}
+                              href={sanitizeUrl(attachment)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block overflow-hidden rounded-xl"
                             >
                               <Image
-                                src={attachment}
+                                src={sanitizeUrl(attachment)}
                                 alt={`${t.attachment} ${index + 1}`}
                                 width={500}
                                 height={256}
@@ -197,7 +198,7 @@ export default function ChatPanel({ conversationId, compact = false }: ChatPanel
                           ) : (
                             <a
                               key={attachment}
-                              href={attachment}
+                              href={sanitizeUrl(attachment)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className={`block rounded-xl px-3 py-2 text-xs font-medium underline underline-offset-2 ${

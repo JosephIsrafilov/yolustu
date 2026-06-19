@@ -175,7 +175,9 @@ def get_verification_document(
     # LocalStorage — serve from filesystem (works in both dev and prod-without-Supabase).
     from app.core.storage import LocalStorage as _LocalStorage
 
+    import os
     if isinstance(storage, _LocalStorage):
+        filename = os.path.basename(filename)
         file_path = storage.get_local_path(
             filename, settings.STORAGE_BUCKET_VERIFICATIONS
         )

@@ -231,10 +231,10 @@ class IdentityService:
                 MessageAttributes=message_attributes,
             )
         except Exception:
-            logger.exception("SNS SMS failed for %s", mask_phone_number(phone))
+            logger.exception("SNS SMS failed")
             raise HTTPException(status_code=500, detail="Failed to send OTP")
 
-        logger.info("OTP SMS sent to %s", mask_phone_number(phone))
+        logger.info("OTP SMS sent successfully")
         return otp
 
     def request_password_reset(

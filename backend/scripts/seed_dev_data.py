@@ -534,7 +534,7 @@ def print_summary(summary: dict[str, dict[str, int]]) -> None:
     for key in ["users", "vehicles", "rides", "bookings", "reviews", "messages", "payments"]:
         counts = summary.get(key, {"created": 0, "existing": 0})
         print(f"  - {key}: created={counts['created']}, existing={counts['existing']}")
-    print(f"Demo login password for seeded accounts: {DEV_PASSWORD}")
+    print("Demo login password for seeded accounts: (see DEV_PASSWORD in seed script)")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import { ROUTES } from '@/lib/routes';
+import { sanitizeUrl } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 import {
   getConversationAvatar,
@@ -151,14 +152,14 @@ export default function ChatDetailView({ conversationId }: { conversationId: str
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 key={attachment}
-                                src={attachment}
+                                src={sanitizeUrl(attachment)}
                                 alt={`Attachment ${index + 1}`}
                                 className="max-h-64 w-full rounded-xl object-cover"
                               />
                             ) : (
                               <a
                                 key={attachment}
-                                href={attachment}
+                                href={sanitizeUrl(attachment)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="block underline underline-offset-2"
