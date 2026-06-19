@@ -614,7 +614,7 @@ class PaymentService:
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
             session = stripe.checkout.Session.retrieve(session_id)
-        except Exception as exc:
+        except Exception:
             raise HTTPException(status_code=404, detail="Session not found")
 
         metadata = self._stripe_metadata_to_dict(getattr(session, "metadata", None))

@@ -1,4 +1,3 @@
-import pytest
 from app.domains.payments.services import PaymentService
 
 class MockStripeObjectRecursive:
