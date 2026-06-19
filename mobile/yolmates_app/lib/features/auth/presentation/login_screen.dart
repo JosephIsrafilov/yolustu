@@ -8,6 +8,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/routes.dart';
 import '../../../core/theme.dart';
 import '../../../shared/widgets/app_logo.dart';
+import '../data/app_user.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
@@ -74,12 +75,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordController.text;
 
     try {
-      if (password.isEmpty) return;
-      await ref.read(authControllerProvider.notifier).sendOtp(phone);
+      await ref
+          .read(authControllerProvider.notifier)
+          .loginWithPassword(phone, password);
       if (!mounted) return;
-      context.push(
-        '${AppRoutes.otp}?channel=sms&target=${Uri.encodeComponent(phone)}',
-      );
+      final authState = ref.read(authControllerProvider);
+      if (authState.status == AuthStatus.authenticated) {
+        final user = authState.user;
+        final isDriver = user?.role == UserRole.driver &&
+            user?.verificationStatus == 'approved';
+        if (isDriver) {
+          context.go(AppRoutes.driverPanel);
+        } else {
+          context.push('${AppRoutes.modeTransition}?driver=false');
+        }
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
