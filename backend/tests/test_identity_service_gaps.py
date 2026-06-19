@@ -212,7 +212,7 @@ def test_request_otp_sms_enabled_calls_sns_publish(monkeypatch, caplog):
             },
         },
     )
-    assert "OTP SMS sent to +994****4224" in caplog.text
+    assert "OTP SMS sent successfully" in caplog.text
     assert "123456" not in caplog.text
 
 

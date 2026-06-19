@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 def _safe_path(directory: Path, filename: str) -> Path:
-    filename = os.path.basename(filename)
     if (
         not filename
         # This prevents standard path traversal (../), directory escapes,
@@ -44,6 +43,8 @@ def _safe_path(directory: Path, filename: str) -> Path:
         or "\\" in filename
     ):
         raise ValueError("Unsafe storage filename")
+        
+    filename = os.path.basename(filename)
     root = directory.resolve()
     candidate = (root / filename).resolve()
     if candidate.parent != root:
