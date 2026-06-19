@@ -13,7 +13,8 @@ import 'data/driver_controller.dart';
 ///
 /// Saves via [vehiclesProvider]; on success pops back to the previous screen.
 class AddVehicleScreen extends ConsumerStatefulWidget {
-  const AddVehicleScreen({super.key});
+  final Vehicle? vehicle;
+  const AddVehicleScreen({this.vehicle, super.key});
 
   @override
   ConsumerState<AddVehicleScreen> createState() => _AddVehicleScreenState();
@@ -26,7 +27,22 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
   final _year = TextEditingController();
   final _color = TextEditingController();
   final _plate = TextEditingController();
+  final _variations = TextEditingController();
   int _seats = 4;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.vehicle != null) {
+      _brand.text = widget.vehicle!.brand;
+      _model.text = widget.vehicle!.model;
+      _year.text = widget.vehicle!.year.toString();
+      _color.text = widget.vehicle!.color;
+      _plate.text = widget.vehicle!.plate;
+      _variations.text = widget.vehicle!.variations ?? '';
+      _seats = widget.vehicle!.seats;
+    }
+  }
 
   bool _saving = false;
   String? _error;
@@ -38,6 +54,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     _year.dispose();
     _color.dispose();
     _plate.dispose();
+    _variations.dispose();
     super.dispose();
   }
 
@@ -67,13 +84,14 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     try {
       await ref.read(vehiclesProvider.notifier).save(
             Vehicle(
-              id: 'veh-${DateTime.now().millisecondsSinceEpoch}',
+              id: widget.vehicle?.id ?? 'veh-${DateTime.now().millisecondsSinceEpoch}',
               brand: _brand.text.trim(),
               model: _model.text.trim(),
               year: int.parse(_year.text.trim()),
               color: _color.text.trim(),
               plate: _plate.text.trim().toUpperCase(),
               seats: _seats,
+              variations: _variations.text.trim().isEmpty ? null : _variations.text.trim(),
             ),
           );
       if (!mounted) return;
@@ -92,8 +110,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
+    final title = widget.vehicle == null ? l10n.addVehicleTitle : 'Edit Vehicle';
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addVehicleTitle)),
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.spacing24),
@@ -140,6 +159,14 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   l10n.addVehiclePlateHint,
                   _req,
                   cap: TextCapitalization.characters,
+                ),
+                const SizedBox(height: 16),
+                _field(
+                  _variations,
+                  'Xüsusiyyətlər (Variations)',
+                  'Məsələn: Kondisioner var, geniş baqaj',
+                  null,
+                  cap: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 24),
                 Text(l10n.addVehicleSeatsCount, style: _label()),

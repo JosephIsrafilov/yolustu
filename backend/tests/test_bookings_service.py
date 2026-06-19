@@ -258,17 +258,17 @@ def test_cannot_create_booking_when_seats_are_insufficient():
     assert "Not enough available seats" in str(exc.value.detail)
 
 
-def test_duplicate_booking_is_forbidden():
+def test_multiple_bookings_allowed_for_passenger():
     service, ride, _, passenger = make_service()
-    service.create_booking(BookingCreate(ride_id=ride.id, seats_booked=1), passenger)
+    b1 = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
+    b2 = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=1), passenger
+    )
 
-    with pytest.raises(HTTPException) as exc:
-        service.create_booking(
-            BookingCreate(ride_id=ride.id, seats_booked=1), passenger
-        )
-
-    assert exc.value.status_code == 400
-    assert "already exists" in str(exc.value.detail)
+    assert b1.id != b2.id
+    assert ride.available_seats == 1
 
 
 def test_cancel_paid_booking_restores_seats_if_ride_not_completed():

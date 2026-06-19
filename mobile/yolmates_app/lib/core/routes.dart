@@ -25,6 +25,8 @@ import '../features/driver/my_rides_screen.dart';
 import '../features/driver/passenger_requests_screen.dart';
 import '../features/driver/active_ride_screen.dart';
 import '../features/driver/driver_panel_screen.dart';
+import '../features/driver/vehicles_screen.dart';
+import '../features/driver/data/vehicle.dart';
 import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/notifications/presentation/notification_detail_screen.dart';
@@ -38,6 +40,8 @@ import '../features/support/support_screen.dart';
 import '../features/support/support_chat_screen.dart';
 import '../features/trips/trip_list_screen.dart';
 import '../features/trips/trip_detail_screen.dart';
+import '../features/trips/trip_search_screen.dart';
+import '../features/trips/passenger_active_ride_screen.dart';
 import '../features/wallet/wallet_screen.dart';
 import '../shared/models/user.dart';
 import '../shared/widgets/main_shell.dart';
@@ -372,6 +376,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/bookings/:id/active',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          PassengerActiveRideScreen(
+            bookingId: state.pathParameters['id']!,
+            rideId: state.extra as String? ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/messages/:id',
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
@@ -467,11 +482,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/driver/vehicles',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const VehiclesScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.addVehicle,
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const AddVehicleScreen(),
+          AddVehicleScreen(vehicle: state.extra as Vehicle?),
         ),
       ),
       GoRoute(

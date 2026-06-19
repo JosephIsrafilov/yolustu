@@ -63,10 +63,6 @@ class BookingsService:
             raise HTTPException(status_code=403, detail="Admin cannot book rides")
         if ride.driver_id == current_user.id:
             raise HTTPException(status_code=403, detail="You cannot book your own ride")
-        if self.bookings.get_active_for_ride_and_passenger(ride.id, current_user.id):  # type: ignore[arg-type]
-            raise HTTPException(
-                status_code=400, detail="Booking already exists for this ride"
-            )
 
         selected_spots = self._validate_and_reserve_spots(
             ride, booking_in.seats_booked, booking_in.selected_spots

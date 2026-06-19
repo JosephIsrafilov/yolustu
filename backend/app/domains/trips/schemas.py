@@ -31,10 +31,22 @@ class VehicleBase(BaseModel):
     year: int
     color: str
     plate_number: str
+    seats_count: int = 4
+    variations: Optional[str] = None
 
 
 class VehicleCreate(VehicleBase):
     pass
+
+
+class VehicleUpdate(BaseModel):
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    color: Optional[str] = None
+    plate_number: Optional[str] = None
+    seats_count: Optional[int] = None
+    variations: Optional[str] = None
 
 
 class VehicleResponse(VehicleBase):

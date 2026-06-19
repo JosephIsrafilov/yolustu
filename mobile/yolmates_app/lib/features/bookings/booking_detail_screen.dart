@@ -240,6 +240,30 @@ class _DetailState extends ConsumerState<_Detail> {
           ),
           const SizedBox(height: 12),
         ],
+        // Passenger mock ride flow buttons
+        if (!b.status.isCancelled && !b.status.isRejected) ...[
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          const Text('Demo Actions (Passenger)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // Mock confirmation and redirect to PassengerActiveRideScreen
+                context.push('${AppRoutes.bookings}/${b.id}/active', extra: b.rideId);
+              },
+              icon: const Icon(Icons.directions_car),
+              label: const Text('Start Ride (Demo)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.navy,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (b.status == BookingStatus.completed) ...[
           SizedBox(
             height: 52,

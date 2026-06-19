@@ -36,6 +36,13 @@ class VehicleRepository:
         self.db.refresh(vehicle)
         return vehicle
 
+    def update(self, vehicle: Vehicle, update_data: dict) -> Vehicle:
+        for field, value in update_data.items():
+            setattr(vehicle, field, value)
+        self.db.commit()
+        self.db.refresh(vehicle)
+        return vehicle
+
     def create_default(self, user_id: UUID, model_name: str) -> Vehicle:
         vehicle = Vehicle(
             user_id=user_id,

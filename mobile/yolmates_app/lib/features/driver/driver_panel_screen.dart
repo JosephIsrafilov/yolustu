@@ -196,6 +196,12 @@ class DriverPanelScreen extends ConsumerWidget {
                   onTap: () => context.push(AppRoutes.messages),
                 ),
                 _ActionCard(
+                  title: 'Avtomobillərim',
+                  icon: Icons.directions_car,
+                  color: AppTheme.slate500,
+                  onTap: () => context.push('/driver/vehicles'),
+                ),
+                _ActionCard(
                   title: 'Reytinqlər',
                   icon: Icons.star_outline,
                   color: AppTheme.slate500,

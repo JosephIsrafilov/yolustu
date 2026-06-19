@@ -10,6 +10,7 @@ class Vehicle {
   final String color;
   final String plate;
   final int seats;
+  final String? variations;
 
   const Vehicle({
     required this.id,
@@ -19,6 +20,7 @@ class Vehicle {
     required this.color,
     required this.plate,
     required this.seats,
+    this.variations,
   });
 
   String get displayName => '$brand $model';
@@ -30,6 +32,7 @@ class Vehicle {
     String? color,
     String? plate,
     int? seats,
+    String? variations,
   }) {
     return Vehicle(
       id: id,
@@ -39,6 +42,7 @@ class Vehicle {
       color: color ?? this.color,
       plate: plate ?? this.plate,
       seats: seats ?? this.seats,
+      variations: variations ?? this.variations,
     );
   }
 }

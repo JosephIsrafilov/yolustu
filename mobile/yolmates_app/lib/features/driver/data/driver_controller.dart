@@ -128,13 +128,22 @@ class ApiDriverRepository implements DriverRepository {
   @override
   Future<Vehicle> saveVehicle(Vehicle vehicle) async {
     try {
-      final response = await _client.post('/vehicles', data: {
+      final isNew = vehicle.id.startsWith('veh-');
+      final dataPayload = {
         'brand': vehicle.brand,
         'model': vehicle.model,
         'year': vehicle.year,
         'color': vehicle.color,
         'plate_number': vehicle.plate,
-      });
+        'seats_count': vehicle.seats,
+        if (vehicle.variations != null && vehicle.variations!.isNotEmpty)
+          'variations': vehicle.variations,
+      };
+      
+      final response = isNew 
+          ? await _client.post('/vehicles', data: dataPayload)
+          : await _client.put('/vehicles/${vehicle.id}', data: dataPayload);
+          
       final data = response.data;
       final json = data is Map<String, dynamic>
           ? (data['data'] as Map<String, dynamic>? ?? data)
@@ -143,6 +152,8 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -199,7 +210,8 @@ class ApiDriverRepository implements DriverRepository {
       year: json['year'] as int,
       color: json['color'] as String,
       plate: json['plate_number'] as String,
-      seats: json['seats'] as int? ?? 4,
+      seats: json['seats_count'] as int? ?? 4,
+      variations: json['variations'] as String?,
     );
   }
 }

@@ -95,7 +95,8 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
     final total = ride.price * _seats * (1 + serviceFeePercent);
     final walletState = ref.read(walletControllerProvider).valueOrNull;
     if (walletState != null && walletState.balance.passengerBalance < total) {
-      setState(() => _error =
+      _showErrorDialog(
+          'Balans kifayət deyil',
           'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.passengerBalance.toStringAsFixed(2)} AZN var.');
       return;
     }
@@ -150,11 +151,57 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       context.go('${AppRoutes.messages}/${conversation.id}');
     } catch (e) {
       if (!mounted) return;
-      setState(() =>
-          _error = 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
+      _showErrorDialog('Xəta', 'Rezervasiya yaradıla bilmədi. Səbəb: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline, color: Colors.red.shade400, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.navy),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 14, color: AppTheme.slate500),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade400,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Bağla'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showSuccess() {
@@ -597,7 +644,7 @@ class _SeatPicker extends StatelessWidget {
             const SizedBox(width: 12),
             _LegendDot(color: AppTheme.slate200, label: 'Boş'),
             const SizedBox(width: 12),
-            _LegendDot(color: Colors.red.shade100, label: 'Tutulub'),
+            _LegendDot(color: AppTheme.slate400, label: 'Tutulub'),
           ],
         ),
       ],
@@ -624,12 +671,12 @@ class _SeatChip extends StatelessWidget {
         ? AppTheme.teal
         : available
             ? Colors.white
-            : Colors.red.shade50;
+            : AppTheme.slate200;
     final foreground = selected
         ? Colors.white
         : available
             ? AppTheme.navy
-            : Colors.red.shade400;
+            : AppTheme.slate400;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -645,30 +692,25 @@ class _SeatChip extends StatelessWidget {
                 ? AppTheme.teal
                 : available
                     ? AppTheme.slate200
-                    : Colors.red.shade100,
+                    : Colors.transparent,
           ),
+          boxShadow: available && !selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              available ? Icons.event_seat : Icons.lock_outline,
-              size: 16,
-              color: foreground,
-            ),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: foreground,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+        child: Text(
+          !available && !selected ? 'Reserved' : label,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

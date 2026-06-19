@@ -31,6 +31,8 @@ class Vehicle(Base):
     year = Column(Integer, nullable=False)
     color = Column(String(30), nullable=False)
     plate_number = Column(String(20), nullable=False)
+    seats_count = Column(Integer, nullable=False, server_default="4")
+    variations = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="vehicles")

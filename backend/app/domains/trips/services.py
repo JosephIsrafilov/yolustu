@@ -22,6 +22,7 @@ from app.domains.trips.schemas import (
     RideResponse,
     RideSearch,
     VehicleCreate,
+    VehicleUpdate,
     geometry_to_location,
     ride_to_public_track,
     ride_to_response,
@@ -263,6 +264,20 @@ class TripsService:
 
     def get_my_vehicles(self, current_user: CurrentUser) -> list[Vehicle]:
         return self.vehicles.list_for_user(current_user.id)
+
+    def update_vehicle(
+        self, vehicle_id: UUID, vehicle_in: VehicleUpdate, current_user: CurrentUser
+    ) -> Vehicle:
+        vehicle = self.vehicles.get(vehicle_id)
+        if not vehicle:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        if vehicle.user_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(
+                status_code=403, detail="Not authorized to edit this vehicle"
+            )
+
+        update_data = vehicle_in.model_dump(exclude_unset=True)
+        return self.vehicles.update(vehicle, update_data)
 
     def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
         vehicle = self.vehicles.get(vehicle_id)
