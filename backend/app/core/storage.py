@@ -43,7 +43,7 @@ def _safe_path(directory: Path, filename: str) -> Path:
         or "\\" in filename
     ):
         raise ValueError("Unsafe storage filename")
-        
+
     filename = os.path.basename(filename)
     root = directory.resolve()
     candidate = (root / filename).resolve()
