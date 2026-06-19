@@ -39,7 +39,10 @@ def get_my_wallet(
 def get_my_wallet_transactions(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
-    filter: str = Query("all", pattern="^(all|payments|refunds|income|topups)$"),
+    filter: str = Query(
+        "all",
+        pattern="^(all|payments|refunds|income|topups|reservations)$",
+    ),
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
