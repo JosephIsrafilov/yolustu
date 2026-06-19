@@ -190,7 +190,9 @@ class MockChatRepository implements ChatRepository {
     await Future.delayed(_latency);
     final key = bookingId ?? rideId ?? 'ride-mock';
     return _conversations.firstWhere(
-      (c) => c.bookingId == bookingId || c.rideId == rideId,
+      (c) =>
+          (bookingId != null && c.bookingId == bookingId) ||
+          (rideId != null && c.rideId == rideId),
       orElse: () {
         final c = Conversation(
           id: key,
