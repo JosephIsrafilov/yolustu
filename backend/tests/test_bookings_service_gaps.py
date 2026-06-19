@@ -758,7 +758,7 @@ def test_cancel_booking_invalid_status():
         price_per_seat=Decimal("10.0"),
     )
 
-    for status in ["cancelled", "rejected", "completed", "expired"]:
+    for status in ["cancelled", "rejected", "completed"]:
         booking = FakeBooking(
             id=uuid4(),
             ride_id=ride.id,
@@ -774,6 +774,36 @@ def test_cancel_booking_invalid_status():
             service.cancel_booking(booking.id, passenger)
         assert exc.value.status_code == 400
         assert "Booking cannot be cancelled in current status" in exc.value.detail
+
+
+def test_cancel_expired_booking_returns_expired_state_without_error():
+    passenger_id = uuid4()
+    ride = FakeRide(
+        id=uuid4(),
+        driver_id=uuid4(),
+        available_seats=4,
+        total_seats=4,
+        price_per_seat=Decimal("10.0"),
+    )
+    booking = FakeBooking(
+        id=uuid4(),
+        ride_id=ride.id,
+        passenger_id=passenger_id,
+        seats_booked=1,
+        total_price=Decimal("10.0"),
+        status="pending",
+        payment_deadline=datetime.now(timezone.utc) - timedelta(seconds=1),
+        ride=ride,
+        selected_spots=["front_right"],
+    )
+    service, _, _, _ = make_service(rides=[ride], bookings=[booking])
+
+    response = service.cancel_booking(
+        booking.id, make_current_user(passenger_id, "passenger")
+    )
+
+    assert response.status == "expired"
+    assert booking.id in cast(Any, service).reservations.released
 
 
 def test_cancel_booking_invalid_transition():

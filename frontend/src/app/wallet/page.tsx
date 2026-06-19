@@ -353,7 +353,7 @@ function WalletContent() {
   const [formMessage, setFormMessage] = React.useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
   const walletQuery = useQuery({
-    queryKey: ['wallet'],
+    queryKey: ['wallet', currentUser?.id],
     queryFn: () => paymentsService.getWallet(),
     staleTime: 60 * 1000,
   });
@@ -386,7 +386,6 @@ function WalletContent() {
 
   const invalidateWallet = () => {
     void queryClient.invalidateQueries({ queryKey: ['wallet'] });
-    void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     void queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
   };
 

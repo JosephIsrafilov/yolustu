@@ -14,6 +14,7 @@ import { I18N } from '@/lib/i18n';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import { messagesService } from '@/services';
 import { useRideChats } from '@/hooks/useRideChats';
+import { effectiveBookingStatus } from '@/lib/bookings';
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -30,9 +31,18 @@ export default function BookingsPage() {
     fetchTrips();
   }, [fetchBookings, fetchTrips]);
 
-  const myBookings = bookings.filter((booking) => booking.passengerId === currentUser?.id);
-  const upcoming = myBookings.filter((booking) => ['pending', 'accepted', 'paid'].includes(booking.status));
-  const past = myBookings.filter((booking) => ['completed', 'cancelled', 'rejected'].includes(booking.status));
+  const myBookings = bookings
+    .filter((booking) => booking.passengerId === currentUser?.id)
+    .map((booking) => ({
+      ...booking,
+      status: effectiveBookingStatus(booking.status, booking.paymentDeadline),
+    }));
+  const upcoming = myBookings.filter((booking) =>
+    ['pending', 'accepted', 'paid', 'boarded'].includes(booking.status),
+  );
+  const past = myBookings.filter((booking) =>
+    ['completed', 'cancelled', 'rejected', 'expired', 'no_show'].includes(booking.status),
+  );
   const current = tab === 'upcoming' ? upcoming : past;
 
   return (
