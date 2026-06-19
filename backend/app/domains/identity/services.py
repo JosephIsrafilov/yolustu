@@ -282,7 +282,9 @@ class IdentityService:
         redis_client.delete(f"pwd_reset:{email}")
         return {"message": "Password reset successfully"}
 
-    def request_phone_password_reset(self, phone: str, redis_client, background_tasks: BackgroundTasks):
+    def request_phone_password_reset(
+        self, phone: str, redis_client, background_tasks: BackgroundTasks
+    ):
         user = self.users.get_by_phone(phone)
         if not user:
             raise HTTPException(
@@ -292,7 +294,7 @@ class IdentityService:
         otp = str(secrets.randbelow(900000) + 100000)
         redis_client.setex(f"pwd_reset_phone:{phone}", 600, otp)
         logger.info("Phone password reset OTP for %s: %s", phone, otp)
-        
+
         if user.email:
             background_tasks.add_task(self._send_email_otp, user.email, otp)
 
