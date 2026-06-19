@@ -176,6 +176,7 @@ def get_verification_document(
     from app.core.storage import LocalStorage as _LocalStorage
 
     import os
+
     if isinstance(storage, _LocalStorage):
         filename = os.path.basename(filename)
         file_path = storage.get_local_path(

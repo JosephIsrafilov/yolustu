@@ -180,6 +180,7 @@ def get_avatar(filename: str):
         )
 
     import os
+
     if isinstance(storage, LocalStorage):
         filename = os.path.basename(filename)
         file_path = storage.get_local_path(filename, settings.STORAGE_BUCKET_AVATARS)
