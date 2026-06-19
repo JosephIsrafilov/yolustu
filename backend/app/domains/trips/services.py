@@ -15,7 +15,12 @@ from app.domains.lifecycle import (
     can_transition_ride,
 )
 from app.domains.trips.models import Ride, SEAT_SPOTS, Vehicle, VehicleDocument
-from app.domains.trips.repositories import RideRepository, VehicleRepository, VehicleDocumentRepository, REQUIRED_DOCUMENT_TYPES
+from app.domains.trips.repositories import (
+    RideRepository,
+    VehicleRepository,
+    VehicleDocumentRepository,
+    REQUIRED_DOCUMENT_TYPES,
+)
 from app.domains.trips.schemas import (
     PublicTrackResponse,
     RideCreate,
@@ -162,15 +167,29 @@ class TripsService:
         return ride_to_response(self.get_ride_model(ride_id))
 
     def cancel_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
-        ride = self.get_ride_model(ride_id)
+        # Lock the ride row so the cascade and any concurrent
+        # booking/payment work serialize on it.
+        ride = self.rides.get_for_update(ride_id)
+        if not ride:
+            raise HTTPException(status_code=404, detail="Ride not found")
         if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
         if ride.status == RIDE_CANCELLED:
             return ride_to_response(ride)
         if not can_transition_ride(ride.status, RIDE_CANCELLED):  # type: ignore[arg-type]
             raise HTTPException(status_code=400, detail="Ride cannot be cancelled")
+
+        # Cascade: refund paid bookings, release seats, reverse pending earnings.
+        # PaymentService does NOT commit — we own the single transaction here so
+        # the status flip and every booking change land atomically.
+        from app.domains.payments.services import PaymentService
+
+        PaymentService(self.db).cancel_ride_bookings(ride)
+
         ride.status = RIDE_CANCELLED  # type: ignore[assignment]
-        return ride_to_response(self.rides.save(ride))
+        self.db.commit()
+        self.db.refresh(ride)
+        return ride_to_response(ride)
 
     def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
         ride = self.get_ride_model(ride_id)
@@ -270,7 +289,8 @@ class TripsService:
         normalized_plate = normalize_plate(vehicle_in.plate_number)
         if self.vehicles.find_active_by_plate(normalized_plate):
             raise HTTPException(
-                status_code=409, detail="An active vehicle with this plate already exists"
+                status_code=409,
+                detail="An active vehicle with this plate already exists",
             )
         return self.vehicles.create(current_user.id, vehicle_in)
 
@@ -296,9 +316,7 @@ class TripsService:
             update_data["normalized_plate"] = normalized_plate
         return self.vehicles.update(vehicle, update_data)
 
-    def get_vehicle(
-        self, vehicle_id: UUID, current_user: CurrentUser
-    ) -> Vehicle:
+    def get_vehicle(self, vehicle_id: UUID, current_user: CurrentUser) -> Vehicle:
         vehicle = self.vehicles.get(vehicle_id)
         if not vehicle:
             raise HTTPException(status_code=404, detail="Vehicle not found")
@@ -311,7 +329,9 @@ class TripsService:
     ) -> Vehicle:
         vehicle = self.get_vehicle(vehicle_id, current_user)
         if not vehicle.is_active:
-            raise HTTPException(status_code=409, detail="Inactive vehicle cannot be default")
+            raise HTTPException(
+                status_code=409, detail="Inactive vehicle cannot be default"
+            )
         return self.vehicles.set_default(vehicle)
 
     def delete_vehicle(self, vehicle_id: UUID, current_user: CurrentUser):
@@ -342,10 +362,17 @@ class TripsService:
     ) -> VehicleDocument:
         vehicle = self.get_vehicle(vehicle_id, current_user)
         if not vehicle.is_active:
-            raise HTTPException(status_code=400, detail="Cannot upload document for inactive vehicle")
+            raise HTTPException(
+                status_code=400, detail="Cannot upload document for inactive vehicle"
+            )
         if document_type not in REQUIRED_DOCUMENT_TYPES:
-            raise HTTPException(status_code=400, detail=f"document_type must be one of {REQUIRED_DOCUMENT_TYPES}")
-        doc = self.vehicle_docs.create(vehicle_id, document_type, storage_key, mime_type, size_bytes, sha256)
+            raise HTTPException(
+                status_code=400,
+                detail=f"document_type must be one of {REQUIRED_DOCUMENT_TYPES}",
+            )
+        doc = self.vehicle_docs.create(
+            vehicle_id, document_type, storage_key, mime_type, size_bytes, sha256
+        )
         if vehicle.verification_status == "none":
             vehicle.verification_status = "pending"  # type: ignore[assignment]
             self.db.commit()
@@ -362,7 +389,9 @@ class TripsService:
     ) -> VehicleVerificationStatusResponse:
         vehicle = self.get_vehicle(vehicle_id, current_user)
         docs = self.vehicle_docs.list_current_for_vehicle(vehicle_id)
-        submitted = {d.document_type: VehicleDocumentResponse.model_validate(d) for d in docs}
+        submitted = {
+            d.document_type: VehicleDocumentResponse.model_validate(d) for d in docs
+        }
         missing = [t for t in REQUIRED_DOCUMENT_TYPES if t not in submitted]
         all_approved = not missing and all(d.status == "approved" for d in docs)
         return VehicleVerificationStatusResponse(

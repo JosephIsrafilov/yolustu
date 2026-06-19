@@ -24,6 +24,16 @@ class PaymentWebhookEvent:
     status: str
     failure_reason: str | None = None
     raw: dict[str, Any] | None = None
+    event_id: str | None = None
+
+    @property
+    def event_key(self) -> str:
+        """Stable idempotency key for the event.
+
+        Prefers the provider's native event id; falls back to
+        ``{transaction_id}:{status}`` when the provider supplies none.
+        """
+        return self.event_id or f"{self.transaction_id}:{self.status}"
 
 
 class BasePaymentProvider(ABC):
@@ -231,6 +241,7 @@ class StripePaymentProvider(BasePaymentProvider):
                 transaction_id="",
                 status="ignored",
                 raw=event.to_dict(),
+                event_id=getattr(event, "id", None),
             )
 
         obj = event.data.object
@@ -241,6 +252,7 @@ class StripePaymentProvider(BasePaymentProvider):
             status=status_mapping[event.type],
             failure_reason=None,
             raw=event.to_dict(),
+            event_id=getattr(event, "id", None),
         )
 
     def refund(self, payment: Payment, amount: Decimal) -> dict[str, Any]:

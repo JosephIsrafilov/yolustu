@@ -12,7 +12,17 @@ class InMemoryRedis:
     def get(self, key: str) -> Any:
         return self._store.get(key)
 
-    def set(self, key: str, value: Any) -> bool:
+    def set(
+        self,
+        key: str,
+        value: Any,
+        nx: bool = False,
+        ex: int | None = None,
+    ) -> bool | None:
+        # Mirror redis-py: SET NX returns None when the key already exists.
+        if nx and key in self._store:
+            return None
+        del ex  # TTL is irrelevant for the in-process test shim.
         self._store[key] = value
         return True
 

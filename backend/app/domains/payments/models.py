@@ -97,6 +97,27 @@ class WalletTransaction(Base):
     ride = relationship("Ride")
 
 
+class ProviderEvent(Base):
+    """Append-only log of inbound provider webhook events.
+
+    The ``event_key`` is the provider's native event id when available, falling
+    back to ``{transaction_id}:{status}``. The unique index on it is the
+    database-level guard against duplicate/reordered webhook deliveries.
+    """
+
+    __tablename__ = "provider_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider = Column(String(50), nullable=False)
+    event_key = Column(String(255), nullable=False)
+    payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=True)
+    status = Column(String(50), nullable=False)
+    raw = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    payment = relationship("Payment")
+
+
 class PayoutRequest(Base):
     __tablename__ = "payout_requests"
 
@@ -131,5 +152,12 @@ Index("ix_wallet_transactions_status", WalletTransaction.status)
 Index(
     "ix_wallet_transactions_idempotency_key",
     WalletTransaction.idempotency_key,
+    unique=True,
+)
+Index("ix_provider_events_payment_id", ProviderEvent.payment_id)
+Index(
+    "ix_provider_events_provider_event_key",
+    ProviderEvent.provider,
+    ProviderEvent.event_key,
     unique=True,
 )

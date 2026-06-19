@@ -4,6 +4,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -16,6 +17,7 @@ from app.domains.bookings.repositories import (
 from app.domains.identity.dependencies import CurrentUser
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
+    BOOKING_BOARDED,
     BOOKING_CANCELLED,
     BOOKING_EXPIRED,
     BOOKING_PAID,
@@ -29,6 +31,7 @@ from app.domains.lifecycle import (
 from app.domains.payments.models import (
     Payment,
     PayoutRequest,
+    ProviderEvent,
     WalletTransaction,
 )
 from app.domains.payments.providers import get_payment_provider
@@ -146,16 +149,60 @@ class PaymentService:
         if not provider.verify_webhook_signature(headers, body):
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
         event = provider.parse_webhook_event(headers, body)
+        if event.status == "ignored":
+            return {"detail": "Webhook ignored"}
         payment = self.payments.get_by_transaction_id(event.transaction_id)
         if not payment:
             raise HTTPException(status_code=404, detail="Payment not found")
+
+        # Database-level idempotency: a unique (provider, event_key) row makes
+        # duplicate/reordered deliveries a no-op. We insert it in its own nested
+        # transaction so a duplicate raises IntegrityError without poisoning the
+        # outer session.
+        if not self._record_provider_event(provider.provider_name, event, payment):
+            return {"detail": "Webhook already processed"}
+
         if event.status == PAYMENT_SUCCEEDED:
             return self.mark_payment_succeeded(payment.id)  # type: ignore[arg-type]
         if event.status == PAYMENT_FAILED:
             return self.mark_payment_failed(payment.id, event.failure_reason)  # type: ignore[arg-type]
         if event.status == PAYMENT_REFUNDED:
-            return self.refund_payment(payment.id, None)  # type: ignore[arg-type]
+            # Provider already moved the money; do NOT call provider.refund again.
+            refunded = self.payments.get_for_update(payment.id)  # type: ignore[arg-type]
+            if not refunded:
+                raise HTTPException(status_code=404, detail="Payment not found")
+            return self._apply_refund(refunded, call_provider=False)
         return {"detail": "Webhook processed"}
+
+    def _record_provider_event(
+        self, provider_name: str, event, payment: Payment
+    ) -> bool:
+        """Insert a provider event row. Returns False if already seen."""
+        existing = (
+            self.db.query(ProviderEvent)
+            .filter(
+                ProviderEvent.provider == provider_name,
+                ProviderEvent.event_key == event.event_key,
+            )
+            .first()
+        )
+        if existing:
+            return False
+        record = ProviderEvent(
+            provider=provider_name,
+            event_key=event.event_key,
+            payment_id=payment.id,
+            status=event.status,
+            raw=event.raw,
+        )
+        self.db.add(record)
+        try:
+            self.db.flush()
+        except IntegrityError:
+            # Concurrent delivery won the race on the unique index.
+            self.db.rollback()
+            return False
+        return True
 
     def mark_payment_succeeded(self, payment_id: UUID) -> dict:
         payment = self.payments.get_for_update(payment_id)
@@ -252,11 +299,25 @@ class PaymentService:
     def refund_payment(
         self, payment_id: UUID, current_user: CurrentUser | None
     ) -> dict:
+        """Admin/cancel-initiated refund. Calls the provider to move money."""
         payment = self.payments.get_for_update(payment_id)
         if not payment:
             raise HTTPException(status_code=404, detail="Payment not found")
         if current_user is not None and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Admin access required")
+        return self._apply_refund(payment, call_provider=True)
+
+    def _apply_refund(
+        self, payment: Payment, *, call_provider: bool, commit: bool = True
+    ) -> dict:
+        """Shared refund core.
+
+        ``call_provider=True`` triggers the provider refund (admin/cancel flow).
+        ``call_provider=False`` is for inbound provider webhooks where the money
+        already moved at the provider — calling refund again would double-refund.
+        ``commit=False`` lets a caller (e.g. the ride-cancel cascade) batch
+        several refunds into one transaction and own the final commit.
+        """
         if payment.status == PAYMENT_REFUNDED:
             return {"detail": "Payment already refunded"}
         if payment.status != PAYMENT_SUCCEEDED:
@@ -271,13 +332,26 @@ class PaymentService:
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
 
-        provider = get_payment_provider(payment.provider)  # type: ignore[arg-type]
-        refund_data = provider.refund(payment, money(payment.amount))  # type: ignore[arg-type]
+        # Wallet payments never have an external provider; the money sits in our
+        # own ledger, so we credit the passenger's available balance back rather
+        # than calling a non-existent "wallet" provider (which would 400).
+        is_wallet = payment.provider == "wallet"
+        refund_data: dict[str, Any] | None = None
+        if call_provider and not is_wallet:
+            provider = get_payment_provider(payment.provider)  # type: ignore[arg-type]
+            refund_data = provider.refund(payment, money(payment.amount))  # type: ignore[arg-type]
         payment.status = PAYMENT_REFUNDED  # type: ignore[assignment]
         payment.refunded_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         payment.payment_metadata = {  # type: ignore[assignment]
             **(payment.payment_metadata or {}),
-            "refund": refund_data,
+            "refund": (
+                refund_data
+                if refund_data is not None
+                else {
+                    "provider": payment.provider,
+                    "via": "wallet" if is_wallet else "webhook",
+                }
+            ),
         }
         booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
         if ride.status != RIDE_COMPLETED:
@@ -294,6 +368,7 @@ class PaymentService:
             status="posted",
             description="Passenger refund",
             idempotency_key=f"payment:{payment.id}:refund",
+            balance_bucket="available" if is_wallet else None,
         )
         self._ledger(
             user_id=payment.driver_id,  # type: ignore[arg-type]
@@ -309,8 +384,47 @@ class PaymentService:
             balance_bucket="pending",
         )
 
-        self.db.commit()
+        if commit:
+            self.db.commit()
         return {"detail": "Payment refunded"}
+
+    def cancel_ride_bookings(self, ride) -> int:
+        """Cascade a ride cancellation across its active bookings.
+
+        Refunds paid bookings, releases held seats, and reverses pending driver
+        earnings — all WITHOUT committing. The caller (TripsService.cancel_ride)
+        owns the single transaction so the ride status flip and every booking
+        change land atomically. Returns the count of affected bookings.
+
+        Assumes the ride row is already locked FOR UPDATE by the caller.
+        """
+        active = self.bookings.list_active_for_ride(ride.id)
+        affected = 0
+        for booking in active:
+            if booking.status in (BOOKING_PAID, BOOKING_BOARDED):
+                payment = self.payments.get_succeeded_for_booking(booking.id)  # type: ignore[arg-type]
+                if payment:
+                    locked = self.payments.get_for_update(payment.id)  # type: ignore[arg-type]
+                    if locked:
+                        self._apply_refund(locked, call_provider=True, commit=False)
+                        affected += 1
+                        self._notify_cancellation(booking)
+                        continue
+            # Pending/accepted (or paid without a payment row): just release.
+            booking.status = BOOKING_CANCELLED  # type: ignore[assignment]
+            if ride.status != RIDE_COMPLETED:
+                self._release_booking_seats(booking.id, ride)  # type: ignore[arg-type]
+            affected += 1
+            self._notify_cancellation(booking)
+        return affected
+
+    def _notify_cancellation(self, booking) -> None:
+        self.notifications.send_push_notification(
+            user_id=booking.passenger_id,
+            title="Səfər ləğv edildi",
+            body="Sürücü səfəri ləğv etdi. Ödənişiniz geri qaytarıldı.",
+            data={"booking_id": str(booking.id), "type": "ride_cancelled"},
+        )
 
     def release_driver_earnings_for_ride(self, ride_id: UUID) -> None:
         ride = self.rides.get_ride_for_update(ride_id)

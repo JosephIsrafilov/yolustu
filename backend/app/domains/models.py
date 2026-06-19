@@ -11,6 +11,7 @@ from app.domains.trips.models import Ride, RideSeat, Vehicle, VehicleDocument
 from app.domains.payments.models import (
     Payment,
     PayoutRequest,
+    ProviderEvent,
     Wallet,
     WalletTransaction,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "VehicleDocument",
     "Payment",
     "PayoutRequest",
+    "ProviderEvent",
     "Wallet",
     "WalletTransaction",
     "Badge",

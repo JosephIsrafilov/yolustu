@@ -21,8 +21,11 @@ from app.domains.identity.schemas import (
 )
 from app.domains.payments.schemas import PayoutRequestResponse
 from app.domains.payments.services import PaymentService
-from app.domains.trips.schemas import RideResponse, VehicleDocumentResponse, AdminDocumentDecision
-from app.domains.trips.repositories import REQUIRED_DOCUMENT_TYPES
+from app.domains.trips.schemas import (
+    RideResponse,
+    VehicleDocumentResponse,
+    AdminDocumentDecision,
+)
 
 router = APIRouter()
 
@@ -310,7 +313,10 @@ def get_recent_audit_activity(
 
 # ── Vehicle document review ──────────────────────────────────────────────────
 
-@router.get("/vehicle-documents", response_model=PaginatedResponse[VehicleDocumentResponse])
+
+@router.get(
+    "/vehicle-documents", response_model=PaginatedResponse[VehicleDocumentResponse]
+)
 def list_pending_vehicle_documents(
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_admin),
@@ -338,7 +344,9 @@ def get_vehicle_document_content(
     return AdminService(db).serve_vehicle_document_content(document_id, current_user)
 
 
-@router.patch("/vehicle-documents/{document_id}/decision", response_model=VehicleDocumentResponse)
+@router.patch(
+    "/vehicle-documents/{document_id}/decision", response_model=VehicleDocumentResponse
+)
 def decide_vehicle_document(
     document_id: UUID,
     payload: AdminDocumentDecision,

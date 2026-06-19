@@ -143,6 +143,9 @@ class FakeRideRepository:
     def get(self, ride_id):
         return self.rides.get(ride_id)
 
+    def get_for_update(self, ride_id):
+        return self.rides.get(ride_id)
+
     def get_by_share_token(self, token):
         return next((r for r in self.rides.values() if r.share_token == token), None)
 
@@ -191,7 +194,13 @@ def make_cu(uid: UUID, role="driver") -> CurrentUser:
 
 
 def make_service(rides=None, vehicles=None):
-    svc = TripsService(db=cast(Session, None))
+    from types import SimpleNamespace
+
+    db = cast(
+        Session,
+        SimpleNamespace(commit=lambda: None, refresh=lambda x: x, flush=lambda: None),
+    )
+    svc = TripsService(db=db)
     ride_repo = FakeRideRepository(rides or [])
     vehicle_repo = FakeVehicleRepository(vehicles or [])
     user_repo = FakeUserRepo()
@@ -371,7 +380,11 @@ def test_cancel_active_ride_succeeds():
     driver_id = uuid4()
     ride = make_ride(driver_id, status="active")
     svc, _, _, _ = make_service(rides=[ride])
-    result = svc.cancel_ride(ride.id, make_cu(driver_id))
+    with patch(
+        "app.domains.payments.services.PaymentService.cancel_ride_bookings",
+        return_value=0,
+    ):
+        result = svc.cancel_ride(ride.id, make_cu(driver_id))
     assert result.status == "cancelled"
 
 
@@ -380,7 +393,11 @@ def test_admin_can_cancel_any_ride():
     ride = make_ride(driver_id, status="active")
     svc, _, _, _ = make_service(rides=[ride])
     admin = make_cu(uuid4(), "admin")
-    result = svc.cancel_ride(ride.id, admin)
+    with patch(
+        "app.domains.payments.services.PaymentService.cancel_ride_bookings",
+        return_value=0,
+    ):
+        result = svc.cancel_ride(ride.id, admin)
     assert result.status == "cancelled"
 
 
