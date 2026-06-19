@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -37,8 +37,6 @@ from app.domains.payments.reservations import BookingReservationWalletService
 from app.domains.payments.services import money
 from app.domains.trips.models import SEAT_SPOTS
 from app.domains.trips.ports import RideLookupPort
-
-PENDING_SEAT_HOLD_MINUTES = 15
 
 
 class BookingsService:
@@ -86,9 +84,9 @@ class BookingsService:
             total_price=amount,  # type: ignore[arg-type]
             selected_spots=selected_spots,
         )
-        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(
-            minutes=PENDING_SEAT_HOLD_MINUTES
-        )
+        # The wallet hold remains valid until the ride departs. A short fixed
+        # deadline made bookings for future rides expire minutes after creation.
+        booking.payment_deadline = ride.departure_time
         try:
             self.seats.allocate(booking, ride.id, selected_spots)  # type: ignore[arg-type]
             self._sync_ride_seat_projection(ride)
@@ -191,12 +189,13 @@ class BookingsService:
             raise HTTPException(
                 status_code=403, detail="Only the passenger can cancel this booking"
             )
+        if booking.status == BOOKING_EXPIRED:
+            return booking_to_response(booking)
 
         if booking.status in [
             BOOKING_CANCELLED,
             BOOKING_REJECTED,
             BOOKING_COMPLETED,
-            BOOKING_EXPIRED,
         ]:
             raise HTTPException(
                 status_code=400, detail="Booking cannot be cancelled in current status"

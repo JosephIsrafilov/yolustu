@@ -229,7 +229,7 @@ def test_create_booking_reserves_wallet_and_decrements_seats():
     assert response.selected_spots == ["front_right", "back_left"]
     assert response.id in reservations.reserved
     assert ride.available_seats == 1
-    assert response.payment_deadline is not None
+    assert response.payment_deadline == ride.departure_time
 
 
 def test_selected_spot_count_must_match_seats_booked():

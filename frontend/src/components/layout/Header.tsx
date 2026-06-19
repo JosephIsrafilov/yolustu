@@ -44,15 +44,12 @@ export default function Header() {
   const isAdmin = capabilities.canAccessAdmin;
   const isLandingPage = pathname === '/';
 
-  const { data: walletBalance, isLoading: isWalletLoading } = useQuery({
-    queryKey: ['wallet-balance', currentUser?.id],
-    queryFn: async () => {
-      const w = await paymentsService.getWallet();
-      return w.availableBalance;
-    },
+  const { data: wallet, isLoading: isWalletLoading } = useQuery({
+    queryKey: ['wallet', currentUser?.id],
+    queryFn: () => paymentsService.getWallet(),
     enabled: !!isAuthenticated && !!currentUser && !isAdmin,
-    staleTime: 5 * 60 * 1000,
   });
+  const walletBalance = wallet?.availableBalance;
 
   const getBecomeDriverText = (lang: string) => {
     if (lang === 'az') return 'Surucu olmaq';

@@ -1,5 +1,6 @@
 import type { CreateTripData, Trip, Booking, User, AiDocumentReview, Review, Vehicle, VehicleDocument, VehicleVerificationStatus, SeatSpot } from '@/types';
 import { buildApiAssetUrl } from '@/lib/env';
+import { effectiveBookingStatus } from '@/lib/bookings';
 import { SEAT_SPOTS } from '@/lib/seats';
 
 export interface ApiAiDocumentReview {
@@ -275,16 +276,17 @@ export function mapCreateTripToApiRideCreate(
 }
 
 export function mapApiBookingToBooking(apiBooking: ApiBooking): Booking {
+  const paymentDeadline = apiBooking.payment_deadline ?? undefined;
   return {
     id: apiBooking.id,
     tripId: apiBooking.ride_id,
     passengerId: apiBooking.passenger_id,
-    status: apiBooking.status,
+    status: effectiveBookingStatus(apiBooking.status, paymentDeadline),
     seatsRequested: apiBooking.seats_booked,
     selectedSpots: apiBooking.selected_spots ?? [],
     totalPrice: apiBooking.total_price ? Number(apiBooking.total_price) : undefined,
     createdAt: apiBooking.created_at,
-    paymentDeadline: apiBooking.payment_deadline ?? undefined,
+    paymentDeadline,
     trip: apiBooking.ride ? mapApiTripToTrip(apiBooking.ride) : undefined,
     passenger: apiBooking.passenger ? mapApiUserToUser(apiBooking.passenger) : undefined,
   };
