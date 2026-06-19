@@ -15,6 +15,7 @@ class AppUser {
   final UserRole role;
   final AppLanguage language;
   final bool isVerified;
+  final bool isEmailVerified;
   final String verificationStatus;
   final String? documentUrl;
   final DateTime? birthDate;
@@ -29,6 +30,7 @@ class AppUser {
     this.role = UserRole.passenger,
     this.language = AppLanguage.az,
     this.isVerified = false,
+    this.isEmailVerified = false,
     this.verificationStatus = 'none',
     this.documentUrl,
     this.birthDate,
@@ -60,6 +62,7 @@ class AppUser {
     UserRole? role,
     AppLanguage? language,
     bool? isVerified,
+    bool? isEmailVerified,
     String? verificationStatus,
     String? documentUrl,
     DateTime? birthDate,
@@ -74,6 +77,7 @@ class AppUser {
       role: role ?? this.role,
       language: language ?? this.language,
       isVerified: isVerified ?? this.isVerified,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       documentUrl: documentUrl ?? this.documentUrl,
       birthDate: birthDate ?? this.birthDate,
@@ -97,6 +101,7 @@ class AppUser {
         orElse: () => AppLanguage.az,
       ),
       isVerified: json['is_verified'] as bool? ?? false,
+      isEmailVerified: json['is_email_verified'] as bool? ?? false,
       verificationStatus: json['verification_status'] as String? ?? 'none',
       documentUrl: json['document_url'] as String?,
       birthDate: json['birth_date'] != null
@@ -116,6 +121,7 @@ class AppUser {
       'role': role.name,
       'language': language.name,
       'is_verified': isVerified,
+      'is_email_verified': isEmailVerified,
       'verification_status': verificationStatus,
       'document_url': documentUrl,
       if (birthDate != null) 'birth_date': birthDate!.toIso8601String(),

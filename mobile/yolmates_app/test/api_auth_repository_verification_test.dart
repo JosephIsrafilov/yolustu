@@ -43,6 +43,36 @@ class _CaptureAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+class _EmailVerifyAdapter implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    return ResponseBody.fromString(
+      jsonEncode({
+        'id': 'user-1',
+        'phone': '+994501234567',
+        'email': 'test@example.com',
+        'first_name': 'Test',
+        'last_name': 'User',
+        'role': 'passenger',
+        'is_verified': false,
+        'is_email_verified': true,
+        'verification_status': 'none',
+      }),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 void main() {
   test('submitVerification sends selected file as multipart field file',
       () async {
@@ -69,5 +99,18 @@ void main() {
     expect(adapter.body!, containsAllInOrder(fileBytes));
     expect(user.verificationStatus, 'pending');
     expect(user.documentUrl, isNotEmpty);
+  });
+
+  test('verifyEmailOtp maps user returned by verify-email endpoint', () async {
+    final storage = InMemorySessionStorage();
+    final client = ApiClient(AuthTokenStorage(storage));
+    client.dio.httpClientAdapter = _EmailVerifyAdapter();
+    final repository =
+        ApiAuthRepository(client, AuthTokenStorage(storage), storage);
+
+    final user = await repository.verifyEmailOtp('123456');
+
+    expect(user.email, 'test@example.com');
+    expect(user.firstName, 'Test');
   });
 }

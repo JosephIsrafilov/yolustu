@@ -69,6 +69,8 @@ class ApiAuthRepository implements AuthRepository {
       // Backend expects query params, not body
       await _client
           .post('/auth/request-otp?phone=${Uri.encodeComponent(phone)}');
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -82,6 +84,8 @@ class ApiAuthRepository implements AuthRepository {
   Future<void> requestEmailVerification() async {
     try {
       await _client.post('/auth/request-email-verification');
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -111,6 +115,8 @@ class ApiAuthRepository implements AuthRepository {
       final user = mapUserResponse(userJson);
       await _persistUser(user);
       return user;
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -123,15 +129,18 @@ class ApiAuthRepository implements AuthRepository {
   @override
   Future<AppUser> verifyEmailOtp(String code) async {
     try {
-      await _client.post('/auth/verify-email', data: {'otp': code});
-      final meResponse = await _client.get('/users/me');
-      final userJson = meResponse.data as Map<String, dynamic>?;
+      final response = await _client.post('/auth/verify-email', data: {
+        'otp': code,
+      });
+      final userJson = response.data as Map<String, dynamic>?;
       if (userJson == null) {
         throw const AuthException('User data was not returned');
       }
       final user = mapUserResponse(userJson);
       await _persistUser(user);
       return user;
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -179,6 +188,8 @@ class ApiAuthRepository implements AuthRepository {
       final user = mapUserResponse(userJson);
       await _persistUser(user);
       return user;
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -233,6 +244,8 @@ class ApiAuthRepository implements AuthRepository {
       final user = mapUserResponse(userJson);
       await _persistUser(user);
       return user;
+    } on ApiException catch (e) {
+      throw AuthException(e.message);
     } on DioException catch (e) {
       final apiError = e.error is ApiException
           ? e.error as ApiException
@@ -424,6 +437,7 @@ class ApiAuthRepository implements AuthRepository {
       role: _parseRole(json['role'] as String?),
       language: _parseLanguage(json['language'] as String?),
       isVerified: json['is_verified'] as bool? ?? false,
+      isEmailVerified: json['is_email_verified'] as bool? ?? false,
       verificationStatus: json['verification_status'] as String? ?? 'none',
       documentUrl: json['document_url'] as String?,
     );

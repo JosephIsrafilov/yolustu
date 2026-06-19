@@ -62,7 +62,7 @@ class MockAuthRepository implements AuthRepository {
     if (current == null) {
       throw const AuthException('No active session');
     }
-    final updated = current.copyWith();
+    final updated = current.copyWith(isEmailVerified: true);
     await _persist(updated);
     return updated;
   }

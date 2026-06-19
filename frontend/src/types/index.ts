@@ -203,6 +203,8 @@ export interface Message {
 export interface ConversationParticipant {
   user_id: string;
   role: string;
+  user_name?: string;
+  user_avatar_url?: string;
 }
 
 export interface Conversation {
@@ -214,6 +216,8 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   participants: ConversationParticipant[];
+  last_message?: Message | null;
+  unread_count?: number;
 }
 
 export type ModerationItemType = 'user' | 'trip' | 'booking';
