@@ -130,6 +130,33 @@ class WalletController extends AsyncNotifier<WalletState> {
     }
   }
 
+  Future<void> simulateDriverEarning(double amount, String description) async {
+    final current = state.value;
+    try {
+      final balance = await _repo.simulateDriverEarning(amount, description);
+      final transactions = await _repo.getTransactions(limit: 20);
+      state = AsyncValue.data(WalletState(
+        balance: balance,
+        transactions: transactions,
+        cards: current?.cards ?? _demoCards,
+        selectedCardId: current?.selectedCardId ?? _demoCards.first.id,
+      ));
+    } catch (e) {
+      // ignore silently for demo
+    }
+  }
+
+  Future<Map<String, dynamic>> createStripeTopUp(double amount) async {
+    return await _repo.createStripeTopUp(amount);
+  }
+
+  Future<void> checkStripeTopUpStatus(String sessionId) async {
+    final status = await _repo.getStripeTopUpStatus(sessionId);
+    if (status['status'] == 'completed' || status['status'] == 'pending') {
+      await refresh();
+    }
+  }
+
   void selectCard(String cardId) {
     final current = state.value;
     if (current == null) return;

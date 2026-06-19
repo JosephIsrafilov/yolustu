@@ -11,6 +11,8 @@ import '../../shared/widgets/status_badge.dart';
 import '../../shared/models/user.dart';
 import '../chat/data/chat_repository.dart';
 import '../reviews/presentation/review_dialog.dart';
+import '../../core/utils/date_utils.dart';
+import '../notifications/notification_provider.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -107,9 +109,7 @@ class _DetailState extends ConsumerState<_Detail> {
       if (mounted) context.push('/messages/${conversation.id}');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Xeta: $e')));
+        ref.read(notificationProvider.notifier).showError('Xeta: $e');
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -160,9 +160,9 @@ class _DetailState extends ConsumerState<_Detail> {
     final l10n = ref.watch(l10nProvider);
     final b = widget.booking;
     final time =
-        '${b.departureTime.hour.toString().padLeft(2, '0')}:${b.departureTime.minute.toString().padLeft(2, '0')}';
+        AppDateUtils.formatLocalDateTime(b.departureTime, format: 'HH:mm');
     final date =
-        '${b.departureTime.day}.${b.departureTime.month}.${b.departureTime.year}';
+        AppDateUtils.formatLocalDateTime(b.departureTime, format: 'dd.MM.yyyy');
 
     return ListView(
       padding: const EdgeInsets.all(AppConstants.spacing16),

@@ -13,6 +13,9 @@ from app.domains.payments.schemas import (
     PaymentResponse,
     PaymentSessionResponse,
     PaymentWebhookResponse,
+    WalletTopUpRequest,
+    WalletTopUpResponse,
+    WalletTopUpSessionResponse,
 )
 from app.domains.payments.services import PaymentService
 
@@ -39,6 +42,24 @@ def pay_from_wallet(
     db: Session = Depends(get_db),
 ):
     return PaymentService(db).pay_booking_from_wallet(request.booking_id, current_user)
+
+
+@router.post("/stripe/wallet-top-up", response_model=WalletTopUpResponse)
+def create_wallet_topup(
+    request: WalletTopUpRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return PaymentService(db).create_stripe_topup_session(request.amount, current_user)
+
+
+@router.get("/stripe/session/{session_id}", response_model=WalletTopUpSessionResponse)
+def get_topup_session_status(
+    session_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return PaymentService(db).get_stripe_topup_status(session_id, current_user)
 
 
 @router.get("/admin", response_model=PaginatedResponse[PaymentResponse])

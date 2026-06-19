@@ -1,24 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/theme.dart';
+import '../../core/utils/date_utils.dart';
+import '../../shared/widgets/app_card.dart';
 import '../auth/data/app_user.dart';
 import '../auth/state/auth_controller.dart';
-import '../../shared/widgets/app_card.dart';
+import '../notifications/notification_provider.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'data/wallet.dart';
 import 'data/wallet_controller.dart';
 
-class WalletScreen extends ConsumerWidget {
+class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends ConsumerState<WalletScreen>
+    with WidgetsBindingObserver {
+  String? _pendingSessionId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingSessionId != null) {
+      _checkPaymentStatus();
+    }
+  }
+
+  Future<void> _checkPaymentStatus() async {
+    if (_pendingSessionId == null) return;
+    try {
+      await ref
+          .read(walletControllerProvider.notifier)
+          .checkStripeTopUpStatus(_pendingSessionId!);
+      ref
+          .read(notificationProvider.notifier)
+          .showSuccess('Stripe ödənişi tamamlandı');
+    } catch (e) {
+      ref.read(notificationProvider.notifier).showError(_stripeErrorMessage(e));
+    }
+    _pendingSessionId = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final walletAsync = ref.watch(walletControllerProvider);
 
@@ -61,54 +106,85 @@ class WalletScreen extends ConsumerWidget {
                     title: l10n.walletTopUpBtn,
                     actionLabel: l10n.walletTopUpBtn,
                     quickAmounts: const [10, 25, 50, 100],
+                    requireCard: true,
+                    allowStripe: true,
                     cards: walletState.cards,
                     selectedCardId: walletState.selectedCard?.id,
-                    onSubmit: (amount) => ref
-                        .read(walletControllerProvider.notifier)
-                        .topUpPassenger(amount),
                     onCardSelected: (cardId) => ref
                         .read(walletControllerProvider.notifier)
                         .selectCard(cardId),
-                    successMessage: 'Mock top up completed',
+                    onSubmit: (amount, method) async {
+                      if (method == 'stripe') {
+                        try {
+                          final res = await ref
+                              .read(walletControllerProvider.notifier)
+                              .createStripeTopUp(amount);
+                          final checkoutUrl = res['checkout_url'] as String;
+                          final sessionId = res['session_id'] as String;
+                          _pendingSessionId = sessionId;
+                          final uri = Uri.parse(checkoutUrl);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri,
+                                mode: LaunchMode.externalApplication);
+                          } else {
+                            throw Exception('Could not open Stripe Checkout');
+                          }
+                        } catch (e) {
+                          ref
+                              .read(notificationProvider.notifier)
+                              .showError(_stripeErrorMessage(e));
+                        }
+                      } else {
+                        try {
+                          await ref
+                              .read(walletControllerProvider.notifier)
+                              .topUpPassenger(amount);
+                          final newBalance = ref
+                              .read(walletControllerProvider)
+                              .valueOrNull
+                              ?.balance
+                              .passengerBalance;
+                          ref.read(notificationProvider.notifier).showSuccess(
+                              newBalance == null
+                                  ? 'Top-up successful: ${amount.toStringAsFixed(2)} AZN.'
+                                  : 'Top-up successful: ${amount.toStringAsFixed(2)} AZN. New balance: ${newBalance.toStringAsFixed(2)} AZN.');
+                        } catch (e) {
+                          ref
+                              .read(notificationProvider.notifier)
+                              .showError('Xəta: ${e.toString()}');
+                        }
+                      }
+                    },
                   ),
+                  secondaryActionLabel:
+                      showDriverBalance ? l10n.walletWithdraw : null,
+                  secondaryActionIcon:
+                      showDriverBalance ? Icons.arrow_upward : null,
+                  onSecondaryAction: showDriverBalance &&
+                          balance.passengerBalance > 0
+                      ? () => _showAmountSheet(
+                            context: context,
+                            title: l10n.walletWithdraw,
+                            actionLabel: l10n.walletWithdraw,
+                            quickAmounts: const [10, 25, 50],
+                            maxAmount: balance.passengerBalance,
+                            cards: walletState.cards,
+                            selectedCardId: walletState.selectedCard?.id,
+                            requireCard: true,
+                            allowStripe: false,
+                            onSubmit: (amount, _) async {
+                              await ref
+                                  .read(walletControllerProvider.notifier)
+                                  .withdrawDriver(amount);
+                              ref.read(notificationProvider.notifier).showSuccess(
+                                  'Withdrawal completed: ${amount.toStringAsFixed(2)} AZN.');
+                            },
+                            onCardSelected: (cardId) => ref
+                                .read(walletControllerProvider.notifier)
+                                .selectCard(cardId),
+                          )
+                      : null,
                 ),
-                if (showDriverBalance) ...[
-                  const SizedBox(height: 12),
-                  _BalanceCard(
-                    label: l10n.walletDriverBalance,
-                    description: l10n.walletDriverBalanceDesc,
-                    amount: balance.driverBalance,
-                    currency: balance.currency,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.navy,
-                        AppTheme.navy.withValues(alpha: 0.8),
-                      ],
-                    ),
-                    actionLabel: l10n.walletWithdraw,
-                    actionIcon: Icons.arrow_upward,
-                    onAction: balance.driverBalance > 0
-                        ? () => _showAmountSheet(
-                              context: context,
-                              title: l10n.walletWithdraw,
-                              actionLabel: l10n.walletWithdraw,
-                              quickAmounts: const [10, 25, 50],
-                              maxAmount: balance.driverBalance,
-                              cards: walletState.cards,
-                              selectedCardId: walletState.selectedCard?.id,
-                              onSubmit: (amount) => ref
-                                  .read(walletControllerProvider.notifier)
-                                  .withdrawDriver(amount),
-                              onCardSelected: (cardId) => ref
-                                  .read(walletControllerProvider.notifier)
-                                  .selectCard(cardId),
-                              successMessage: 'Mock withdrawal completed',
-                            )
-                        : null,
-                  ),
-                ],
                 const SizedBox(height: 20),
                 Text(
                   l10n.walletPaymentMethod,
@@ -171,11 +247,12 @@ class WalletScreen extends ConsumerWidget {
     required String title,
     required String actionLabel,
     required List<double> quickAmounts,
-    required List<WalletCard> cards,
-    required String? selectedCardId,
-    required Future<void> Function(double amount) onSubmit,
-    required void Function(String cardId) onCardSelected,
-    required String successMessage,
+    required Future<void> Function(double amount, String method) onSubmit,
+    List<WalletCard> cards = const [],
+    String? selectedCardId,
+    void Function(String cardId)? onCardSelected,
+    bool requireCard = false,
+    bool allowStripe = false,
     double? maxAmount,
   }) async {
     final request = await showModalBottomSheet<_WalletActionRequest>(
@@ -191,23 +268,23 @@ class WalletScreen extends ConsumerWidget {
         maxAmount: maxAmount,
         cards: cards,
         selectedCardId: selectedCardId,
+        requireCard: requireCard,
+        allowStripe: allowStripe,
       ),
     );
 
     if (request == null || !context.mounted) return;
 
     try {
-      onCardSelected(request.cardId);
-      await onSubmit(request.amount);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage)),
-      );
+      if (requireCard &&
+          request.method == 'mock' &&
+          request.cardId != null &&
+          onCardSelected != null) {
+        onCardSelected(request.cardId!);
+      }
+      await onSubmit(request.amount, request.method);
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ref.read(notificationProvider.notifier).showError(e.toString());
     }
   }
 
@@ -228,22 +305,37 @@ class WalletScreen extends ConsumerWidget {
     if (card == null || !context.mounted) return;
     try {
       onSubmit(card.holderName, card.number, card.expiry);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Card added')),
-      );
+      ref.read(notificationProvider.notifier).showSuccess('Card added.');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ref.read(notificationProvider.notifier).showError(e.toString());
     }
+  }
+
+  String _stripeErrorMessage(Object error) {
+    final apiError = error is ApiException ? error : null;
+    final message = error.toString();
+    if (apiError?.statusCode == 404 ||
+        apiError?.code == 'NOT_FOUND' ||
+        message.toLowerCase().contains('not found')) {
+      return 'Stripe ödənişi tapılmadı. API bağlantısını yoxlayın.';
+    }
+    if (message.toLowerCase().contains('pending')) {
+      return 'Stripe payment is still pending. Try refreshing in a moment.';
+    }
+    if (message.toLowerCase().contains('cancel')) {
+      return 'Stripe payment was cancelled.';
+    }
+    return 'Stripe payment failed: $message';
   }
 }
 
 class _WalletActionRequest {
   final double amount;
-  final String cardId;
+  final String? cardId;
+  final String method;
 
-  const _WalletActionRequest({required this.amount, required this.cardId});
+  const _WalletActionRequest(
+      {required this.amount, this.cardId, required this.method});
 }
 
 class _NewCardInput {
@@ -265,13 +357,17 @@ class _AmountSheet extends StatefulWidget {
   final double? maxAmount;
   final List<WalletCard> cards;
   final String? selectedCardId;
+  final bool requireCard;
+  final bool allowStripe;
 
   const _AmountSheet({
     required this.title,
     required this.actionLabel,
     required this.quickAmounts,
-    required this.cards,
-    required this.selectedCardId,
+    this.cards = const [],
+    this.selectedCardId,
+    this.requireCard = false,
+    this.allowStripe = false,
     this.maxAmount,
   });
 
@@ -283,6 +379,8 @@ class _AmountSheetState extends State<_AmountSheet> {
   late final TextEditingController _controller;
   late String? _selectedCardId;
   String? _error;
+  String _method = 'mock';
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -300,23 +398,38 @@ class _AmountSheetState extends State<_AmountSheet> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_selectedCardId == null) {
-      setState(() => _error = 'Add or choose a card first');
-      return;
-    }
+  Future<void> _submit() async {
+    if (_isLoading) return;
     final amount = double.tryParse(_controller.text.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
-      setState(() => _error = 'Enter a valid amount');
+      setState(() => _error = 'Düzgün məbləğ daxil edin');
       return;
     }
     if (widget.maxAmount != null && amount > widget.maxAmount!) {
-      setState(() => _error = 'Amount exceeds available balance');
+      setState(() => _error = 'Kifayət qədər vəsait yoxdur');
       return;
     }
-    Navigator.of(context).pop(
-      _WalletActionRequest(amount: amount, cardId: _selectedCardId!),
-    );
+
+    if (widget.requireCard && _method == 'mock' && _selectedCardId == null) {
+      setState(() => _error = 'Kart seçin');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      if (mounted) {
+        Navigator.of(context).pop(_WalletActionRequest(
+            amount: amount, cardId: _selectedCardId, method: _method));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -338,33 +451,49 @@ class _AmountSheetState extends State<_AmountSheet> {
                   ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Card',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.navy,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            if (widget.cards.isEmpty)
-              const Text(
-                'No card added',
-                style: TextStyle(color: AppTheme.slate500),
-              )
-            else
-              ...widget.cards.map(
-                (card) => RadioListTile<String>(
-                  contentPadding: EdgeInsets.zero,
-                  value: card.id,
-                  // ignore: deprecated_member_use
-                  groupValue: _selectedCardId,
-                  // ignore: deprecated_member_use
-                  onChanged: (value) => setState(() => _selectedCardId = value),
-                  title: Text(card.label),
-                  subtitle: Text('${card.holderName} · ${card.expiry}'),
-                ),
+            if (widget.allowStripe) ...[
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'mock', label: Text('Demo Card')),
+                  ButtonSegment(value: 'stripe', label: Text('Stripe')),
+                ],
+                selected: {_method},
+                onSelectionChanged: (val) {
+                  setState(() => _method = val.first);
+                },
               ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
+            if (_method == 'mock' && widget.requireCard) ...[
+              Text(
+                'Card',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.navy,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              if (widget.cards.isEmpty)
+                const Text(
+                  'No card added',
+                  style: TextStyle(color: AppTheme.slate500),
+                )
+              else
+                ...widget.cards.map(
+                  (card) => RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    value: card.id,
+                    // ignore: deprecated_member_use
+                    groupValue: _selectedCardId,
+                    // ignore: deprecated_member_use
+                    onChanged: (value) =>
+                        setState(() => _selectedCardId = value),
+                    title: Text(card.label),
+                    subtitle: Text('${card.holderName} · ${card.expiry}'),
+                  ),
+                ),
+              const SizedBox(height: 16),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -400,8 +529,15 @@ class _AmountSheetState extends State<_AmountSheet> {
             ],
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _submit,
-              child: Text(widget.actionLabel),
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(_method == 'stripe'
+                      ? 'Pay with Stripe'
+                      : widget.actionLabel),
             ),
           ],
         ),
@@ -574,6 +710,9 @@ class _BalanceCard extends StatelessWidget {
   final String actionLabel;
   final IconData actionIcon;
   final VoidCallback? onAction;
+  final String? secondaryActionLabel;
+  final IconData? secondaryActionIcon;
+  final VoidCallback? onSecondaryAction;
 
   const _BalanceCard({
     required this.label,
@@ -584,6 +723,9 @@ class _BalanceCard extends StatelessWidget {
     required this.actionLabel,
     required this.actionIcon,
     this.onAction,
+    this.secondaryActionLabel,
+    this.secondaryActionIcon,
+    this.onSecondaryAction,
   });
 
   @override
@@ -623,20 +765,44 @@ class _BalanceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onAction,
-              icon: Icon(actionIcon, size: 16),
-              label: Text(actionLabel),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white,
-                disabledBackgroundColor: Colors.white.withValues(alpha: 0.08),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onAction,
+                  icon: Icon(actionIcon, size: 16),
+                  label: Text(actionLabel),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        Colors.white.withValues(alpha: 0.08),
+                    side:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
               ),
-            ),
+              if (secondaryActionLabel != null) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onSecondaryAction,
+                    icon: Icon(secondaryActionIcon, size: 16),
+                    label: Text(secondaryActionLabel!),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          Colors.white.withValues(alpha: 0.08),
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -655,7 +821,8 @@ class _TxnRow extends StatelessWidget {
     final label = transaction.description ?? transaction.type.label;
     final amount = transaction.amount;
     final currency = transaction.currency;
-    final date = DateFormat('dd MMM, HH:mm').format(transaction.createdAt);
+    final date = AppDateUtils.formatLocalDateTime(transaction.createdAt,
+        format: 'dd MMM, HH:mm');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),

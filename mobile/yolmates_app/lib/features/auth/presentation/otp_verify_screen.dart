@@ -177,6 +177,12 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 enabled: !_verifying,
                 onCompleted: (_) => _verify(),
               ),
+              const SizedBox(height: 8),
+              const Text(
+                'Demo code: 123456',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.slate500),
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Row(

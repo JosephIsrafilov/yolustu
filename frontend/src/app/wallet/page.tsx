@@ -82,6 +82,7 @@ const WALLET_COPY = {
       pending: 'Gözləyir',
       captured: 'Ödənişə çevrildi',
       reversed: 'Geri qaytarıldı',
+      completed: 'Tamamlandı',
     },
     payoutStatuses: {
       pending: 'Gözləyir',
@@ -142,6 +143,7 @@ const WALLET_COPY = {
       pending: 'В ожидании',
       captured: 'Списано',
       reversed: 'Отменено',
+      completed: 'Завершено',
     },
     payoutStatuses: {
       pending: 'В ожидании',
@@ -198,10 +200,11 @@ const WALLET_COPY = {
       reservations: 'No reservation transactions yet',
     },
     statuses: {
-      posted: 'Completed',
+      posted: 'Posted',
       pending: 'Pending',
       captured: 'Captured',
       reversed: 'Reversed',
+      completed: 'Completed',
     },
     payoutStatuses: {
       pending: 'Pending',
@@ -224,6 +227,7 @@ const STATUS_VARIANT = {
   pending: 'warning',
   captured: 'success',
   reversed: 'muted',
+  completed: 'success',
 } as const;
 
 const PAYOUT_STATUS_VARIANT = {
@@ -351,6 +355,7 @@ function WalletContent() {
   const [expiry, setExpiry] = React.useState('');
   const [cvc, setCvc] = React.useState('');
   const [formMessage, setFormMessage] = React.useState<{ type: 'error' | 'success'; text: string } | null>(null);
+  const [paymentMethod, setPaymentMethod] = React.useState<'mock' | 'stripe'>('mock');
 
   const walletQuery = useQuery({
     queryKey: ['wallet', currentUser?.id],
@@ -397,6 +402,13 @@ function WalletContent() {
     },
   });
 
+  const topupStripeMutation = useMutation({
+    mutationFn: (value: number) => paymentsService.createStripeTopUp(value),
+    onSuccess: (data) => {
+      window.location.href = data.checkout_url;
+    },
+  });
+
   const payoutMutation = useMutation({
     mutationFn: (value: number) => paymentsService.requestPayout(value, payoutKey),
     onSuccess: () => {
@@ -431,6 +443,19 @@ function WalletContent() {
       await topupMutation.mutateAsync(Number(amount));
       setFormMessage({ type: 'success', text: copy.success });
       if (returnTo) router.push(returnTo);
+    } catch {
+      setFormMessage({ type: 'error', text: copy.loadError });
+    }
+  };
+
+  const handleStripeTopup = async () => {
+    if (!amount || amount <= 0) {
+      setFormMessage({ type: 'error', text: copy.formError });
+      return;
+    }
+    try {
+      setFormMessage(null);
+      await topupStripeMutation.mutateAsync(Number(amount));
     } catch {
       setFormMessage({ type: 'error', text: copy.loadError });
     }
@@ -562,96 +587,134 @@ function WalletContent() {
               </Card>
 
               <Card className="p-5 md:p-6 shadow-md border border-[#cfdfe3]/80 bg-white">
+                <div className="mb-5 flex rounded-lg bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('mock')}
+                    className={`flex-1 rounded-md py-2 text-sm font-semibold transition-all ${
+                      paymentMethod === 'mock'
+                        ? 'bg-white text-slate-800 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Demo (Mock)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('stripe')}
+                    className={`flex-1 rounded-md py-2 text-sm font-semibold transition-all ${
+                      paymentMethod === 'stripe'
+                        ? 'bg-[#635BFF] text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Stripe Checkout
+                  </button>
+                </div>
+
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-[#002f37]">{copy.cardTitle}</h2>
-                    <p className="mt-1 text-sm text-[#526970]">{copy.network}: {networkMeta?.label ?? 'Auto'}</p>
+                    <h2 className="text-xl font-bold text-[#002f37]">{paymentMethod === 'mock' ? copy.cardTitle : 'Stripe Checkout'}</h2>
+                    {paymentMethod === 'mock' && <p className="mt-1 text-sm text-[#526970]">{copy.network}: {networkMeta?.label ?? 'Auto'}</p>}
                   </div>
-                  <span className={`rounded-lg px-3 py-1 text-xs font-bold text-white ${networkMeta?.color ?? 'bg-[#60757b]'}`}>
-                    {networkMeta?.label?.toUpperCase() ?? 'CARD'}
-                  </span>
+                  {paymentMethod === 'mock' && (
+                    <span className={`rounded-lg px-3 py-1 text-xs font-bold text-white ${networkMeta?.color ?? 'bg-[#60757b]'}`}>
+                      {networkMeta?.label?.toUpperCase() ?? 'CARD'}
+                    </span>
+                  )}
                 </div>
 
-                <div className="group relative mt-5 overflow-hidden rounded-2xl bg-linear-to-br from-[#115e6e] via-[#0b3c43] to-[#041f24] p-5 text-white shadow-lg border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
-                  {/* shine effect overlay */}
-                  <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-white/10 opacity-75" />
-                  <div className="pointer-events-none absolute -left-1/3 -top-1/2 w-full h-full bg-white/5 blur-3xl rounded-full transition-transform duration-500 group-hover:translate-x-10" />
-                  <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rotate-45 bg-white/5 transition-transform duration-500 group-hover:-translate-y-2" />
-                  
-                  <div className="flex items-start justify-between relative z-10">
-                    {/* chip SVG */}
-                    <svg width="38" height="30" viewBox="0 0 38 30" fill="none" className="opacity-95 shadow-sm">
-                      <rect x="0.5" y="0.5" width="37" height="29" rx="4.5" fill="#d4af37" stroke="#b8931d"/>
-                      <line x1="13" y1="0" x2="13" y2="30" stroke="#b8931d" strokeWidth="1"/>
-                      <line x1="25" y1="0" x2="25" y2="30" stroke="#b8931d" strokeWidth="1"/>
-                      <line x1="0" y1="10" x2="38" y2="10" stroke="#b8931d" strokeWidth="1"/>
-                      <line x1="0" y1="20" x2="38" y2="20" stroke="#b8931d" strokeWidth="1"/>
-                    </svg>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">{networkMeta?.label?.toUpperCase() ?? 'WALLET CARD'}</span>
+                {paymentMethod === 'mock' ? (
+                  <div className="group relative mt-5 overflow-hidden rounded-2xl bg-linear-to-br from-[#115e6e] via-[#0b3c43] to-[#041f24] p-5 text-white shadow-lg border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+                    {/* shine effect overlay */}
+                    <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-white/10 opacity-75" />
+                    <div className="pointer-events-none absolute -left-1/3 -top-1/2 w-full h-full bg-white/5 blur-3xl rounded-full transition-transform duration-500 group-hover:translate-x-10" />
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rotate-45 bg-white/5 transition-transform duration-500 group-hover:-translate-y-2" />
+
+                    <div className="flex items-start justify-between relative z-10">
+                      {/* chip SVG */}
+                      <svg width="38" height="30" viewBox="0 0 38 30" fill="none" className="opacity-95 shadow-sm">
+                        <rect x="0.5" y="0.5" width="37" height="29" rx="4.5" fill="#d4af37" stroke="#b8931d"/>
+                        <line x1="13" y1="0" x2="13" y2="30" stroke="#b8931d" strokeWidth="1"/>
+                        <line x1="25" y1="0" x2="25" y2="30" stroke="#b8931d" strokeWidth="1"/>
+                        <line x1="0" y1="10" x2="38" y2="10" stroke="#b8931d" strokeWidth="1"/>
+                        <line x1="0" y1="20" x2="38" y2="20" stroke="#b8931d" strokeWidth="1"/>
+                      </svg>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">{networkMeta?.label?.toUpperCase() ?? 'WALLET CARD'}</span>
+                    </div>
+                    <p className="mt-7 font-mono text-lg tracking-[0.24em] relative z-10 select-all">{maskedCard}</p>
+                    <div className="mt-5 flex justify-between gap-4 text-xs font-semibold uppercase text-white/80 relative z-10">
+                      <span className="truncate tracking-wide">{cardholder || copy.cardholder}</span>
+                      <span className="font-mono">{expiry || 'MM/YY'}</span>
+                    </div>
                   </div>
-                  <p className="mt-7 font-mono text-lg tracking-[0.24em] relative z-10 select-all">{maskedCard}</p>
-                  <div className="mt-5 flex justify-between gap-4 text-xs font-semibold uppercase text-white/80 relative z-10">
-                    <span className="truncate tracking-wide">{cardholder || copy.cardholder}</span>
-                    <span className="font-mono">{expiry || 'MM/YY'}</span>
+                ) : (
+                  <div className="mt-5 rounded-xl bg-[#f8fafc] border border-slate-200 p-5 text-center shadow-sm">
+                    <Icon name="lock" size={24} className="mx-auto text-slate-400 mb-2" />
+                    <p className="text-sm font-medium text-slate-600">You will be securely redirected to Stripe.</p>
                   </div>
-                </div>
+                )}
 
                 <div className="mt-5 space-y-4">
-                  <label className="block">
-                    <span className="text-sm font-semibold text-[#314f56]">{copy.cardNumber}</span>
-                    <input
-                      id="wallet-card-number"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="cc-number"
-                      value={cardNumber}
-                      onChange={(event) => {
-                        const nextNetwork = detectCardNetwork(event.target.value);
-                        setCardNumber(formatCardNumber(event.target.value, nextNetwork));
-                      }}
-                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
-                      placeholder="4242 4242 4242 4242"
-                    />
-                  </label>
+                  {paymentMethod === 'mock' && (
+                    <>
+                      <label className="block">
+                        <span className="text-sm font-semibold text-[#314f56]">{copy.cardNumber}</span>
+                        <input
+                          id="wallet-card-number"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="cc-number"
+                          value={cardNumber}
+                          onChange={(event) => {
+                            const nextNetwork = detectCardNetwork(event.target.value);
+                            setCardNumber(formatCardNumber(event.target.value, nextNetwork));
+                          }}
+                          className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
+                          placeholder="4242 4242 4242 4242"
+                        />
+                      </label>
 
-                  <label className="block">
-                    <span className="text-sm font-semibold text-[#314f56]">{copy.cardholder}</span>
-                    <input
-                      type="text"
-                      autoComplete="cc-name"
-                      value={cardholder}
-                      onChange={(event) => setCardholder(event.target.value.toUpperCase())}
-                      className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
-                      placeholder="ELVIN MAMMADOV"
-                    />
-                  </label>
+                      <label className="block">
+                        <span className="text-sm font-semibold text-[#314f56]">{copy.cardholder}</span>
+                        <input
+                          type="text"
+                          autoComplete="cc-name"
+                          value={cardholder}
+                          onChange={(event) => setCardholder(event.target.value.toUpperCase())}
+                          className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-semibold text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
+                          placeholder="ELVIN MAMMADOV"
+                        />
+                      </label>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-sm font-semibold text-[#314f56]">{copy.expiry}</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="cc-exp"
-                        value={expiry}
-                        onChange={(event) => setExpiry(formatExpiry(event.target.value))}
-                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
-                        placeholder="MM/YY"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-semibold text-[#314f56]">{copy.cvc}</span>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        autoComplete="cc-csc"
-                        value={cvc}
-                        onChange={(event) => setCvc(digitsOnly(event.target.value).slice(0, networkMeta?.cvc ?? 3))}
-                        className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
-                        placeholder={network === 'amex' ? '1234' : '123'}
-                      />
-                    </label>
-                  </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="block">
+                          <span className="text-sm font-semibold text-[#314f56]">{copy.expiry}</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-exp"
+                            value={expiry}
+                            onChange={(event) => setExpiry(formatExpiry(event.target.value))}
+                            className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
+                            placeholder="MM/YY"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-sm font-semibold text-[#314f56]">{copy.cvc}</span>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
+                            value={cvc}
+                            onChange={(event) => setCvc(digitsOnly(event.target.value).slice(0, networkMeta?.cvc ?? 3))}
+                            className="mt-1 h-11 w-full rounded-xl border border-[#cfdfe3] px-3 font-mono text-[#002f37] outline-none focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8] transition-all duration-150"
+                            placeholder={network === 'amex' ? '1234' : '123'}
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
 
                   <label className="block">
                     <span className="text-sm font-semibold text-[#314f56]">{copy.amount}</span>
@@ -689,10 +752,17 @@ function WalletContent() {
                     </div>
                   )}
 
-                  <Button onClick={handleTopup} loading={topupMutation.isPending} className="w-full h-11 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-sm hover:shadow-md">
-                    <Icon name="credit-card" size={16} />
-                    {copy.pay}
-                  </Button>
+                  {paymentMethod === 'mock' ? (
+                    <Button onClick={handleTopup} loading={topupMutation.isPending} className="w-full h-11 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-sm hover:shadow-md">
+                      <Icon name="credit-card" size={16} />
+                      {copy.pay}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleStripeTopup} loading={topupStripeMutation.isPending} className="w-full h-11 bg-[#635BFF] text-white hover:bg-[#5851df] transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-sm hover:shadow-md border-transparent">
+                      <Icon name="credit-card" size={16} />
+                      Pay with Stripe
+                    </Button>
+                  )}
                 </div>
               </Card>
 

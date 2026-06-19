@@ -42,20 +42,22 @@ class BookingDto {
 
   factory BookingDto.fromJson(Map<String, dynamic> json) {
     return BookingDto(
-      id: json['id'].toString(),
-      rideId: json['ride_id'].toString(),
-      passengerId: json['passenger_id'].toString(),
-      seatsBooked: json['seats_booked'] as int,
+      id: json['id']?.toString() ?? '',
+      rideId: json['ride_id']?.toString() ?? '',
+      passengerId: json['passenger_id']?.toString() ?? '',
+      seatsBooked: json['seats_booked'] as int? ?? 1,
       selectedSpots: (json['selected_spots'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      status: json['status'] as String,
+      status: json['status']?.toString() ?? 'unknown',
       totalPrice: _parseDecimal(json['total_price']),
       paymentDeadline: json['payment_deadline'] != null
-          ? DateTime.parse(json['payment_deadline'])
+          ? DateTime.tryParse(json['payment_deadline'].toString())
           : null,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       ride: json['ride'] != null
           ? RideDto.fromJson(json['ride'] as Map<String, dynamic>)
           : null,

@@ -12,6 +12,7 @@ import '../wallet/data/wallet_controller.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../chat/data/chat_repository.dart';
+import '../../core/utils/date_utils.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -125,9 +126,9 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
       );
 
       final time =
-          '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
-      final date =
-          '${ride.departureTime.day.toString().padLeft(2, '0')}.${ride.departureTime.month.toString().padLeft(2, '0')}';
+          AppDateUtils.formatLocalDateTime(ride.departureTime, format: 'HH:mm');
+      final date = AppDateUtils.formatLocalDateTime(ride.departureTime,
+          format: 'dd.MM.yyyy');
       final msg = [
         'Sifariş detalı:',
         'Marşrut: ${ride.fromCity} - ${ride.toCity}',
@@ -348,7 +349,7 @@ class _Content extends StatelessWidget {
     final isValid = selectedSpots.length == seats && seats > 0;
 
     final time =
-        '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+        AppDateUtils.formatLocalDateTime(ride.departureTime, format: 'HH:mm');
 
     return Column(
       children: [

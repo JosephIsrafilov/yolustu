@@ -11,6 +11,10 @@ import '../../core/theme.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../trips/data/ride_tracking_repository.dart';
 import '../../shared/widgets/map/route_map_view.dart';
+import '../../core/utils/date_utils.dart';
+import '../notifications/notification_provider.dart';
+import '../reviews/presentation/review_dialog.dart';
+import '../trips/ride_lifecycle.dart';
 import 'data/driver_controller.dart';
 import 'data/driver_ride.dart';
 
@@ -33,6 +37,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   StreamSubscription<TrackingLocation>? _trackingSubscription;
   double _progress = 0.0;
   double _etaMinutes = 240.0;
+  bool _finishNoticeShown = false;
+  bool _ratingsSubmitted = false;
 
   @override
   void dispose() {
@@ -54,8 +60,23 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
           _progress = loc.progress;
           _etaMinutes = loc.etaMinutes;
         });
+        _maybeNotifyFinishAvailable();
       }
     });
+  }
+
+  void _maybeNotifyFinishAvailable() {
+    if (_finishNoticeShown) return;
+    final canFinish = RideLifecycle.canFinish(
+      remaining: Duration(seconds: (_etaMinutes * 60).ceil()),
+      isCompleted: false,
+    );
+    if (canFinish) {
+      _finishNoticeShown = true;
+      ref
+          .read(notificationProvider.notifier)
+          .showInfo('Ride is almost finished. Complete ride is ready.');
+    }
   }
 
   void _stopTracking() {
@@ -72,23 +93,66 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   Future<void> _completeRide(DriverRide ride) async {
     final l10n = ref.read(l10nProvider);
+    final canFinish = RideLifecycle.canFinish(
+      remaining: Duration(seconds: (_etaMinutes * 60).ceil()),
+      isCompleted: ride.status == DriverRideStatus.completed,
+    );
+    if (!canFinish) {
+      ref
+          .read(notificationProvider.notifier)
+          .showInfo('Complete ride unlocks near the destination.');
+      return;
+    }
     _stopTracking();
     await ref
         .read(driverRidesProvider.notifier)
         .setStatus(ride.id, DriverRideStatus.completed);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.activeRideCompleted)),
+      ref
+          .read(notificationProvider.notifier)
+          .showSuccess(l10n.activeRideCompleted);
+    }
+    await _ratePassengers(ride);
+  }
+
+  Future<void> _ratePassengers(DriverRide ride) async {
+    if (_ratingsSubmitted || !mounted) return;
+    final passengers = ref
+            .read(passengerRequestsProvider)
+            .valueOrNull
+            ?.where((request) =>
+                request.rideId == ride.id &&
+                request.status == RequestStatus.accepted)
+            .toList() ??
+        const <PassengerRequest>[];
+
+    if (passengers.isEmpty) {
+      _ratingsSubmitted = true;
+      return;
+    }
+
+    for (final passenger in passengers) {
+      if (!mounted) return;
+      await ReviewDialog.show(
+        context,
+        targetId: passenger.id,
+        rideId: '${ride.id}:${passenger.id}',
+        targetName: passenger.passengerName,
       );
     }
+    _ratingsSubmitted = true;
+    if (!mounted) return;
+    ref
+        .read(notificationProvider.notifier)
+        .showSuccess('Passenger ratings submitted.');
   }
 
   Future<void> _shareTrip(DriverRide ride) async {
     final l10n = ref.read(l10nProvider);
     final time =
-        '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
-    final date =
-        '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
+        AppDateUtils.formatLocalDateTime(ride.departureTime, format: 'HH:mm');
+    final date = AppDateUtils.formatLocalDateTime(ride.departureTime,
+        format: 'dd.MM.yyyy');
 
     final shareText = '''
 Yolmates Səfər Məlumatı
@@ -103,9 +167,9 @@ Təcili yardım: 112
 
     await Clipboard.setData(ClipboardData(text: shareText.trim()));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.safetyShareCopied)),
-      );
+      ref
+          .read(notificationProvider.notifier)
+          .showSuccess(l10n.safetyShareCopied);
     }
   }
 
@@ -188,8 +252,12 @@ Təcili yardım: 112
           }
 
           final label = _mapStatusLabel(ride.status);
-          final time =
-              '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
+          final time = AppDateUtils.formatLocalDateTime(ride.departureTime,
+              format: 'HH:mm');
+          final canCompleteRide = RideLifecycle.canFinish(
+            remaining: Duration(seconds: (_etaMinutes * 60).ceil()),
+            isCompleted: ride.status == DriverRideStatus.completed,
+          );
 
           return Column(
             children: [
@@ -286,6 +354,15 @@ Təcili yardım: 112
                         ),
                         const SizedBox(height: 4),
                         Text(
+                          canCompleteRide
+                              ? 'Finish is available'
+                              : 'Finish unlocks near destination',
+                          textAlign: TextAlign.left,
+                          style:
+                              TextStyle(fontSize: 12, color: AppTheme.slate500),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
                           'Səyahət tərəqqisi: ${(_progress * 100).toStringAsFixed(0)}%',
                           textAlign: TextAlign.left,
                           style:
@@ -377,7 +454,9 @@ Təcili yardım: 112
                         SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
-                            onPressed: () => _completeRide(ride!),
+                            onPressed: canCompleteRide
+                                ? () => _completeRide(ride!)
+                                : null,
                             icon: const Icon(Icons.done_all),
                             label: Text(l10n.activeRideCompleteButton),
                             style: ElevatedButton.styleFrom(

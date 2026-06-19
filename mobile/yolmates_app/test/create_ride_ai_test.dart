@@ -138,7 +138,8 @@ class _VehicleDriverRepository implements DriverRepository {
   Future<void> deleteVehicle(String id) async {}
 
   @override
-  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {}
+  Future<void> uploadVehicleDocument(
+      String id, String documentType, String filePath) async {}
 
   @override
   Future<DriverRide> updateRideStatus(

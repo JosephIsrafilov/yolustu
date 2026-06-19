@@ -41,6 +41,8 @@ export interface PaymentsService {
     filter?: WalletTransactionFilter,
   ): Promise<Paginated<WalletTransaction>>;
   topupWallet(amount: number, idempotencyKey: string): Promise<{ detail: string; new_balance: number }>;
+  createStripeTopUp(amount: number): Promise<{ checkout_url: string; session_id: string; payment_id: string | null }>;
+  getStripeTopUpStatus(sessionId: string): Promise<{ session_id: string; status: string; amount: number; currency: string; wallet_balance: number }>;
   payFromWallet(bookingId: string): Promise<{ detail: string }>;
   requestPayout(amount: number, idempotencyKey: string): Promise<Payout>;
   getPayouts(page?: number, limit?: number): Promise<Paginated<Payout>>;

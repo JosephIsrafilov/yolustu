@@ -11,7 +11,9 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../core/utils/date_utils.dart';
 import '../chat/data/chat_repository.dart';
+import '../notifications/notification_provider.dart';
 import 'data/booking.dart';
 import 'data/bookings_controller.dart';
 
@@ -70,10 +72,10 @@ class _BookingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final time =
-        '${booking.departureTime.hour.toString().padLeft(2, '0')}:${booking.departureTime.minute.toString().padLeft(2, '0')}';
-    final date =
-        '${booking.departureTime.day}.${booking.departureTime.month}.${booking.departureTime.year}';
+    final time = AppDateUtils.formatLocalDateTime(booking.departureTime,
+        format: 'HH:mm');
+    final date = AppDateUtils.formatLocalDateTime(booking.departureTime,
+        format: 'dd.MM.yyyy');
 
     return InkWell(
       onTap: () => context.push('${AppRoutes.bookings}/${booking.id}'),
@@ -160,11 +162,9 @@ class _BookingCard extends ConsumerWidget {
                           }
                         } catch (error) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Çat açıla bilmədi: $error'),
-                              ),
-                            );
+                            ref
+                                .read(notificationProvider.notifier)
+                                .showError('Çat açıla bilmədi: $error');
                           }
                         }
                       },

@@ -13,6 +13,7 @@ import 'core/theme.dart';
 
 import 'features/auth/state/auth_controller.dart';
 import 'features/notifications/data/push_notifications_service.dart';
+import 'shared/widgets/notification_overlay.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,6 +85,8 @@ class _YolmatesAppState extends ConsumerState<YolmatesApp> {
       ],
       routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,
+      builder: (context, child) =>
+          NotificationOverlay(child: child ?? const SizedBox.shrink()),
     );
   }
 }

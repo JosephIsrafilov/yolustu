@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import Icon from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { formatPrice } from '@/lib/utils';
+import { paymentsService } from '@/services';
 
 type CardNetwork = 'visa' | 'mastercard' | 'amex' | 'discover' | 'maestro' | 'unionpay' | 'unknown';
 
@@ -80,8 +81,10 @@ const TOPUP_COPY = {
     invalidAmount: 'Düzgün məbləğ daxil edin.',
     invalidNumber: 'Kart nömrəsini yoxlayın.',
     invalidName: 'Kart sahibinin adını daxil edin.',
-    invalidExpiry: 'Bitmə tarixini yoxlayın.',
-    invalidCvc: 'CVC kodunu yoxlayın.',
+    invalidExpiry: 'Check the expiry date.',
+    invalidCvc: 'Check the CVC.',
+    methodMock: 'Demo Top-up',
+    methodStripe: 'Pay with Stripe',
   },
   ru: {
     title: 'Пополнить баланс',
@@ -104,6 +107,8 @@ const TOPUP_COPY = {
     invalidName: 'Введите имя владельца карты.',
     invalidExpiry: 'Проверьте срок действия.',
     invalidCvc: 'Проверьте CVC.',
+    methodMock: 'Demo (Mock)',
+    methodStripe: 'Stripe',
   },
   en: {
     title: 'Top up wallet',
@@ -126,6 +131,8 @@ const TOPUP_COPY = {
     invalidName: 'Enter the cardholder name.',
     invalidExpiry: 'Check the expiry date.',
     invalidCvc: 'Check the CVC.',
+    methodMock: 'Demo Top-up',
+    methodStripe: 'Stripe',
   },
 } as const;
 
@@ -217,6 +224,8 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [method, setMethod] = useState<'mock' | 'stripe'>('mock');
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const network = useMemo(() => detectCardNetwork(cardNumber), [cardNumber]);
   const networkMeta = network === 'unknown' ? null : CARD_NETWORKS[network];
@@ -247,18 +256,32 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
   };
 
   const handlePay = async () => {
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
+    if (method === 'mock') {
+      const validationError = validate();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    } else {
+      if (!amount || amount <= 0) {
+        setError(copy.invalidAmount);
+        return;
+      }
     }
 
     try {
       setError(null);
-      await onSuccess(Number(amount));
-      setStep('success');
+      if (method === 'mock') {
+        await onSuccess(Number(amount));
+        setStep('success');
+      } else {
+        setIsRedirecting(true);
+        const res = await paymentsService.createStripeTopUp(Number(amount));
+        window.location.href = res.checkout_url;
+      }
     } catch {
       setError(copy.error);
+      setIsRedirecting(false);
     }
   };
 
@@ -278,8 +301,9 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
           )}
 
           {step === 'form' && (
-            <div className="grid gap-0 md:grid-cols-[0.9fr_1.1fr]">
-              <div className="bg-[#f6fafb] p-5 md:p-6">
+            <div className={`grid gap-0 ${method === 'mock' ? 'md:grid-cols-[0.9fr_1.1fr]' : 'md:grid-cols-1'}`}>
+              {method === 'mock' && (
+                <div className="bg-[#f6fafb] p-5 md:p-6">
                 <div className={`flex aspect-[1.58] min-h-[190px] flex-col justify-between rounded-2xl bg-gradient-to-br ${networkMeta?.accent ?? 'from-[#20383f] to-[#5b6b70]'} p-5 text-white shadow-[0_18px_45px_rgba(15,35,40,0.22)]`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -318,12 +342,34 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
                     ))}
                   </div>
                 </div>
-              </div>
+                </div>
+              )}
 
               <div className="space-y-5 p-5 md:p-6">
                 <div>
                   <h2 className="pr-10 text-xl font-bold text-[#002f37]">{copy.title}</h2>
-                  <p className="mt-1 text-sm text-[#5d6e73]">{copy.cardDetails}</p>
+
+                  {/* Segmented Control */}
+                  <div className="mt-4 flex rounded-xl bg-slate-100 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMethod('mock')}
+                      className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+                        method === 'mock' ? 'bg-white text-[#054752] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {copy.methodMock}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMethod('stripe')}
+                      className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+                        method === 'stripe' ? 'bg-white text-[#054752] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {copy.methodStripe}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid gap-4">
@@ -341,63 +387,67 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
                     />
                   </label>
 
-                  <label className="space-y-1.5">
-                    <span className="text-sm font-semibold text-[#314f56]">{copy.cardNumber}</span>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="cc-number"
-                        value={cardNumber}
-                        onChange={(event) => setCardNumber(formatCardNumber(event.target.value, detectCardNetwork(event.target.value)))}
-                        className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 pr-28 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
-                        placeholder="4242 4242 4242 4242"
-                      />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-[#edf6f8] px-2 py-1 text-xs font-bold text-[#34575f]">
-                        {networkMeta?.label ?? copy.card}
-                      </span>
-                    </div>
-                  </label>
+                  {method === 'mock' && (
+                    <>
+                      <label className="space-y-1.5">
+                        <span className="text-sm font-semibold text-[#314f56]">{copy.cardNumber}</span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-number"
+                            value={cardNumber}
+                            onChange={(event) => setCardNumber(formatCardNumber(event.target.value, detectCardNetwork(event.target.value)))}
+                            className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 pr-28 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                            placeholder="4242 4242 4242 4242"
+                          />
+                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-[#edf6f8] px-2 py-1 text-xs font-bold text-[#34575f]">
+                            {networkMeta?.label ?? copy.card}
+                          </span>
+                        </div>
+                      </label>
 
-                  <label className="space-y-1.5">
-                    <span className="text-sm font-semibold text-[#314f56]">{copy.cardholder}</span>
-                    <input
-                      type="text"
-                      autoComplete="cc-name"
-                      value={cardholder}
-                      onChange={(event) => setCardholder(event.target.value.toUpperCase())}
-                      className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 text-base font-semibold text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
-                      placeholder="YUSIF ALIYEV"
-                    />
-                  </label>
+                      <label className="space-y-1.5">
+                        <span className="text-sm font-semibold text-[#314f56]">{copy.cardholder}</span>
+                        <input
+                          type="text"
+                          autoComplete="cc-name"
+                          value={cardholder}
+                          onChange={(event) => setCardholder(event.target.value.toUpperCase())}
+                          className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 text-base font-semibold text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                          placeholder="YUSIF ALIYEV"
+                        />
+                      </label>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="space-y-1.5">
-                      <span className="text-sm font-semibold text-[#314f56]">{copy.expiry}</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="cc-exp"
-                        value={expiry}
-                        onChange={(event) => setExpiry(formatExpiry(event.target.value))}
-                        className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
-                        placeholder="MM/YY"
-                      />
-                    </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="space-y-1.5">
+                          <span className="text-sm font-semibold text-[#314f56]">{copy.expiry}</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-exp"
+                            value={expiry}
+                            onChange={(event) => setExpiry(formatExpiry(event.target.value))}
+                            className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                            placeholder="MM/YY"
+                          />
+                        </label>
 
-                    <label className="space-y-1.5">
-                      <span className="text-sm font-semibold text-[#314f56]">{copy.cvc}</span>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        autoComplete="cc-csc"
-                        value={cvc}
-                        onChange={(event) => setCvc(onlyDigits(event.target.value).slice(0, cvcLength))}
-                        className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
-                        placeholder={network === 'amex' ? '1234' : '123'}
-                      />
-                    </label>
-                  </div>
+                        <label className="space-y-1.5">
+                          <span className="text-sm font-semibold text-[#314f56]">{copy.cvc}</span>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
+                            value={cvc}
+                            onChange={(event) => setCvc(onlyDigits(event.target.value).slice(0, cvcLength))}
+                            className="h-12 w-full rounded-xl border border-[#cfdfe3] bg-white px-4 font-mono text-base text-[#002f37] outline-none transition-colors focus:border-[#054752] focus:ring-2 focus:ring-[#b9e1e8]"
+                            placeholder={network === 'amex' ? '1234' : '123'}
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {error && (
@@ -408,11 +458,11 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, isLoading, init
                 )}
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                  <Button variant="outline" onClick={resetAndClose} className="flex-1" disabled={isLoading}>
+                  <Button variant="outline" onClick={resetAndClose} className="flex-1" disabled={isLoading || isRedirecting}>
                     {copy.cancel}
                   </Button>
-                  <Button onClick={handlePay} loading={isLoading} className="flex-1">
-                    {copy.pay}
+                  <Button onClick={handlePay} loading={isLoading || isRedirecting} className="flex-1">
+                    {method === 'stripe' ? copy.methodStripe : copy.pay}
                     {amount ? ` ${formatPrice(Number(amount))}` : ''}
                   </Button>
                 </div>

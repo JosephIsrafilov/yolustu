@@ -9,6 +9,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../chat/data/chat_repository.dart';
+import '../notifications/notification_provider.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 
@@ -64,14 +65,10 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
           .read(passengerRequestsProvider.notifier)
           .setStatus(widget.request.id, status);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(status.label)),
-      );
+      ref.read(notificationProvider.notifier).showSuccess(status.label);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ref.read(notificationProvider.notifier).showError(e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -90,9 +87,7 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
       if (mounted) context.push('${AppRoutes.messages}/${conversation.id}');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ref.read(notificationProvider.notifier).showError(e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }

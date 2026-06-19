@@ -12,6 +12,10 @@ abstract class WalletRepository {
       {int page = 1, int limit = 20});
   Future<WalletBalance> topUpPassenger(double amount);
   Future<WalletBalance> withdrawDriver(double amount);
+  Future<WalletBalance> simulateDriverEarning(
+      double amount, String description);
+  Future<Map<String, dynamic>> createStripeTopUp(double amount);
+  Future<Map<String, dynamic>> getStripeTopUpStatus(String sessionId);
 }
 
 /// Mock wallet repository with realistic demo data.
@@ -93,6 +97,52 @@ class MockWalletRepository implements WalletRepository {
       ),
     );
     return _balance;
+  }
+
+  @override
+  Future<WalletBalance> simulateDriverEarning(
+      double amount, String description) async {
+    await Future.delayed(_latency);
+    final nextDriverBalance = _balance.driverBalance + amount;
+    _balance = _balance.copyWith(
+      driverBalance: nextDriverBalance,
+      totalEarned: _balance.totalEarned + amount,
+    );
+    _transactions.insert(
+      0,
+      WalletTransaction(
+        id: 'mock-earning-${DateTime.now().microsecondsSinceEpoch}',
+        userId: _balance.userId,
+        type: WalletTransactionType.driverAvailableEarning,
+        amount: amount,
+        currency: _balance.currency,
+        balanceAfter: nextDriverBalance,
+        description: description,
+        createdAt: DateTime.now(),
+      ),
+    );
+    return _balance;
+  }
+
+  @override
+  Future<Map<String, dynamic>> createStripeTopUp(double amount) async {
+    await Future.delayed(_latency);
+    return {
+      'checkout_url': 'https://stripe.com/mock',
+      'session_id': 'mock_session_${DateTime.now().microsecondsSinceEpoch}',
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getStripeTopUpStatus(String sessionId) async {
+    await Future.delayed(_latency);
+    return {
+      'session_id': sessionId,
+      'status': 'completed',
+      'amount': 50.0,
+      'currency': 'USD',
+      'wallet_balance': _balance.passengerBalance,
+    };
   }
 
   List<WalletTransaction> _initialTransactions() {

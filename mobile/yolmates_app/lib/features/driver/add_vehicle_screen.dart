@@ -84,14 +84,17 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     try {
       await ref.read(vehiclesProvider.notifier).save(
             Vehicle(
-              id: widget.vehicle?.id ?? 'veh-${DateTime.now().millisecondsSinceEpoch}',
+              id: widget.vehicle?.id ??
+                  'veh-${DateTime.now().millisecondsSinceEpoch}',
               brand: _brand.text.trim(),
               model: _model.text.trim(),
               year: int.parse(_year.text.trim()),
               color: _color.text.trim(),
               plate: _plate.text.trim().toUpperCase(),
               seats: _seats,
-              variations: _variations.text.trim().isEmpty ? null : _variations.text.trim(),
+              variations: _variations.text.trim().isEmpty
+                  ? null
+                  : _variations.text.trim(),
               isActive: widget.vehicle?.isActive ?? true,
               isDefault: widget.vehicle?.isDefault ?? false,
             ),
@@ -112,7 +115,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
-    final title = widget.vehicle == null ? l10n.addVehicleTitle : 'Edit Vehicle';
+    final title =
+        widget.vehicle == null ? l10n.addVehicleTitle : 'Edit Vehicle';
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: SafeArea(

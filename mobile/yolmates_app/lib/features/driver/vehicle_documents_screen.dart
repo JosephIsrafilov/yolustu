@@ -145,7 +145,8 @@ class _VehicleDocumentsScreenState
               ),
               const SizedBox(height: 16),
               _DocumentTypeCard(
-                title: 'Nəqliyyat vasitəsinin qeydiyyat şəhadətnaməsi (Texpasport)',
+                title:
+                    'Nəqliyyat vasitəsinin qeydiyyat şəhadətnaməsi (Texpasport)',
                 description: 'Ön və arxa hissəsinin aydın şəkli',
                 onUpload: () => _pickAndUpload('registration'),
               ),

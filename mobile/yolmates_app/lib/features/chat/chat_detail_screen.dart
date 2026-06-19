@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../core/routes.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme.dart';
+import '../../core/utils/date_utils.dart';
 import '../../shared/models/user.dart';
 import '../auth/state/auth_controller.dart';
 import 'data/chat_controller.dart';
 import 'data/chat_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
@@ -246,7 +246,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  DateFormat('HH:mm').format(msg.createdAt),
+                                  AppDateUtils.formatLocalDateTime(
+                                      msg.createdAt,
+                                      format: 'HH:mm'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isMine

@@ -102,3 +102,21 @@ class PayoutRequestResponse(BaseModel):
     )
     created_at: datetime
     processed_at: Optional[datetime] = None
+
+
+class WalletTopUpRequest(BaseModel):
+    amount: Decimal
+
+
+class WalletTopUpResponse(BaseModel):
+    checkout_url: str
+    session_id: str
+    payment_id: Optional[UUID] = None
+
+
+class WalletTopUpSessionResponse(BaseModel):
+    session_id: str
+    status: str
+    amount: Decimal
+    currency: str
+    wallet_balance: Decimal

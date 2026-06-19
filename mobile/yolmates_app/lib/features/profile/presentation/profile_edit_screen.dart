@@ -9,6 +9,7 @@ import '../../../core/constants.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../notifications/notification_provider.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -84,10 +85,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           );
 
       if (mounted) {
+        ref
+            .read(notificationProvider.notifier)
+            .showSuccess(ref.read(l10nProvider).profileSave);
         context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ref.read(l10nProvider).profileSave)),
-        );
       }
     } catch (e) {
       if (mounted) {

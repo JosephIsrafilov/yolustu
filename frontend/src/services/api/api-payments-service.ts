@@ -226,6 +226,16 @@ export const apiPaymentsService: PaymentsService = {
     return { detail: res.detail, new_balance: Number(res.new_balance) };
   },
 
+  async createStripeTopUp(amount: number) {
+    return await apiClient.post<{ checkout_url: string; session_id: string; payment_id: string | null }>('/payments/stripe/wallet-top-up', {
+      amount,
+    });
+  },
+
+  async getStripeTopUpStatus(sessionId: string) {
+    return await apiClient.get<{ session_id: string; status: string; amount: number; currency: string; wallet_balance: number }>(`/payments/stripe/session/${sessionId}`);
+  },
+
   async payFromWallet(bookingId: string) {
     return await apiClient.post<{ detail: string }>('/payments/wallet-pay', { booking_id: bookingId });
   },

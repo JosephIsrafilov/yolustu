@@ -11,6 +11,8 @@ import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../core/utils/date_utils.dart';
+import '../notifications/notification_provider.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 
@@ -85,9 +87,9 @@ class _RideCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     final time =
-        '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
-    final date =
-        '${ride.departureTime.day}.${ride.departureTime.month}.${ride.departureTime.year}';
+        AppDateUtils.formatLocalDateTime(ride.departureTime, format: 'HH:mm');
+    final date = AppDateUtils.formatLocalDateTime(ride.departureTime,
+        format: 'dd.MM.yyyy');
 
     return InkWell(
       onTap: () => context.push('${AppRoutes.myRides}/${ride.id}'),
@@ -233,9 +235,9 @@ class _RideCard extends ConsumerWidget {
     );
     await ref.read(driverRidesProvider.notifier).publish(copy);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.myRidesDuplicateSuccess)),
-      );
+      ref
+          .read(notificationProvider.notifier)
+          .showSuccess(l10n.myRidesDuplicateSuccess);
     }
   }
 

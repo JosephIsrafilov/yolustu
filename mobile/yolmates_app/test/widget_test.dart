@@ -93,4 +93,76 @@ void main() {
 
     expect(find.text(az.phoneLoginPhoneRequired), findsOneWidget);
   });
+
+  testWidgets('login submit opens OTP screen with demo code', (tester) async {
+    final az = AppLocalizations(AppLanguage.az);
+    final storage = InMemorySessionStorage();
+    await storage.write('onboarding_seen', 'true');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider
+              .overrideWith((ref) => MockAuthRepository(storage)),
+        ],
+        child: const _TestApp(),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    await tester.enterText(find.byType(TextFormField).at(0), '501234567');
+    await tester.enterText(find.byType(TextFormField).at(1), 'password123');
+    final loginButton = find.widgetWithText(ElevatedButton, az.loginBtn);
+    await tester.ensureVisible(loginButton);
+    await tester.tap(loginButton);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    expect(find.text('Demo code: 123456'), findsOneWidget);
+  });
+
+  testWidgets('registration submit opens OTP screen with demo code',
+      (tester) async {
+    final az = AppLocalizations(AppLanguage.az);
+    final storage = InMemorySessionStorage();
+    await storage.write('onboarding_seen', 'true');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider
+              .overrideWith((ref) => MockAuthRepository(storage)),
+        ],
+        child: const _TestApp(),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    final registerLink = find.text(az.registerLink).first;
+    await tester.ensureVisible(registerLink);
+    await tester.tap(registerLink);
+    await tester.pumpAndSettle();
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Test');
+    await tester.enterText(fields.at(1), 'User');
+    await tester.enterText(fields.at(2), '501234567');
+    await tester.enterText(fields.at(3), 'test@example.com');
+    await tester.enterText(fields.at(4), 'password123');
+    await tester.enterText(fields.at(5), 'password123');
+    final submitButton = find.widgetWithText(ElevatedButton, az.registerLink);
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    expect(find.text('Demo code: 123456'), findsOneWidget);
+  });
 }

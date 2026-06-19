@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/theme.dart';
+import '../../../core/utils/date_utils.dart';
 import '../data/notifications_controller.dart';
 
 class NotificationDetailScreen extends ConsumerWidget {
@@ -68,6 +69,6 @@ class NotificationDetailScreen extends ConsumerWidget {
   }
 
   String _formatTime(DateTime time) {
-    return '${time.day.toString().padLeft(2, '0')}.${time.month.toString().padLeft(2, '0')}.${time.year} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    return AppDateUtils.formatLocalDateTime(time, format: 'dd.MM.yyyy HH:mm');
   }
 }

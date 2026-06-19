@@ -143,12 +143,49 @@ class PaymentService:
             raise HTTPException(status_code=403, detail="Not authorized")
         return payment
 
+    @staticmethod
+    def _stripe_metadata_to_dict(metadata: Any | None) -> dict[str, str]:
+        if not metadata:
+            return {}
+        if isinstance(metadata, dict):
+            return {str(k): str(v) for k, v in metadata.items()}
+        if hasattr(metadata, "to_dict_recursive"):
+            raw = metadata.to_dict_recursive()
+            return {str(k): str(v) for k, v in raw.items()}
+        if hasattr(metadata, "to_dict"):
+            raw = metadata.to_dict()
+            return {str(k): str(v) for k, v in raw.items()}
+        return {}
+
     def handle_webhook(
         self, provider_name: str, headers: dict[str, str], body: bytes
     ) -> dict:
         provider = get_payment_provider(provider_name)
         if not provider.verify_webhook_signature(headers, body):
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+        if provider_name == "stripe":
+            import stripe
+            try:
+                event = stripe.Webhook.construct_event(
+                    body, headers.get("stripe-signature", headers.get("Stripe-Signature", "")), settings.STRIPE_WEBHOOK_SECRET
+                )
+                if event.type == "checkout.session.completed":
+                    session = event.data.object
+                    metadata = self._stripe_metadata_to_dict(getattr(session, "metadata", None))
+                    if metadata.get("type") == "wallet_top_up":
+                        user_id_str = metadata.get("user_id")
+                        amount_str = metadata.get("amount")
+                        if user_id_str and amount_str:
+                            self._process_wallet_topup_success(
+                                session.id,
+                                UUID(user_id_str),
+                                Decimal(amount_str)
+                            )
+                        return {"detail": "Wallet top-up processed"}
+            except Exception:
+                pass
+
         event = provider.parse_webhook_event(headers, body)
         if event.status == "ignored":
             return {"detail": "Webhook ignored"}
@@ -496,12 +533,119 @@ class PaymentService:
             amount=amount,
             currency=settings.PAYMENT_CURRENCY,
             status="posted",
-            description="Wallet top-up (Fake Payment)",
+            description="Mock card top-up",
             idempotency_key=scoped_key,
         )
         self.wallets.add_transaction(tx)
         self.db.commit()
         return {"detail": "Topup successful", "new_balance": wallet.available_balance}
+
+    def _process_wallet_topup_success(self, session_id: str, user_id: UUID, amount: Decimal):
+        scoped_key = f"stripe_topup:{session_id}"
+        existing = self.wallets.get_transaction_by_idempotency_key(scoped_key)
+        if existing:
+            return
+
+        wallet = self.wallets.get_or_create_for_update(user_id, settings.PAYMENT_CURRENCY)
+        wallet.available_balance = money(wallet.available_balance + amount)
+
+        tx = WalletTransaction(
+            user_id=user_id,
+            type="wallet_top_up",
+            direction="credit",
+            amount=amount,
+            currency=settings.PAYMENT_CURRENCY,
+            status="completed",
+            description="Stripe top-up",
+            idempotency_key=scoped_key,
+        )
+        self.wallets.add_transaction(tx)
+        self.db.commit()
+
+    def create_stripe_topup_session(
+        self, amount: Decimal, current_user: CurrentUser
+    ) -> dict:
+        import stripe
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+
+        amount = money(amount)
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Topup amount must be positive")
+
+        if not settings.STRIPE_ENABLED:
+            raise HTTPException(status_code=500, detail="STRIPE_NOT_CONFIGURED")
+
+        try:
+            session = stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": settings.STRIPE_CURRENCY.lower(),
+                            "product_data": {
+                                "name": "Yolmates wallet top-up",
+                            },
+                            "unit_amount": int(amount * 100),
+                        },
+                        "quantity": 1,
+                    }
+                ],
+                mode="payment",
+                success_url=settings.STRIPE_CHECKOUT_SUCCESS_URL,
+                cancel_url=settings.STRIPE_CHECKOUT_CANCEL_URL,
+                client_reference_id=str(current_user.id),
+                metadata={
+                    "type": "wallet_top_up",
+                    "user_id": str(current_user.id),
+                    "amount": str(amount),
+                    "currency": settings.STRIPE_CURRENCY.upper(),
+                },
+            )
+            return {
+                "checkout_url": session.url,
+                "session_id": session.id,
+                "payment_id": None
+            }
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Stripe error: {str(exc)}")
+
+    def get_stripe_topup_status(self, session_id: str, current_user: CurrentUser) -> dict:
+        import stripe
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except Exception as exc:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        metadata = self._stripe_metadata_to_dict(getattr(session, "metadata", None))
+
+        if not metadata or metadata.get("type") != "wallet_top_up":
+            raise HTTPException(status_code=400, detail="Not a wallet top-up session")
+
+        if metadata.get("user_id") != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Not authorized for this session")
+
+        status = "pending"
+        if session.payment_status == "paid":
+            status = "completed"
+        elif session.status == "expired":
+            status = "expired"
+
+        if status == "completed":
+            self._process_wallet_topup_success(
+                session_id,
+                current_user.id,
+                Decimal(metadata.get("amount", "0"))
+            )
+
+        wallet = self.wallets.get_or_create(current_user.id, settings.PAYMENT_CURRENCY)
+        return {
+            "session_id": session_id,
+            "status": status,
+            "amount": Decimal(metadata.get("amount", "0")),
+            "currency": metadata.get("currency", "USD"),
+            "wallet_balance": money(wallet.available_balance),
+        }
 
     def pay_booking_from_wallet(
         self, booking_id: UUID, current_user: CurrentUser

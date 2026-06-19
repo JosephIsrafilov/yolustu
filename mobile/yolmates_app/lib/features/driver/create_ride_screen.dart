@@ -113,7 +113,8 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
         .toList();
     final selectedVehicle = _selectedVehicle(activeVehicles);
     if (selectedVehicle == null) {
-      setState(() => _error = 'Gediş yaratmaq üçün aktiv avtomobil əlavə edin.');
+      setState(
+          () => _error = 'Gediş yaratmaq üçün aktiv avtomobil əlavə edin.');
       return;
     }
     if (!_formKey.currentState!.validate()) return;

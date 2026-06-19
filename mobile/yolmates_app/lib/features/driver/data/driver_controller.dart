@@ -21,7 +21,8 @@ abstract class DriverRepository {
   Future<Vehicle> setDefaultVehicle(String id);
   Future<Vehicle> deactivateVehicle(String id);
   Future<void> deleteVehicle(String id);
-  Future<void> uploadVehicleDocument(String id, String documentType, String filePath);
+  Future<void> uploadVehicleDocument(
+      String id, String documentType, String filePath);
 }
 
 // --- API implementation ------------------------------------------------------
@@ -143,11 +144,11 @@ class ApiDriverRepository implements DriverRepository {
         if (vehicle.variations != null && vehicle.variations!.isNotEmpty)
           'variations': vehicle.variations,
       };
-      
-      final response = isNew 
+
+      final response = isNew
           ? await _client.post('/vehicles', data: dataPayload)
           : await _client.put('/vehicles/${vehicle.id}', data: dataPayload);
-          
+
       final data = response.data;
       final json = data is Map<String, dynamic>
           ? (data['data'] as Map<String, dynamic>? ?? data)
@@ -198,7 +199,8 @@ class ApiDriverRepository implements DriverRepository {
   }
 
   @override
-  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {
+  Future<void> uploadVehicleDocument(
+      String id, String documentType, String filePath) async {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
@@ -366,7 +368,8 @@ class MockDriverRepository implements DriverRepository {
   }
 
   @override
-  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {
+  Future<void> uploadVehicleDocument(
+      String id, String documentType, String filePath) async {
     await Future.delayed(_latency);
     // Mock successful upload
   }
@@ -436,9 +439,11 @@ class VehiclesController extends AsyncNotifier<List<Vehicle>> {
     state = AsyncData(await _repo.vehicles());
   }
 
-  Future<void> uploadDocument(String id, String documentType, String filePath) async {
+  Future<void> uploadDocument(
+      String id, String documentType, String filePath) async {
     await _repo.uploadVehicleDocument(id, documentType, filePath);
-    state = AsyncData(await _repo.vehicles()); // Refresh vehicles to get updated status
+    state = AsyncData(
+        await _repo.vehicles()); // Refresh vehicles to get updated status
   }
 }
 

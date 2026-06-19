@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
+import '../../notifications/notification_provider.dart';
 import '../data/reviews_repository.dart';
 
 class ReviewDialog extends ConsumerStatefulWidget {
@@ -66,10 +67,9 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
           );
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Rəyiniz uğurla göndərildi. Təşəkkür edirik!')),
-        );
+        ref
+            .read(notificationProvider.notifier)
+            .showSuccess('Review submitted successfully. Thank you!');
       }
     } catch (e) {
       if (mounted) {
@@ -88,9 +88,12 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
-        '${widget.targetName} üçün rəy bildirin',
+        'Leave a review for ${widget.targetName}',
         style: const TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.navy),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.navy,
+        ),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -98,7 +101,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Səyahəti qiymətləndirin:',
+              'Rate the trip:',
               style: TextStyle(fontSize: 14, color: AppTheme.slate700),
             ),
             const SizedBox(height: 12),
@@ -124,7 +127,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
               enabled: !_submitting,
               maxLines: 3,
               decoration: const InputDecoration(
-                hintText: 'Şərhləriniz (istəyə bağlı)...',
+                hintText: 'Optional comment',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -141,7 +144,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
       actions: [
         TextButton(
           onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('İmtina'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: _submitting ? null : _submit,
@@ -154,10 +157,11 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.white)),
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
                 )
-              : const Text('Göndər'),
+              : const Text('Submit'),
         ),
       ],
     );

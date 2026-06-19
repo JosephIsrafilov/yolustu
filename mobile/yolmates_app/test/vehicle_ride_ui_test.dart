@@ -20,9 +20,11 @@ void main() {
     expect(find.text('Toyota Prius • 90-AA-002 • 2 yer'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(
-      tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.add_circle_outline),
-      ).onPressed,
+      tester
+          .widget<IconButton>(
+            find.widgetWithIcon(IconButton, Icons.add_circle_outline),
+          )
+          .onPressed,
       isNull,
     );
 
@@ -51,7 +53,8 @@ void main() {
     );
     expect(find.byKey(const Key('add-active-vehicle')), findsOneWidget);
     expect(
-      tester.widget<ElevatedButton>(find.byKey(const Key('publish-ride')))
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('publish-ride')))
           .onPressed,
       isNull,
     );
@@ -113,7 +116,8 @@ class _FakeDriverRepository implements DriverRepository {
   }
 
   @override
-  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {}
+  Future<void> uploadVehicleDocument(
+      String id, String documentType, String filePath) async {}
 
   @override
   Future<List<DriverRide>> rides() async => [];

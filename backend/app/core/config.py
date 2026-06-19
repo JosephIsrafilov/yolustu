@@ -27,7 +27,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REDIS_URL: str = "redis://127.0.0.1:6379/0"
 
+    STRIPE_ENABLED: bool = False
     STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_CURRENCY: str = "usd"
+    STRIPE_CHECKOUT_SUCCESS_URL: str = ""
+    STRIPE_CHECKOUT_CANCEL_URL: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     PAYMENT_PROVIDER: str = "mock"
     PAYMENT_CURRENCY: str = "AZN"

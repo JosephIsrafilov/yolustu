@@ -30,9 +30,11 @@ class VehiclesScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.directions_car_outlined, size: 64, color: AppTheme.slate500),
+                  const Icon(Icons.directions_car_outlined,
+                      size: 64, color: AppTheme.slate500),
                   const SizedBox(height: 16),
-                  const Text('Avtomobil tapılmadı', style: TextStyle(color: AppTheme.slate500, fontSize: 16)),
+                  const Text('Avtomobil tapılmadı',
+                      style: TextStyle(color: AppTheme.slate500, fontSize: 16)),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.addVehicle),
@@ -99,18 +101,24 @@ class _VehicleCard extends ConsumerWidget {
               children: [
                 Text(
                   vehicle.displayName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.navy),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppTheme.navy),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${vehicle.plate} • ${vehicle.color} • ${vehicle.year}',
-                  style: const TextStyle(color: AppTheme.slate500, fontSize: 14),
+                  style:
+                      const TextStyle(color: AppTheme.slate500, fontSize: 14),
                 ),
-                if (vehicle.variations != null && vehicle.variations!.isNotEmpty) ...[
+                if (vehicle.variations != null &&
+                    vehicle.variations!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     vehicle.variations!,
-                    style: const TextStyle(color: AppTheme.tealDark, fontSize: 13),
+                    style:
+                        const TextStyle(color: AppTheme.tealDark, fontSize: 13),
                   ),
                 ],
                 const SizedBox(height: 8),

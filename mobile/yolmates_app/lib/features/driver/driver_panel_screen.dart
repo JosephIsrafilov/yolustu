@@ -113,8 +113,8 @@ class DriverPanelScreen extends ConsumerWidget {
               final walletAsync = ref.watch(walletControllerProvider);
               final requestsAsync = ref.watch(passengerRequestsProvider);
 
-              final income =
-                  walletAsync.valueOrNull?.balance.totalEarned ?? 0.0;
+              final balance =
+                  walletAsync.valueOrNull?.balance.passengerBalance ?? 0.0;
               final pendingRequests = requestsAsync.valueOrNull
                       ?.where((r) => r.status.name == 'pending')
                       .length ??
@@ -124,8 +124,8 @@ class DriverPanelScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _StatCard(
-                      title: 'Ümumi gəlir',
-                      value: '${income.toStringAsFixed(2)} AZN',
+                      title: 'Cari Balans',
+                      value: '${balance.toStringAsFixed(2)} AZN',
                       icon: Icons.account_balance_wallet_outlined,
                       color: AppTheme.teal,
                     ),

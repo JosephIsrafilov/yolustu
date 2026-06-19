@@ -70,27 +70,32 @@ class RideDto {
 
   factory RideDto.fromJson(Map<String, dynamic> json) {
     return RideDto(
-      id: json['id'].toString(),
-      driverId: json['driver_id'].toString(),
-      vehicleId: json['vehicle_id'].toString(),
-      departureTime: DateTime.parse(json['departure_time']),
-      totalSeats: json['total_seats'] as int,
-      availableSeats: json['available_seats'] as int,
+      id: json['id']?.toString() ?? '',
+      driverId: json['driver_id']?.toString() ?? '',
+      vehicleId: json['vehicle_id']?.toString() ?? '',
+      departureTime: json['departure_time'] != null
+          ? DateTime.tryParse(json['departure_time'].toString()) ??
+              DateTime.now()
+          : DateTime.now(),
+      totalSeats: json['total_seats'] as int? ?? 1,
+      availableSeats: json['available_seats'] as int? ?? 1,
       availableSpots: (json['available_spots'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
       pricePerSeat: _parseDecimal(json['price_per_seat']),
-      originCity: json['origin_city'] as String,
-      destinationCity: json['destination_city'] as String,
-      intermediateCities: json['intermediate_cities'] as String?,
-      status: json['status'] as String,
-      description: json['description'] as String?,
+      originCity: json['origin_city']?.toString() ?? '',
+      destinationCity: json['destination_city']?.toString() ?? '',
+      intermediateCities: json['intermediate_cities']?.toString(),
+      status: json['status']?.toString() ?? 'unknown',
+      description: json['description']?.toString(),
       smokingAllowed: json['smoking_allowed'] as bool? ?? false,
       petsAllowed: json['pets_allowed'] as bool? ?? false,
       musicAllowed: json['music_allowed'] as bool? ?? true,
       femaleOnly: json['female_only'] as bool? ?? false,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       driver: json['driver'] != null
           ? DriverDto.fromJson(json['driver'] as Map<String, dynamic>)
           : null,
@@ -131,11 +136,11 @@ class DriverDto {
 
   factory DriverDto.fromJson(Map<String, dynamic> json) {
     return DriverDto(
-      id: json['id'].toString(),
-      firstName: json['first_name'] as String?,
-      lastName: json['last_name'] as String?,
-      phone: json['phone'] as String,
-      avatarUrl: json['avatar_url'] as String?,
+      id: json['id']?.toString() ?? '',
+      firstName: json['first_name']?.toString(),
+      lastName: json['last_name']?.toString(),
+      phone: json['phone']?.toString() ?? '',
+      avatarUrl: json['avatar_url']?.toString(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       totalRides: json['total_rides'] as int? ?? 0,
       isVerified: json['is_verified'] as bool? ?? false,
@@ -168,12 +173,12 @@ class VehicleDto {
 
   factory VehicleDto.fromJson(Map<String, dynamic> json) {
     return VehicleDto(
-      id: json['id'].toString(),
-      brand: json['brand'] as String,
-      model: json['model'] as String,
-      year: json['year'] as int,
-      color: json['color'] as String,
-      plateNumber: json['plate_number'] as String,
+      id: json['id']?.toString() ?? '',
+      brand: json['brand']?.toString() ?? '',
+      model: json['model']?.toString() ?? '',
+      year: json['year'] as int? ?? 2000,
+      color: json['color']?.toString() ?? '',
+      plateNumber: json['plate_number']?.toString() ?? '',
     );
   }
 }

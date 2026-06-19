@@ -19,6 +19,7 @@ TRANSACTION_TYPES: tuple[str, ...] = (
     "adjustment",
     "reservation_hold",
     "reservation_release",
+    "wallet_top_up",
 )
 
 # Filters exposed on the transactions listing endpoint.

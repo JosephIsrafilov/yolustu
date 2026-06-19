@@ -11,6 +11,7 @@ import '../../shared/models/trip.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/skeleton_cards.dart';
+import '../../core/utils/date_utils.dart';
 
 class TripListScreen extends ConsumerStatefulWidget {
   final String fromCity;
@@ -60,7 +61,7 @@ class _TripListScreenState extends ConsumerState<TripListScreen> {
     final dateLabel = widget.dateTo != null
         ? ' · ${l10n.dateThisWeek}'
         : widget.date != null
-            ? ' · ${widget.date!.day}.${widget.date!.month}.${widget.date!.year}'
+            ? ' · ${AppDateUtils.formatLocal(widget.date!, format: 'dd.MM.yyyy')}'
             : '';
 
     return Scaffold(
@@ -324,10 +325,10 @@ class _TripCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     final timeStr =
-        '${trip.departureTime.hour.toString().padLeft(2, '0')}:${trip.departureTime.minute.toString().padLeft(2, '0')}';
+        AppDateUtils.formatLocalDateTime(trip.departureTime, format: 'HH:mm');
 
     final dateStr = showDate
-        ? '${trip.departureTime.day.toString().padLeft(2, '0')}.${trip.departureTime.month.toString().padLeft(2, '0')} · '
+        ? '${AppDateUtils.formatLocalDateTime(trip.departureTime, format: 'dd.MM')} · '
         : '';
     final displayTime = '$dateStr$timeStr';
 
