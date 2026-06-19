@@ -644,7 +644,7 @@ class _SeatPicker extends StatelessWidget {
             const SizedBox(width: 12),
             _LegendDot(color: AppTheme.slate200, label: 'Boş'),
             const SizedBox(width: 12),
-            _LegendDot(color: AppTheme.slate400, label: 'Tutulub'),
+            _LegendDot(color: AppTheme.slate500, label: 'Tutulub'),
           ],
         ),
       ],
@@ -676,7 +676,7 @@ class _SeatChip extends StatelessWidget {
         ? Colors.white
         : available
             ? AppTheme.navy
-            : AppTheme.slate400;
+            : AppTheme.slate500;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),

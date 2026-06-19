@@ -165,7 +165,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   _variations,
                   'Xüsusiyyətlər (Variations)',
                   'Məsələn: Kondisioner var, geniş baqaj',
-                  null,
+                  (_) => null,
                   cap: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 24),

@@ -241,7 +241,7 @@ class _DetailState extends ConsumerState<_Detail> {
           const SizedBox(height: 12),
         ],
         // Passenger mock ride flow buttons
-        if (!b.status.isCancelled && !b.status.isRejected) ...[
+        if (b.status != BookingStatus.cancelled && b.status != BookingStatus.rejected) ...[
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),

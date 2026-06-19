@@ -168,12 +168,12 @@ app.include_router(v1_router)
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict[str, str]:
     return {"message": "Welcome to Yolmates API", "version": "v1"}
 
 
 @app.get("/health")
-def health_check():
+def health_check() -> dict[str, dict[str, object]]:
     checks: dict[str, dict[str, object]] = {
         "api": {"status": "ok"},
         "database": {"status": "ok"},

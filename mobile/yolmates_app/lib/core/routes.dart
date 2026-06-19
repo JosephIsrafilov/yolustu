@@ -40,7 +40,6 @@ import '../features/support/support_screen.dart';
 import '../features/support/support_chat_screen.dart';
 import '../features/trips/trip_list_screen.dart';
 import '../features/trips/trip_detail_screen.dart';
-import '../features/trips/trip_search_screen.dart';
 import '../features/trips/passenger_active_ride_screen.dart';
 import '../features/wallet/wallet_screen.dart';
 import '../shared/models/user.dart';

@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
-import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/map/route_map_view.dart';
 import '../bookings/data/bookings_controller.dart';
-import 'data/trip_search_provider.dart';
 
 class PassengerActiveRideScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -48,7 +46,6 @@ class _PassengerActiveRideScreenState extends ConsumerState<PassengerActiveRideS
 
   @override
   Widget build(BuildContext context) {
-    final l10n = ref.watch(l10nProvider);
     final booking = ref.watch(bookingsControllerProvider).valueOrNull?.firstWhere((b) => b.id == widget.bookingId);
     
     if (booking == null) {
@@ -109,7 +106,7 @@ class _PassengerActiveRideScreenState extends ConsumerState<PassengerActiveRideS
                     Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: AppTheme.teal.withOpacity(0.2),
+                          backgroundColor: AppTheme.teal.withValues(alpha: 0.1),
                           child: const Icon(Icons.person, color: AppTheme.tealDark),
                         ),
                         const SizedBox(width: 16),

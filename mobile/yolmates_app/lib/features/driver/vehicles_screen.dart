@@ -30,7 +30,7 @@ class VehiclesScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.directions_car_outlined, size: 64, color: AppTheme.slate400),
+                  const Icon(Icons.directions_car_outlined, size: 64, color: AppTheme.slate500),
                   const SizedBox(height: 16),
                   const Text('Avtomobil tapılmadı', style: TextStyle(color: AppTheme.slate500, fontSize: 16)),
                   const SizedBox(height: 24),
