@@ -107,6 +107,7 @@ extension RequestStatusX on RequestStatus {
 
 class PassengerRequest {
   final String id;
+  final String rideId;
   final String passengerName;
   final String fromCity;
   final String toCity;
@@ -117,6 +118,7 @@ class PassengerRequest {
 
   const PassengerRequest({
     required this.id,
+    this.rideId = '',
     required this.passengerName,
     required this.fromCity,
     required this.toCity,
@@ -129,6 +131,7 @@ class PassengerRequest {
   PassengerRequest copyWith({RequestStatus? status}) {
     return PassengerRequest(
       id: id,
+      rideId: rideId,
       passengerName: passengerName,
       fromCity: fromCity,
       toCity: toCity,

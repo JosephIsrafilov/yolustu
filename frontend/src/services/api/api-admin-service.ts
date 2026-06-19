@@ -17,6 +17,13 @@ import {
   type ApiUser,
 } from './mappers';
 
+function paginationQuery(page = 1, limit = 10) {
+  const params = new URLSearchParams();
+  params.set('page', String(Math.max(1, Math.floor(page))));
+  params.set('limit', String(Math.min(100, Math.max(1, Math.floor(limit)))));
+  return params;
+}
+
 export const apiAdminService: AdminService = {
   async getAdminStats() {
     return apiClient.get<AdminStats>('/admin/stats');
@@ -24,12 +31,10 @@ export const apiAdminService: AdminService = {
 
   async getUsers(options = {}) {
     const { page = 1, limit = 10, role, status, verification, q } = options;
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('limit', String(limit));
-    if (role) params.set('role', role);
-    if (status) params.set('status', status);
-    if (verification) params.set('verification', verification);
+    const params = paginationQuery(page, limit);
+    if (role && role !== 'all') params.set('role', role);
+    if (status && status !== 'all') params.set('status', status);
+    if (verification && verification !== 'all') params.set('verification', verification);
     if (q && q.trim()) params.set('q', q.trim());
     const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/users?${params.toString()}`);
     return {
@@ -68,7 +73,8 @@ export const apiAdminService: AdminService = {
   },
 
   async getTrips(page = 1, limit = 10) {
-    const res = await apiClient.get<ApiPaginated<ApiTrip>>(`/admin/rides?page=${page}&limit=${limit}`);
+    const params = paginationQuery(page, limit);
+    const res = await apiClient.get<ApiPaginated<ApiTrip>>(`/admin/rides?${params.toString()}`);
     return {
       ...res,
       items: res.items.map(mapApiTripToTrip)
@@ -80,7 +86,8 @@ export const apiAdminService: AdminService = {
   },
 
   async getBookings(page = 1, limit = 10) {
-    const res = await apiClient.get<ApiPaginated<ApiBooking>>(`/admin/bookings?page=${page}&limit=${limit}`);
+    const params = paginationQuery(page, limit);
+    const res = await apiClient.get<ApiPaginated<ApiBooking>>(`/admin/bookings?${params.toString()}`);
     return {
       ...res,
       items: res.items.map(mapApiBookingToBooking)
@@ -88,7 +95,8 @@ export const apiAdminService: AdminService = {
   },
   
   async getPendingVerifications(page = 1, limit = 10) {
-    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/verifications?page=${page}&limit=${limit}`);
+    const params = paginationQuery(page, limit);
+    const res = await apiClient.get<ApiPaginated<ApiUser>>(`/admin/verifications?${params.toString()}`);
     return {
       ...res,
       items: res.items.map(mapApiUserToUser)

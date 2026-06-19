@@ -331,6 +331,7 @@ class RideMapPreview extends StatelessWidget {
         origin: origin,
         destination: destination,
         showCar: false,
+        preferGoogleMap: false,
       ),
     );
   }

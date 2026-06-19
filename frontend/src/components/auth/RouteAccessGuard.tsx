@@ -7,7 +7,7 @@ import { ROUTES } from '@/lib/routes';
 import { getUserCapabilities } from '@/lib/access-control';
 import TireLoader from '@/components/ui/TireLoader';
 
-const AUTH_REQUIRED_PREFIXES = ['/bookings', '/profile', '/reviews', '/driver', '/admin'];
+const AUTH_REQUIRED_PREFIXES = ['/bookings', '/chats', '/profile', '/reviews', '/driver', '/admin'];
 const DRIVER_PROTECTED_PREFIXES = ['/driver/create-trip', '/driver/my-trips', '/driver/requests', '/driver/vehicle', '/driver/documents'];
 
 function startsWithAny(pathname: string, prefixes: string[]) {

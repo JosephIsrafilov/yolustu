@@ -202,6 +202,7 @@ Təcili yardım: 112
                     destination: ride.toCity,
                     progress: _progress,
                     showCar: ride.status == DriverRideStatus.active,
+                    preferGoogleMap: false,
                   ),
                 ),
               ),

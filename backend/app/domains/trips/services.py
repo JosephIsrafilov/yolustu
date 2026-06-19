@@ -29,6 +29,8 @@ from app.domains.trips.schemas import (
 from app.domains.gamification.services import check_and_award_badge
 from app.core.pagination import PaginatedResponse, create_paginated_response
 
+SEAT_SPOTS = ("front_right", "back_left", "back_middle", "back_right")
+
 
 class TripsService:
     def __init__(self, db: Session):
@@ -73,7 +75,22 @@ class TripsService:
                     current_user.id, ride_in.car_model or "Car"
                 )
 
-        ride_in = ride_in.model_copy(update={"status": RIDE_ACTIVE})
+        available_spots = ride_in.available_spots or list(
+            SEAT_SPOTS[: ride_in.available_seats]
+        )
+        if len(available_spots) != ride_in.available_seats:
+            raise HTTPException(
+                status_code=400,
+                detail="available_spots count must match available_seats",
+            )
+        if len(set(available_spots)) != len(available_spots) or any(
+            spot not in SEAT_SPOTS[: ride_in.total_seats] for spot in available_spots
+        ):
+            raise HTTPException(status_code=400, detail="Invalid available_spots")
+
+        ride_in = ride_in.model_copy(
+            update={"status": RIDE_ACTIVE, "available_spots": available_spots}
+        )
         return ride_to_response(self.rides.create(current_user.id, vehicle.id, ride_in))  # type: ignore[arg-type]
 
     def search_rides(

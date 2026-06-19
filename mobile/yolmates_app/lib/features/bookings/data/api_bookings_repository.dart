@@ -50,6 +50,7 @@ class ApiBookingsRepository implements BookingsRepository {
       final response = await _client.post('/bookings', data: {
         'ride_id': booking.rideId,
         'seats_booked': booking.seats,
+        'selected_spots': booking.selectedSpots,
       });
 
       final data = response.data;

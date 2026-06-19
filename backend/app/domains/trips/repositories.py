@@ -86,6 +86,7 @@ class RideRepository:
             departure_time=ride_in.departure_time,
             total_seats=ride_in.total_seats,
             available_seats=ride_in.available_seats,
+            available_spots=ride_in.available_spots,
             price_per_seat=ride_in.price_per_seat,
             status=ride_in.status,
             description=ride_in.description,

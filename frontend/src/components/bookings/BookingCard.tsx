@@ -122,7 +122,7 @@ export default function BookingCard({
         </div>
 
         {driver && (
-          <div className="grid grid-cols-[28px_1fr] gap-2 py-2 border-t border-border items-center h-11">
+          <div className="grid grid-cols-[28px_1fr_36px] gap-2 py-2 border-t border-border items-center h-11">
             <Link
               href={ROUTES.profileDetails(driver.id)}
               className="contents"
@@ -141,6 +141,15 @@ export default function BookingCard({
                 </p>
               </div>
             </Link>
+            <button
+              type="button"
+              onClick={openRideChat}
+              disabled={isOpeningChat}
+              aria-label={localCopy.chat}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-brand-600 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Icon name="message-square" size={15} />
+            </button>
           </div>
         )}
 

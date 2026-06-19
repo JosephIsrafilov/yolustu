@@ -30,6 +30,7 @@ class RideDto {
   final DateTime departureTime;
   final int totalSeats;
   final int availableSeats;
+  final List<String> availableSpots;
   final double pricePerSeat;
   final String originCity;
   final String destinationCity;
@@ -51,6 +52,7 @@ class RideDto {
     required this.departureTime,
     required this.totalSeats,
     required this.availableSeats,
+    this.availableSpots = const [],
     required this.pricePerSeat,
     required this.originCity,
     required this.destinationCity,
@@ -74,6 +76,10 @@ class RideDto {
       departureTime: DateTime.parse(json['departure_time']),
       totalSeats: json['total_seats'] as int,
       availableSeats: json['available_seats'] as int,
+      availableSpots: (json['available_spots'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       pricePerSeat: _parseDecimal(json['price_per_seat']),
       originCity: json['origin_city'] as String,
       destinationCity: json['destination_city'] as String,

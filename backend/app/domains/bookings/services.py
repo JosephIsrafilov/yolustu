@@ -30,6 +30,8 @@ from app.domains.lifecycle import (
 from app.domains.trips.ports import RideLookupPort
 from app.core.notifications import NotificationService
 
+SEAT_SPOTS = ("front_right", "back_left", "back_middle", "back_right")
+
 
 class BookingsService:
     def __init__(self, db: Session):
@@ -66,6 +68,10 @@ class BookingsService:
                 status_code=400, detail="Booking already exists for this ride"
             )
 
+        selected_spots = self._validate_and_reserve_spots(
+            ride, booking_in.seats_booked, booking_in.selected_spots
+        )
+
         from app.core.config import settings
 
         amount = money(ride.price_per_seat * booking_in.seats_booked)
@@ -89,6 +95,7 @@ class BookingsService:
             passenger_id=current_user.id,
             seats_booked=booking_in.seats_booked,
             total_price=amount,  # type: ignore[arg-type]
+            selected_spots=selected_spots,
         )
 
         # Record wallet transaction for the hold
@@ -107,6 +114,7 @@ class BookingsService:
             )
 
         ride.available_seats -= booking_in.seats_booked  # type: ignore[assignment]
+        ride.available_spots = self._available_spots_after(ride, selected_spots)  # type: ignore[assignment]
         if self.db is not None:
             self.db.commit()
             self.db.refresh(booking)
@@ -176,6 +184,7 @@ class BookingsService:
             ride.available_seats = min(  # type: ignore[assignment,arg-type]
                 ride.total_seats, ride.available_seats + booking.seats_booked
             )
+            ride.available_spots = self._available_spots_after(ride)  # type: ignore[assignment]
 
         # Release held funds
         if self.db is not None:
@@ -251,6 +260,9 @@ class BookingsService:
                 ride.available_seats = min(  # type: ignore[assignment,arg-type]
                     ride.total_seats, ride.available_seats + booking.seats_booked
                 )
+                ride.available_spots = self._available_spots_after(
+                    ride, released_booking_id=booking.id
+                )  # type: ignore[assignment]
 
         if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]:
             # Release held funds
@@ -369,6 +381,7 @@ class BookingsService:
                     ride.total_seats,
                     ride.available_seats + booking.seats_booked,  # type: ignore[arg-type]
                 )
+                ride.available_spots = self._available_spots_after(ride)  # type: ignore[assignment]
 
             # Release held funds
             if self.db is not None:
@@ -403,3 +416,54 @@ class BookingsService:
                 body="Ödəniş edilmədiyi üçün rezerviniz ləğv edildi.",
                 data={"booking_id": str(booking.id), "type": "booking_expired"},
             )
+
+    def _seat_layout(self, ride) -> list[str]:
+        return list(SEAT_SPOTS[: ride.total_seats])
+
+    def _taken_spots(self, ride, exclude_booking_id: UUID | None = None) -> set[str]:
+        taken: set[str] = set()
+        for booking in self.bookings.list_active_for_ride(ride.id):  # type: ignore[arg-type]
+            if exclude_booking_id is not None and booking.id == exclude_booking_id:
+                continue
+            taken.update(booking.selected_spots or [])
+        return taken
+
+    def _available_spots_after(
+        self,
+        ride,
+        newly_selected: list[str] | None = None,
+        released_booking_id: UUID | None = None,
+    ) -> list[str]:
+        taken = self._taken_spots(ride, exclude_booking_id=released_booking_id)
+        taken.update(newly_selected or [])
+        return [spot for spot in self._seat_layout(ride) if spot not in taken]
+
+    def _validate_and_reserve_spots(
+        self, ride, seats_booked: int, selected_spots: list[str] | None
+    ) -> list[str]:
+        layout = self._seat_layout(ride)
+        selected = list(selected_spots or [])
+        if selected and len(selected) != seats_booked:
+            raise HTTPException(
+                status_code=400,
+                detail="selected_spots count must match seats_booked",
+            )
+        if len(selected) != len(set(selected)):
+            raise HTTPException(status_code=400, detail="Duplicate seat selection")
+        unknown = [spot for spot in selected if spot not in layout]
+        if unknown:
+            raise HTTPException(status_code=400, detail="Invalid seat selection")
+
+        taken = self._taken_spots(ride)
+        if any(spot in taken for spot in selected):
+            raise HTTPException(
+                status_code=400, detail="Selected seat is not available"
+            )
+
+        if selected:
+            return selected
+
+        available = [spot for spot in layout if spot not in taken]
+        if len(available) < seats_booked:
+            raise HTTPException(status_code=400, detail="Not enough available seats")
+        return available[:seats_booked]

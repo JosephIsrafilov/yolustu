@@ -9,6 +9,7 @@ class Trip {
   final double price;
   final int availableSeats;
   final int totalSeats;
+  final List<String> availableSpots;
   final String status;
   final bool femaleOnly;
   final bool allowSmoking;
@@ -24,6 +25,7 @@ class Trip {
     required this.price,
     required this.availableSeats,
     required this.totalSeats,
+    this.availableSpots = const [],
     required this.status,
     this.femaleOnly = false,
     this.allowSmoking = false,
@@ -41,6 +43,10 @@ class Trip {
       price: (json['price'] as num).toDouble(),
       availableSeats: json['available_seats'] as int,
       totalSeats: json['total_seats'] as int,
+      availableSpots: (json['available_spots'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       status: json['status'] as String,
       femaleOnly: json['female_only'] as bool? ?? false,
       allowSmoking: json['allow_smoking'] as bool? ?? false,
@@ -59,6 +65,7 @@ class Trip {
       'price': price,
       'available_seats': availableSeats,
       'total_seats': totalSeats,
+      'available_spots': availableSpots,
       'status': status,
     };
   }

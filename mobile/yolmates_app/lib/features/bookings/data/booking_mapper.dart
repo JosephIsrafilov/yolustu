@@ -36,6 +36,7 @@ class BookingMapper {
       driverName: driverName,
       departureTime: departureTime,
       seats: dto.seatsBooked,
+      selectedSpots: dto.selectedSpots,
       pricePerSeat: pricePerSeat,
       status: _parseStatus(dto.status),
       createdAt: dto.createdAt,

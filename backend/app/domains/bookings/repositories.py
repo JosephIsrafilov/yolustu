@@ -9,6 +9,8 @@ from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_CANCELLED,
     BOOKING_COMPLETED,
+    BOOKING_EXPIRED,
+    BOOKING_NO_SHOW,
     BOOKING_PAID,
     BOOKING_PENDING,
     BOOKING_REJECTED,
@@ -20,12 +22,18 @@ class BookingRepository:
         self.db = db
 
     def create(
-        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: Decimal
+        self,
+        ride_id: UUID,
+        passenger_id: UUID,
+        seats_booked: int,
+        total_price: Decimal,
+        selected_spots: list[str] | None = None,
     ) -> Booking:
         booking = Booking(
             ride_id=ride_id,
             passenger_id=passenger_id,
             seats_booked=seats_booked,
+            selected_spots=selected_spots,
             total_price=total_price,
             status=BOOKING_PENDING,
         )
@@ -76,6 +84,23 @@ class BookingRepository:
                 Booking.status.notin_([BOOKING_CANCELLED, BOOKING_REJECTED]),
             )
             .first()
+        )
+
+    def list_active_for_ride(self, ride_id: UUID) -> list[Booking]:
+        return (
+            self.db.query(Booking)
+            .filter(
+                Booking.ride_id == ride_id,
+                Booking.status.notin_(
+                    [
+                        BOOKING_CANCELLED,
+                        BOOKING_REJECTED,
+                        BOOKING_EXPIRED,
+                        BOOKING_NO_SHOW,
+                    ]
+                ),
+            )
+            .all()
         )
 
     def has_accepted_booking(self, ride_id: UUID, passenger_id: UUID) -> bool:

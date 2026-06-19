@@ -148,7 +148,10 @@ class _BookingCard extends ConsumerWidget {
                       try {
                         final conversation = await ref
                             .read(chatRepositoryProvider)
-                            .getOrCreateRideConversation(booking.rideId);
+                            .getOrCreateRideConversation(
+                              rideId: booking.rideId,
+                              bookingId: booking.id,
+                            );
                         if (context.mounted) {
                           context.push(
                             '${AppRoutes.messages}/${conversation.id}',

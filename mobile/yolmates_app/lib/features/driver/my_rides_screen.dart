@@ -9,6 +9,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/map/route_map_view.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
@@ -119,6 +120,12 @@ class _RideCard extends ConsumerWidget {
                   foregroundColor: ride.status.colors.$2,
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            RideMapPreview(
+              origin: ride.fromCity,
+              destination: ride.toCity,
+              height: 120,
             ),
             const SizedBox(height: 12),
             Row(

@@ -30,7 +30,7 @@ export interface AdminStats {
 export interface GetUsersOptions {
   page?: number;
   limit?: number;
-  role?: string;
+  role?: UserRole | 'all';
   status?: 'active' | 'blocked' | 'all';
   verification?: 'none' | 'pending' | 'approved' | 'rejected' | 'all';
   q?: string;

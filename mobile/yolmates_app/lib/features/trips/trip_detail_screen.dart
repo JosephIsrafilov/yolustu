@@ -141,8 +141,8 @@ class _Body extends ConsumerWidget {
                       // Note: getOrCreateRideConversation expects a booking ID or ride ID depending on backend implementation.
                       // The backend route is POST /chats/ride. If it takes booking_id but we just have ride, we might pass ride.id.
                       // Wait, let's just pass ride.id since we might not have booked it yet!
-                      final conv =
-                          await repo.getOrCreateRideConversation(ride.id);
+                      final conv = await repo.getOrCreateRideConversation(
+                          rideId: ride.id);
                       if (context.mounted) {
                         context.push('/messages/${conv.id}');
                       }

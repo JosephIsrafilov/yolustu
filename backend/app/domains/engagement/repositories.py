@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, aliased, joinedload
 
 from app.domains.engagement.models import (
     Conversation,
@@ -82,6 +82,29 @@ class ConversationRepository:
             .first()
         )
 
+    def get_ride_conversation_between_users(
+        self, user_a_id: UUID, user_b_id: UUID
+    ) -> Conversation | None:
+        participant_a = aliased(ConversationParticipant)
+        participant_b = aliased(ConversationParticipant)
+        return (
+            self.db.query(Conversation)
+            .join(participant_a, participant_a.conversation_id == Conversation.id)
+            .join(participant_b, participant_b.conversation_id == Conversation.id)
+            .options(
+                joinedload(Conversation.participants).joinedload(
+                    ConversationParticipant.user
+                )
+            )
+            .filter(
+                Conversation.type == "ride",
+                participant_a.user_id == user_a_id,
+                participant_b.user_id == user_b_id,
+            )
+            .order_by(Conversation.updated_at.desc())
+            .first()
+        )
+
     def get_open_support_conversation(self, user_id: UUID) -> Conversation | None:
         return (
             self.db.query(Conversation)
@@ -148,7 +171,19 @@ class ConversationRepository:
             )
         else:
             query = query.filter(ConversationParticipant.user_id == user_id)
-        return query.distinct().order_by(Conversation.updated_at.desc()).all()
+        conversations = query.distinct().order_by(Conversation.updated_at.desc()).all()
+        visible: list[Conversation] = []
+        seen_ride_pairs: set[frozenset[UUID]] = set()
+        for conversation in conversations:
+            if conversation.type != "ride":
+                visible.append(conversation)
+                continue
+            participant_ids = frozenset(p.user_id for p in conversation.participants)
+            if participant_ids in seen_ride_pairs:
+                continue
+            seen_ride_pairs.add(participant_ids)
+            visible.append(conversation)
+        return visible
 
 
 class MessageRepository:

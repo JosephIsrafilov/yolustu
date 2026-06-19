@@ -100,8 +100,10 @@ class _DetailState extends ConsumerState<_Detail> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(chatRepositoryProvider);
-      final conversation =
-          await repo.getOrCreateRideConversation(widget.booking.rideId);
+      final conversation = await repo.getOrCreateRideConversation(
+        rideId: widget.booking.rideId,
+        bookingId: widget.booking.id,
+      );
       if (mounted) context.push('/messages/${conversation.id}');
     } catch (e) {
       if (mounted) {

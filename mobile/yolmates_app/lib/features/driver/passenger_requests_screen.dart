@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../chat/data/chat_repository.dart';
 import 'data/driver_ride.dart';
 import 'data/driver_controller.dart';
 
@@ -42,14 +45,63 @@ class PassengerRequestsScreen extends ConsumerWidget {
   }
 }
 
-class _RequestCard extends ConsumerWidget {
+class _RequestCard extends ConsumerStatefulWidget {
   final PassengerRequest request;
 
   const _RequestCard({required this.request});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RequestCard> createState() => _RequestCardState();
+}
+
+class _RequestCardState extends ConsumerState<_RequestCard> {
+  bool _busy = false;
+
+  Future<void> _setStatus(RequestStatus status) async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(passengerRequestsProvider.notifier)
+          .setStatus(widget.request.id, status);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(status.label)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openChat() async {
+    setState(() => _busy = true);
+    try {
+      final conversation =
+          await ref.read(chatRepositoryProvider).getOrCreateRideConversation(
+                rideId: widget.request.rideId.isEmpty
+                    ? null
+                    : widget.request.rideId,
+                bookingId: widget.request.id,
+              );
+      if (mounted) context.push('${AppRoutes.messages}/${conversation.id}');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
+    final request = widget.request;
     final time =
         '${request.departureTime.hour.toString().padLeft(2, '0')}:${request.departureTime.minute.toString().padLeft(2, '0')}';
 
@@ -109,6 +161,12 @@ class _RequestCard extends ConsumerWidget {
                   backgroundColor: request.status.colors.$1,
                   foregroundColor: request.status.colors.$2,
                 ),
+              IconButton(
+                onPressed: _busy ? null : _openChat,
+                icon: const Icon(Icons.chat_bubble_outline),
+                color: AppTheme.tealDark,
+                tooltip: 'Söhbət',
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -139,11 +197,8 @@ class _RequestCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () async {
-                      await ref
-                          .read(passengerRequestsProvider.notifier)
-                          .setStatus(request.id, RequestStatus.rejected);
-                    },
+                    onPressed:
+                        _busy ? null : () => _setStatus(RequestStatus.rejected),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red.shade600,
                       side: BorderSide(color: Colors.red.shade200),
@@ -154,11 +209,8 @@ class _RequestCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      await ref
-                          .read(passengerRequestsProvider.notifier)
-                          .setStatus(request.id, RequestStatus.accepted);
-                    },
+                    onPressed:
+                        _busy ? null : () => _setStatus(RequestStatus.accepted),
                     child: Text(l10n.passengerRequestsAccept),
                   ),
                 ),

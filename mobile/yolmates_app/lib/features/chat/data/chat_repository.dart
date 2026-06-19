@@ -10,7 +10,10 @@ import 'chat_models.dart';
 abstract class ChatRepository {
   Future<List<Conversation>> getConversations();
   Future<Conversation> getOrCreateSupportConversation();
-  Future<Conversation> getOrCreateRideConversation(String rideId);
+  Future<Conversation> getOrCreateRideConversation({
+    String? rideId,
+    String? bookingId,
+  });
   Future<List<ChatMessage>> getMessages(String conversationId);
   Future<ChatMessage> sendMessage(String conversationId, String content,
       {String type = 'text', List<String> attachments = const []});
@@ -68,9 +71,14 @@ class ApiChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation> getOrCreateRideConversation(String rideId) async {
-    final response =
-        await _client.post('/chats/ride', data: {'ride_id': rideId});
+  Future<Conversation> getOrCreateRideConversation({
+    String? rideId,
+    String? bookingId,
+  }) async {
+    final response = await _client.post('/chats/ride', data: {
+      if (rideId != null) 'ride_id': rideId,
+      if (bookingId != null) 'booking_id': bookingId,
+    });
     return Conversation.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -175,15 +183,20 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation> getOrCreateRideConversation(String rideId) async {
+  Future<Conversation> getOrCreateRideConversation({
+    String? rideId,
+    String? bookingId,
+  }) async {
     await Future.delayed(_latency);
+    final key = bookingId ?? rideId ?? 'ride-mock';
     return _conversations.firstWhere(
-      (c) => c.rideId == rideId,
+      (c) => c.bookingId == bookingId || c.rideId == rideId,
       orElse: () {
         final c = Conversation(
-          id: 'ride-mock',
+          id: key,
           type: 'ride',
           rideId: rideId,
+          bookingId: bookingId,
           status: 'open',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

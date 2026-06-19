@@ -8,6 +8,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/routes.dart';
 import '../../../core/theme.dart';
 import '../../../shared/widgets/app_logo.dart';
+import '../data/app_user.dart';
 import '../data/auth_repository.dart';
 import '../state/auth_controller.dart';
 
@@ -80,7 +81,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       final authState = ref.read(authControllerProvider);
       if (authState.status == AuthStatus.authenticated) {
-        context.push('${AppRoutes.modeTransition}?driver=false');
+        final user = authState.user;
+        final isDriver = user?.role == UserRole.driver &&
+            user?.verificationStatus == 'approved';
+        if (isDriver) {
+          context.go(AppRoutes.driverPanel);
+        } else {
+          context.push('${AppRoutes.modeTransition}?driver=false');
+        }
       }
     } on AuthException catch (e) {
       if (!mounted) return;

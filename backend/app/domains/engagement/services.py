@@ -152,10 +152,17 @@ class EngagementService:
                     detail="Not authorized to access this booking chat",
                 )
 
-            existing = self.conversations.get_ride_conversation(
-                booking.id  # type: ignore[arg-type]
+            existing = self.conversations.get_ride_conversation_between_users(
+                booking.passenger_id,
+                ride.driver_id,  # type: ignore[arg-type]
             )
             if existing:
+                if existing.ride_id is None:
+                    existing.ride_id = ride.id  # type: ignore[assignment]
+                if existing.booking_id is None:
+                    existing.booking_id = booking.id  # type: ignore[assignment]
+                self.db.commit()
+                self.db.refresh(existing)
                 return existing
 
             conv = Conversation(
@@ -198,19 +205,16 @@ class EngagementService:
                 ),
             )
 
-        # Try to find an existing conversation between this user and the driver for this ride
-        existing = (
-            self.conversations.db.query(Conversation)
-            .filter(
-                Conversation.type == "ride",
-                Conversation.ride_id == ride_id,
-                Conversation.created_by_user_id == current_user.id,
-                Conversation.booking_id.is_(None),
-            )
-            .first()
+        # Reuse a passenger-driver chat across bookings and rides.
+        existing = self.conversations.get_ride_conversation_between_users(
+            current_user.id,
+            ride.driver_id,  # type: ignore[arg-type]
         )
-
         if existing:
+            if existing.ride_id is None:
+                existing.ride_id = ride.id  # type: ignore[assignment]
+                self.db.commit()
+                self.db.refresh(existing)
             return existing
 
         conv = Conversation(

@@ -18,6 +18,7 @@ class BookingDto {
   final String rideId;
   final String passengerId;
   final int seatsBooked;
+  final List<String> selectedSpots;
   final String status;
   final double totalPrice;
   final DateTime? paymentDeadline;
@@ -30,6 +31,7 @@ class BookingDto {
     required this.rideId,
     required this.passengerId,
     required this.seatsBooked,
+    this.selectedSpots = const [],
     required this.status,
     required this.totalPrice,
     this.paymentDeadline,
@@ -44,6 +46,10 @@ class BookingDto {
       rideId: json['ride_id'].toString(),
       passengerId: json['passenger_id'].toString(),
       seatsBooked: json['seats_booked'] as int,
+      selectedSpots: (json['selected_spots'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       status: json['status'] as String,
       totalPrice: _parseDecimal(json['total_price']),
       paymentDeadline: json['payment_deadline'] != null

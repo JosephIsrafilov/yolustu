@@ -42,6 +42,8 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -56,6 +58,7 @@ class ApiDriverRepository implements DriverRepository {
         'departure_time': ride.departureTime.toIso8601String(),
         'total_seats': ride.seats,
         'available_seats': ride.seats,
+        'available_spots': _defaultSpots(ride.seats),
         'price_per_seat': ride.pricePerSeat,
         'description': ride.description.isEmpty ? null : ride.description,
         'smoking_allowed': ride.allowSmoking,
@@ -77,6 +80,8 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -96,6 +101,8 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -113,6 +120,8 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -175,6 +184,11 @@ class ApiDriverRepository implements DriverRepository {
       default:
         return DriverRideStatus.upcoming;
     }
+  }
+
+  List<String> _defaultSpots(int seats) {
+    const spots = ['front_right', 'back_left', 'back_middle', 'back_right'];
+    return spots.take(seats).toList();
   }
 
   Vehicle _vehicleFromJson(Map<String, dynamic> json) {
@@ -323,6 +337,8 @@ class PassengerRequestsController
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -344,6 +360,8 @@ class PassengerRequestsController
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -361,6 +379,7 @@ class PassengerRequestsController
         : 'Sərnişin';
     return PassengerRequest(
       id: json['id'].toString(),
+      rideId: ride?['id']?.toString() ?? json['ride_id']?.toString() ?? '',
       passengerName: passengerName.isEmpty ? 'Sərnişin' : passengerName,
       fromCity: ride?['origin_city'] as String? ?? '',
       toCity: ride?['destination_city'] as String? ?? '',

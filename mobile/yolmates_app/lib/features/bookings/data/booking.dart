@@ -68,6 +68,7 @@ class Booking {
   final String driverName;
   final DateTime departureTime;
   final int seats;
+  final List<String> selectedSpots;
   final double pricePerSeat;
   final BookingStatus status;
   final DateTime createdAt;
@@ -81,6 +82,7 @@ class Booking {
     required this.driverName,
     required this.departureTime,
     required this.seats,
+    this.selectedSpots = const [],
     required this.pricePerSeat,
     required this.status,
     required this.createdAt,
@@ -98,6 +100,7 @@ class Booking {
       driverName: driverName,
       departureTime: departureTime,
       seats: seats,
+      selectedSpots: selectedSpots,
       pricePerSeat: pricePerSeat,
       status: status ?? this.status,
       createdAt: createdAt,

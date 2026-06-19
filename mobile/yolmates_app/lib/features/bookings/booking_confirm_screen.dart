@@ -32,10 +32,64 @@ class BookingConfirmScreen extends ConsumerStatefulWidget {
 
 class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
   late int _seats = widget.initialSeats.clamp(1, 4);
+  List<String> _selectedSpots = const [];
   bool _submitting = false;
   String? _error;
 
+  static const _seatOrder = [
+    'front_right',
+    'back_left',
+    'back_middle',
+    'back_right',
+  ];
+
+  List<String> _availableSpotsFor(Trip ride) {
+    if (ride.availableSpots.isNotEmpty) return ride.availableSpots;
+    return _seatOrder.take(ride.availableSeats).toList();
+  }
+
+  void _syncSelectedSpots(Trip ride) {
+    final available = _availableSpotsFor(ride);
+    if (available.isNotEmpty && _seats > available.length) {
+      _seats = available.length;
+    }
+    final next = _selectedSpots.where(available.contains).take(_seats).toList();
+    for (final spot in available) {
+      if (next.length == _seats) break;
+      if (!next.contains(spot)) next.add(spot);
+    }
+    _selectedSpots = next;
+  }
+
+  void _setSeats(Trip ride, int seats) {
+    setState(() {
+      _seats = seats;
+      _syncSelectedSpots(ride);
+    });
+  }
+
+  void _toggleSpot(Trip ride, String spot) {
+    final available = _availableSpotsFor(ride);
+    if (!available.contains(spot)) return;
+    setState(() {
+      final next = [..._selectedSpots];
+      if (next.contains(spot)) {
+        next.remove(spot);
+      } else {
+        if (next.length == _seats) next.removeAt(0);
+        next.add(spot);
+      }
+      _selectedSpots = next;
+    });
+  }
+
   Future<void> _confirm(Trip ride) async {
+    _syncSelectedSpots(ride);
+    if (_selectedSpots.length != _seats) {
+      setState(() => _error = 'Zəhmət olmasa $_seats yer seçin.');
+      return;
+    }
+
     // Check wallet balance before booking
     const serviceFeePercent = 0.10;
     final total = ride.price * _seats * (1 + serviceFeePercent);
@@ -59,6 +113,7 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
         driverName: ride.driver.name,
         departureTime: ride.departureTime,
         seats: _seats,
+        selectedSpots: _selectedSpots,
         pricePerSeat: ride.price,
         status: BookingStatus.pending,
         createdAt: DateTime.now(),
@@ -72,13 +127,23 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
 
       // Navigate to chat and send automated message
       final chatRepo = ref.read(chatRepositoryProvider);
-      final conversation =
-          await chatRepo.getOrCreateRideConversation(created.rideId);
+      final conversation = await chatRepo.getOrCreateRideConversation(
+        rideId: created.rideId,
+        bookingId: created.id,
+      );
 
       final time =
           '${ride.departureTime.hour.toString().padLeft(2, '0')}:${ride.departureTime.minute.toString().padLeft(2, '0')}';
-      final msg =
-          'Sifariş detalı:\nMarşrut: ${ride.fromCity} - ${ride.toCity}\nVaxt: ${ride.departureTime.day.toString().padLeft(2, '0')}.${ride.departureTime.month.toString().padLeft(2, '0')} $time\nYer sayı: $_seats\nQiymət: ${ride.price.toStringAsFixed(0)} AZN/yer';
+      final date =
+          '${ride.departureTime.day.toString().padLeft(2, '0')}.${ride.departureTime.month.toString().padLeft(2, '0')}';
+      final msg = [
+        'Sifariş detalı:',
+        'Marşrut: ${ride.fromCity} - ${ride.toCity}',
+        'Vaxt: $date $time',
+        'Yer sayı: $_seats',
+        'Yer: ${_selectedSpots.map(_seatLabel).join(', ')}',
+        'Qiymət: ${ride.price.toStringAsFixed(0)} AZN/yer',
+      ].join('\n');
       await chatRepo.sendMessage(conversation.id, msg);
 
       if (!mounted) return;
@@ -156,30 +221,54 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
               )
             : _submitting
                 ? const LoadingView(message: 'Rezervasiya yaradılır...')
-                : _Content(
-                    ride: ride,
-                    seats: _seats,
-                    error: _error,
-                    onSeatsChanged: (s) => setState(() => _seats = s),
-                    onConfirm: () => _confirm(ride),
-                  ),
+                : Builder(builder: (context) {
+                    _syncSelectedSpots(ride);
+                    return _Content(
+                      ride: ride,
+                      seats: _seats,
+                      selectedSpots: _selectedSpots,
+                      error: _error,
+                      onSeatsChanged: (s) => _setSeats(ride, s),
+                      onSpotToggle: (spot) => _toggleSpot(ride, spot),
+                      onConfirm: () => _confirm(ride),
+                    );
+                  }),
       ),
     );
+  }
+}
+
+String _seatLabel(String spot) {
+  switch (spot) {
+    case 'front_right':
+      return 'Ön sağ';
+    case 'back_left':
+      return 'Arxa sol';
+    case 'back_middle':
+      return 'Arxa orta';
+    case 'back_right':
+      return 'Arxa sağ';
+    default:
+      return spot;
   }
 }
 
 class _Content extends StatelessWidget {
   final Trip ride;
   final int seats;
+  final List<String> selectedSpots;
   final String? error;
   final ValueChanged<int> onSeatsChanged;
+  final ValueChanged<String> onSpotToggle;
   final VoidCallback onConfirm;
 
   const _Content({
     required this.ride,
     required this.seats,
+    required this.selectedSpots,
     required this.error,
     required this.onSeatsChanged,
+    required this.onSpotToggle,
     required this.onConfirm,
   });
 
@@ -284,6 +373,20 @@ class _Content extends StatelessWidget {
                       ],
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SectionCard(
+                title: 'Yer seçimi',
+                child: _SeatPicker(
+                  totalSeats: ride.totalSeats,
+                  availableSpots: ride.availableSpots.isNotEmpty
+                      ? ride.availableSpots
+                      : _BookingConfirmScreenState._seatOrder
+                          .take(ride.availableSeats)
+                          .toList(),
+                  selectedSpots: selectedSpots,
+                  onToggle: onSpotToggle,
                 ),
               ),
               const SizedBox(height: 12),
@@ -432,6 +535,164 @@ class _RouteCard extends StatelessWidget {
         if (time.isNotEmpty)
           Text(time,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
+      ],
+    );
+  }
+}
+
+class _SeatPicker extends StatelessWidget {
+  final int totalSeats;
+  final List<String> availableSpots;
+  final List<String> selectedSpots;
+  final ValueChanged<String> onToggle;
+
+  const _SeatPicker({
+    required this.totalSeats,
+    required this.availableSpots,
+    required this.selectedSpots,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final seats = _BookingConfirmScreenState._seatOrder.take(totalSeats);
+
+    return Column(
+      children: [
+        Container(
+          width: 92,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppTheme.slate100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.slate200),
+          ),
+          child: const Text(
+            'Sürücü',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
+          children: seats.map((spot) {
+            final available = availableSpots.contains(spot);
+            final selected = selectedSpots.contains(spot);
+            return _SeatChip(
+              label: _seatLabel(spot),
+              available: available,
+              selected: selected,
+              onTap: available ? () => onToggle(spot) : null,
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _LegendDot(color: AppTheme.teal, label: 'Seçilib'),
+            const SizedBox(width: 12),
+            _LegendDot(color: AppTheme.slate200, label: 'Boş'),
+            const SizedBox(width: 12),
+            _LegendDot(color: Colors.red.shade100, label: 'Tutulub'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SeatChip extends StatelessWidget {
+  final String label;
+  final bool available;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const _SeatChip({
+    required this.label,
+    required this.available,
+    required this.selected,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final background = selected
+        ? AppTheme.teal
+        : available
+            ? Colors.white
+            : Colors.red.shade50;
+    final foreground = selected
+        ? Colors.white
+        : available
+            ? AppTheme.navy
+            : Colors.red.shade400;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 104,
+        height: 46,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? AppTheme.teal
+                : available
+                    ? AppTheme.slate200
+                    : Colors.red.shade100,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              available ? Icons.event_seat : Icons.lock_outline,
+              size: 16,
+              color: foreground,
+            ),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 11)),
       ],
     );
   }

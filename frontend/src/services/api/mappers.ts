@@ -78,6 +78,7 @@ export interface ApiTrip {
   pets_allowed?: boolean;
   music_allowed?: boolean;
   female_only?: boolean;
+  available_spots?: string[];
 }
 
 export interface ApiBooking {
@@ -119,6 +120,7 @@ export interface ApiRideCreateInput {
   pets_allowed?: boolean;
   music_allowed?: boolean;
   female_only?: boolean;
+  available_spots?: string[];
 }
 
 export function mapApiVehicleToVehicle(apiVehicle: ApiVehicle): Vehicle {
@@ -165,6 +167,7 @@ export function mapApiTripToTrip(apiTrip: ApiTrip): Trip {
     petsAllowed: apiTrip.pets_allowed ?? false,
     musicAllowed: apiTrip.music_allowed ?? true,
     femaleOnly: apiTrip.female_only ?? false,
+    availableSpots: apiTrip.available_spots ?? [],
   };
 }
 
@@ -190,6 +193,7 @@ export function mapCreateTripToApiRideCreate(
     pets_allowed: input.petsAllowed,
     music_allowed: input.musicAllowed,
     female_only: input.femaleOnly,
+    available_spots: input.availableSpots,
   };
 }
 

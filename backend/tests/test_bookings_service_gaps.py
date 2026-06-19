@@ -70,7 +70,12 @@ class FakeBookingRepository:
         self.bookings: dict[UUID, FakeBooking] = {b.id: b for b in (bookings or [])}
 
     def create(
-        self, ride_id: UUID, passenger_id: UUID, seats_booked: int, total_price: Decimal
+        self,
+        ride_id: UUID,
+        passenger_id: UUID,
+        seats_booked: int,
+        total_price: Decimal,
+        selected_spots: list[str] | None = None,
     ) -> FakeBooking:
         booking = FakeBooking(
             id=uuid4(),
@@ -78,6 +83,7 @@ class FakeBookingRepository:
             passenger_id=passenger_id,
             seats_booked=seats_booked,
             total_price=total_price,
+            selected_spots=selected_spots,
         )
         self.bookings[booking.id] = booking
         return booking
@@ -99,6 +105,14 @@ class FakeBookingRepository:
             ):
                 return booking
         return None
+
+    def list_active_for_ride(self, ride_id: UUID) -> list[FakeBooking]:
+        return [
+            booking
+            for booking in self.bookings.values()
+            if booking.ride_id == ride_id
+            and booking.status not in ["cancelled", "rejected", "expired", "no_show"]
+        ]
 
     def list_for_passenger(self, passenger_id: UUID) -> list[FakeBooking]:
         return [

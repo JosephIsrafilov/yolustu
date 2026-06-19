@@ -631,6 +631,8 @@ class _BalanceCard extends StatelessWidget {
               label: Text(actionLabel),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white,
+                disabledBackgroundColor: Colors.white.withValues(alpha: 0.08),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),

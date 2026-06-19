@@ -17,6 +17,7 @@ class RideMapper {
       price: dto.pricePerSeat,
       availableSeats: dto.availableSeats,
       totalSeats: dto.totalSeats,
+      availableSpots: dto.availableSpots,
       status: dto.status,
       femaleOnly: dto.femaleOnly,
       allowSmoking: dto.smokingAllowed,
