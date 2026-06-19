@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -163,6 +163,26 @@ class FakeSeatReservationRepository:
         return len(released)
 
 
+class FakeReservationWalletService:
+    def __init__(self):
+        self.reserved: list[tuple[UUID, Decimal]] = []
+        self.captured: list[UUID] = []
+        self.released: list[UUID] = []
+
+    def reserve_for_booking(
+        self, booking: FakeBooking, ride: FakeRide, current_user: CurrentUser
+    ) -> None:
+        self.reserved.append((booking.id, booking.total_price))
+
+    def capture_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
+        self.captured.append(booking.id)
+        booking.status = "paid"
+        booking.payment_deadline = None
+
+    def release_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
+        self.released.append(booking.id)
+
+
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
@@ -192,30 +212,12 @@ def make_service(
     )
 
     db_mock = MagicMock(spec=Session)
-
-    # Mock wallet behavior so get_or_create_for_update works and ledger works
-    wallet_mock = MagicMock()
-    wallet_mock.available_balance = Decimal("1000.00")
-    wallet_mock.pending_balance = Decimal("0.00")
-    wallet_mock.status = "succeeded"  # So it can also act as a payment mock
-    wallet_mock.provider = "mock"
-    wallet_mock.amount = Decimal("10.00")
-
-    # We'll just mock PaymentService where it matters. But PaymentService itself
-    # creates WalletRepository using db_mock.
-    # To intercept the query, we can mock the entire PaymentService.
-
     service = BookingsService(db=db_mock)
     service.bookings = cast(BookingRepository, FakeBookingRepository())
     service.seats = cast(SeatReservationRepository, FakeSeatReservationRepository(ride))
     service.rides = cast(RideLookupPort, FakeRideLookupPort(ride))
+    cast(Any, service).reservations = FakeReservationWalletService()
     service.notifications = cast(NotificationService, FakeNotificationService())
-
-    # Mock the PaymentService at the module level or inside BookingsService
-    # But since create_booking imports PaymentService directly, we might need a patch
-    # Or just mock db_mock.query().filter().with_for_update().first() to return a wallet
-
-    db_mock.query.return_value.filter.return_value.with_for_update.return_value.first.return_value = wallet_mock
 
     driver = make_current_user(driver_id, role="driver")
     passenger = make_current_user(passenger_id, role="passenger")
@@ -243,6 +245,17 @@ def test_create_booking_decrements_seats():
     assert response.selected_spots == ["front_right", "back_left"]
     assert ride.available_seats == 1
     assert response.payment_deadline is not None
+
+
+def test_create_booking_reserves_wallet_amount():
+    service, ride, _, passenger = make_service()
+
+    response = service.create_booking(
+        BookingCreate(ride_id=ride.id, seats_booked=2), passenger
+    )
+
+    reservations = cast(Any, service).reservations
+    assert reservations.reserved == [(response.id, Decimal("20.00"))]
 
 
 def test_selected_spot_count_must_match_seats_booked():
@@ -286,7 +299,7 @@ def test_exact_seat_conflict_returns_409():
     assert exc.value.status_code == 409
 
 
-def test_confirm_booking_does_not_change_seats():
+def test_confirm_booking_captures_wallet_hold_without_changing_seats():
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
@@ -294,11 +307,13 @@ def test_confirm_booking_does_not_change_seats():
 
     confirmed = service.confirm_booking(booking.id, driver)
 
-    assert confirmed.status == "accepted"
+    reservations = cast(Any, service).reservations
+    assert confirmed.status == "paid"
+    assert booking.id in reservations.captured
     assert ride.available_seats == 1
 
 
-def test_reject_booking_restores_seats():
+def test_reject_booking_restores_seats_and_releases_wallet_hold():
     service, ride, driver, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=1), passenger
@@ -306,20 +321,23 @@ def test_reject_booking_restores_seats():
 
     rejected = service.reject_booking(booking.id, driver)
 
+    reservations = cast(Any, service).reservations
     assert rejected.status == "rejected"
+    assert booking.id in reservations.released
     assert ride.available_seats == 3
 
 
-def test_cancel_accepted_booking_restores_seats():
-    service, ride, driver, passenger = make_service()
+def test_cancel_pending_booking_restores_seats_and_releases_wallet_hold():
+    service, ride, _, passenger = make_service()
     booking = service.create_booking(
         BookingCreate(ride_id=ride.id, seats_booked=2), passenger
     )
-    service.confirm_booking(booking.id, driver)
 
     cancelled = service.cancel_booking(booking.id, passenger)
 
+    reservations = cast(Any, service).reservations
     assert cancelled.status == "cancelled"
+    assert booking.id in reservations.released
     assert ride.available_seats == 3
 
 
