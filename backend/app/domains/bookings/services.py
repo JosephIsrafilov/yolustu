@@ -5,6 +5,9 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.cache import invalidate_cache
+from app.core.notifications import NotificationService
+from app.core.redis import get_redis
 from app.domains.bookings.models import Booking
 from app.domains.bookings.repositories import (
     BookingRepository,
@@ -15,27 +18,25 @@ from app.domains.bookings.schemas import (
     BookingResponse,
     booking_to_response,
 )
-from app.core.redis import get_redis
-from app.core.cache import invalidate_cache
 from app.domains.identity.dependencies import CurrentUser
-from app.domains.payments.services import money
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_BOARDED,
     BOOKING_CANCELLED,
     BOOKING_COMPLETED,
+    BOOKING_EXPIRED,
     BOOKING_NO_SHOW,
     BOOKING_PAID,
     BOOKING_PENDING,
     BOOKING_REJECTED,
-    BOOKING_EXPIRED,
     RIDE_ACTIVE,
     RIDE_COMPLETED,
     can_transition_booking,
 )
+from app.domains.payments.reservations import BookingReservationWalletService
+from app.domains.payments.services import money
 from app.domains.trips.models import SEAT_SPOTS
 from app.domains.trips.ports import RideLookupPort
-from app.core.notifications import NotificationService
 
 PENDING_SEAT_HOLD_MINUTES = 15
 
@@ -46,6 +47,7 @@ class BookingsService:
         self.bookings = BookingRepository(db)
         self.seats = SeatReservationRepository(db)
         self.rides = RideLookupPort(db)
+        self.reservations = BookingReservationWalletService(db)
         self.notifications = NotificationService(db)
 
     def create_booking(
@@ -89,13 +91,18 @@ class BookingsService:
         )
         try:
             self.seats.allocate(booking, ride.id, selected_spots)  # type: ignore[arg-type]
+            self._sync_ride_seat_projection(ride)
+            self.reservations.reserve_for_booking(booking, ride, current_user)
+        except HTTPException:
+            if self.db is not None:
+                self.db.rollback()
+            raise
         except (IntegrityError, ValueError):
             if self.db is not None:
                 self.db.rollback()
             raise HTTPException(
                 status_code=409, detail="Selected seat is not available"
             )
-        self._sync_ride_seat_projection(ride)
         if self.db is not None:
             self.db.commit()
             self.db.refresh(booking)
@@ -134,17 +141,17 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         booking.status = BOOKING_ACCEPTED  # type: ignore[assignment]
-        booking.payment_deadline = datetime.now(timezone.utc) + timedelta(hours=24)  # type: ignore[assignment]
-        self.bookings.save(booking)
+        self.reservations.capture_for_booking(booking, ride)
+        saved = self.bookings.save(booking)
 
         self.notifications.send_push_notification(
             user_id=booking.passenger_id,  # type: ignore[arg-type]
             title="Booking Accepted!",
-            body="The driver accepted your booking request.",
+            body="The driver accepted your booking request and the reserved wallet amount was captured.",
             data={"booking_id": str(booking.id), "type": "booking_accepted"},
         )
 
-        return booking_to_response(booking)
+        return booking_to_response(saved)
 
     def reject_booking(
         self, booking_id: UUID, current_user: CurrentUser
@@ -161,6 +168,7 @@ class BookingsService:
             raise HTTPException(status_code=400, detail="Invalid booking transition")
 
         booking.status = BOOKING_REJECTED  # type: ignore[assignment]
+        self.reservations.release_for_booking(booking, ride)
         if ride.status != RIDE_COMPLETED:
             self._release_seats(booking, ride)
 
@@ -169,7 +177,7 @@ class BookingsService:
         self.notifications.send_push_notification(
             user_id=booking.passenger_id,  # type: ignore[arg-type]
             title="Booking Declined",
-            body="The driver declined your booking request.",
+            body="The driver declined your booking request. The reserved amount was returned to your wallet.",
             data={"booking_id": str(booking.id), "type": "booking_rejected"},
         )
 
@@ -208,6 +216,8 @@ class BookingsService:
 
         if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED, BOOKING_PAID]:
             ride = self._get_booking_ride_for_update(booking)
+            if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]:
+                self.reservations.release_for_booking(booking, ride)
             if ride.status != RIDE_COMPLETED:
                 self._release_seats(booking, ride)
 
@@ -296,8 +306,10 @@ class BookingsService:
         for booking in expired:
             booking.status = BOOKING_EXPIRED  # type: ignore[assignment]
             ride = self.rides.get_ride_for_update(booking.ride_id)  # type: ignore[arg-type]
-            if ride and ride.status != RIDE_COMPLETED:
-                self._release_seats(booking, ride)
+            if ride:
+                self.reservations.release_for_booking(booking, ride)
+                if ride.status != RIDE_COMPLETED:
+                    self._release_seats(booking, ride)
 
             self.bookings.save(booking)
             self.notifications.send_push_notification(

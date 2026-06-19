@@ -28,6 +28,7 @@ TRANSACTION_FILTERS: tuple[str, ...] = (
     "refunds",
     "income",
     "topups",
+    "reservations",
 )
 
 

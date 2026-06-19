@@ -142,16 +142,24 @@ class WalletRepository:
             query = query.filter(WalletTransaction.type == "refund")
         elif filter == "income":
             query = query.filter(
-                WalletTransaction.direction == "credit",
-                WalletTransaction.type != "refund",
+                WalletTransaction.type.in_(
+                    [
+                        "driver_pending_earning",
+                        "driver_available_earning",
+                        "adjustment",
+                    ]
+                )
             )
         elif filter == "payments":
             query = query.filter(
-                WalletTransaction.direction == "debit",
-                WalletTransaction.type != "refund",
+                WalletTransaction.type.in_(["passenger_payment", "platform_fee"])
             )
         elif filter == "topups":
             query = query.filter(WalletTransaction.type == "adjustment")
+        elif filter == "reservations":
+            query = query.filter(
+                WalletTransaction.type.in_(["reservation_hold", "reservation_release"])
+            )
         return query
 
     def list_transactions(

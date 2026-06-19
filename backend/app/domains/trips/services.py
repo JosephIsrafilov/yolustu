@@ -192,19 +192,28 @@ class TripsService:
         return ride_to_response(ride)
 
     def complete_ride(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
-        ride = self.get_ride_model(ride_id)
+        ride = self.rides.get_for_update(ride_id)
+        if not ride:
+            raise HTTPException(status_code=404, detail="Ride not found")
         if ride.driver_id != current_user.id and current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
-        if ride.status == RIDE_COMPLETED:
-            return ride_to_response(ride)
-        if not can_transition_ride(ride.status, RIDE_COMPLETED):  # type: ignore[arg-type]
-            raise HTTPException(status_code=400, detail="Ride cannot be completed")
-        ride.status = RIDE_COMPLETED  # type: ignore[assignment]
-        self.users.increment_total_rides(ride.driver_id)  # type: ignore[arg-type]
-        saved_ride = self.rides.save(ride)
+        if ride.status != RIDE_COMPLETED:
+            if not can_transition_ride(ride.status, RIDE_COMPLETED):  # type: ignore[arg-type]
+                raise HTTPException(status_code=400, detail="Ride cannot be completed")
+            ride.status = RIDE_COMPLETED  # type: ignore[assignment]
+            self.users.increment_total_rides(ride.driver_id)  # type: ignore[arg-type]
         from app.domains.payments.services import PaymentService
 
-        PaymentService(self.db).release_driver_earnings_for_ride(ride.id)  # type: ignore[arg-type]
+        try:
+            PaymentService(self.db).release_driver_earnings_for_ride(
+                ride.id,  # type: ignore[arg-type]
+                commit=False,
+            )
+            self.db.commit()
+            self.db.refresh(ride)
+        except Exception:
+            self.db.rollback()
+            raise
 
         # Gamification: check rides count for driver
         driver = self.users.get_by_id(ride.driver_id)  # type: ignore[arg-type]
@@ -214,7 +223,7 @@ class TripsService:
             if driver.total_rides >= 10:
                 check_and_award_badge(self.db, driver.id, "veteran")  # type: ignore[arg-type]
 
-        return ride_to_response(saved_ride)
+        return ride_to_response(ride)
 
     def start_boarding(self, ride_id: UUID, current_user: CurrentUser) -> RideResponse:
         """Transition a ride to BOARDING so the driver can mark passengers."""

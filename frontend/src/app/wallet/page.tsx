@@ -42,6 +42,7 @@ const WALLET_COPY = {
     subtitle: 'Kartla artırın, balansdan ödəyin və bütün əməliyyatları izləyin.',
     available: 'Mövcud balans',
     pending: 'Gözləyən gəlir',
+    reserved: 'Rezerv edilmiş',
     topup: 'Balansı artır',
     withdraw: 'Çıxarış',
     earned: 'Gəlir',
@@ -74,10 +75,12 @@ const WALLET_COPY = {
       topups: 'Hələ balans artırma yoxdur',
       refunds: 'Hələ qaytarma yoxdur',
       income: 'Hələ gəlir yoxdur',
+      reservations: 'Hələ rezerv əməliyyatı yoxdur',
     },
     statuses: {
       posted: 'Tamamlandı',
       pending: 'Gözləyir',
+      captured: 'Ödənişə çevrildi',
       reversed: 'Geri qaytarıldı',
     },
     payoutStatuses: {
@@ -91,6 +94,7 @@ const WALLET_COPY = {
       topups: 'Artırmalar',
       refunds: 'Qaytarmalar',
       income: 'Gəlir',
+      reservations: 'Rezervlər',
     },
   },
   ru: {
@@ -98,6 +102,7 @@ const WALLET_COPY = {
     subtitle: 'Пополняйте картой, платите из баланса и отслеживайте операции.',
     available: 'Доступный баланс',
     pending: 'Ожидаемый доход',
+    reserved: 'Зарезервировано',
     topup: 'Пополнить',
     withdraw: 'Вывести',
     earned: 'Доход',
@@ -130,10 +135,12 @@ const WALLET_COPY = {
       topups: 'Пополнений пока нет',
       refunds: 'Возвратов пока нет',
       income: 'Дохода пока нет',
+      reservations: 'Операций резервирования пока нет',
     },
     statuses: {
       posted: 'Проведено',
       pending: 'В ожидании',
+      captured: 'Списано',
       reversed: 'Отменено',
     },
     payoutStatuses: {
@@ -147,6 +154,7 @@ const WALLET_COPY = {
       topups: 'Пополнения',
       refunds: 'Возвраты',
       income: 'Доход',
+      reservations: 'Резервы',
     },
   },
   en: {
@@ -154,6 +162,7 @@ const WALLET_COPY = {
     subtitle: 'Top up by card, pay from balance, and track every wallet movement.',
     available: 'Available balance',
     pending: 'Pending income',
+    reserved: 'Reserved',
     topup: 'Top up',
     withdraw: 'Withdraw',
     earned: 'Earned',
@@ -186,10 +195,12 @@ const WALLET_COPY = {
       topups: 'No top-ups yet',
       refunds: 'No refunds yet',
       income: 'No income yet',
+      reservations: 'No reservation transactions yet',
     },
     statuses: {
       posted: 'Completed',
       pending: 'Pending',
+      captured: 'Captured',
       reversed: 'Reversed',
     },
     payoutStatuses: {
@@ -203,6 +214,7 @@ const WALLET_COPY = {
       topups: 'Top-ups',
       refunds: 'Refunds',
       income: 'Income',
+      reservations: 'Reservations',
     },
   },
 } as const;
@@ -210,6 +222,7 @@ const WALLET_COPY = {
 const STATUS_VARIANT = {
   posted: 'success',
   pending: 'warning',
+  captured: 'success',
   reversed: 'muted',
 } as const;
 
@@ -444,6 +457,17 @@ function WalletContent() {
             icon: 'banknote' as const,
             bgIcon: 'bg-emerald-50 text-emerald-600',
             bgCard: 'bg-white border-emerald-100/70',
+          },
+        ]
+      : []),
+    ...(!isDriver
+      ? [
+          {
+            label: copy.reserved,
+            value: wallet.pendingBalance,
+            icon: 'clock' as const,
+            bgIcon: 'bg-amber-50 text-amber-600',
+            bgCard: 'bg-white border-amber-100/70',
           },
         ]
       : []),
@@ -776,6 +800,9 @@ function WalletContent() {
                                   </span>
                                   <div>
                                     <p className="font-semibold text-[#002f37]">{transactionLabel(transaction.type, language)}</p>
+                                    {transaction.description && (
+                                      <p className="mt-1 text-sm text-[#526970]">{transaction.description}</p>
+                                    )}
                                     <p className="mt-1 text-sm text-[#526970]" title={formatAbsoluteTime(transaction.createdAt, language)}>
                                       {formatRelativeTime(transaction.createdAt, language)}
                                     </p>

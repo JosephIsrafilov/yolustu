@@ -141,7 +141,9 @@ export type WalletTransactionType =
   | 'driver_available_earning'
   | 'refund'
   | 'payout'
-  | 'adjustment';
+  | 'adjustment'
+  | 'reservation_hold'
+  | 'reservation_release';
 
 export interface Payment {
   id: string;
@@ -183,7 +185,7 @@ export interface WalletTransaction {
   direction: 'credit' | 'debit';
   amount: number;
   currency: string;
-  status: 'pending' | 'posted' | 'reversed';
+  status: 'pending' | 'posted' | 'captured' | 'reversed';
   description?: string;
   createdAt: string;
 }

@@ -21,6 +21,7 @@ from app.domains.engagement.schemas import (
     ChatMessageCreate,
     MessageCreate,
 )
+from pydantic import ValidationError
 from app.domains.identity.dependencies import CurrentUser
 
 
@@ -241,6 +242,12 @@ def test_create_review_ride_not_found():
     assert exc.value.status_code == 404
 
 
+@pytest.mark.parametrize("rating", [0, 6])
+def test_review_rating_must_be_between_one_and_five(rating: int):
+    with pytest.raises(ValidationError):
+        ReviewCreate(ride_id=uuid4(), target_id=uuid4(), rating=rating)
+
+
 def test_create_review_ride_not_completed():
     driver_id = uuid4()
     ride = FakeRide(id=uuid4(), driver_id=driver_id, status="active")
@@ -340,10 +347,16 @@ def test_create_review_success():
         target_users=[target],
     )
     result = svc.create_review(
-        ReviewCreate(ride_id=ride.id, target_id=driver_id, rating=5),
+        ReviewCreate(
+            ride_id=ride.id,
+            target_id=driver_id,
+            rating=5,
+            comment="Safe and comfortable ride",
+        ),
         make_cu(passenger_id),
     )
     assert result.rating == 5
+    assert result.comment == "Safe and comfortable ride"
 
 
 # ---- _can_access_conversation tests ----

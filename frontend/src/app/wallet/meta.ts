@@ -37,6 +37,14 @@ export const TRANSACTION_META: Record<WalletTransactionType, TransactionMeta> = 
     icon: 'plus',
     labels: { az: 'Balans artırma', ru: 'Пополнение', en: 'Top-up' },
   },
+  reservation_hold: {
+    icon: 'clock',
+    labels: { az: 'Rezervdə saxlanılıb', ru: 'Сумма зарезервирована', en: 'Reservation hold' },
+  },
+  reservation_release: {
+    icon: 'refresh-cw',
+    labels: { az: 'Rezerv geri qaytarılıb', ru: 'Резерв возвращён', en: 'Reservation returned' },
+  },
 };
 
 const FALLBACK_META: TransactionMeta = {
@@ -44,10 +52,12 @@ const FALLBACK_META: TransactionMeta = {
   labels: { az: 'Əməliyyat', ru: 'Операция', en: 'Transaction' },
 };
 
-export function getTransactionMeta(type: WalletTransactionType): TransactionMeta {
-  return TRANSACTION_META[type] ?? FALLBACK_META;
+export function getTransactionMeta(type: string): TransactionMeta {
+  return type in TRANSACTION_META
+    ? TRANSACTION_META[type as WalletTransactionType]
+    : FALLBACK_META;
 }
 
-export function transactionLabel(type: WalletTransactionType, language: WalletLang): string {
+export function transactionLabel(type: string, language: WalletLang): string {
   return getTransactionMeta(type).labels[language];
 }

@@ -4,7 +4,7 @@ import pytest
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
-from typing import cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
@@ -226,6 +226,29 @@ class FakeSeatReservationRepository:
         return len(released)
 
 
+class FakeReservationWalletService:
+    def __init__(self) -> None:
+        self.reserved: list[UUID] = []
+        self.captured: list[UUID] = []
+        self.released: list[UUID] = []
+
+    def reserve_for_booking(
+        self,
+        booking: FakeBooking,
+        ride: FakeRide,
+        current_user: CurrentUser,
+    ) -> None:
+        self.reserved.append(booking.id)
+
+    def capture_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
+        self.captured.append(booking.id)
+        booking.status = "paid"
+        booking.payment_deadline = None
+
+    def release_for_booking(self, booking: FakeBooking, ride: FakeRide) -> None:
+        self.released.append(booking.id)
+
+
 def make_current_user(user_id: UUID, role: str) -> CurrentUser:
     return CurrentUser(
         id=user_id,
@@ -252,6 +275,7 @@ def make_service(rides=None, bookings=None, db=None):
         FakeSeatReservationRepository(rides, bookings),
     )
     service.rides = cast(RideLookupPort, ride_repo)
+    cast(Any, service).reservations = FakeReservationWalletService()
     service.notifications = cast(NotificationService, notification_svc)
 
     return service, booking_repo, ride_repo, notification_svc
@@ -403,6 +427,7 @@ def test_get_my_bookings_lazy_expires():
     assert res[0].status == "expired"
     assert booking.status == "expired"
     assert ride.available_seats == 4
+    assert booking.id in cast(Any, service).reservations.released
     assert len(notifications.sent_notifications) == 1
     assert notifications.sent_notifications[0]["user_id"] == passenger_id
     assert notifications.sent_notifications[0]["title"] == "Rezerv vaxtı bitdi"
@@ -439,6 +464,7 @@ def test_get_booking_requests_lazy_expires():
     assert res[0].status == "expired"
     assert booking.status == "expired"
     assert ride.available_seats == 3
+    assert booking.id in cast(Any, service).reservations.released
     assert len(notifications.sent_notifications) == 1
 
 
