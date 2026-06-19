@@ -1,11 +1,22 @@
 # Yolmates - Azerbaijan Carpooling Platform
 
-**Yolmates** is a modern car-pooling prototype tailored for Azerbaijan. It includes:
-- **Real-time chat and notifications** via WebSockets
-- **AI Smart Pricing** powered by NVIDIA NIM (LLaMA-3.1) that suggests optimal seat prices based on route and time
-- Payment provider abstraction with mock checkout, wallet ledger, and refund flow
-- Secure JWT authentication with simulated SMS OTP verification
-- Interactive Leaflet Maps on OpenStreetMap tiles (no Google Maps API key required)
+**[Test the Yolmates Live Website Here (AWS Deployment)](https://63.182.139.73.nip.io/)**
+
+**Yolmates** is a modern car-pooling platform tailored for Azerbaijan. It connects drivers with empty seats to passengers looking for a ride, making intercity travel more affordable, sociable, and convenient.
+
+## Project Benefits
+- **Cost-Effective Travel**: Share fuel and toll costs, making trips cheaper for everyone.
+- **Convenience & Accessibility**: Easy-to-use search and booking with real-time route visualization using interactive Leaflet Maps.
+- **AI Smart Pricing**: Powered by NVIDIA NIM (LLaMA-3.1), the platform suggests optimal seat prices to drivers based on route, day, and time.
+- **Safe & Secure**: Secure JWT authentication, simulated SMS OTP verification, and a wallet ledger for reliable transactions.
+- **Real-time Engagement**: In-app WebSockets-based real-time chat and booking notifications keep drivers and passengers connected.
+
+## Current Status
+- **Backend**: Fully functional modular monolith (FastAPI, PostgreSQL, PostGIS, Redis). Supports auth, rides, bookings, AI pricing, and websockets.
+- **Frontend**: Responsive Web App (Next.js 16, Tailwind CSS v4, Zustand) fully integrated with backend APIs.
+- **Mobile App**: Flutter-based MVP completed, featuring Onboarding, Passenger/Driver modes, Google Maps, and i18n support (AZ/EN/RU).
+- **CI/CD**: Fully automated testing and deployment pipelines via GitHub Actions.
+- **Overall**: The project MVP is complete and ready for demonstration and testing.
 
 ---
 

@@ -28,7 +28,7 @@ function resolveDriverStatus(user: User | null): DriverStatus {
   if (user.verificationStatus === 'rejected') return 'rejected';
 
   if (user.role === 'driver') {
-    // Backward-compatible fallback for legacy mock users that still have `verificationStatus: 'none'`.
+    // Legacy fallback: mock users may have verificationStatus === 'none'
     if (user.verificationStatus === 'none') return 'approved';
     return 'approved';
   }
@@ -40,8 +40,6 @@ export function getUserCapabilities(
   isAuthenticated: boolean,
   activeModeInput?: ActiveMode
 ): UserCapabilities {
-  // Frontend-only visibility/redirect helper.
-  // Real authorization must be enforced by backend RBAC/JWT checks on every protected endpoint.
   const activeMode = normalizeActiveMode(activeModeInput);
 
   if (!user || !isAuthenticated) {

@@ -313,10 +313,6 @@ class ApiClient {
     return this.request<T>('DELETE', path);
   }
 
-  /**
-   * Fetch a binary resource (image, PDF, etc.) as a Blob.
-   * Uses the same baseUrl, cookie auth, and loopback normalization as other methods.
-   */
   async getBlob(path: string): Promise<Blob> {
     const response = await fetch(buildRequestUrl(this.baseUrl, path), {
       method: 'GET',
@@ -330,7 +326,6 @@ class ApiClient {
       typeof window !== 'undefined' &&
       shouldAttemptRefresh(path)
     ) {
-      // Try refreshing the session then retry
       if (!this.refreshPromise) {
         this.refreshPromise = this.post('/auth/refresh')
           .then(() => undefined)

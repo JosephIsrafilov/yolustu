@@ -122,8 +122,7 @@ export function estimateDurationMinutes(origin?: Coordinates, destination?: Coor
   const d = destination || (arrCity ? getCityCoordinates(arrCity) : undefined);
   if (!o || !d) return null;
   const dist = getDistanceKm(o.lat, o.lng, d.lat, d.lng);
-  const speed = 75; // average speed km/h
-  // Add 20 minutes fixed overhead (getting out of city etc)
+  const speed = 75;
   return Math.round((dist / speed) * 60) + 20;
 }
 

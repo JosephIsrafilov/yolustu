@@ -10,7 +10,6 @@ export function useRideChats(enabled = true) {
 
   React.useEffect(() => {
     if (!enabled) {
-      // ponytail: defer to avoid synchronous setState in effect body
       const id = setTimeout(() => {
         setRideChats([]);
         setLoading(false);

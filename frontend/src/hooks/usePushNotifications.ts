@@ -79,9 +79,8 @@ export function usePushNotifications() {
             }
             toastTimeoutRef.current = setTimeout(() => {
               setActiveToast(null);
-            }, 8000); // Give users slightly more time to click action buttons
+            }, 8000);
 
-            // Trigger live UI refresh if it's a booking event
             const notificationType = data.data?.type;
             if (typeof notificationType === 'string') {
               if (notificationType.startsWith('booking_')) {
@@ -114,7 +113,7 @@ export function usePushNotifications() {
             }
           }
         } catch {
-          // Error handled silently
+          // Ignore notification parse errors
         }
       };
 

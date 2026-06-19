@@ -272,7 +272,6 @@ export default function CreateTripPage() {
         setValue('comment', response.description);
       }
     } catch {
-      // Error handled silently
     } finally {
       setIsDrafting(false);
     }
@@ -348,7 +347,6 @@ export default function CreateTripPage() {
     })();
   };
 
-  // ponytail: coords committed only after city validation passes — prevents race where eager setValue saves wrong-city coords
   const reverseGeocode = async (pos: { lat: number; lng: number }, field: 'meetingPoint' | 'dropoffPoint') => {
     const { lat, lng } = pos;
     const isMeeting = field === 'meetingPoint';
@@ -401,11 +399,9 @@ export default function CreateTripPage() {
       setValue(coordField, pos);
       setValue(field, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } catch {
-      // Error handled silently
     }
   };
 
-  // Spot toggle helper
   const toggleSpot = (spotId: string) => {
     const current = getValues('availableSpots') || [];
     let next = [];

@@ -239,8 +239,6 @@ function mapAiReview(raw?: ApiAiDocumentReview | null): AiDocumentReview | undef
     raw.confidence >= 0.9;
   const issues = Array.isArray(raw.issues) ? [...raw.issues] : [];
 
-  // Old stored AI results did not contain evidence fields. Never display those
-  // legacy model-only approvals as trusted recommendations.
   if (recommendation === 'approve' && !hasApprovalEvidence) {
     recommendation = 'needs_review';
     if (!issues.includes('insufficient_evidence')) {

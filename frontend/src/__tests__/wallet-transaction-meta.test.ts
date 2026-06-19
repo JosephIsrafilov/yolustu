@@ -1,12 +1,6 @@
 import { TRANSACTION_META } from '@/app/wallet/meta';
 import type { WalletTransactionType } from '@/types';
 
-/**
- * Runtime-exhaustive map of every WalletTransactionType. Declaring it as a
- * `Record<WalletTransactionType, true>` makes the compiler fail here if the
- * union grows or shrinks, so this list can never silently drift from the union
- * it mirrors. Its keys drive the runtime assertions below.
- */
 const ALL_TRANSACTION_TYPES: Record<WalletTransactionType, true> = {
   passenger_payment: true,
   platform_fee: true,

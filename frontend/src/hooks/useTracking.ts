@@ -9,15 +9,10 @@ export interface LatLng {
 }
 
 export interface TrackingState {
-  /** Full interpolated route, received once at simulation start. */
   route: LatLng[];
-  /** Latest car position. */
   position: LatLng | null;
-  /** Compass heading in degrees (0=N, 90=E). */
   heading: number;
-  /** 0..1 fraction of the route covered. */
   progress: number;
-  /** 'connecting' | 'live' | 'completed' | 'ended' | 'offline' */
   status: string;
   isConnected: boolean;
 }
@@ -38,10 +33,6 @@ type LocationMessage = {
 type StatusMessage = { type: 'status'; status: string };
 type TrackingMessage = RouteMessage | LocationMessage | StatusMessage;
 
-/**
- * Subscribes to /ws/tracking/{rideId}. Pass either a JWT (logged-in user) or a
- * shareToken (public viewer) — the backend accepts either as a query param.
- */
 export function useTracking(
   rideId: string | null,
   opts: { shareToken?: string; token?: string } = {},
@@ -111,7 +102,6 @@ export function useTracking(
     socket.onclose = () => {
       setState((s) => ({ ...s, isConnected: false }));
       socketRef.current = null;
-      // Don't reconnect once the trip has finished.
       if (shouldReconnectRef.current) {
         reconnectRef.current = setTimeout(() => connectRef.current(), 3000);
       }
@@ -131,7 +121,6 @@ export function useTracking(
     };
   }, [connect]);
 
-  // Stop reconnecting after a terminal status.
   useEffect(() => {
     if (state.status === 'completed' || state.status === 'ended') {
       shouldReconnectRef.current = false;

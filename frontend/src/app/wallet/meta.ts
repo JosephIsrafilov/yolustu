@@ -8,14 +8,6 @@ export interface TransactionMeta {
   labels: Record<WalletLang, string>;
 }
 
-/**
- * Single source of truth for per-type transaction presentation: the icon and
- * the localized label. Replaces the previously scattered `TYPE_ICON` map and
- * the inline labels object in `transactionLabel`. A drift test in
- * `src/__tests__/wallet-transaction-meta.test.ts` asserts every
- * `WalletTransactionType` has an entry here, so a backend type addition fails
- * a test instead of crashing at runtime.
- */
 export const TRANSACTION_META: Record<WalletTransactionType, TransactionMeta> = {
   passenger_payment: {
     icon: 'credit-card',
@@ -52,7 +44,6 @@ const FALLBACK_META: TransactionMeta = {
   labels: { az: 'Əməliyyat', ru: 'Операция', en: 'Transaction' },
 };
 
-/** Safe lookup so an unknown/unmapped type never crashes the UI. */
 export function getTransactionMeta(type: WalletTransactionType): TransactionMeta {
   return TRANSACTION_META[type] ?? FALLBACK_META;
 }

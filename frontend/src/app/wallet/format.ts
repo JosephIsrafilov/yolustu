@@ -29,10 +29,6 @@ const LOCALE_BY_LANG: Record<Lang, string> = {
   en: 'en-US',
 };
 
-/**
- * Localized relative time for recent timestamps, falling back to an absolute
- * date once an entry is older than a week.
- */
 export function formatRelativeTime(dateStr: string, language: Lang): string {
   const date = new Date(dateStr);
   const copy = RELATIVE_COPY[language];
@@ -60,10 +56,6 @@ export function formatAbsoluteTime(dateStr: string, language: Lang): string {
   return new Date(dateStr).toLocaleString(LOCALE_BY_LANG[language]);
 }
 
-/**
- * A human day label used as a separator between transaction groups:
- * "Today" / "Yesterday" / an absolute date — all localized.
- */
 export function formatDayLabel(dateStr: string, language: Lang): string {
   const date = new Date(dateStr);
   const today = new Date();
@@ -91,10 +83,6 @@ export interface TransactionGroup {
   transactions: WalletTransaction[];
 }
 
-/**
- * Groups transactions (assumed newest-first) into day buckets, preserving
- * input order both across and within groups.
- */
 export function groupTransactionsByDay(
   transactions: WalletTransaction[],
   language: Lang,

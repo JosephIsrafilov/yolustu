@@ -56,9 +56,7 @@ interface ApiWalletTransaction {
   payment_id?: string | null;
   booking_id?: string | null;
   ride_id?: string | null;
-  // Raw backend type. The API uses "topup" where the frontend models it as
-  // "adjustment", so this is a plain string and gets normalized below.
-  type: string;
+  type: string; // Backend "topup" → frontend "adjustment"
   direction: WalletTransaction['direction'];
   amount: string | number;
   currency: string;
@@ -91,8 +89,6 @@ function amount(value: string | number): number {
   return Number(value);
 }
 
-// The backend uses "topup" for wallet top-ups; the frontend models that as
-// "adjustment". Normalize here so icons, filters, and labels stay consistent.
 const TRANSACTION_TYPE_ALIASES: Record<string, WalletTransaction['type']> = {
   topup: 'adjustment',
 };

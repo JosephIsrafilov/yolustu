@@ -113,10 +113,6 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       const user = await authService.register(data);
-      // MVP: registration no longer gates on SMS OTP. The /auth/register
-      // response already carries an authenticated session (cookies set
-      // server-side), so the account is active immediately. Email
-      // verification is an opt-in step on the profile page.
       set({
         currentUser: user,
         isAuthenticated: true,
@@ -164,7 +160,6 @@ export const createAuthSlice: StateCreator<
     try {
       await authService.logout();
     } catch {
-      // Error handled silently
     } finally {
       get().clearSession();
     }
@@ -215,7 +210,6 @@ export const createAuthSlice: StateCreator<
         });
       }
     } catch {
-      // Error handled silently
     }
   },
 
@@ -249,7 +243,6 @@ export const createAuthSlice: StateCreator<
         error && typeof error === 'object' && 'status' in error && error.status === 401;
 
       if (!isUnauthorized) {
-        // Error handled silently
       }
 
       get().clearSession();
@@ -279,7 +272,6 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch {
-      // Error handled silently
     }
   },
 
@@ -290,7 +282,6 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch {
-      // Error handled silently
     }
   },
 
@@ -299,7 +290,6 @@ export const createAuthSlice: StateCreator<
       const response = await adminService.getUsers();
       set({ users: response.items });
     } catch {
-      // Error handled silently
     }
   },
 
@@ -308,7 +298,6 @@ export const createAuthSlice: StateCreator<
       const response = await adminService.getPendingVerifications();
       set({ pendingVerifications: response.items });
     } catch {
-      // Error handled silently
     }
   },
 
@@ -320,7 +309,6 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch {
-      // Error handled silently
     }
   },
 
@@ -332,7 +320,6 @@ export const createAuthSlice: StateCreator<
         users: s.users.map((u) => (u.id === userId ? updated : u)),
       }));
     } catch {
-      // Error handled silently
     }
   },
 

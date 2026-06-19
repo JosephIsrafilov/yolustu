@@ -49,9 +49,8 @@ export default function RouteAccessGuard() {
 
     if (capabilities.canAccessAdmin) {
       if (isAdminRoute) {
-        return; // Admins can access admin routes
+        return;
       }
-      // Admins can also access non-admin routes, so do not redirect them back to ROUTES.admin
     }
 
     if (isAdminRoute) {

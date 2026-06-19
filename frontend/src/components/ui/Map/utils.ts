@@ -51,7 +51,6 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
       })
       .catch((error) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        // Error handled silently
       });
 
     return () => controller.abort();

@@ -14,10 +14,6 @@ export const createTripSlice: StateCreator<
   myTrips: [],
   isLoadingTrips: false,
 
-  // fetchTrips and fetchMyTrips are now no-ops.
-  // Data fetching is handled by React Query hooks (useTripsPage, useMyTrips)
-  // in the individual page components. These stubs satisfy the TripSlice type
-  // contract so callers that haven't been migrated yet don't break at runtime.
   fetchTrips: async () => {},
   fetchMyTrips: async () => {},
 

@@ -143,7 +143,7 @@ export function useChatMessages(conversationId: string) {
               : [...current, message],
           );
         } catch {
-          // Ignore malformed socket payloads.
+          // Skip malformed payloads
         }
       };
 

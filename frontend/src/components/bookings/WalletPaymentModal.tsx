@@ -81,7 +81,7 @@ export default function WalletPaymentModal({ isOpen, onClose, booking, onPayDire
       const wallet = await paymentsService.getWallet();
       setBalance(wallet.availableBalance);
     } catch {
-      // Error handled silently
+      // Ignore fetch errors
     } finally {
       setIsLoading(false);
     }

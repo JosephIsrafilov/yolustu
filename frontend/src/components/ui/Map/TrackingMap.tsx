@@ -16,16 +16,10 @@ interface TrackingMapProps {
 const CONTAINER_STYLE = { width: '100%', height: '100%' };
 const DEFAULT_CENTER = { lat: 40.4093, lng: 49.8671 };
 
-/**
- * Eases the car marker from its current rendered point toward the latest WS
- * target on every animation frame, so movement is smooth instead of a hard
- * jump each tick. Standard exponential smoothing — no animation library.
- */
 function InnerTrackingMap({ route, position, heading, className }: TrackingMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [rendered, setRendered] = useState<LatLng | null>(position);
 
-  // Latest target the marker should ease toward.
   const targetRef = useRef<LatLng | null>(position);
   const renderedRef = useRef<LatLng | null>(position);
   const frameRef = useRef<number | null>(null);
@@ -34,7 +28,6 @@ function InnerTrackingMap({ route, position, heading, className }: TrackingMapPr
     if (position) targetRef.current = position;
   }, [position]);
 
-  // Seed the rendered position the first time we get one.
   useEffect(() => {
     if (position && !renderedRef.current) {
       renderedRef.current = position;
@@ -43,7 +36,7 @@ function InnerTrackingMap({ route, position, heading, className }: TrackingMapPr
   }, [position]);
 
   useEffect(() => {
-    const SMOOTHING = 0.12; // 0..1 — higher snaps faster, lower glides longer
+  const SMOOTHING = 0.12;
     const EPSILON = 1e-6;
 
     const tick = () => {
@@ -83,14 +76,12 @@ function InnerTrackingMap({ route, position, heading, className }: TrackingMapPr
     }
   };
 
-  // Keep the car comfortably in view as it moves.
   useEffect(() => {
     if (mapRef.current && rendered) {
       mapRef.current.panTo(rendered);
     }
   }, [rendered]);
 
-  // A rotatable arrow so heading is visible. SYMBOL is part of the maps lib.
   const carIcon = useMemo<google.maps.Symbol | undefined>(() => {
     if (typeof window === 'undefined' || !window.google) return undefined;
     return {
