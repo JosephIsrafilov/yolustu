@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Any
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -173,7 +174,7 @@ def read_root() -> dict[str, str]:
 
 
 @app.get("/health")
-def health_check() -> dict[str, dict[str, object]]:
+def health_check() -> dict[str, Any]:
     checks: dict[str, dict[str, object]] = {
         "api": {"status": "ok"},
         "database": {"status": "ok"},
