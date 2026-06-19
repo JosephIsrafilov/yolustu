@@ -145,7 +145,7 @@ def end_trip(
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    """Stop the simulation and mark the ride completed."""
-    result = TripsService(db).end_trip(ride_id, current_user)
+    """Stop the simulation and run the full ride completion workflow."""
+    result = TripsService(db).complete_ride(ride_id, current_user)
     tracking_manager.stop_simulation(ride_id)
     return result
