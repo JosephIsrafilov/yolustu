@@ -5,6 +5,9 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.cache import invalidate_cache
+from app.core.notifications import NotificationService
+from app.core.redis import get_redis
 from app.domains.bookings.models import Booking
 from app.domains.bookings.repositories import (
     BookingRepository,
@@ -15,28 +18,25 @@ from app.domains.bookings.schemas import (
     BookingResponse,
     booking_to_response,
 )
-from app.core.redis import get_redis
-from app.core.cache import invalidate_cache
 from app.domains.identity.dependencies import CurrentUser
-from app.domains.payments.services import money
-from app.domains.payments.reservations import BookingReservationWalletService
 from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_BOARDED,
     BOOKING_CANCELLED,
     BOOKING_COMPLETED,
+    BOOKING_EXPIRED,
     BOOKING_NO_SHOW,
     BOOKING_PAID,
     BOOKING_PENDING,
     BOOKING_REJECTED,
-    BOOKING_EXPIRED,
     RIDE_ACTIVE,
     RIDE_COMPLETED,
     can_transition_booking,
 )
+from app.domains.payments.reservations import BookingReservationWalletService
+from app.domains.payments.services import money
 from app.domains.trips.models import SEAT_SPOTS
 from app.domains.trips.ports import RideLookupPort
-from app.core.notifications import NotificationService
 
 PENDING_SEAT_HOLD_MINUTES = 15
 
