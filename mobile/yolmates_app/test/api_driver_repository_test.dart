@@ -58,15 +58,15 @@ void main() {
   });
 
   test('set default and deactivate call their vehicle endpoints', () async {
-    adapter.onPatch(
-      '/vehicles/vehicle-2/default',
+    adapter.onPost(
+      '/vehicles/vehicle-2/set-default',
       (server) => server.reply(
         200,
         _vehicleResponse(isActive: true, isDefault: true),
       ),
     );
-    adapter.onPatch(
-      '/vehicles/vehicle-2/deactivate',
+    adapter.onDelete(
+      '/vehicles/vehicle-2',
       (server) => server.reply(
         200,
         _vehicleResponse(isActive: false, isDefault: false),

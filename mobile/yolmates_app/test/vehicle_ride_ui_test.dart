@@ -113,6 +113,9 @@ class _FakeDriverRepository implements DriverRepository {
   }
 
   @override
+  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {}
+
+  @override
   Future<List<DriverRide>> rides() async => [];
 
   @override

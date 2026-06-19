@@ -26,6 +26,7 @@ import '../features/driver/passenger_requests_screen.dart';
 import '../features/driver/active_ride_screen.dart';
 import '../features/driver/driver_panel_screen.dart';
 import '../features/driver/vehicles_screen.dart';
+import '../features/driver/vehicle_documents_screen.dart';
 import '../features/driver/data/vehicle.dart';
 import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
@@ -486,6 +487,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           context,
           state,
           const VehiclesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/vehicles/:id/documents',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          VehicleDocumentsScreen(
+            vehicleId: state.pathParameters['id']!,
+            vehicle: state.extra as Vehicle?,
+          ),
         ),
       ),
       GoRoute(

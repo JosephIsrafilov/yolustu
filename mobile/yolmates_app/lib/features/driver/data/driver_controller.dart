@@ -21,6 +21,7 @@ abstract class DriverRepository {
   Future<Vehicle> setDefaultVehicle(String id);
   Future<Vehicle> deactivateVehicle(String id);
   Future<void> deleteVehicle(String id);
+  Future<void> uploadVehicleDocument(String id, String documentType, String filePath);
 }
 
 // --- API implementation ------------------------------------------------------
@@ -163,7 +164,7 @@ class ApiDriverRepository implements DriverRepository {
   @override
   Future<Vehicle> setDefaultVehicle(String id) async {
     try {
-      final response = await _client.patch('/vehicles/$id/default');
+      final response = await _client.post('/vehicles/$id/set-default');
       return _vehicleFromResponse(response.data);
     } on DioException catch (e) {
       final err = e.error as ApiException;
@@ -176,7 +177,7 @@ class ApiDriverRepository implements DriverRepository {
   @override
   Future<Vehicle> deactivateVehicle(String id) async {
     try {
-      final response = await _client.patch('/vehicles/$id/deactivate');
+      final response = await _client.delete('/vehicles/$id');
       return _vehicleFromResponse(response.data);
     } on DioException catch (e) {
       final err = e.error as ApiException;
@@ -193,6 +194,23 @@ class ApiDriverRepository implements DriverRepository {
     } on DioException catch (e) {
       final err = e.error as ApiException;
       throw Exception(err.message);
+    }
+  }
+
+  @override
+  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+      });
+      await _client.dio.post(
+        '/vehicles/$id/documents',
+        data: formData,
+        queryParameters: {'document_type': documentType},
+      );
+    } on DioException catch (e) {
+      final err = e.error as ApiException?;
+      throw Exception(err?.message ?? e.message);
     }
   }
 
@@ -233,6 +251,12 @@ class ApiDriverRepository implements DriverRepository {
   }
 
   Vehicle _vehicleFromJson(Map<String, dynamic> json) {
+    VerificationStatus status = VerificationStatus.notSubmitted;
+    final String? statusRaw = json['verification_status'] as String?;
+    if (statusRaw == 'pending') status = VerificationStatus.pending;
+    if (statusRaw == 'approved') status = VerificationStatus.approved;
+    if (statusRaw == 'rejected') status = VerificationStatus.rejected;
+
     return Vehicle(
       id: json['id'].toString(),
       brand: json['brand'] as String,
@@ -244,6 +268,7 @@ class ApiDriverRepository implements DriverRepository {
       variations: json['variations'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       isDefault: json['is_default'] as bool? ?? false,
+      verificationStatus: status,
     );
   }
 
@@ -339,6 +364,12 @@ class MockDriverRepository implements DriverRepository {
     await Future.delayed(_latency);
     _vehicles.removeWhere((v) => v.id == id);
   }
+
+  @override
+  Future<void> uploadVehicleDocument(String id, String documentType, String filePath) async {
+    await Future.delayed(_latency);
+    // Mock successful upload
+  }
 }
 
 // --- Providers ---------------------------------------------------------------
@@ -403,6 +434,11 @@ class VehiclesController extends AsyncNotifier<List<Vehicle>> {
   Future<void> deactivate(String id) async {
     await _repo.deactivateVehicle(id);
     state = AsyncData(await _repo.vehicles());
+  }
+
+  Future<void> uploadDocument(String id, String documentType, String filePath) async {
+    await _repo.uploadVehicleDocument(id, documentType, filePath);
+    state = AsyncData(await _repo.vehicles()); // Refresh vehicles to get updated status
   }
 }
 

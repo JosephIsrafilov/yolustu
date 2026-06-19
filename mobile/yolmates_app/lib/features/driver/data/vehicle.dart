@@ -13,6 +13,7 @@ class Vehicle {
   final String? variations;
   final bool isActive;
   final bool isDefault;
+  final VerificationStatus verificationStatus;
 
   const Vehicle({
     required this.id,
@@ -25,6 +26,7 @@ class Vehicle {
     this.variations,
     this.isActive = true,
     this.isDefault = false,
+    this.verificationStatus = VerificationStatus.notSubmitted,
   });
 
   String get displayName => '$brand $model';
@@ -39,6 +41,7 @@ class Vehicle {
     String? variations,
     bool? isActive,
     bool? isDefault,
+    VerificationStatus? verificationStatus,
   }) {
     return Vehicle(
       id: id,
@@ -51,6 +54,7 @@ class Vehicle {
       variations: variations ?? this.variations,
       isActive: isActive ?? this.isActive,
       isDefault: isDefault ?? this.isDefault,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
     );
   }
 }

@@ -129,6 +129,11 @@ class _VehicleCard extends ConsumerWidget {
                         label: 'Əsas avtomobil',
                         color: AppTheme.navy,
                       ),
+                    _Badge(
+                      label: vehicle.verificationStatus.label,
+                      color: vehicle.verificationStatus.colors.$2,
+                      bgColor: vehicle.verificationStatus.colors.$1,
+                    ),
                   ],
                 ),
               ],
@@ -141,6 +146,10 @@ class _VehicleCard extends ConsumerWidget {
               const PopupMenuItem(
                 value: _VehicleAction.edit,
                 child: Text('Redaktə et'),
+              ),
+              const PopupMenuItem(
+                value: _VehicleAction.documents,
+                child: Text('Sənədlər'),
               ),
               if (vehicle.isActive && !vehicle.isDefault)
                 const PopupMenuItem(
@@ -168,6 +177,10 @@ class _VehicleCard extends ConsumerWidget {
       context.push(AppRoutes.addVehicle, extra: vehicle);
       return;
     }
+    if (action == _VehicleAction.documents) {
+      context.push('/driver/vehicles/${vehicle.id}/documents', extra: vehicle);
+      return;
+    }
 
     try {
       final controller = ref.read(vehiclesProvider.notifier);
@@ -186,20 +199,21 @@ class _VehicleCard extends ConsumerWidget {
   }
 }
 
-enum _VehicleAction { edit, setDefault, deactivate }
+enum _VehicleAction { edit, documents, setDefault, deactivate }
 
 class _Badge extends StatelessWidget {
   final String label;
   final Color color;
+  final Color? bgColor;
 
-  const _Badge({required this.label, required this.color});
+  const _Badge({required this.label, required this.color, this.bgColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: bgColor ?? color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
