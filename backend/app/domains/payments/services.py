@@ -19,6 +19,7 @@ from app.domains.lifecycle import (
     BOOKING_ACCEPTED,
     BOOKING_BOARDED,
     BOOKING_CANCELLED,
+    BOOKING_COMPLETED,
     BOOKING_EXPIRED,
     BOOKING_PAID,
     PAYMENT_CANCELLED,
@@ -426,14 +427,16 @@ class PaymentService:
             data={"booking_id": str(booking.id), "type": "ride_cancelled"},
         )
 
-    def release_driver_earnings_for_ride(self, ride_id: UUID) -> None:
+    def release_driver_earnings_for_ride(
+        self, ride_id: UUID, *, commit: bool = True
+    ) -> None:
         ride = self.rides.get_ride_for_update(ride_id)
         if not ride:
             raise HTTPException(status_code=404, detail="Ride not found")
         paid_bookings = [
             b
             for b in self.bookings.list_requests_for_driver(ride.driver_id)  # type: ignore[arg-type]
-            if b.ride_id == ride.id and b.status == BOOKING_PAID
+            if b.ride_id == ride.id and b.status in (BOOKING_PAID, BOOKING_BOARDED)
         ]
         for booking in paid_bookings:
             payment = self.payments.get_succeeded_for_booking(booking.id)
@@ -453,8 +456,9 @@ class PaymentService:
                 balance_bucket="available",
                 pending_delta=-money(payment.driver_amount),  # type: ignore[arg-type]
             )
-            booking.status = "completed"
-        self.db.commit()
+            booking.status = BOOKING_COMPLETED
+        if commit:
+            self.db.commit()
 
     def topup_wallet(
         self, current_user: CurrentUser, amount: Decimal, idempotency_key: str

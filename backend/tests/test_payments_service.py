@@ -530,6 +530,27 @@ def test_wallet_me_returns_correct_balances():
     assert wallet["available_balance"] == Decimal("0.00")
 
 
+@pytest.mark.parametrize("booking_status", ["paid", "boarded"])
+def test_completed_ride_releases_earning_and_completes_paid_booking(booking_status):
+    service, booking, ride, _, wallet_repo = make_service("accepted")
+    payment_id = service.create_payment_session(
+        booking.id, make_current_user(booking.passenger_id)
+    )["payment_id"]
+    service.mark_payment_succeeded(payment_id)
+    booking.status = booking_status
+
+    service.release_driver_earnings_for_ride(ride.id)
+
+    driver_wallet = wallet_repo.wallets[ride.driver_id]
+    assert booking.status == "completed"
+    assert driver_wallet.pending_balance == Decimal("0.00")
+    assert driver_wallet.available_balance == Decimal("22.50")
+    assert any(
+        tx.type == "driver_available_earning"
+        for tx in wallet_repo.transactions.values()
+    )
+
+
 def test_decimal_precision_rounds_money_values():
     assert money(Decimal("10.005")) == Decimal("10.01")
     assert money("10.004") == Decimal("10.00")

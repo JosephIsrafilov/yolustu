@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
@@ -454,8 +454,12 @@ def test_complete_already_completed_is_idempotent():
     driver_id = uuid4()
     ride = make_ride(driver_id, status="completed")
     svc, _, _, _ = make_service(rides=[ride])
-    result = svc.complete_ride(ride.id, make_cu(driver_id))
+    with patch(
+        "app.domains.payments.services.PaymentService.release_driver_earnings_for_ride"
+    ) as release:
+        result = svc.complete_ride(ride.id, make_cu(driver_id))
     assert result.status == "completed"
+    release.assert_called_once_with(ride.id, commit=False)
 
 
 def test_complete_cancelled_ride_raises_400():
@@ -505,6 +509,44 @@ def test_complete_active_ride_succeeds():
     ):
         result = svc2.complete_ride(ride2.id, make_cu(driver_id))
     assert result.status == "completed"
+
+
+def test_complete_ride_commits_status_and_earnings_together():
+    driver_id = uuid4()
+    ride = make_ride(driver_id, status="active")
+    svc, _, _, _ = make_service(rides=[ride])
+    db = MagicMock(spec=Session)
+    svc.db = db
+
+    with patch(
+        "app.domains.payments.services.PaymentService.release_driver_earnings_for_ride"
+    ) as release:
+        result = svc.complete_ride(ride.id, make_cu(driver_id))
+
+    assert result.status == "completed"
+    release.assert_called_once_with(ride.id, commit=False)
+    db.commit.assert_called_once()
+    db.refresh.assert_called_once_with(ride)
+
+
+def test_complete_ride_rolls_back_when_earning_release_fails():
+    driver_id = uuid4()
+    ride = make_ride(driver_id, status="active")
+    svc, _, _, _ = make_service(rides=[ride])
+    db = MagicMock(spec=Session)
+    svc.db = db
+
+    with (
+        patch(
+            "app.domains.payments.services.PaymentService.release_driver_earnings_for_ride",
+            side_effect=RuntimeError("ledger failure"),
+        ),
+        pytest.raises(RuntimeError, match="ledger failure"),
+    ):
+        svc.complete_ride(ride.id, make_cu(driver_id))
+
+    db.commit.assert_not_called()
+    db.rollback.assert_called_once()
 
 
 # --- end_trip ---

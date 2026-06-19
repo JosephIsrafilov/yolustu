@@ -105,7 +105,7 @@ class BookingReservationWalletService:
                 wallet.pending_balance,  # type: ignore[arg-type]
                 amount,
             )
-            hold.status = "posted"  # type: ignore[assignment]
+            hold.status = "captured"  # type: ignore[assignment]
             hold.description = (  # type: ignore[assignment]
                 "Reservation hold captured after driver confirmation"
             )
@@ -276,7 +276,14 @@ class BookingReservationWalletService:
 
     @staticmethod
     def _subtract_pending(current: Decimal, amount: Decimal) -> Decimal:
-        return money(max(ZERO, money(current) - amount))
+        current = money(current)
+        amount = money(amount)
+        if current < amount:
+            raise HTTPException(
+                status_code=409,
+                detail="Wallet pending balance is lower than the reserved amount",
+            )
+        return money(current - amount)
 
     @staticmethod
     def _hold_key(booking_id: UUID) -> str:

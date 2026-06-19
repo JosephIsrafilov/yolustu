@@ -310,6 +310,7 @@ def test_participant_can_review_after_trip_completed():
     assert review.target_id == driver.id
     assert review.ride_id == ride.id
     assert review.rating == 5
+    assert review.comment == "great ride"
 
 
 def test_non_participant_cannot_create_review():

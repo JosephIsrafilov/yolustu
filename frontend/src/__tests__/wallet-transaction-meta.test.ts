@@ -9,6 +9,8 @@ const ALL_TRANSACTION_TYPES: Record<WalletTransactionType, true> = {
   refund: true,
   payout: true,
   adjustment: true,
+  reservation_hold: true,
+  reservation_release: true,
 };
 
 const TRANSACTION_TYPES = Object.keys(ALL_TRANSACTION_TYPES) as WalletTransactionType[];

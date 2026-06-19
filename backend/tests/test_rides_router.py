@@ -1,13 +1,14 @@
 import os
 import sys
 from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.main import app
 from app.domains.trips.services import TripsService
+from app.domains.trips.tracking import tracking_manager
 
 
 client = TestClient(app)
@@ -126,3 +127,61 @@ def test_rides_my_endpoint(monkeypatch):
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_driver_can_start_trip_simulation(monkeypatch):
+    ride_id = uuid4()
+    started: dict[str, object] = {}
+    monkeypatch.setattr(
+        TripsService,
+        "get_simulation_endpoints",
+        lambda self, requested_id, current_user: (
+            (40.4093, 49.8671),
+            (40.6828, 46.3606),
+        ),
+    )
+    monkeypatch.setattr(
+        tracking_manager,
+        "start_simulation",
+        lambda requested_id, origin, destination: started.update(
+            ride_id=requested_id,
+            origin=origin,
+            destination=destination,
+        ),
+    )
+
+    response = client.post(
+        f"/api/v1/rides/{ride_id}/simulate",
+        headers={"Authorization": f"Bearer {get_access_token()}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "started", "ride_id": str(ride_id)}
+    assert started["ride_id"] == ride_id
+
+
+def test_ending_simulation_runs_full_ride_completion(monkeypatch):
+    ride = sample_ride_response()
+    ride["status"] = "completed"
+    completed: list[UUID] = []
+    stopped: list[UUID] = []
+    monkeypatch.setattr(
+        TripsService,
+        "complete_ride",
+        lambda self, ride_id, current_user: completed.append(ride_id) or ride,
+    )
+    monkeypatch.setattr(
+        tracking_manager,
+        "stop_simulation",
+        lambda ride_id: stopped.append(ride_id),
+    )
+
+    response = client.post(
+        f"/api/v1/rides/{ride['id']}/end",
+        headers={"Authorization": f"Bearer {get_access_token()}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "completed"
+    assert completed == [UUID(ride["id"])]
+    assert stopped == [UUID(ride["id"])]

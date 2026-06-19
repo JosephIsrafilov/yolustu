@@ -10,7 +10,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.notifications import NotificationService
-from app.domains.bookings.repositories import BookingRepository, SeatReservationRepository
+from app.domains.bookings.repositories import (
+    BookingRepository,
+    SeatReservationRepository,
+)
 from app.domains.bookings.schemas import BookingCreate
 from app.domains.bookings.services import BookingsService
 from app.domains.identity.dependencies import CurrentUser
