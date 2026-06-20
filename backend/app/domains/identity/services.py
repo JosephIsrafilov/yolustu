@@ -192,9 +192,10 @@ class IdentityService:
     def _send_otp(phone: str, redis_client):
         otp = "123456"
         redis_client.setex(f"otp:{phone}", 300, otp)
-        # ponytail: dev fallback — OTP visible in CloudWatch/stdout logs
-        logger.info("SMS OTP (dev) for %s: %s", phone, otp)
-        return otp
+        if not settings.SMS_ENABLED:
+            # ponytail: dev fallback — OTP visible in CloudWatch/stdout logs
+            logger.info("SMS OTP (dev) for %s: %s", phone, otp)
+            return otp
 
         try:
             import boto3
