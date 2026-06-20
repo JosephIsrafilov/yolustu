@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -29,6 +30,7 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
     with SingleTickerProviderStateMixin {
   final MapController _mapController = MapController();
   late List<LatLon> _routePoints;
+  Timer? _fitBoundsTimer;
 
   // Smooth animation between progress ticks
   late AnimationController _animController;
@@ -50,6 +52,7 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
 
   @override
   void dispose() {
+    _fitBoundsTimer?.cancel();
     _animController.dispose();
     _mapController.dispose();
     super.dispose();
@@ -175,8 +178,10 @@ class _LeafletRouteMapViewState extends State<LeafletRouteMapView>
                   initialCenter: initialPos,
                   initialZoom: 8,
                   onMapReady: () {
-                    Future.delayed(
-                        const Duration(milliseconds: 400), _fitBounds);
+                    _fitBoundsTimer?.cancel();
+                    _fitBoundsTimer = Timer(const Duration(milliseconds: 400), () {
+                      if (mounted) _fitBounds();
+                    });
                   },
                 ),
                 children: [
