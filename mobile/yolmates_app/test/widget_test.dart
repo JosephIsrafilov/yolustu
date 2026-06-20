@@ -152,7 +152,7 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'Test');
     await tester.enterText(fields.at(1), 'User');
-    await tester.enterText(fields.at(2), '501234567');
+    await tester.enterText(fields.at(2), '701112233');
     await tester.enterText(fields.at(3), 'test@example.com');
     await tester.enterText(fields.at(4), 'password123');
     await tester.enterText(fields.at(5), 'password123');

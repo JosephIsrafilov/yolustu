@@ -10,9 +10,10 @@ import 'bookings_controller.dart';
 /// Real backend bookings implementation.
 ///
 /// Endpoints:
-/// - POST /bookings/ - create booking
+/// - POST /bookings - create booking
 /// - GET /bookings/my - passenger's bookings
 /// - POST /bookings/{id}/cancel - cancel booking
+/// - POST /bookings/{id}/complete-demo - passenger demo completion
 class ApiBookingsRepository implements BookingsRepository {
   final ApiClient _client;
 
@@ -53,20 +54,7 @@ class ApiBookingsRepository implements BookingsRepository {
         'selected_spots': booking.selectedSpots,
       });
 
-      final data = response.data;
-      final Map<String, dynamic> bookingJson;
-
-      if (data is Map<String, dynamic>) {
-        if (data['data'] != null) {
-          bookingJson = data['data'] as Map<String, dynamic>;
-        } else {
-          bookingJson = data;
-        }
-      } else {
-        throw Exception('Gözlənilməz cavab formatı');
-      }
-
-      return BookingMapper.toBooking(BookingDto.fromJson(bookingJson));
+      return _bookingFromResponse(response.data);
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
       throw apiError;
@@ -75,31 +63,38 @@ class ApiBookingsRepository implements BookingsRepository {
 
   @override
   Future<Booking> updateStatus(String id, BookingStatus status) async {
-    // Only cancel supported for passenger
-    if (status != BookingStatus.cancelled) {
-      throw Exception('Bu əməliyyat dəstəklənmir');
+    final endpoint = switch (status) {
+      BookingStatus.cancelled => '/bookings/$id/cancel',
+      BookingStatus.completed => '/bookings/$id/complete-demo',
+      _ => null,
+    };
+
+    if (endpoint == null) {
+      throw Exception('Bu emeliyyat desteklenmir');
     }
 
     try {
-      final response = await _client.post('/bookings/$id/cancel');
-
-      final data = response.data;
-      final Map<String, dynamic> bookingJson;
-
-      if (data is Map<String, dynamic>) {
-        if (data['data'] != null) {
-          bookingJson = data['data'] as Map<String, dynamic>;
-        } else {
-          bookingJson = data;
-        }
-      } else {
-        throw Exception('Gözlənilməz cavab formatı');
-      }
-
-      return BookingMapper.toBooking(BookingDto.fromJson(bookingJson));
+      final response = await _client.post(endpoint);
+      return _bookingFromResponse(response.data);
     } on DioException catch (e) {
       final apiError = e.error as ApiException;
       throw apiError;
     }
+  }
+
+  Booking _bookingFromResponse(dynamic data) {
+    final Map<String, dynamic> bookingJson;
+
+    if (data is Map<String, dynamic>) {
+      if (data['data'] != null) {
+        bookingJson = data['data'] as Map<String, dynamic>;
+      } else {
+        bookingJson = data;
+      }
+    } else {
+      throw Exception('Unexpected response format');
+    }
+
+    return BookingMapper.toBooking(BookingDto.fromJson(bookingJson));
   }
 }

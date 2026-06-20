@@ -61,6 +61,7 @@ class NotificationsController extends Notifier<List<AppNotification>> {
     // Remove /api/v1 suffix — WS endpoint lives at /api/v1/notifications/ws
     final wsUrl = base.replace(
       scheme: scheme,
+      port: base.hasPort ? base.port : (scheme == 'wss' ? 443 : 80),
       path: '${base.path}/notifications/ws',
       queryParameters: {'token': token},
     );

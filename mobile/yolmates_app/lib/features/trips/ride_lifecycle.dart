@@ -8,6 +8,8 @@ class RideLifecycle {
     return isCompleted || remaining < nearEndThreshold;
   }
 
+  static bool canConfirmPassengerArrival() => true;
+
   static Duration remainingFromProgress({
     required double progress,
     Duration simulatedDuration = const Duration(minutes: 60),

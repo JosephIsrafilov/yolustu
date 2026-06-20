@@ -114,7 +114,7 @@ class DriverPanelScreen extends ConsumerWidget {
               final requestsAsync = ref.watch(passengerRequestsProvider);
 
               final balance =
-                  walletAsync.valueOrNull?.balance.passengerBalance ?? 0.0;
+                  walletAsync.valueOrNull?.balance.balance ?? 0.0;
               final pendingRequests = requestsAsync.valueOrNull
                       ?.where((r) => r.status.name == 'pending')
                       .length ??

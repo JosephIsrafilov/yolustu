@@ -33,9 +33,7 @@ class WalletBalanceDTO {
     final available = double.tryParse(availableBalance) ?? 0.0;
     return WalletBalance(
       userId: userId,
-      // ponytail: backend returns single balance; treat it as passenger balance
-      passengerBalance: available,
-      driverBalance: double.tryParse(totalEarned) ?? 0.0,
+      balance: available,
       pendingBalance: double.tryParse(pendingBalance) ?? 0.0,
       currency: currency,
       totalEarned: double.tryParse(totalEarned) ?? 0.0,

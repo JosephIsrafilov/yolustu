@@ -292,7 +292,7 @@ class AppLocalizations {
   String get navProfile =>
       _get({'az': 'Profil', 'en': 'Profile', 'ru': 'Профиль'});
   String get navDriverPanel => _get(
-      {'az': 'Sürücü Paneli', 'en': 'Driver Panel', 'ru': 'Панель водителя'});
+      {'az': 'Panel', 'en': 'Driver Panel', 'ru': 'Панель водителя'});
 
   // Chat
   String get chatTitle => _get({'az': 'Söhbət', 'en': 'Chat', 'ru': 'Чат'});
@@ -781,7 +781,7 @@ class AppLocalizations {
         'ru': 'Быстрые действия'
       });
   String get driverPanelCreateRide => _get({
-        'az': 'Yeni gediş yarat',
+        'az': 'Yeni gediş',
         'en': 'Create new ride',
         'ru': 'Создать новую поездку'
       });

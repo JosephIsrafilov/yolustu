@@ -1,8 +1,7 @@
 /// Domain model for wallet balance and transactions.
 class WalletBalance {
   final String userId;
-  final double passengerBalance;
-  final double driverBalance;
+  final double balance;
   final double pendingBalance;
   final String currency;
   final double totalEarned;
@@ -10,8 +9,7 @@ class WalletBalance {
 
   const WalletBalance({
     required this.userId,
-    required this.passengerBalance,
-    required this.driverBalance,
+    required this.balance,
     required this.pendingBalance,
     required this.currency,
     required this.totalEarned,
@@ -19,12 +17,11 @@ class WalletBalance {
   });
 
   // ponytail: keep availableBalance as alias so DTO layer compiles unchanged
-  double get availableBalance => passengerBalance;
+  double get availableBalance => balance;
 
   WalletBalance copyWith({
     String? userId,
-    double? passengerBalance,
-    double? driverBalance,
+    double? balance,
     double? pendingBalance,
     String? currency,
     double? totalEarned,
@@ -32,8 +29,7 @@ class WalletBalance {
   }) {
     return WalletBalance(
       userId: userId ?? this.userId,
-      passengerBalance: passengerBalance ?? this.passengerBalance,
-      driverBalance: driverBalance ?? this.driverBalance,
+      balance: balance ?? this.balance,
       pendingBalance: pendingBalance ?? this.pendingBalance,
       currency: currency ?? this.currency,
       totalEarned: totalEarned ?? this.totalEarned,

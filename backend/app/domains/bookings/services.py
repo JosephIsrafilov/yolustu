@@ -13,6 +13,7 @@ from app.domains.bookings.repositories import (
     BookingRepository,
     SeatReservationRepository,
 )
+from app.domains.identity.repositories import UserRepository
 from app.domains.bookings.schemas import (
     BookingCreate,
     BookingResponse,
@@ -32,6 +33,7 @@ from app.domains.lifecycle import (
     RIDE_ACTIVE,
     RIDE_COMPLETED,
     can_transition_booking,
+    can_transition_ride,
 )
 from app.domains.payments.reservations import BookingReservationWalletService
 from app.domains.payments.services import money
@@ -45,6 +47,7 @@ class BookingsService:
         self.bookings = BookingRepository(db)
         self.seats = SeatReservationRepository(db)
         self.rides = RideLookupPort(db)
+        self.users = UserRepository(db)
         self.reservations = BookingReservationWalletService(db)
         self.notifications = NotificationService(db)
 
@@ -244,6 +247,44 @@ class BookingsService:
     ) -> BookingResponse:
         """Driver marks a passenger as a no-show."""
         return self._set_boarding_status(booking_id, current_user, BOOKING_NO_SHOW)
+
+    def complete_demo_ride(
+        self, booking_id: UUID, current_user: CurrentUser
+    ) -> BookingResponse:
+        """Passenger demo shortcut: finish the ride and release captured funds."""
+        booking = self._get_booking_for_update(booking_id)
+        if booking.passenger_id != current_user.id and current_user.role != "admin":
+            raise HTTPException(
+                status_code=403, detail="Only the passenger can complete this demo ride"
+            )
+        if booking.status in [
+            BOOKING_CANCELLED,
+            BOOKING_REJECTED,
+            BOOKING_EXPIRED,
+            BOOKING_NO_SHOW,
+        ]:
+            raise HTTPException(
+                status_code=400, detail="Booking cannot complete in current status"
+            )
+
+        ride = self._get_booking_ride_for_update(booking)
+        from app.domains.payments.services import PaymentService
+
+        payments = PaymentService(self.db)
+        if booking.status in [BOOKING_PENDING, BOOKING_ACCEPTED]:
+            self.reservations.capture_for_booking(booking, ride)
+
+        if ride.status != RIDE_COMPLETED:
+            if not can_transition_ride(ride.status, RIDE_COMPLETED):  # type: ignore[arg-type]
+                raise HTTPException(status_code=400, detail="Ride cannot be completed")
+            ride.status = RIDE_COMPLETED  # type: ignore[assignment]
+            self.users.increment_total_rides(ride.driver_id)  # type: ignore[arg-type]
+
+        payments.release_driver_earnings_for_ride(ride.id, commit=False)  # type: ignore[arg-type]
+        booking.status = BOOKING_COMPLETED  # type: ignore[assignment]
+        self.db.commit()
+        self.db.refresh(booking)
+        return booking_to_response(booking)
 
     def _set_boarding_status(
         self, booking_id: UUID, current_user: CurrentUser, target: str

@@ -86,9 +86,9 @@ class _BookingConfirmScreenState extends ConsumerState<BookingConfirmScreen> {
     // Check wallet balance before booking
     final total = ride.price * _seats;
     final walletState = ref.read(walletControllerProvider).valueOrNull;
-    if (walletState != null && walletState.balance.passengerBalance < total) {
+    if (walletState != null && walletState.balance.balance < total) {
       _showErrorDialog('Balans kifayət deyil',
-          'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.passengerBalance.toStringAsFixed(2)} AZN var.');
+          'Balansınız kifayət deyil. ${total.toStringAsFixed(2)} AZN lazımdır, lakin ${walletState.balance.balance.toStringAsFixed(2)} AZN var.');
       return;
     }
 

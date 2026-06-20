@@ -78,3 +78,12 @@ def mark_no_show(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return BookingsService(db).mark_no_show(booking_id, current_user)
+
+
+@router.post("/{booking_id}/complete-demo", response_model=BookingResponse)
+def complete_demo_ride(
+    booking_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return BookingsService(db).complete_demo_ride(booking_id, current_user)

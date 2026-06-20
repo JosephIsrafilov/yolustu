@@ -210,7 +210,13 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
       });
     }
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.createRideTitle)),
+      appBar: AppBar(
+        title: Text(l10n.createRideTitle),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(AppRoutes.driverPanel),
+        ),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -242,7 +248,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                 child: RouteMapView(
                   origin: _from,
                   destination: _to,
-                  forceCanvas: true,
+                  preferGoogleMap: false,
                 ),
               ),
               const SizedBox(height: 16),
@@ -283,6 +289,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                     : DropdownButtonFormField<String>(
                         key: const Key('ride-vehicle-selector'),
                         initialValue: selectedVehicle?.id,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.directions_car_outlined),
                         ),
@@ -292,6 +299,7 @@ class _CreateRideScreenState extends ConsumerState<CreateRideScreen> {
                               value: vehicle.id,
                               child: Text(
                                 '${vehicle.displayName} • ${vehicle.plate} • ${vehicle.seats} yer',
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                         ],

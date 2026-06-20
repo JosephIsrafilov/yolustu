@@ -62,16 +62,18 @@ class ApiClient {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
-        await _refreshAndRetry();
-        try {
-          return await _dio.get<T>(
-            path,
-            queryParameters: queryParameters,
-            options: options,
-          );
-        } on DioException catch (retryErr) {
-          if (retryErr.error is ApiException) throw retryErr.error!;
-          rethrow;
+        final refreshed = await _refreshAndRetry();
+        if (refreshed) {
+          try {
+            return await _dio.get<T>(
+              path,
+              queryParameters: queryParameters,
+              options: options,
+            );
+          } on DioException catch (retryErr) {
+            if (retryErr.error is ApiException) throw retryErr.error!;
+            rethrow;
+          }
         }
       }
       if (e.error is ApiException) throw e.error!;
@@ -131,17 +133,19 @@ class ApiClient {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
-        await _refreshAndRetry();
-        try {
-          return await _dio.put<T>(
-            path,
-            data: data,
-            queryParameters: queryParameters,
-            options: options,
-          );
-        } on DioException catch (retryErr) {
-          if (retryErr.error is ApiException) throw retryErr.error!;
-          rethrow;
+        final refreshed = await _refreshAndRetry();
+        if (refreshed) {
+          try {
+            return await _dio.put<T>(
+              path,
+              data: data,
+              queryParameters: queryParameters,
+              options: options,
+            );
+          } on DioException catch (retryErr) {
+            if (retryErr.error is ApiException) throw retryErr.error!;
+            rethrow;
+          }
         }
       }
       if (e.error is ApiException) throw e.error!;
@@ -165,17 +169,19 @@ class ApiClient {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
-        await _refreshAndRetry();
-        try {
-          return await _dio.patch<T>(
-            path,
-            data: data,
-            queryParameters: queryParameters,
-            options: options,
-          );
-        } on DioException catch (retryErr) {
-          if (retryErr.error is ApiException) throw retryErr.error!;
-          rethrow;
+        final refreshed = await _refreshAndRetry();
+        if (refreshed) {
+          try {
+            return await _dio.patch<T>(
+              path,
+              data: data,
+              queryParameters: queryParameters,
+              options: options,
+            );
+          } on DioException catch (retryErr) {
+            if (retryErr.error is ApiException) throw retryErr.error!;
+            rethrow;
+          }
         }
       }
       if (e.error is ApiException) throw e.error!;
@@ -199,17 +205,19 @@ class ApiClient {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && !_isRefreshing) {
-        await _refreshAndRetry();
-        try {
-          return await _dio.delete<T>(
-            path,
-            data: data,
-            queryParameters: queryParameters,
-            options: options,
-          );
-        } on DioException catch (retryErr) {
-          if (retryErr.error is ApiException) throw retryErr.error!;
-          rethrow;
+        final refreshed = await _refreshAndRetry();
+        if (refreshed) {
+          try {
+            return await _dio.delete<T>(
+              path,
+              data: data,
+              queryParameters: queryParameters,
+              options: options,
+            );
+          } on DioException catch (retryErr) {
+            if (retryErr.error is ApiException) throw retryErr.error!;
+            rethrow;
+          }
         }
       }
       if (e.error is ApiException) throw e.error!;
@@ -218,14 +226,14 @@ class ApiClient {
   }
 
   /// Refresh access token using refresh token, then retry.
-  Future<void> _refreshAndRetry() async {
+  Future<bool> _refreshAndRetry() async {
     _isRefreshing = true;
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null) {
         await _tokenStorage.clearTokens();
         onUnauthenticated?.call();
-        throw ApiException.unauthorized();
+        return false;
       }
 
       final response = await _dio
@@ -243,18 +251,18 @@ class ApiClient {
             refreshToken: newRefreshToken,
             csrfToken: csrfToken,
           );
-          return;
+          return true;
         }
       }
 
       await _tokenStorage.clearTokens();
       onUnauthenticated?.call();
-      throw ApiException.unauthorized();
+      return false;
     } catch (e) {
       await _tokenStorage.clearTokens();
       onUnauthenticated?.call();
       if (e is ApiException) rethrow;
-      throw ApiException.unauthorized();
+      return false;
     } finally {
       _isRefreshing = false;
     }

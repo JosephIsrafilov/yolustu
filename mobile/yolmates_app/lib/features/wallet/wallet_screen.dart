@@ -80,9 +80,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           final balance = walletState.balance;
           final transactions = walletState.transactions;
           final currentUser = ref.watch(authControllerProvider).user;
-          final showDriverBalance = currentUser?.role == UserRole.driver &&
+          final isDriver = currentUser?.role == UserRole.driver &&
               currentUser?.verificationStatus == 'approved';
-
           return RefreshIndicator(
             onRefresh: () =>
                 ref.read(walletControllerProvider.notifier).refresh(),
@@ -92,7 +91,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                 _BalanceCard(
                   label: l10n.walletBalance,
                   description: l10n.walletPassengerBalanceDesc,
-                  amount: balance.passengerBalance,
+                  amount: balance.balance,
                   currency: balance.currency,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
@@ -143,7 +142,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                               .read(walletControllerProvider)
                               .valueOrNull
                               ?.balance
-                              .passengerBalance;
+                              .balance;
                           ref.read(notificationProvider.notifier).showSuccess(
                               newBalance == null
                                   ? 'Top-up successful: ${amount.toStringAsFixed(2)} AZN.'
@@ -157,17 +156,17 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                     },
                   ),
                   secondaryActionLabel:
-                      showDriverBalance ? l10n.walletWithdraw : null,
+                      isDriver ? l10n.walletWithdraw : null,
                   secondaryActionIcon:
-                      showDriverBalance ? Icons.arrow_upward : null,
-                  onSecondaryAction: showDriverBalance &&
-                          balance.passengerBalance > 0
+                      isDriver ? Icons.arrow_upward : null,
+                  onSecondaryAction: isDriver &&
+                          balance.balance > 0
                       ? () => _showAmountSheet(
                             context: context,
                             title: l10n.walletWithdraw,
                             actionLabel: l10n.walletWithdraw,
                             quickAmounts: const [10, 25, 50],
-                            maxAmount: balance.passengerBalance,
+                            maxAmount: balance.balance,
                             cards: walletState.cards,
                             selectedCardId: walletState.selectedCard?.id,
                             requireCard: true,

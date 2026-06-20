@@ -82,7 +82,8 @@ class BookingsController extends AsyncNotifier<List<Booking>> {
         .where(
           (booking) =>
               booking.status != BookingStatus.cancelled &&
-              booking.status != BookingStatus.rejected,
+              booking.status != BookingStatus.rejected &&
+              booking.status != BookingStatus.completed,
         )
         .toList();
   }
@@ -101,10 +102,10 @@ class BookingsController extends AsyncNotifier<List<Booking>> {
   Future<Booking> setStatus(String id, BookingStatus status) async {
     final updated = await _repo.updateStatus(id, status);
     final current = state.valueOrNull ?? const <Booking>[];
-    state = AsyncData([
+    state = AsyncData(_visible([
       for (final booking in current)
         if (booking.id == id) updated else booking,
-    ]);
+    ]));
     return updated;
   }
 

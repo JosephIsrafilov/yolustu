@@ -33,6 +33,7 @@ class _PassengerActiveRideScreenState
   Timer? _timer;
   bool _arrivalNoticeShown = false;
   bool _reviewSubmitted = false;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -55,32 +56,39 @@ class _PassengerActiveRideScreenState
 
   void _maybeNotifyFinishAvailable() {
     if (_arrivalNoticeShown) return;
-    final remaining = RideLifecycle.remainingFromProgress(progress: _progress);
-    if (RideLifecycle.canFinish(remaining: remaining, isCompleted: false)) {
-      _arrivalNoticeShown = true;
-      ref
-          .read(notificationProvider.notifier)
-          .showInfo('Ride is almost finished. Arrival confirmation is ready.');
-    }
+    _arrivalNoticeShown = true;
+    ref
+        .read(notificationProvider.notifier)
+        .showInfo('Arrival confirmation is ready for this demo ride.');
   }
 
   Future<void> _confirmArrival(Booking booking) async {
-    if (_reviewSubmitted) return;
-    await ReviewDialog.show(
-      context,
-      targetId: booking.driverId.isEmpty ? booking.rideId : booking.driverId,
-      rideId: booking.rideId,
-      targetName: booking.driverName,
-    );
+    if (_busy || _reviewSubmitted) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(bookingsControllerProvider.notifier)
+          .setStatus(booking.id, BookingStatus.completed);
+      if (!mounted) return;
+      ref
+          .read(notificationProvider.notifier)
+          .showSuccess('Ride completed. Reserved funds were released.');
+      await ReviewDialog.show(
+        context,
+        targetId: booking.driverId.isEmpty ? booking.rideId : booking.driverId,
+        rideId: booking.rideId,
+        targetName: booking.driverName,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(notificationProvider.notifier).showError('Xeta: $e');
+      return;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
     if (!mounted) return;
     _reviewSubmitted = true;
-    await ref
-        .read(bookingsControllerProvider.notifier)
-        .setStatus(booking.id, BookingStatus.completed);
-    if (!mounted) return;
-    ref
-        .read(notificationProvider.notifier)
-        .showSuccess('Review submitted. Ride completed.');
+    context.go('/bookings');
   }
 
   @override
@@ -105,11 +113,7 @@ class _PassengerActiveRideScreenState
     final currentBooking = booking;
 
     final remaining = RideLifecycle.remainingFromProgress(progress: _progress);
-    final isCompleted = currentBooking.status == BookingStatus.completed;
-    final canFinish = RideLifecycle.canFinish(
-      remaining: remaining,
-      isCompleted: isCompleted,
-    );
+    final canFinish = RideLifecycle.canConfirmPassengerArrival();
     final etaMinutes = remaining.inMinutes.clamp(0, 60);
 
     return Scaffold(
@@ -244,14 +248,23 @@ class _PassengerActiveRideScreenState
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton.icon(
-                        onPressed: canFinish && !_reviewSubmitted
+                        onPressed: canFinish && !_reviewSubmitted && !_busy
                             ? () => _confirmArrival(currentBooking)
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.teal,
                           foregroundColor: Colors.white,
                         ),
-                        icon: const Icon(Icons.check_circle_outline),
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check_circle_outline),
                         label: Text(
                           _reviewSubmitted ? 'Reviewed' : 'Men catdim',
                         ),

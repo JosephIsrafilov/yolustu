@@ -269,6 +269,44 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.home,
                 builder: (_, __) => const HomeScreen(),
               ),
+              GoRoute(
+                path: AppRoutes.driverPanel,
+                builder: (_, __) => const DriverPanelScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.createRide,
+                builder: (_, __) => const CreateRideScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.myRides,
+                builder: (_, __) => const MyRidesScreen(),
+              ),
+              GoRoute(
+                path: '${AppRoutes.myRides}/:id',
+                builder: (context, state) => ActiveRideScreen(
+                  rideId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.passengerRequests,
+                builder: (_, __) => const PassengerRequestsScreen(),
+              ),
+              GoRoute(
+                path: '/driver/vehicles',
+                builder: (_, __) => const VehiclesScreen(),
+              ),
+              GoRoute(
+                path: '/driver/vehicles/:id/documents',
+                builder: (context, state) => VehicleDocumentsScreen(
+                  vehicleId: state.pathParameters['id']!,
+                  vehicle: state.extra as Vehicle?,
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.addVehicle,
+                builder: (context, state) =>
+                    AddVehicleScreen(vehicle: state.extra as Vehicle?),
+              ),
             ],
           ),
           StatefulShellBranch(
@@ -300,6 +338,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (_, __) => const ProfileScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.wallet,
+                builder: (_, __) => const WalletScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.reviews,
+                builder: (_, __) => const ReviewsScreen(),
               ),
             ],
           ),
@@ -447,32 +493,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           const NotificationsScreen(),
         ),
       ),
-      GoRoute(
-        path: AppRoutes.reviews,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const ReviewsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.wallet,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const WalletScreen(),
-        ),
-      ),
-
       // Driver
-      GoRoute(
-        path: AppRoutes.driverPanel,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const DriverPanelScreen(),
-        ),
-      ),
       GoRoute(
         path: AppRoutes.driverOnboarding,
         pageBuilder: (context, state) => _buildPageWithTransition(
@@ -482,72 +503,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/driver/vehicles',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const VehiclesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/driver/vehicles/:id/documents',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          VehicleDocumentsScreen(
-            vehicleId: state.pathParameters['id']!,
-            vehicle: state.extra as Vehicle?,
-          ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.addVehicle,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          AddVehicleScreen(vehicle: state.extra as Vehicle?),
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.driverVerification,
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
           const DriverVerificationScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.createRide,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const CreateRideScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.myRides,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const MyRidesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '${AppRoutes.myRides}/:id',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          ActiveRideScreen(
-            rideId: state.pathParameters['id']!,
-          ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.passengerRequests,
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const PassengerRequestsScreen(),
         ),
       ),
     ],

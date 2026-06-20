@@ -30,23 +30,25 @@ class MainShell extends ConsumerWidget {
 
   void _onDriverTap(BuildContext context, int index) {
     if (index == 0) {
-      navigationShell.goBranch(0); // Home branch -> Shows DriverPanelScreen
+      context.go(AppRoutes.home);
     } else if (index == 1) {
-      context.push(AppRoutes.createRide);
+      context.go(AppRoutes.createRide);
     } else if (index == 2) {
-      navigationShell.goBranch(3); // Messages branch (Chats)
+      context.go(AppRoutes.messages);
     } else if (index == 3) {
-      context.push(AppRoutes.wallet); // Balance opens wallet
+      context.go(AppRoutes.wallet);
     } else if (index == 4) {
-      navigationShell.goBranch(4); // Profile branch
+      context.go(AppRoutes.profile);
     }
   }
 
-  int _getDriverIndex() {
-    if (navigationShell.currentIndex == 0) return 0;
-    if (navigationShell.currentIndex == 3) return 2;
-    if (navigationShell.currentIndex == 4) return 4;
-    return 0; // Default to Dashboard
+  int _getDriverIndex(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    if (path == AppRoutes.createRide) return 1;
+    if (path.startsWith(AppRoutes.messages)) return 2;
+    if (path == AppRoutes.wallet) return 3;
+    if (path.startsWith(AppRoutes.profile)) return 4;
+    return 0;
   }
 
   @override
@@ -61,7 +63,7 @@ class MainShell extends ConsumerWidget {
       body: navigationShell,
       bottomNavigationBar: isDriverMode
           ? BottomNavigationBar(
-              currentIndex: _getDriverIndex(),
+              currentIndex: _getDriverIndex(context),
               onTap: (index) => _onDriverTap(context, index),
               selectedItemColor: AppTheme.teal,
               unselectedItemColor: AppTheme.slate500,

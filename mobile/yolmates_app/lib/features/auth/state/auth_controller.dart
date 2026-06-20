@@ -142,10 +142,14 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> requestEmailVerification() => _repo.requestEmailVerification();
 
-  /// Verify OTP. On success advances state (-> setup or main).
+  /// Verify OTP. On success the phone is confirmed and the session becomes
+  /// active, so this is where state advances (-> setup or main).
   /// Throws [AuthException] on failure; UI handles loading/error.
   Future<void> verifyOtp(String phone, String code) async {
     final user = await _repo.verifyOtp(phone, code);
+    final isDriver =
+        user.role == UserRole.driver && user.verificationStatus == 'approved';
+    await ref.read(driverModeProvider.notifier).toggle(isDriver);
     state = _resolve(user);
   }
 
@@ -155,18 +159,30 @@ class AuthController extends Notifier<AuthState> {
   }
 
   /// Login with phone and password.
-  /// If successful, user might need OTP if not verified.
-  Future<void> loginWithPassword(String phone, String password) async {
+  ///
+  /// Returns the user whose credentials were accepted. State is resolved from
+  /// the repository's actual session: API mode establishes a session on login
+  /// (-> authenticated), mock mode does not (-> stays unauthenticated until the
+  /// phone is confirmed via OTP). The UI inspects the returned user / resulting
+  /// status to decide whether to route through OTP.
+  Future<AppUser> loginWithPassword(String phone, String password) async {
     final user = await _repo.loginWithPassword(phone, password);
-    final isDriver =
-        user.role == UserRole.driver && user.verificationStatus == 'approved';
-    await ref.read(driverModeProvider.notifier).toggle(isDriver);
-    state = _resolve(user);
+    final session = await _repo.currentUser();
+    if (session != null) {
+      final isDriver = session.role == UserRole.driver &&
+          session.verificationStatus == 'approved';
+      await ref.read(driverModeProvider.notifier).toggle(isDriver);
+      state = _resolve(session);
+    }
+    return user;
   }
 
   /// Register with phone, password, and name.
-  /// If successful, advances state (might need OTP).
-  Future<void> registerWithPassword({
+  ///
+  /// In mock mode the account is created but no session is established; the
+  /// caller must confirm the phone via OTP. In API mode the backend returns a
+  /// session, so state advances immediately.
+  Future<AppUser> registerWithPassword({
     required String phone,
     String? email,
     required String password,
@@ -181,8 +197,12 @@ class AuthController extends Notifier<AuthState> {
       firstName: firstName,
       lastName: lastName,
     );
-    await ref.read(driverModeProvider.notifier).toggle(false);
-    state = _resolve(user);
+    final session = await repo.currentUser();
+    if (session != null) {
+      await ref.read(driverModeProvider.notifier).toggle(false);
+      state = _resolve(session);
+    }
+    return user;
   }
 
   /// Persist first-time profile and enter the main app.

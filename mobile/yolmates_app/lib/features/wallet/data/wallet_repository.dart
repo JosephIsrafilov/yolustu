@@ -23,8 +23,7 @@ class MockWalletRepository implements WalletRepository {
   static const Duration _latency = Duration(milliseconds: 400);
   WalletBalance _balance = const WalletBalance(
     userId: 'mock-user',
-    passengerBalance: 25.00,
-    driverBalance: 75.50,
+    balance: 25.00,
     pendingBalance: 0.00,
     currency: 'AZN',
     totalEarned: 75.50,
@@ -53,8 +52,8 @@ class MockWalletRepository implements WalletRepository {
       throw ArgumentError.value(
           amount, 'amount', 'Amount must be greater than 0');
     }
-    final nextPassengerBalance = _balance.passengerBalance + amount;
-    _balance = _balance.copyWith(passengerBalance: nextPassengerBalance);
+    final nextBalance = _balance.balance + amount;
+    _balance = _balance.copyWith(balance: nextBalance);
     _transactions.insert(
       0,
       WalletTransaction(
@@ -63,7 +62,7 @@ class MockWalletRepository implements WalletRepository {
         type: WalletTransactionType.topUp,
         amount: amount,
         currency: _balance.currency,
-        balanceAfter: nextPassengerBalance,
+        balanceAfter: nextBalance,
         description: 'Mock top up',
         createdAt: DateTime.now(),
       ),
@@ -78,11 +77,11 @@ class MockWalletRepository implements WalletRepository {
       throw ArgumentError.value(
           amount, 'amount', 'Amount must be greater than 0');
     }
-    if (amount > _balance.driverBalance) {
-      throw StateError('Insufficient driver balance');
+    if (amount > _balance.balance) {
+      throw StateError('Insufficient balance');
     }
-    final nextDriverBalance = _balance.driverBalance - amount;
-    _balance = _balance.copyWith(driverBalance: nextDriverBalance);
+    final nextBalance = _balance.balance - amount;
+    _balance = _balance.copyWith(balance: nextBalance);
     _transactions.insert(
       0,
       WalletTransaction(
@@ -91,7 +90,7 @@ class MockWalletRepository implements WalletRepository {
         type: WalletTransactionType.payout,
         amount: -amount,
         currency: _balance.currency,
-        balanceAfter: nextDriverBalance,
+        balanceAfter: nextBalance,
         description: 'Mock withdrawal',
         createdAt: DateTime.now(),
       ),
@@ -103,9 +102,9 @@ class MockWalletRepository implements WalletRepository {
   Future<WalletBalance> simulateDriverEarning(
       double amount, String description) async {
     await Future.delayed(_latency);
-    final nextDriverBalance = _balance.driverBalance + amount;
+    final nextBalance = _balance.balance + amount;
     _balance = _balance.copyWith(
-      driverBalance: nextDriverBalance,
+      balance: nextBalance,
       totalEarned: _balance.totalEarned + amount,
     );
     _transactions.insert(
@@ -116,7 +115,7 @@ class MockWalletRepository implements WalletRepository {
         type: WalletTransactionType.driverAvailableEarning,
         amount: amount,
         currency: _balance.currency,
-        balanceAfter: nextDriverBalance,
+        balanceAfter: nextBalance,
         description: description,
         createdAt: DateTime.now(),
       ),
@@ -141,7 +140,7 @@ class MockWalletRepository implements WalletRepository {
       'status': 'completed',
       'amount': 50.0,
       'currency': 'USD',
-      'wallet_balance': _balance.passengerBalance,
+      'wallet_balance': _balance.balance,
     };
   }
 

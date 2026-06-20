@@ -101,6 +101,128 @@ void main() {
     });
   });
 
+  group('loginWithPassword', () {
+    test('seeded demo account: correct password leaves session pending OTP',
+        () async {
+      final c = _makeContainer();
+      await _settled(c);
+      final notifier = c.read(authControllerProvider.notifier);
+
+      final user =
+          await notifier.loginWithPassword('+994501234567', 'password123');
+
+      // Credentials accepted, but no session yet — phone awaits OTP.
+      expect(user.phone, '+994501234567');
+      expect(c.read(authControllerProvider).status,
+          AuthStatus.unauthenticated);
+
+      // OTP confirms the phone and establishes the session.
+      await notifier.verifyOtp('+994501234567', '123456');
+      expect(c.read(authControllerProvider).status, AuthStatus.authenticated);
+    });
+
+    test('wrong password throws and keeps session empty', () async {
+      final c = _makeContainer();
+      await _settled(c);
+
+      await expectLater(
+        () => c
+            .read(authControllerProvider.notifier)
+            .loginWithPassword('+994501234567', 'wrong-password'),
+        throwsA(isA<AuthException>()),
+      );
+      expect(c.read(authControllerProvider).status,
+          AuthStatus.unauthenticated);
+    });
+
+    test('unknown phone throws', () async {
+      final c = _makeContainer();
+      await _settled(c);
+
+      await expectLater(
+        () => c
+            .read(authControllerProvider.notifier)
+            .loginWithPassword('+994559998877', 'password123'),
+        throwsA(isA<AuthException>()),
+      );
+    });
+  });
+
+  group('registerWithPassword', () {
+    test('new account stays pending OTP, then verifies', () async {
+      final c = _makeContainer();
+      await _settled(c);
+      final notifier = c.read(authControllerProvider.notifier);
+
+      await notifier.registerWithPassword(
+        phone: '+994701112233',
+        email: 'new@yolmates.az',
+        password: 'password123',
+        firstName: 'Ali',
+        lastName: 'Valiyev',
+      );
+      expect(c.read(authControllerProvider).status,
+          AuthStatus.unauthenticated);
+
+      await notifier.verifyOtp('+994701112233', '123456');
+      final state = c.read(authControllerProvider);
+      expect(state.status, AuthStatus.authenticated);
+      expect(state.user!.fullName, 'Ali Valiyev');
+    });
+
+    test('duplicate phone is rejected', () async {
+      final c = _makeContainer();
+      await _settled(c);
+      final notifier = c.read(authControllerProvider.notifier);
+
+      await expectLater(
+        () => notifier.registerWithPassword(
+          phone: '+994501234567', // seeded demo phone
+          email: 'other@yolmates.az',
+          password: 'password123',
+          firstName: 'Dup',
+          lastName: 'Phone',
+        ),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('duplicate email is rejected (case-insensitive)', () async {
+      final c = _makeContainer();
+      await _settled(c);
+      final notifier = c.read(authControllerProvider.notifier);
+
+      await expectLater(
+        () => notifier.registerWithPassword(
+          phone: '+994559998877',
+          email: 'DEMO@yolmates.az', // seeded demo email, different case
+          password: 'password123',
+          firstName: 'Dup',
+          lastName: 'Email',
+        ),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('after registering, the new account can log in', () async {
+      final c = _makeContainer();
+      await _settled(c);
+      final notifier = c.read(authControllerProvider.notifier);
+
+      await notifier.registerWithPassword(
+        phone: '+994701112233',
+        email: 'new@yolmates.az',
+        password: 'password123',
+        firstName: 'Ali',
+        lastName: 'Valiyev',
+      );
+
+      final user =
+          await notifier.loginWithPassword('+994701112233', 'password123');
+      expect(user.phone, '+994701112233');
+    });
+  });
+
   group('logout', () {
     test('clears the session back to unauthenticated', () async {
       final c = _makeContainer();

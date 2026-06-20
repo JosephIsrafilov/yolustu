@@ -118,8 +118,9 @@ class ApiChatRepository implements ChatRepository {
     final scheme = base.scheme == 'https' ? 'wss' : 'ws';
     final url = base.replace(
       scheme: scheme,
+      port: base.hasPort ? base.port : (scheme == 'wss' ? 443 : 80),
       path: '${base.path}/chats/ws/$conversationId',
-      queryParameters: {'token': Uri.encodeQueryComponent(token)},
+      queryParameters: {'token': token},
     );
     return WebSocketChannel.connect(url);
   }
