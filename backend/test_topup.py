@@ -5,7 +5,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.config import settings
-from app.domains.payments.services import PaymentService
 
 # We just want to try creating a stripe topup session using dummy data
 import stripe
