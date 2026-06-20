@@ -488,12 +488,12 @@ export default function AdminUsersPage() {
       )}
 
       <AdminTableShell>
-        <table className="w-full min-w-full table-fixed text-sm">
+        <table className="w-full min-w-[1400px] table-fixed text-sm">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('fullName')}
-                className="w-[24%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[20%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.user}</span>
@@ -506,7 +506,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('role')}
-                className="w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[8%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.role}</span>
@@ -519,7 +519,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('rating')}
-                className="w-[8%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[7%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rating}</span>
@@ -532,7 +532,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('totalTrips')}
-                className="hidden xl:table-cell w-[7%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[6%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.rides}</span>
@@ -545,7 +545,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('bookings')}
-                className="hidden xl:table-cell w-[7%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[6%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.bookings}</span>
@@ -558,7 +558,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('verificationStatus')}
-                className="w-[12%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.verification}</span>
@@ -571,7 +571,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[8%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -584,7 +584,7 @@ export default function AdminUsersPage() {
               </th>
               <th 
                 onClick={() => handleSort('createdAt')}
-                className="hidden xl:table-cell w-[11%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden xl:table-cell w-[10%] text-left px-3 py-3 md:px-4 md:py-3.5 font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.created}</span>
@@ -595,7 +595,7 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </th>
-              <th className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="w-[25%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -708,7 +708,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="hidden xl:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(u.createdAt).toLocaleDateString(t.locale)}</td>
                       <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <Button 
                             size="sm" 
                             variant="outline" 

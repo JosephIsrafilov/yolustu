@@ -321,12 +321,12 @@ export default function AdminBookingsPage() {
       )}
 
       <AdminTableShell>
-        <table className="w-full min-w-full table-fixed text-sm">
+        <table className="w-full min-w-[1200px] table-fixed text-sm">
           <thead className="bg-surface-muted border-b border-border select-none">
             <tr>
               <th 
                 onClick={() => handleSort('passenger')}
-                className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[15%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.passenger}</span>
@@ -339,7 +339,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('driver')}
-                className="w-[18%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[15%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.driver}</span>
@@ -352,7 +352,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('route')}
-                className="w-[24%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[20%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.route}</span>
@@ -378,7 +378,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('price')}
-                className="w-[11%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[10%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.price}</span>
@@ -391,7 +391,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('status')}
-                className="w-[10%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="w-[8%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.status}</span>
@@ -404,7 +404,7 @@ export default function AdminBookingsPage() {
               </th>
               <th 
                 onClick={() => handleSort('date')}
-                className="hidden lg:table-cell w-[8%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
+                className="hidden lg:table-cell w-[5%] px-3 py-3 md:px-4 md:py-3.5 text-left font-semibold text-text-secondary hover:text-brand-600 cursor-pointer group"
               >
                 <div className="flex items-center gap-1">
                   <span>{t.table.date}</span>
@@ -415,7 +415,7 @@ export default function AdminBookingsPage() {
                   )}
                 </div>
               </th>
-              <th className="w-[14%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
+              <th className="w-[20%] px-3 py-3 md:px-4 md:py-3.5 text-right font-semibold text-text-secondary">{t.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -543,7 +543,7 @@ export default function AdminBookingsPage() {
                     <td className="px-3 py-3 md:px-4 md:py-3.5"><StatusBadge status={booking.status} /></td>
                     <td className="hidden lg:table-cell px-3 py-3 md:px-4 md:py-3.5 text-text-muted text-xs">{new Date(booking.createdAt).toLocaleDateString(t.locale)}</td>
                     <td className="px-3 py-3 md:px-4 md:py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {trip && (
                           <Button
                             size="sm"
