@@ -23,7 +23,9 @@ class UserBase(BaseModel):
     @classmethod
     def validate_phone(cls, v: str) -> str:
         if not _AZ_PHONE_RE.match(v):
-            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+            raise ValueError(
+                "Phone must be in format +994XXXXXXXXX (9 digits after +994)"
+            )
         return v
 
 
@@ -72,7 +74,9 @@ class UserUpdate(BaseModel):
     @classmethod
     def validate_phone(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and not _AZ_PHONE_RE.match(v):
-            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+            raise ValueError(
+                "Phone must be in format +994XXXXXXXXX (9 digits after +994)"
+            )
         return v
 
 
@@ -200,7 +204,9 @@ class PhonePasswordResetRequestInput(BaseModel):
     @classmethod
     def validate_phone(cls, v: str) -> str:
         if not _AZ_PHONE_RE.match(v):
-            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+            raise ValueError(
+                "Phone must be in format +994XXXXXXXXX (9 digits after +994)"
+            )
         return v
 
 
@@ -211,8 +217,11 @@ class PhonePasswordResetConfirmInput(BaseModel):
     @classmethod
     def validate_phone(cls, v: str) -> str:
         if not _AZ_PHONE_RE.match(v):
-            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+            raise ValueError(
+                "Phone must be in format +994XXXXXXXXX (9 digits after +994)"
+            )
         return v
+
     code: str
     new_password: str = Field(min_length=8, max_length=72)
 
