@@ -45,7 +45,7 @@ def _make_admin_in_db(db) -> User:
 
 def _create_user_payload(role: str = "passenger") -> AdminUserCreate:
     return AdminUserCreate(
-        phone=f"+99451{uuid.uuid4().hex[:7]}",
+        phone=f"+9945{uuid.uuid4().int % 10**8:08d}",
         email=f"user-{uuid.uuid4().hex[:8]}@example.com",
         first_name="Test",
         last_name="User",
@@ -138,7 +138,7 @@ def test_approve_verification_logs_action(db):
 
     # Create a user with pending verification
     user = User(
-        phone=f"+99451{uuid.uuid4().hex[:7]}",
+        phone=f"+9945{uuid.uuid4().int % 10**8:08d}",
         email=f"pending-{uuid.uuid4().hex[:8]}@example.com",
         first_name="Pending",
         last_name="Driver",
@@ -169,7 +169,7 @@ def test_reject_verification_logs_action(db):
     audit_repo = AuditLogRepository(db)
 
     user = User(
-        phone=f"+99451{uuid.uuid4().hex[:7]}",
+        phone=f"+9945{uuid.uuid4().int % 10**8:08d}",
         email=f"pending-{uuid.uuid4().hex[:8]}@example.com",
         first_name="Pending",
         last_name="Driver",

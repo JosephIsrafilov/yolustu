@@ -1,8 +1,11 @@
+import re
 from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+_AZ_PHONE_RE = re.compile(r"^\+994\d{9}$")
 
 
 class UserBase(BaseModel):
@@ -15,6 +18,13 @@ class UserBase(BaseModel):
     role: Optional[str] = "passenger"
     city: Optional[str] = None
     bio: Optional[str] = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if not _AZ_PHONE_RE.match(v):
+            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+        return v
 
 
 class UserCreate(UserBase):
@@ -57,6 +67,13 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     city: Optional[str] = None
     bio: Optional[str] = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not _AZ_PHONE_RE.match(v):
+            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+        return v
 
 
 class PublicUserResponse(BaseModel):
@@ -179,9 +196,23 @@ class PasswordResetConfirmInput(BaseModel):
 class PhonePasswordResetRequestInput(BaseModel):
     phone: str
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if not _AZ_PHONE_RE.match(v):
+            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+        return v
+
 
 class PhonePasswordResetConfirmInput(BaseModel):
     phone: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if not _AZ_PHONE_RE.match(v):
+            raise ValueError("Phone must be in format +994XXXXXXXXX (9 digits after +994)")
+        return v
     code: str
     new_password: str = Field(min_length=8, max_length=72)
 

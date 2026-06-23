@@ -61,7 +61,7 @@ def _make_admin_in_db(db) -> User:
 
 def _payload(role: str = "passenger", **overrides) -> AdminUserCreate:
     base = dict(
-        phone=f"+99451{uuid.uuid4().hex[:7]}",
+        phone=f"+994{50 + (hash(uuid.uuid4().hex) % 10)}{uuid.uuid4().int % 10**7:07d}",
         email=f"user-{uuid.uuid4().hex[:8]}@example.com",
         first_name="New",
         last_name="User",
