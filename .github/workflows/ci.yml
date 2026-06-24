@@ -17,7 +17,7 @@ jobs:
   backend-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -64,7 +64,7 @@ jobs:
       DATABASE_URL: postgresql://yolustu_user:yolustu_password@127.0.0.1:5432/yolustu_db
       SECRET_KEY: ci-migrations-secret-key
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -87,14 +87,14 @@ jobs:
   backend-docker-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Build backend image
       run: docker build ./backend
 
   frontend-check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
