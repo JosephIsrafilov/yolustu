@@ -12,7 +12,7 @@ bcrypt==4.0.1
 pydantic==2.13.4
 pydantic-settings==2.14.1
 python-multipart==0.0.32
-redis[hiredis]==7.4.0
+redis[hiredis]==8.0.0
 stripe==15.1.0
 openai==2.38.0
 httpx==0.28.1
