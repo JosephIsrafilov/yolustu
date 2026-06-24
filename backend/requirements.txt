@@ -18,5 +18,5 @@ openai==2.38.0
 httpx==0.28.1
 slowapi==0.1.9
 firebase-admin==7.4.0
-apscheduler==3.10.4
+apscheduler==3.11.2
 boto3==1.35.99
