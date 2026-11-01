@@ -8,6 +8,7 @@ import { Language } from '@/lib/i18n';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://yolmates.pages.dev'),
   title: process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? 'Yolmates — Share rides across Azerbaijan' : 'Yolmates — Azərbaycan üçün carpooling platforması',
   description: process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? 'Explore an interactive, browser-based demo of Yolmates, an Azerbaijan carpooling platform.' : 'Şəhərlərarası gedişləri tap, paylaş, ucuz və rahat səyahət et. Bakı, Gəncə, Sumqayıt, Şəki, Quba və daha çox.',
 };

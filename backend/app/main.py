@@ -66,7 +66,7 @@ if settings.ENVIRONMENT == "production":
     # Production: only allow the configured frontend URL
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.FRONTEND_URL],
+        allow_origins=list(dict.fromkeys([settings.FRONTEND_URL, 'https://yolmates.pages.dev', 'https://yolustu.pages.dev'])),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

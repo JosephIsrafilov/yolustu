@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 
-const BASE_URL = 'https://yolustu.pages.dev';
+const BASE_URL = process.env.QA_BASE_URL || 'https://yolmates.pages.dev';
 
 async function runLiveQA() {
   console.log(`[Live QA] Testing production deployment at ${BASE_URL}`);

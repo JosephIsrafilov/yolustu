@@ -16,7 +16,7 @@ For a direct upload after `wrangler login`:
 
 ```powershell
 cd frontend
-npx wrangler pages deploy out --project-name yolustu
+npx wrangler pages deploy out --project-name yolmates
 ```
 
 Cloudflare Pages serves the exported route directories directly, including deep links. `build-demo.mjs` also writes flattened RSC prefetch aliases required by this Next.js 16 static export.
@@ -29,4 +29,4 @@ The map is a local schematic route display in demo mode. Prices are deterministi
 
 ## Updates
 
-Edit the frontend and demo services, run `npm run build:demo`, test the output in a browser, commit to the portfolio branch or fork, then push. A Pages Git integration can rebuild automatically from that branch using the settings above; direct-upload projects need `npx wrangler pages deploy out --project-name yolustu` after each build.
+Edit the frontend and demo services, run `npm run build:demo`, test the output in a browser, commit to the portfolio branch or fork, then push. A Pages Git integration can rebuild automatically from that branch using the settings above; direct-upload projects need `npx wrangler pages deploy out --project-name yolmates` after each build.
