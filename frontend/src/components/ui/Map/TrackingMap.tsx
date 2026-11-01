@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useJsApiLoader, GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
 import type { LatLng } from '@/hooks/useTracking';
+import DemoRouteMap from './DemoRouteMap';
 
 interface TrackingMapProps {
   route: LatLng[];
@@ -159,4 +160,8 @@ function TrackingMapLoader(props: TrackingMapProps) {
 }
 
 // ssr:false — the maps SDK touches window.
-export default dynamic(() => Promise.resolve(TrackingMapLoader), { ssr: false });
+const LiveTrackingMap = dynamic(() => Promise.resolve(TrackingMapLoader), { ssr: false });
+export default function TrackingMap(props: TrackingMapProps) {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return <DemoRouteMap origin={props.route[0]} destination={props.route.at(-1)} className={props.className} />;
+  return <LiveTrackingMap {...props} />;
+}

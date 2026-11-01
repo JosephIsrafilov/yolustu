@@ -20,7 +20,8 @@ node_modules/
 Thumbs.db
 .superpowers/
 check-ci.ps1
-scripts/
+/scripts/
+/mobile/scripts/
 
 # Python
 __pycache__/
@@ -65,4 +66,12 @@ analyze.err
 # Firebase local config
 mobile/yolmates_app/android/app/google-services.json
 mobile/yolmates_app/ios/Runner/GoogleService-Info.plist
+
+# Test & QA cache
+frontend/.jest-cache/
+.playwright-mcp/
+graphify-out/.*
+graphify-out/cache/
+
+
 

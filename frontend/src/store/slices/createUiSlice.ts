@@ -7,7 +7,7 @@ export const createUiSlice: StateCreator<
   [],
   UiSlice
 > = (set) => ({
-  language: 'az',
+  language: process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? 'en' : 'az',
   setLanguage: (language) => set({ language }),
   unreadRides: {},
   markRideAsRead: (rideId) =>

@@ -1,5 +1,7 @@
 
 
+const staticTripIds = new Set(['ride-baku-ganja', 'ride-baku-quba', 'ride-ganja-baku', 'ride-baku-sheki', 'ride-past']);
+const demoPath = (base: string, id: string, known: boolean) => process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && !known ? `${base}/demo/?id=${encodeURIComponent(id)}` : `${base}/${id}`;
 export const ROUTES = {
   home: '/',
   register: '/auth/register',
@@ -7,20 +9,21 @@ export const ROUTES = {
   passwordReset: '/auth/forgot-password',
   profileSetup: '/profile/setup',
   profile: '/profile',
-  profileDetails: (id: string) => `/profile/${id}`,
+  profileDetails: (id: string) => demoPath('/profile', id, ['passenger', 'driver', 'driver2', 'admin'].includes(id)),
   wallet: '/wallet',
   search: '/trips',
   trips: '/trips',
-  tripDetails: (id: string) => `/trips/${id}`,
+  tripDetails: (id: string) => demoPath('/trips', id, staticTripIds.has(id)),
+  tripChat: (id: string) => process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && !staticTripIds.has(id) ? `/trips/demo/chat/?id=${encodeURIComponent(id)}` : `/trips/${id}/chat`,
   bookings: '/bookings',
   chats: '/chats',
-  chatDetails: (id: string) => `/chats/${id}`,
+  chatDetails: (id: string) => demoPath('/chats', id, false),
   bookingRequests: '/bookings/requests',
   driverDashboard: '/driver',
   driverApply: '/driver/apply',
   createTrip: '/driver/create-trip',
   myTrips: '/driver/my-trips',
-  driverTripManage: (id: string) => `/driver/my-trips/${id}`,
+  driverTripManage: (id: string) => demoPath('/driver/my-trips', id, staticTripIds.has(id)),
   driverRequests: '/driver/requests',
   driverVehicle: '/driver/vehicle',
   driverDocuments: '/driver/documents',

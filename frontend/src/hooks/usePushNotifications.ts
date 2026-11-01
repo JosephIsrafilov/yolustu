@@ -19,6 +19,7 @@ export function usePushNotifications() {
   const shouldReconnectRef = useRef(false);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return;
     if (!isAuthenticated || authStatus !== 'authenticated') {
       shouldReconnectRef.current = false;
       if (wsRef.current) {

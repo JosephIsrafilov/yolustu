@@ -69,7 +69,7 @@ export default function DriverLayout({ children, narrow }: { children: React.Rea
   return (
     <div className="min-h-screen flex flex-col bg-[#f6fafb]">
       <header className="border-b border-border bg-white">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-3 px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <YolmatesLogo size="md" />
             <div className="h-4 w-px bg-border hidden sm:block" />

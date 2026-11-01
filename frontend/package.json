@@ -8,6 +8,7 @@
     "dev:webpack": "next dev --webpack",
     "dev:lowmem": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --webpack",
     "build": "node scripts/run-next-build.mjs",
+    "build:demo": "node scripts/build-demo.mjs",
     "start": "cross-env NEXT_DIST_DIR=.next-build next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --incremental false",

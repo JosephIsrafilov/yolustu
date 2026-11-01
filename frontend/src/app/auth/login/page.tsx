@@ -13,6 +13,7 @@ import { toApiError } from '@/services/api-error';
 import { I18N } from '@/lib/i18n';
 import YolmatesLogo from '@/components/brand/YolmatesLogo';
 import PhoneInput from '@/components/auth/PhoneInput';
+import { switchDemoAccount } from '@/services/demo/data';
 import {
   AZERBAIJAN_PHONE_PREFIX,
   isValidAzerbaijaniPhone,
@@ -143,6 +144,7 @@ export default function LoginPage() {
               {loading ? copy.auth.loggingIn : copy.auth.loginBtn}
             </Button>
           </form>
+          {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && <div className="mt-5 border-t border-[#c0c8ca] pt-5 text-center"><p className="mb-3 text-sm text-[#40484a]">Explore without registering · demo OTP: 123456</p><div className="flex gap-2"><button type="button" onClick={() => switchDemoAccount('passenger')} className="flex-1 rounded-xl border border-[#054752] px-3 py-3 text-sm font-semibold text-[#054752]">Passenger demo</button><button type="button" onClick={() => switchDemoAccount('driver')} className="flex-1 rounded-xl bg-[#054752] px-3 py-3 text-sm font-semibold text-white">Driver demo</button></div></div>}
 
           <p className="text-[14px] text-[#40484a] text-center mt-6">
             {copy.auth.noAccount}{' '}

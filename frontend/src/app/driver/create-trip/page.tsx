@@ -349,6 +349,10 @@ export default function CreateTripPage() {
   };
 
   const reverseGeocode = async (lat: number, lng: number, field: 'meetingPoint' | 'dropoffPoint') => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      setValue(field, `${getValues(field === 'meetingPoint' ? 'departureCity' : 'arrivalCity')} selected meeting point`);
+      return;
+    }
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
       const data = await res.json();

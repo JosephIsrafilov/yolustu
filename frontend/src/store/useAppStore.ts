@@ -19,7 +19,7 @@ export const useAppStore = create<AppState>()(
       ...createUiSlice(...a),
     }),
     {
-      name: 'yolustu-storage',
+      name: process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? 'yolmates-demo-ui' : 'yolustu-storage',
       version: 2,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({

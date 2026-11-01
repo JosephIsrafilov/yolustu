@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import { ApiError, type ApiErrorCode, toApiError } from '@/services/api-error';
+import { demoDirectRequest } from '@/services/demo/direct';
 
 function normalizePath(path: string): string {
   if (!path) {
@@ -167,6 +168,7 @@ class ApiClient {
     options?: RequestInit,
     allowRefresh = true,
   ): Promise<T> {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return demoDirectRequest(method, path, body) as T;
     try {
       const headers: Record<string, string> = {
         Accept: 'application/json',
@@ -292,6 +294,7 @@ class ApiClient {
    * Uses the same baseUrl, cookie auth, and loopback normalization as other methods.
    */
   async getBlob(path: string): Promise<Blob> {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('Private documents are not included in this demo.');
     const response = await fetch(`${this.baseUrl}${normalizePath(path)}`, {
       method: 'GET',
       credentials: 'include',

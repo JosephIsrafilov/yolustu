@@ -45,6 +45,7 @@ export const createAuthSlice: StateCreator<
     try {
       set({ lastError: null });
       await authService.verifyOtp({ phone, otp });
+      if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') set({ currentUser: await authService.getCurrentUser() });
       return true;
     } catch (error) {
       const apiError = toApiError(error);
@@ -212,7 +213,7 @@ export const createAuthSlice: StateCreator<
   },
 
   initAuth: async () => {
-    if (!hasSessionHint()) {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE !== 'true' && !hasSessionHint()) {
       get().clearSession();
       return;
     }

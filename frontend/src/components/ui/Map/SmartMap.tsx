@@ -5,13 +5,14 @@ import dynamic from 'next/dynamic';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { SmartMapProps } from './types';
 import { useOsrmRoute } from './utils';
+import DemoRouteMap from './DemoRouteMap';
 
 const GoogleMapRenderer = dynamic(() => import('./GoogleMapRenderer'), {
   ssr: false,
   loading: () => <div className="w-full animate-pulse bg-slate-100 rounded-xl h-[400px]" />,
 });
 
-export default function SmartMap(props: SmartMapProps) {
+function LiveMap(props: SmartMapProps) {
   const googleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const fetchedRoute = useOsrmRoute(props.origin, props.destination);
   const routeToUse = props.route || fetchedRoute;
@@ -40,4 +41,7 @@ export default function SmartMap(props: SmartMapProps) {
       <GoogleMapRenderer {...finalProps} />
     </Suspense>
   );
+}
+export default function SmartMap(props: SmartMapProps) {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? <DemoRouteMap {...props} /> : <LiveMap {...props} />;
 }

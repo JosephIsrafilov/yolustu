@@ -14,17 +14,18 @@ import { getUserCapabilities } from '@/lib/access-control';
 import UserAvatar from '@/components/ui/UserAvatar';
 import YolmatesLogo from '@/components/brand/YolmatesLogo';
 import RoleSwitch from '@/components/layout/RoleSwitch';
+import DemoNotifications from '@/components/layout/DemoNotifications';
 
 const HEADER_MODE_I18N = {
   az: {
     adminPanel: 'Admin paneli',
     wallet: 'Balans',
-    driverDashboard: 'Surucu paneli',
+    driverDashboard: 'Sürücü paneli',
   },
   ru: {
-    adminPanel: 'РђРґРјРёРЅ-РїР°РЅРµР»СЊ',
-    wallet: 'Р‘Р°Р»Р°РЅСЃ',
-    driverDashboard: 'РџР°РЅРµР»СЊ РІРѕРґРёС‚РµР»СЏ',
+    adminPanel: 'Админ-панель',
+    wallet: 'Баланс',
+    driverDashboard: 'Панель водителя',
   },
   en: {
     adminPanel: 'Admin panel',
@@ -103,6 +104,7 @@ export default function Header() {
         <div className="flex shrink-0 items-center gap-4 justify-self-end">
           {isAuthenticated && currentUser ? (
             <>
+              {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && <DemoNotifications />}
               {!isAdmin && (
                 <Link
                   href={ROUTES.wallet}

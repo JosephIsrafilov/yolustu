@@ -61,7 +61,7 @@ export default function LanguageSync({ serverLocale }: { serverLocale?: Language
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (serverLocale) {
+    if (serverLocale && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') {
       useAppStore.setState({ language: serverLocale });
     }
   }, [serverLocale]);

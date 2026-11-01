@@ -10,6 +10,6 @@ export const MapContainer = dynamic(
 );
 
 export const LocationPicker = dynamic(
-  () => import('./LocationPicker'),
+  () => process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? import('./DemoLocationPicker') : import('./LocationPicker'),
   { ssr: false }
 );

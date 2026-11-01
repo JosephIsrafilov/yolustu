@@ -26,6 +26,11 @@ export default function BookingRequestCard({
   onReject,
 }: BookingRequestCardProps) {
   const language = useAppStore((state) => state.language);
+  const labels = {
+    az: { seats: 'yer istəyir', full: 'Yer yoxdur', accept: 'Qəbul et', reject: 'Rədd et' },
+    ru: { seats: 'мест запрошено', full: 'Нет мест', accept: 'Принять', reject: 'Отклонить' },
+    en: { seats: 'seat(s) requested', full: 'No seats', accept: 'Accept', reject: 'Reject' },
+  }[language];
 
   if (!passenger || !trip) return null;
 
@@ -60,7 +65,7 @@ export default function BookingRequestCard({
       <div className="grid grid-cols-2 gap-3 text-xs text-text-secondary mb-3 h-5 items-center">
         <span className="flex items-center gap-1 min-w-0">
           <Icon name="users" size={13} className="shrink-0 flex-none" />
-          <span className="truncate block w-full">{booking.seatsRequested} yer istəyir</span>
+          <span className="truncate block w-full">{booking.seatsRequested} {labels.seats}</span>
         </span>
         <span className="truncate block w-full text-right">
           {departureCity} → {arrivalCity}
@@ -78,11 +83,11 @@ export default function BookingRequestCard({
             className="flex-1 w-full"
           >
             <Icon name="check" size={14} className="shrink-0 flex-none" />
-            <span className="truncate">{noSeats ? 'Yer yoxdur' : 'Qəbul et'}</span>
+            <span className="truncate">{noSeats ? labels.full : labels.accept}</span>
           </Button>
           <Button variant="outline" size="sm" fullWidth onClick={onReject} className="flex-1 w-full">
             <Icon name="x" size={14} className="shrink-0 flex-none" />
-            <span className="truncate">Rədd et</span>
+            <span className="truncate">{labels.reject}</span>
           </Button>
         </div>
       )}

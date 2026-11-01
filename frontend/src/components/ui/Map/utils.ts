@@ -23,6 +23,7 @@ export function useOsrmRoute(origin?: { lat: number; lng: number }, destination?
   }>({ path: [] });
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return;
     if (!origin || !destination) {
       return;
     }
@@ -90,6 +91,7 @@ export function useOsrmMultipleRoutes(
     .join('|');
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return;
     if (!tripsKey) return;
     let active = true;
 

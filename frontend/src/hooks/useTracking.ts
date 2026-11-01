@@ -121,6 +121,7 @@ export function useTracking(
   }, [rideId, shareToken, token]);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return;
     shouldReconnectRef.current = true;
     connectRef.current = connect;
     connect();

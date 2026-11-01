@@ -1,4 +1,5 @@
 'use client';
+import { ROUTES } from '@/lib/routes';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from 'next/image';
@@ -493,7 +494,7 @@ export default function AdminTripsPage() {
                     <td className="px-6 py-4"><StatusBadge status={trip.status} type="trip" /></td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <Button size="sm" variant="outline" onClick={() => router.push(`/trips/${trip.id}`)}>
+                        <Button size="sm" variant="outline" onClick={() => router.push(ROUTES.tripDetails(trip.id))}>
                           <Icon name="file-text" size={14} /> {t.actions.view}
                         </Button>
                         {showDeactivate && (

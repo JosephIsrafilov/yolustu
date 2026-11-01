@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { buildApiWebSocketUrl } from '@/lib/env';
 import { Message } from '@/types';
+import { getDemoData } from '@/services/demo/data';
 
 type ChatSocketMode = 'ride' | 'conversation';
 
@@ -61,6 +62,12 @@ export function useChat(id: string, mode: ChatSocketMode = 'ride') {
   }, [id, mode]);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      const refresh = () => setMessages(getDemoData().messages.filter((item) => mode === 'conversation' ? item.conversation_id === id : item.ride_id === id));
+      refresh();
+      window.addEventListener('yolmates-demo-change', refresh);
+      return () => window.removeEventListener('yolmates-demo-change', refresh);
+    }
     shouldReconnectRef.current = true;
     connectRef.current = connect;
     connect();
@@ -74,7 +81,7 @@ export function useChat(id: string, mode: ChatSocketMode = 'ride') {
         socketRef.current.close();
       }
     };
-  }, [connect]);
+  }, [connect, id, mode]);
 
   const addMessage = useCallback((message: Message) => {
     setMessages((prev) => {
@@ -88,7 +95,7 @@ export function useChat(id: string, mode: ChatSocketMode = 'ride') {
   return {
     messages,
     setMessages,
-    isConnected,
+    isConnected: process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? true : isConnected,
     addMessage,
   };
 }

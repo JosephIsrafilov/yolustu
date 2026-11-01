@@ -52,6 +52,7 @@ export default function AboutPage() {
             </Card>
           ))}
         </div>
+        {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && <Card className="p-6 md:p-8"><h2 className="text-lg font-semibold text-[#002f37]">About this project demo</h2><p className="mt-3 text-sm leading-6 text-[#4a5e64]">The original Yolmates application uses Next.js, TypeScript, Tailwind CSS, Zustand, FastAPI, PostgreSQL with PostGIS, Redis and WebSockets. Its main challenge is keeping rides, seat availability, bookings, payments and messages consistent across passengers and drivers. This public version runs those workflows locally in your browser with fictional sample data. It has no live backend, payment processing or connected users.</p><p className="mt-3 text-sm leading-6 text-[#4a5e64]">Yolmates is the work of its original project team. Karim Baliyev contributed to the project; <a className="underline" href="https://github.com/JosephIsrafilov/yolustu/commits?author=d3fenddr" target="_blank" rel="noopener noreferrer">view the public contribution history</a> and <a className="underline" href="https://github.com/JosephIsrafilov/yolustu" target="_blank" rel="noopener noreferrer">original source</a>.</p></Card>}
       </div>
     </WebLayout>
   );

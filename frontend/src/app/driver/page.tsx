@@ -9,8 +9,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/lib/routes';
 import Icon from '@/components/ui/Icon';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { paymentsService } from '@/services';
-import type { Wallet } from '@/types';
+import { paymentsService, tripsService } from '@/services';
+import type { Trip, Wallet } from '@/types';
 
 const DASHBOARD_I18N = {
   az: {
@@ -69,8 +69,9 @@ const DASHBOARD_I18N = {
 export default function DriverDashboardPage() {
   const router = useRouter();
   const { trips, bookings, currentUser, fetchTrips, fetchBookingRequests, language } = useAppStore();
+  const [demoTrips, setDemoTrips] = React.useState<Trip[]>([]);
   const [wallet, setWallet] = React.useState<Wallet | null>(null);
-  const myTrips = trips.filter((t) => t.driverId === currentUser?.id);
+  const myTrips = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? demoTrips : trips.filter((t) => t.driverId === currentUser?.id);
   const activeTrips = myTrips.filter((t) => t.status === 'active');
   const pendingBookings = bookings.filter((b) => {
     const trip = myTrips.find((t) => t.id === b.tripId);
@@ -87,7 +88,8 @@ export default function DriverDashboardPage() {
   const availableBalanceLabel = language === 'az' ? 'Mövcud balans' : language === 'ru' ? 'Доступный баланс' : 'Available balance';
 
   React.useEffect(() => {
-    fetchTrips();
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') void tripsService.getMyTrips().then(setDemoTrips);
+    else fetchTrips();
     fetchBookingRequests();
   }, [fetchTrips, fetchBookingRequests]);
 
@@ -109,13 +111,13 @@ export default function DriverDashboardPage() {
     <DriverLayout>
       <ProtectedRoute mode="driver">
         <div className="stagger-children">
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <Card padding="md" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100/50">
                 <Icon name="map" size={16} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.activeRide}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{copy.activeRide}</p>
                 <p className="text-lg sm:text-2xl font-black text-brand-600 mt-0.5 leading-none">{activeTrips.length}</p>
               </div>
             </Card>
@@ -124,7 +126,7 @@ export default function DriverDashboardPage() {
                 <Icon name="inbox" size={16} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.pendingRequest}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{copy.pendingRequest}</p>
                 <p className="text-lg sm:text-2xl font-black text-accent-500 mt-0.5 leading-none">{pendingBookings.length}</p>
               </div>
             </Card>
@@ -133,7 +135,7 @@ export default function DriverDashboardPage() {
                 <Icon name="car" size={16} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted truncate">{copy.totalRides}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{copy.totalRides}</p>
                 <p className="text-lg sm:text-2xl font-black text-text mt-0.5 leading-none">{myTrips.length}</p>
               </div>
             </Card>

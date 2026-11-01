@@ -64,7 +64,7 @@ export default function RouteAccessGuard() {
       return;
     }
 
-    if (isAuthRoute) {
+    if (isAuthRoute && !(process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && pathname === '/auth/verify')) {
       router.replace(ROUTES.search);
     }
   }, [pathname, router, currentUser, isAuthenticated, authStatus, activeMode, isHydrated]);

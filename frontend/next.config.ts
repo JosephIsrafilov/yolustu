@@ -2,6 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  ...(process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? { output: 'export' as const, trailingSlash: true, experimental: { cpus: 1 } } : {}),
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   turbopack: {
     root: path.resolve(process.cwd(), '..'),
@@ -47,7 +48,7 @@ const nextConfig: NextConfig = {
       },
     ],
     qualities: [75],
-    unoptimized: process.env.NODE_ENV === 'development',
+    unoptimized: process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true',
   },
 };
 

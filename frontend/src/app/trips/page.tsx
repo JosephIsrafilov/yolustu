@@ -1,4 +1,5 @@
 'use client';
+import { ROUTES } from '@/lib/routes';
 
 import { useState, Suspense, useMemo } from "react";
 import Image from 'next/image';
@@ -178,7 +179,7 @@ function TripsContent() {
     return (
       <FadeInOnScroll key={trip.id} delay={index * 100}>
         <article
-          onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
+          onClick={() => !isFull && router.push(ROUTES.tripDetails(trip.id))}
           className={`group relative flex flex-col sm:flex-row items-stretch justify-between gap-6 rounded-[24px] bg-white p-5 transition-all duration-300 border border-white/50 ${
             isFull ? 'cursor-not-allowed opacity-60 grayscale' : 'cursor-pointer shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(20,184,166,0.12)] hover:-translate-y-1 hover:border-teal-200'
           }`}
@@ -297,7 +298,7 @@ function TripsContent() {
     return (
       <FadeInOnScroll key={trip.id} delay={index * 50}>
         <article
-          onClick={() => !isFull && router.push(`/trips/${trip.id}`)}
+          onClick={() => !isFull && router.push(ROUTES.tripDetails(trip.id))}
           className={`rounded-[20px] bg-white p-4 transition-all duration-300 border border-white/50 ${
             isFull ? 'cursor-not-allowed opacity-60 grayscale' : 'cursor-pointer shadow-[0_2px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_15px_35px_rgba(20,184,166,0.12)] hover:-translate-y-1 hover:border-teal-200'
           }`}
